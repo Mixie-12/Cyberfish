@@ -37,5 +37,12 @@ sources, never with attacker-controlled text, and deployed by CI only
   notify; the agent already collapses repeats, so the volume is small.
 - The OAuth token is fetched per notifying event, not cached; acceptable at
   this volume and avoids state in the function.
+- firebase-messaging 26 deprecates registration tokens in favour of
+  registration by Firebase installation ID (`register()`, `onRegistered()`).
+  The app and `notify` still use tokens, which work today; they move to
+  installation IDs together, in one tested change.
+- The app initialises Firebase from Gradle properties (no
+  google-services.json, no plugin). Debug builds without them run with push
+  off; release builds require them.
 - The FCM project is a one-time owner bootstrap step: a Firebase project and
   a service account key stored as a GitHub secret.
