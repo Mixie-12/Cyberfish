@@ -251,7 +251,8 @@ stiffness 400).
 
 - `InsetSection` and `InsetRow`: a hairline list; a `label` above, a line
   above every row and one closing the list. `KeyValueRow`, `CopyableRow`
-  build on the row.
+  and `TechnicalDetailsRow` (the collapsed "Technical details") build on
+  the row.
 - `StatTile`: an open tile, a hairline along the top with a 24 dp blue lead,
   a `label`, the value.
 - `SeverityChip`, `SeverityTile`: outline and glow in the severity colour

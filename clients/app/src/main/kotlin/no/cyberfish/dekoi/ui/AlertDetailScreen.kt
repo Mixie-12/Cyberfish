@@ -36,7 +36,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
-import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -49,8 +48,6 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.semantics.collapse
-import androidx.compose.ui.semantics.expand
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
@@ -95,6 +92,7 @@ import no.cyberfish.dekoi.ui.components.KeyValueRow
 import no.cyberfish.dekoi.ui.components.KindTile
 import no.cyberfish.dekoi.ui.components.MissingScreen
 import no.cyberfish.dekoi.ui.components.Screen
+import no.cyberfish.dekoi.ui.components.TechnicalDetailsRow
 import no.cyberfish.dekoi.ui.components.severityGlyph
 import no.cyberfish.dekoi.ui.learn.learnTopicFor
 import no.cyberfish.dekoi.ui.motion.CriticalAlertHaptic
@@ -636,33 +634,7 @@ private fun TechnicalDetails(
     var open by rememberSaveable { mutableStateOf(false) }
     val spec = if (LocalReduceMotion.current) snap() else expandSpring<IntSize>()
     InsetSection(Modifier.animateContentSize(spec)) {
-        InsetRow(
-            stringResource(R.string.event_details),
-            modifier =
-                Modifier.semantics {
-                    if (open) {
-                        collapse {
-                            open = false
-                            true
-                        }
-                    } else {
-                        expand {
-                            open = true
-                            true
-                        }
-                    }
-                },
-            trailing = {
-                Icon(
-                    painterResource(R.drawable.ic_expand_more),
-                    contentDescription = null,
-                    modifier = Modifier.rotate(if (open) 180f else 0f),
-                    tint = MaterialTheme.colorScheme.outline,
-                )
-            },
-            onClick = { open = !open },
-            chevron = false,
-        )
+        TechnicalDetailsRow(open) { open = it }
         if (!open) return@InsetSection
         if (incident.start == incident.end) {
             KeyValueRow(stringResource(R.string.event_detail_time), absoluteTime(incident.end))
