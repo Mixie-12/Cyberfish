@@ -147,9 +147,8 @@ The backend decides what is new. A change to `mismatch` writes a
 `dns_hijack` event (critical, without a source MAC) and a mapping never seen
 before writes a `port_forward` event (warning) whose `src_mac` is the
 inventory's host at that address. It records the public address from
-`cf-connecting-ip`, or else the first `X-Forwarded-For` entry, the header
-Supabase documents for the client address, and the country from
-`cf-ipcountry` when present; the device never reports either. The reply's
+`private.client_ip()` (the platform's `cf-connecting-ip`, ADR 0016) and the
+country from `cf-ipcountry` when present; the device never reports either. The reply's
 `speed_test` is true while the owner has the test on and no result is stored
 for 20 hours.
 
