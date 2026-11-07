@@ -110,7 +110,8 @@ def attack(password: str) -> None:
         " http://host.containers.internal/index.html || true)"
         " && (timeout 20 arp-scan --localnet --interface=eth0 >/dev/null || true)"
     )
-    run("podman", "run", "--rm", ATTACKER_IMAGE, "sh", "-c", script)
+    # Podman, unlike Docker, does not grant NET_RAW by default; arp-scan needs it.
+    run("podman", "run", "--rm", "--cap-add", "NET_RAW", ATTACKER_IMAGE, "sh", "-c", script)
 
 
 def feed_port_scan() -> None:
