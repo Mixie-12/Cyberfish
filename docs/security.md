@@ -41,6 +41,7 @@ The data flow and every contract are in `docs/architecture.md`.
 | 9  | Anything beyond the intended surface on the project URL          | public schema only, GraphQL dropped, no buckets, no publications | verified 2026-11-07 against production: anonymous reads 401, private schema and GraphQL not exposed, no buckets, notify refuses requests without the secret |
 | 10 | Secrets in git history                                           | secrets only in GitHub secrets and 1Password                | tested: `gitleaks` on every push |
 | 11 | Flooding the API from one address or account                    | write limits per address and per user in PostgREST's pre-request function (ADR 0016) | tested: `10_request_limits`; HTTP 429 through the local gateway verified 2026-11-08 |
+| 12 | Filling the database or the function quota from accounts and devices of one's own | storage limits per account and device, push tokens capped, abandoned setups removed, notify calls capped per account and in all (ADR 0016) | tested: `11_storage_limits` |
 
 Further: typed passwords never leave the device (tested: agent `test_sources`,
 end-to-end assertion that the attacker's password is absent from the backend).
@@ -70,8 +71,8 @@ Object-level and function-level authorization (API1, API5): RLS and exact
 function grants, tested. Authentication (API2): Supabase Auth, device secrets.
 Property-level authorization (API3): column grants (only `name` and `trusted`
 are writable), tested. Resource consumption (API4): batch limits, pending-claim
-limit, bounded fields, write limits per address and per user (ADR 0016),
-tested; reads are bounded by statement timeouts and `max_rows`, with
+limit, bounded fields, write limits per address and per user, storage
+limits per account and device, a cap on notify calls (ADR 0016), tested; reads are bounded by statement timeouts and `max_rows`, with
 aggregates and query plans off; no edge firewall without a custom domain.
 Business flows (API6): single-use pairing. SSRF (API7): the only outbound call
 from the backend goes to a fixed FCM URL. Misconfiguration (API8): see A02.

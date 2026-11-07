@@ -99,12 +99,13 @@ Responses the agent must handle:
 | 400  | malformed input                          | drop the batch, log it; never retry it      |
 | 403  | registration refused or secret rejected  | before registration: retry with backoff;    |
 |      |                                          | after: device was removed, back off to 1 h  |
-| 429  | over a request limit                     | keep the batch, retry with backoff          |
+| 429  | over a request or storage limit          | keep the batch, retry with backoff          |
 | 5xx, network error | backend unavailable            | keep the batch, retry with backoff          |
 
 Every write through the Data API passes `guard.check_request()` first,
 which counts it per client address and per user (ADR 0016, limits in
-`private.request_limits()`).
+`private.request_limits()`). Triggers bound what one account or device can
+store (migration `20261108000000_request_and_storage_limits.sql`).
 
 ## App API (v1)
 
@@ -128,8 +129,11 @@ mapping of their own.
 ## Scheduled jobs
 
 pg_cron runs `private.mark_offline_devices()` every 5 minutes (one
-`device_offline` event per outage) and `private.apply_retention()` nightly
-(events, hosts and networks older than 90 days).
+`device_offline` event per outage), `private.apply_retention()` nightly
+(events, hosts and networks older than 90 days),
+`private.expire_pending_setups()` nightly (setups whose DeKoi never
+registered within 30 days) and `private.prune_rate_counters()` every 10
+minutes.
 
 ## Notifications
 
@@ -138,6 +142,7 @@ Every insert into `events` posts `{"event_id": <id>}` with the header
 secret in Vault). `notify` asks `notification_targets_v1(event_id)` which
 phones to notify and with which template, and sends FCM HTTP v1 messages
 whose data payload is `event_id` only. The rules are in that function
-(ADR 0007).
+(ADR 0007). The webhook fires only while the account and the project are
+under their hourly notify limits (ADR 0016).
 `notify` accepts the secret in `NOTIFY_SECRET` and, while it is rotated,
 the one in `NOTIFY_SECRET_PREVIOUS` (`docs/runbooks/rotate-keys.md`).

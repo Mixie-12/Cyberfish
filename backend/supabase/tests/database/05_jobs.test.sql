@@ -54,6 +54,7 @@ select results_eq(
   $$
     values
       ('dekoi-mark-offline', '*/5 * * * *'),
+      ('dekoi-pending-setups', '37 3 * * *'),
       ('dekoi-rate-counters', '*/10 * * * *'),
       ('dekoi-retention', '17 3 * * *')
   $$,
