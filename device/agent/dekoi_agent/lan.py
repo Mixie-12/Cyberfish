@@ -397,7 +397,7 @@ def ask_for_services() -> None:
         # From port 5353, so devices answer by multicast as they do any other
         # mDNS querier, rather than by unicast to a closed port.
         mdns.bind((NO_ADDRESS, MDNS_PORT))
-        mdns.sendto(_dns_query("_services._dns-sd._udp.local", 0, DNS_PTR), MDNS_GROUP)
+        mdns.sendto(dns_query("_services._dns-sd._udp.local", 0, DNS_PTR), MDNS_GROUP)
     with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as ssdp:
         ssdp.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_TTL, 1)
         ssdp.sendto(
@@ -420,10 +420,10 @@ def _drain(sock: socket.socket, limit: int) -> list[bytes]:
     return frames
 
 
-def _dns_query(name: str, query_id: int, record_type: int) -> bytes:
+def dns_query(name: str, query_id: int, record_type: int, flags: int = 0) -> bytes:
     labels = b"".join(bytes([len(part)]) + part.encode() for part in name.split("."))
     return (
-        struct.pack("!HHHHHH", query_id, 0, 1, 0, 0, 0)
+        struct.pack("!HHHHHH", query_id, flags, 1, 0, 0, 0)
         + labels
         + b"\x00"
         + struct.pack("!HH", record_type, 1)
@@ -451,8 +451,8 @@ def probe_name_poisoning() -> list[tuple[str, str]]:
     name = decoy_name()
     query_id = secrets.randbelow(0xFFFF) + 1
     probes = [
-        ("llmnr", ("224.0.0.252", 5355), _dns_query(name, query_id, DNS_A), dns_has_answer),
-        ("mdns", MDNS_GROUP, _dns_query(name + ".local", query_id, DNS_A), dns_has_answer),
+        ("llmnr", ("224.0.0.252", 5355), dns_query(name, query_id, DNS_A), dns_has_answer),
+        ("mdns", MDNS_GROUP, dns_query(name + ".local", query_id, DNS_A), dns_has_answer),
         ("nbns", ("255.255.255.255", 137), _nbns_query(name, query_id), nbns_has_answer),
     ]
     sockets = {}

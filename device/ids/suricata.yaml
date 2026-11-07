@@ -1,8 +1,10 @@
 %YAML 1.1
 ---
 # Suricata for DeKoi (ADR 0003). Everything not set here keeps Suricata's
-# defaults. Alerts are the only output and go to the agent's socket, so
-# nothing is written to the SD card.
+# defaults. Alerts and a minutely statistics record are the only output and
+# go to the agent's socket, so nothing is written to the SD card. The
+# statistics tell the agent that Suricata is alive and how many rules it
+# runs (ADR 0013).
 
 vars:
   address-groups:
@@ -57,6 +59,10 @@ outputs:
             http-body: no
             http-body-printable: no
             tagged-packets: no
+        - stats:
+            totals: yes
+            threads: no
+            deltas: no
 
 logging:
   default-log-level: notice
@@ -83,4 +89,5 @@ detect:
   sgh-mpm-context: single
 
 stats:
-  enabled: no
+  enabled: yes
+  interval: 60

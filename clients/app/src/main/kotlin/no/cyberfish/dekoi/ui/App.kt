@@ -267,6 +267,8 @@ private fun SignedIn(
                 WriteCardScreen(onClaim = viewModel::claim, onBack = back)
             }
             composable<Route.Settings> {
+                val settings by viewModel.settings.collectAsStateWithLifecycle()
+                LaunchedEffect(Unit) { viewModel.loadSettings() }
                 SettingsScreen(
                     email,
                     data.devices,
@@ -274,6 +276,8 @@ private fun SignedIn(
                     onSignOut = viewModel::signOut,
                     onDeleteAccount = viewModel::deleteAccount,
                     onNavigate = navigate,
+                    weeklySummary = settings?.weeklySummary,
+                    onWeeklySummary = viewModel::setWeeklySummary,
                 )
             }
         }

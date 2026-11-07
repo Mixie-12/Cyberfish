@@ -41,7 +41,6 @@ import no.cyberfish.dekoi.R
 import no.cyberfish.dekoi.cancelAlertNotification
 import no.cyberfish.dekoi.eventText
 import no.cyberfish.dekoi.hostDisplayName
-import no.cyberfish.dekoi.isIntrusion
 import no.cyberfish.dekoi.looksLike
 import no.cyberfish.dekoi.steps
 import no.cyberfish.dekoi.ui.components.CopyableRow
@@ -179,7 +178,8 @@ fun AlertDetailScreen(
         }
         host?.let { item { SourceDevice(it, onNavigate) } }
         item { WhatToDo(event, host) }
-        if (event.isIntrusion && host != null) item { Trust(host, onTrust) }
+        // Every event with a source device on the network, a new one included, offers to mark it as known.
+        host?.let { item { Trust(it, onTrust) } }
         item { TechnicalDetails(event, host) }
     }
 }

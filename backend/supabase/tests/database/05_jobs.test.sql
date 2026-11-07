@@ -51,8 +51,9 @@ select results_eq(
 
 select results_eq(
   'select jobname::text, schedule::text from cron.job order by jobname',
-  $$ values ('dekoi-mark-offline', '*/5 * * * *'), ('dekoi-retention', '17 3 * * *') $$,
-  'both jobs are scheduled'
+  $$ values ('dekoi-mark-offline', '*/5 * * * *'), ('dekoi-retention', '17 3 * * *'),
+            ('dekoi-weekly-summary', '0 17 * * 0') $$,
+  'every job is scheduled'
 );
 
 select * from finish();

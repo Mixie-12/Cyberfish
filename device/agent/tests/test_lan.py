@@ -3,10 +3,10 @@ import struct
 
 from dekoi_agent.lan import (
     ArpMonitor,
-    _dns_query,
     _nbns_query,
     dhcp_offer_server,
     dns_has_answer,
+    dns_query,
     nbns_has_answer,
     newcomers,
     parse_arp,
@@ -121,7 +121,7 @@ def test_dhcp_offer_server_identifier() -> None:
 
 
 def test_poisoning_answers_are_recognised() -> None:
-    query = _dns_query("backup-1234", 0x4242, 1)
+    query = dns_query("backup-1234", 0x4242, 1)
     assert len(query) == 12 + 1 + len("backup-1234") + 1 + 4
     answer = struct.pack("!HHHHHH", 0x4242, 0x8000, 1, 1, 0, 0) + query[12:]
     assert dns_has_answer(answer, 0x4242)

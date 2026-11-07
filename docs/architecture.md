@@ -12,6 +12,9 @@ Pi: OpenCanary --log file--> agent --HTTPS, anon key + device secret--> Supabase
                                                                             |
 App <--HTTPS, user JWT, RLS-- Postgres tables <------------------------------+
 App <--FCM push-- Edge Function "notify" <--database webhook on events insert
+
+agent --ICMP, UDP 53, HTTP (UPnP, read-only)--> gateway and resolver on the LAN
+agent --HTTPS--> 1.1.1.1 (DNS over HTTPS), speed.cloudflare.com (speed test, opt-in)
 ```
 
 ## Trust boundaries
@@ -22,6 +25,7 @@ App <--FCM push-- Edge Function "notify" <--database webhook on events insert
 | LAN discovery traffic to agent  | anyone on the customer LAN    | kernel filter, bounded parsers, cleaned and bounded strings, fixed vocabularies |
 | Canary container to agent       | possibly compromised decoys   | one-way, read-only log file; no secrets  |
 | Agent to backend                | any internet client           | 256-bit device secret, input validation  |
+| Gateway and resolver to agent   | a possibly compromised router | read-only requests to the gateway's own address, bounded size and time, no document types, values validated before they are reported |
 | App to backend                  | any internet client           | Supabase Auth JWT, RLS, column grants    |
 | Registry to device              | GHCR, CI                      | cosign signature required by Podman      |
 
@@ -53,6 +57,7 @@ a `_v1` function never changes; new behaviour goes into `_v2`.
 | `device_events_v1`    | `device_id`, `secret`, `events` (array, 1 to 200)           | rows inserted |
 | `device_hosts_v1`     | `device_id`, `secret`, `hosts` (array, up to 1024)          | rows written  |
 | `device_hosts_v2`     | `device_id`, `secret`, `hosts` (up to 1024), `networks` (up to 64) | rows written |
+| `device_health_v1`    | `device_id`, `secret`, `samples` (up to 216), `dns`, `resolver`, `forwards` (up to 64, or null), `download_mbps` | `{"speed_test": bool}` |
 
 Event object: `agent_event_id` (device-unique integer), `occurred_at`,
 `kind`, `service`, `src_ip`, `src_mac`, `dst_port`, `count`, `detail`.
@@ -70,6 +75,13 @@ Kinds a device may report (`private.device_event_kinds()`):
 | `rogue_router`   | IPv6 router advertisement watcher        | `protocol`                          |
 | `name_poisoning` | LLMNR, NBT-NS and mDNS probes            | `protocol`                          |
 | `ids_alert`      | Suricata                                 | `signature`, `category`, `severity`, `signature_id` |
+
+The backend writes three more kinds itself (`private.event_kinds()`):
+`device_offline` and `device_online` (scheduled job and heartbeat), and
+`new_host`. Once a DeKoi's first inventory row is 24 hours old, a trigger on
+`network_hosts` turns the first sighting of a hardware address into a
+`new_host` event carrying its `src_mac` and `src_ip` (ADR 0015). The
+learning period is per DeKoi; an address another DeKoi knows is still new.
 
 `detail` accepts only these fields: strings up to 256 characters without
 control characters; `targets`, `severity` and `signature_id` as non-negative
@@ -91,6 +103,45 @@ is refused as malformed. Hosts come from the bounded `arp-scan`; how the
 agent identifies them and finds networks is in `device/agent/dekoi_agent/`
 (`identify.py`, `classify.py`, `inventory.py`).
 
+## Network health (ADR 0015)
+
+Every minute the agent sends one ICMP echo to the default gateway, looks up
+the backend's name at the first IPv4 name server in `/etc/resolv.conf`, and
+opens a TCP connection to the backend at the address that lookup gave
+(`device/agent/dekoi_agent/health.py`). Once an hour it calls
+`device_health_v1` with:
+
+- `samples`: one object per finished hour and target (`gateway`,
+  `internet`, `resolver`): `hour`, `target`, `probes`, `lost`, `median_ms`,
+  `worst_ms` (null when every probe was lost) and `outage_minutes` (failed
+  probes next to another failed one). Unreported hours wait in memory for
+  up to 72 hours; a resent hour replaces the stored one.
+- `dns` and `resolver`: the DNS check (`dns_check.py`). Three names with
+  long-stable anycast addresses, A and AAAA, are resolved by the LAN
+  resolver and by DNS over HTTPS at `https://1.1.1.1/dns-query`. Answers
+  that point nowhere (none, `0.0.0.0`, `::`) do not count; two or more names
+  with disjoint answers is a mismatch. The agent reports `mismatch` only
+  after two checks in a row, `ok` or `unavailable` otherwise, null while a
+  mismatch is unconfirmed.
+- `forwards`: the gateway's enabled UPnP IGD port mappings (`upnp.py`):
+  `protocol`, `external_port`, `internal_client`, `internal_port`,
+  `description`, or null when they could not be read. The description URL
+  comes from the gateway's SSDP answers, which the discovery listener
+  already receives; the agent sends only `GetGenericPortMappingEntry`.
+- `download_mbps`: the speed test, run only when the previous reply said
+  `speed_test: true` and between 02:00 and 05:00 UTC: one download of at most
+  25 MB and 30 s from `https://speed.cloudflare.com/__down`.
+
+The backend decides what is new. A change to `mismatch` writes a
+`dns_hijack` event (critical, without a source MAC) and a mapping never seen
+before writes a `port_forward` event (warning) whose `src_mac` is the
+inventory's host at that address. It records the public address from
+`cf-connecting-ip`, or else the first `X-Forwarded-For` entry, the header
+Supabase documents for the client address, and the country from
+`cf-ipcountry` when present; the device never reports either. The reply's
+`speed_test` is true while the owner has the test on and no result is stored
+for 20 hours.
+
 Responses the agent must handle:
 
 | HTTP | Meaning                                  | Agent behaviour                             |
@@ -106,31 +157,47 @@ Responses the agent must handle:
 | Operation              | How                                                        |
 | ---------------------- | ---------------------------------------------------------- |
 | Claim a device         | `claim_device_v1(claim_code, name)`                        |
-| Read own data          | `select` on `devices`, `events`, `network_hosts`, `networks` (RLS) |
+| Read own data          | `select` on `devices`, `events`, `network_hosts`, `networks`, `owner_settings` (RLS) |
+| Read own data          | `select` on `devices`, `events`, `network_hosts`, `networks`, `health_samples`, `port_forwards`, `speed_tests` (RLS) |
 | Rename, remove device  | `update` of `name`, `delete` on `devices` (RLS)            |
+| Speed test on or off   | `update` of `speed_test` on `devices` (RLS)                |
 | Trust a host           | `update` of `trusted` on `network_hosts` (RLS)             |
+| Weekly summary on, off | `select`, and `insert` or `update` of `weekly_summary`, on `owner_settings` (RLS); `user_id` defaults to the caller; no row means on |
 | Push token             | `register_push_token_v1(token)`, `unregister_push_token_v1(token)` |
 | Delete account         | `delete_account_v1()`                                      |
 
 ## Event severity
 
 `events.severity` is generated from the kind, and for `ids_alert` from the
-Suricata severity, by `private.event_severity` (migration
-`20261107160000_device_identification.sql`, which documents the mapping):
+Suricata severity, by `private.event_severity` (its latest definition, in
+`20261107183000_network_health.sql`, documents the mapping):
 `critical`, `warning` or `info`. Clients read the column and keep no
 mapping of their own.
 
 ## Scheduled jobs
 
 pg_cron runs `private.mark_offline_devices()` every 5 minutes (one
+`device_offline` event per outage), `private.apply_retention()` nightly
+(events, hosts and networks older than 90 days) and
+`private.post_weekly_summaries()` on Sundays at 17:00 UTC.
 `device_offline` event per outage) and `private.apply_retention()` nightly
-(events, hosts and networks older than 90 days).
+(events, hosts, networks, health samples, port forwards and speed tests
+older than 90 days).
 
 ## Notifications
 
 Every insert into `events` posts `{"event_id": <id>}` with the header
 `X-Notify-Secret` to the Edge Function `notify` (pg_net trigger; URL and
-secret in Vault). `notify` asks `notification_targets_v1(event_id)` which
-phones to notify and with which template, and sends FCM HTTP v1 messages
-whose data payload is `event_id` only. The rules are in that function
-(ADR 0007).
+secret in Vault). `notify` asks `notification_targets_v2(event_id)` which
+phones to notify, with which template, severity and source kind, and sends
+FCM HTTP v1 messages whose data payload is `event_id` only. The rules are in
+`notification_targets_v1` (ADR 0007); `new_host` events notify at most once
+per DeKoi per 10 minutes, so devices that join together give one push.
+
+The weekly job posts `{"weekly_summary_for": "<user id>"}` the same way, once
+per owner with a registered DeKoi. `notify` asks `weekly_summary_v1(user_id)`,
+which returns the owner's phones with three numbers for the last 7 days
+(alerts as the app groups them into incidents, new devices, uptime in whole
+percent), or nothing when the owner turned the summary off or already had
+one in the last 6 days. The push uses a fixed template on the `updates`
+channel and carries no data.

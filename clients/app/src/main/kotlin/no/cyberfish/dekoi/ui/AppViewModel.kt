@@ -17,6 +17,7 @@ import no.cyberfish.dekoi.Event
 import no.cyberfish.dekoi.GoogleIdToken
 import no.cyberfish.dekoi.Network
 import no.cyberfish.dekoi.NetworkHost
+import no.cyberfish.dekoi.OwnerSettings
 import no.cyberfish.dekoi.R
 import no.cyberfish.dekoi.shared.ClaimCode
 import java.io.IOException
@@ -148,12 +149,14 @@ class AppViewModel(
             pushToken()?.let { backend.unregisterPushToken(it) }
             backend.signOut()
             owner.value = OwnerData()
+            ownerSettings.value = null
         }
 
     fun deleteAccount() =
         run {
             backend.deleteAccount()
             owner.value = OwnerData()
+            ownerSettings.value = null
         }
 
     private suspend fun load() =
@@ -185,6 +188,19 @@ class AppViewModel(
     ) {
         messages.value = message
     }
+
+    private val ownerSettings = MutableStateFlow<OwnerSettings?>(null)
+
+    /** The owner's settings; null until loaded, and again after signing out. */
+    val settings: StateFlow<OwnerSettings?> = ownerSettings.asStateFlow()
+
+    fun loadSettings() = run { ownerSettings.value = backend.settings() }
+
+    fun setWeeklySummary(on: Boolean) =
+        run {
+            backend.setWeeklySummary(on)
+            ownerSettings.value = OwnerSettings(weeklySummary = on)
+        }
 
     private companion object {
         const val TOO_MANY_REQUESTS = 429

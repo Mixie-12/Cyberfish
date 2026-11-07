@@ -44,6 +44,23 @@ class GuidanceTest {
     }
 
     @Test
+    fun `a new device is found first, kept if known, and otherwise disconnected and locked out`() {
+        for (source in HostKind.entries) {
+            assertEquals(
+                listOf(
+                    findStep(source),
+                    R.string.step_mark_known_newcomer,
+                    disconnectStep(source),
+                    R.string.step_change_wifi_password_newcomer,
+                ),
+                steps("new_host", source),
+                "$source",
+            )
+        }
+        assertTrue(R.string.step_change_account_passwords !in steps("new_host", HostKind.UNKNOWN))
+    }
+
+    @Test
     fun `DeKoi going offline is about DeKoi, and coming back needs nothing`() {
         assertEquals(
             listOf(R.string.step_check_power, R.string.step_check_cable, R.string.step_wait_reconnect),

@@ -5,7 +5,7 @@ from pathlib import Path
 import pytest
 
 from dekoi_agent import agent as agent_module
-from dekoi_agent import api
+from dekoi_agent import api, monitors
 from dekoi_agent.agent import Agent
 from dekoi_agent.config import Config
 from dekoi_agent.state import State
@@ -24,6 +24,9 @@ class FakeBackend:
         self.outcomes: dict[str, list[object]] = {}
         self.poisoners: list[tuple[str, str]] = []
         self.dhcp_servers: set[str] = {"192.168.1.1"}
+        self.lan_answer = frozenset({"192.0.2.10"})
+        self.doh_answer = frozenset({"192.0.2.10"})
+        self.mappings_read: list[tuple[str | None, str | None]] = []
 
     def __call__(self, config: Config, function: str, arguments: dict) -> object:
         self.calls.append((function, arguments))
@@ -101,6 +104,20 @@ def backend(monkeypatch: pytest.MonkeyPatch) -> FakeBackend:
     monkeypatch.setattr(agent_module.lan, "probe_dhcp_servers", lambda mac: fake.dhcp_servers)
     monkeypatch.setattr(agent_module.lan, "ask_for_services", lambda: None)
     monkeypatch.setattr(agent_module.inventory, "routed_networks", lambda: [dict(HOME_NETWORK)])
+    monkeypatch.setattr(agent_module.health, "ping", lambda address: 1.5)
+    monkeypatch.setattr(agent_module.health, "connect", lambda host, port: 20.0)
+    monkeypatch.setattr(agent_module.health, "speed_test", lambda: 93.4)
+    monkeypatch.setattr(agent_module.dns_check, "lan_resolver", lambda: "192.168.1.1")
+    monkeypatch.setattr(agent_module.dns_check, "ask_lan", lambda *question: fake.lan_answer)
+    monkeypatch.setattr(
+        agent_module.dns_check, "ask_doh", lambda questions: [fake.doh_answer] * len(questions)
+    )
+
+    def port_mappings(url: str | None, gateway: str | None) -> list[dict]:
+        fake.mappings_read.append((url, gateway))
+        return []
+
+    monkeypatch.setattr(agent_module.upnp, "port_mappings", port_mappings)
     return fake
 
 
@@ -173,17 +190,96 @@ def test_backend_outage_keeps_events_and_malformed_batches_are_dropped(
     assert len(backend.called("device_events_v1")) == 2
 
 
-def test_heartbeat_reports_running_decoys(config: Config, backend: FakeBackend) -> None:
+HEARTBEAT_V1 = {
+    "device_id": "device-1",
+    "secret": "a" * 64,
+    "agent_version": "0.1.0",
+    "services": ["http", "ssh"],
+    "local_ip": "192.168.1.20",
+}
+
+
+def test_heartbeat_reports_running_decoys_and_monitors(
+    config: Config, backend: FakeBackend
+) -> None:
+    (config.canary_log.parent / "image").write_text("0.1.0 2026-11-02T04:30:00Z\n")
     agent = Agent(config, State(device_id="device-1", secret="a" * 64), Clock(), FakeListeners())
     agent.tick()
-    (heartbeat,) = backend.called("device_heartbeat_v1")
-    assert heartbeat == {
-        "device_id": "device-1",
-        "secret": "a" * 64,
-        "agent_version": "0.1.0",
-        "services": ["http", "ssh"],
-        "local_ip": "192.168.1.20",
+    (heartbeat,) = backend.called("device_heartbeat_v2")
+    assert heartbeat == HEARTBEAT_V1 | {
+        "monitors": [
+            {"name": "decoys", "state": "starting", "detail": {"decoys": 2}},
+            {"name": "port_scan", "state": "starting"},
+            {"name": "arp_watch", "state": "starting"},
+            {"name": "dhcp_watch", "state": "starting"},
+            {"name": "router_watch", "state": "ok"},
+            {"name": "name_poisoning", "state": "starting"},
+            {"name": "ids", "state": "starting"},
+            {"name": "inventory", "state": "starting"},
+        ],
+        "images": [{"name": "canary", "version": "0.1.0", "updated_at": "2026-11-02T04:30:00Z"}],
     }
+    assert backend.called("device_heartbeat_v1") == []
+
+
+def test_monitors_follow_their_sources(config: Config, backend: FakeBackend) -> None:
+    listeners = FakeListeners()
+    clock = Clock()
+    agent = Agent(config, State(device_id="device-1", secret="a" * 64), clock, listeners)
+    agent.tick()
+    config.scan_log.write_text("")
+    listeners.frames = [b"\x00" * 42]
+    clock.now += 60
+    agent.tick()
+
+    states = {m["name"]: m["state"] for m in backend.called("device_heartbeat_v2")[-1]["monitors"]}
+    assert states == {
+        "decoys": "starting",
+        "port_scan": "ok",
+        "arp_watch": "ok",
+        "dhcp_watch": "ok",
+        "router_watch": "ok",
+        "name_poisoning": "ok",
+        "ids": "starting",
+        "inventory": "ok",
+    }
+
+
+@pytest.mark.parametrize("status", [404, 400])
+def test_heartbeat_falls_back_to_v1(config: Config, backend: FakeBackend, status: int) -> None:
+    """An older backend (404) or a refused report (400) still keeps the
+    device online."""
+    backend.outcomes["device_heartbeat_v2"] = [api.ApiError(status, "no")]
+    agent = Agent(config, State(device_id="device-1", secret="a" * 64), Clock(), FakeListeners())
+    agent.tick()
+    assert backend.called("device_heartbeat_v1") == [HEARTBEAT_V1]
+    assert agent.heartbeat_schedule.delay == agent_module.HEARTBEAT_SECONDS
+
+
+def test_heartbeat_outage_is_retried_later(config: Config, backend: FakeBackend) -> None:
+    backend.outcomes["device_heartbeat_v2"] = [api.ApiError(503, "down")]
+    agent = Agent(config, State(device_id="device-1", secret="a" * 64), Clock(), FakeListeners())
+    agent.tick()
+    assert backend.called("device_heartbeat_v1") == []
+    assert agent.heartbeat_schedule.delay > agent_module.HEARTBEAT_SECONDS
+
+
+def test_monitors_start_again_when_the_device_registers(
+    config: Config, backend: FakeBackend
+) -> None:
+    """A card claimed long after it first started does not report its
+    probes and inventory as failed before they have run."""
+    clock = Clock()
+    backend.outcomes["device_register_v1"] = [api.ApiError(403, "refused"), "device-1"]
+    agent = Agent(config, State(), clock, FakeListeners())
+    agent.tick()
+    clock.now += monitors.STARTUP_SECONDS + 60
+    agent.tick()
+    agent.tick()
+
+    (heartbeat,) = backend.called("device_heartbeat_v2")
+    states = {m["name"]: m["state"] for m in heartbeat["monitors"]}
+    assert states["inventory"] == states["dhcp_watch"] == states["name_poisoning"] == "starting"
 
 
 def test_network_findings_are_delivered(config: Config, backend: FakeBackend) -> None:
@@ -257,3 +353,64 @@ def test_inventory_reports_identified_hosts_and_networks(
         {"cidr": "2001:db8:1:2::/64", "source": "router_advertisement", "gateway": "fe80::1"},
     ]
     assert backend.called("device_hosts_v1") == []
+
+
+def ssdp_answer_frame(source_ip: str, payload: bytes) -> bytes:
+    udp = struct.pack("!HHHH", 1900, 50123, 8 + len(payload), 0) + payload
+    ip = struct.pack(
+        "!BBHHHBBH4s4s",
+        0x45,
+        0,
+        20 + len(udp),
+        0,
+        0,
+        64,
+        17,
+        0,
+        bytes(map(int, source_ip.split("."))),
+        bytes([192, 168, 1, 20]),
+    )
+    return bytes.fromhex("dca632000001001122334455") + bytes.fromhex("0800") + ip + udp
+
+
+def test_network_health_is_reported_every_hour(config: Config, backend: FakeBackend) -> None:
+    listeners = FakeListeners()
+    clock = Clock()
+    clock.now += 17 * 3600  # 01:00 UTC
+    igd = (
+        b"HTTP/1.1 200 OK\r\nST: urn:schemas-upnp-org:device:InternetGatewayDevice:1\r\n"
+        b"LOCATION: http://192.168.1.1:5000/rootDesc.xml\r\n\r\n"
+    )
+    listeners.discovery = [
+        ssdp_answer_frame("192.168.1.66", igd.replace(b"192.168.1.1:", b"192.168.1.66:")),
+        ssdp_answer_frame("192.168.1.1", igd),
+    ]
+    backend.outcomes["device_health_v1"] = [{"speed_test": True}, {"speed_test": False}]
+    agent = Agent(config, State(device_id="device-1", secret="a" * 64), clock, listeners)
+
+    agent.tick()
+    (first,) = backend.called("device_health_v1")
+    assert first["samples"] == [], "no hour has ended yet"
+    assert (first["dns"], first["resolver"]) == ("ok", "192.168.1.1")
+    assert first["download_mbps"] is None, "not yet asked for"
+    assert backend.mappings_read == [("http://192.168.1.1:5000/rootDesc.xml", "192.168.1.1")]
+
+    for _ in range(60):
+        clock.now += 60
+        agent.tick()
+    first, second = backend.called("device_health_v1")
+    assert [(s["target"], s["probes"], s["lost"]) for s in second["samples"]] == [
+        ("gateway", 60, 0),
+        ("resolver", 60, 0),
+        ("internet", 60, 0),
+    ]
+    assert second["download_mbps"] == 93.4, "asked for, and it is night"
+    assert agent.speed_test_wanted is False
+
+    backend.outcomes["device_health_v1"] = [api.ApiError(503, "down")]
+    clock.now += 3600
+    agent.tick()
+    clock.now += 60
+    agent.tick()
+    assert len(backend.called("device_health_v1")) == 3, "not retried before the next hour"
+    assert len(agent.health.samples(clock.now)) == 3, "kept for the next report"
