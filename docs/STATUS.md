@@ -115,6 +115,9 @@ records why.
   expiry issues; nightly encrypted backups; repository settings as code.
 - First-run tour, Learn topics for every event kind, home-screen widget,
   motion and haptics (`docs/design.md`, "Motion").
+- Features screen with live status from the DeKoi's reports and a feature
+  tour; the Wi-Fi watch is called Wi-Fi Guard in the app (`docs/design.md`,
+  "Features").
 
 Verified by CI on `main` (`9dc0efd`, `b69caca`): pgTAP 19 files, 417 tests,
 advisors clean; `notify` 18 tests; agent 212 tests, ruff clean; app 158,
