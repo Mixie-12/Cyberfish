@@ -2,16 +2,25 @@ package no.cyberfish.dekoi.ui.features
 
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
+import androidx.compose.animation.core.AnimationSpec
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.snap
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.shape.CutCornerShape
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -20,10 +29,17 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.drawOutline
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
@@ -52,12 +68,14 @@ import no.cyberfish.dekoi.lastFound
 import no.cyberfish.dekoi.status
 import no.cyberfish.dekoi.ui.Dimens
 import no.cyberfish.dekoi.ui.EntranceRow
+import no.cyberfish.dekoi.ui.LocalReduceMotion
 import no.cyberfish.dekoi.ui.LocalSeverityColors
 import no.cyberfish.dekoi.ui.OwnerData
 import no.cyberfish.dekoi.ui.Route
 import no.cyberfish.dekoi.ui.address
 import no.cyberfish.dekoi.ui.components.HudFrame
 import no.cyberfish.dekoi.ui.components.MissingScreen
+import no.cyberfish.dekoi.ui.components.PrimaryButton
 import no.cyberfish.dekoi.ui.components.Screen
 import no.cyberfish.dekoi.ui.dayAndMonth
 import no.cyberfish.dekoi.ui.headingCase
@@ -71,38 +89,50 @@ import java.time.Instant
 import java.util.Locale
 import kotlin.math.abs
 
+/** Cards start after the screen's title and the introduction. */
+internal const val FIRST_CARD = 2
+
 private const val SEPARATOR = " · "
+private const val SPOTLIGHT_MS = 300
+private const val DIMMED = 0.4f
+private const val GLOW_ALPHA = 0.25f
+private val GLOW_WIDTH = 6.dp
 private val ICON = 56.dp
 private val STATUS_ICON = 18.dp
 private val CHEVRON = 20.dp
 
-/** What a feature is called and what it promises, in one line. */
+/** Room below the last card while touring, so it can scroll up clear of the caption. */
+private val TOUR_SPACE = 240.dp
+
+/** What a feature is called, what it promises in one line, and what the tour says about it. */
 internal class Words(
     @param:StringRes val name: Int,
     @param:StringRes val promise: Int,
+    @param:StringRes val tour: Int,
 )
 
 internal fun words(feature: Feature): Words =
     when (feature) {
-        Feature.DECOY -> Words(R.string.features_decoy, R.string.features_decoy_promise)
-        Feature.IDS -> Words(R.string.features_ids, R.string.features_ids_promise)
-        Feature.SCANS -> Words(R.string.features_scans, R.string.features_scans_promise)
-        Feature.ARP_GUARD -> Words(R.string.features_arp, R.string.features_arp_promise)
-        Feature.ROUTER_GUARD -> Words(R.string.features_router, R.string.features_router_promise)
-        Feature.NAME_TRAP -> Words(R.string.features_names, R.string.features_names_promise)
-        Feature.WIFI_GUARD -> Words(R.string.wifi_guard, R.string.features_wifi_promise)
-        Feature.NETWORK_MAP -> Words(R.string.features_map, R.string.features_map_promise)
-        Feature.NEW_DEVICES -> Words(R.string.features_new, R.string.features_new_promise)
-        Feature.INTERNET_HEALTH -> Words(R.string.features_internet, R.string.features_internet_promise)
-        Feature.OPEN_PORTS -> Words(R.string.insights_ports, R.string.features_ports_promise)
-        Feature.WEEKLY_SUMMARY -> Words(R.string.settings_weekly_summary, R.string.features_summary_promise)
+        Feature.DECOY -> Words(R.string.features_decoy, R.string.features_decoy_promise, R.string.features_decoy_tour)
+        Feature.IDS -> Words(R.string.features_ids, R.string.features_ids_promise, R.string.features_ids_tour)
+        Feature.SCANS -> Words(R.string.features_scans, R.string.features_scans_promise, R.string.features_scans_tour)
+        Feature.ARP_GUARD -> Words(R.string.features_arp, R.string.features_arp_promise, R.string.features_arp_tour)
+        Feature.ROUTER_GUARD -> Words(R.string.features_router, R.string.features_router_promise, R.string.features_router_tour)
+        Feature.NAME_TRAP -> Words(R.string.features_names, R.string.features_names_promise, R.string.features_names_tour)
+        Feature.WIFI_GUARD -> Words(R.string.wifi_guard, R.string.features_wifi_promise, R.string.features_wifi_tour)
+        Feature.NETWORK_MAP -> Words(R.string.features_map, R.string.features_map_promise, R.string.features_map_tour)
+        Feature.NEW_DEVICES -> Words(R.string.features_new, R.string.features_new_promise, R.string.features_new_tour)
+        Feature.INTERNET_HEALTH -> Words(R.string.features_internet, R.string.features_internet_promise, R.string.features_internet_tour)
+        Feature.OPEN_PORTS -> Words(R.string.insights_ports, R.string.features_ports_promise, R.string.features_ports_tour)
+        Feature.WEEKLY_SUMMARY -> Words(R.string.settings_weekly_summary, R.string.features_summary_promise, R.string.features_summary_tour)
     }
 
 /**
  * Everything DeKoi does, one HUD-framed card per feature: its drawing,
  * what it promises, how it is doing on [deviceId] (the DeKoi Home speaks
  * for when null) and what it last found. Without a DeKoi the cards show
- * what each feature does, without a status. One drawing moves at a time:
+ * what each feature does, without a status. "Show me around" plays the
+ * tour (FeatureTour.kt). One drawing moves at a time: the tour's card, else
  * the card nearest the middle of the screen.
  */
 @Composable
@@ -123,32 +153,40 @@ fun FeaturesScreen(
     val device = chosen ?: dekoiToShow(data.devices, now)
     val states = device?.let { dekoi -> Feature.entries.associateWith { dekoi.featureState(it, data.hosts, weeklySummary, now) } }.orEmpty()
     val listState = rememberLazyListState()
+    var step by rememberSaveable { mutableStateOf<Int?>(null) }
     val centred by remember(listState) { derivedStateOf { centredFeature(listState) } }
-    Screen(
-        stringResource(R.string.features_title),
-        listState = listState,
-        onBack = onBack,
-        subtitle = {
-            if (device != null && data.devices.size > 1) {
-                Text(device.name, style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+    val toured = step?.let { Feature.entries[it] }
+    val playing = toured ?: centred
+    Box(Modifier.fillMaxSize()) {
+        Screen(
+            stringResource(R.string.features_title),
+            listState = listState,
+            onBack = onBack,
+            subtitle = {
+                if (device != null && data.devices.size > 1) {
+                    Text(device.name, style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+            },
+        ) {
+            item(key = "intro") { Intro(device, states, now, touring = step != null, onTour = { step = 0 }, onNavigate) }
+            Feature.entries.forEach { feature ->
+                item(key = feature.name) {
+                    FeatureCard(
+                        feature,
+                        device,
+                        states[feature],
+                        data,
+                        now,
+                        playing = feature == playing,
+                        spotlight = toured?.let { it == feature },
+                        onNavigate = onNavigate,
+                        onOpenSettings = onOpenSettings,
+                    )
+                }
             }
-        },
-    ) {
-        item(key = "intro") { Intro(device, states, now, onNavigate) }
-        Feature.entries.forEach { feature ->
-            item(key = feature.name) {
-                FeatureCard(
-                    feature,
-                    device,
-                    states[feature],
-                    data,
-                    now,
-                    playing = feature == centred,
-                    onNavigate = onNavigate,
-                    onOpenSettings = onOpenSettings,
-                )
-            }
+            if (step != null) item(key = "tour_space") { Spacer(Modifier.height(TOUR_SPACE)) }
         }
+        step?.let { current -> TourCaption(current, listState, onStep = { step = it }, Modifier.align(Alignment.BottomCenter)) }
     }
 }
 
@@ -162,12 +200,14 @@ private fun centredFeature(state: LazyListState): Feature? {
         ?.first
 }
 
-/** The answer first: how many features are on, or why none run. */
+/** The answer first: how many features are on, or why none run; then the tour. */
 @Composable
 private fun Intro(
     device: Device?,
     states: Map<Feature, FeatureState>,
     now: Instant,
+    touring: Boolean,
+    onTour: () -> Unit,
     onNavigate: (Route) -> Unit,
 ) {
     val on = states.count { it.value.isOn }
@@ -191,13 +231,19 @@ private fun Intro(
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
-        if (device == null) {
-            TextButton(onClick = { onNavigate(Route.AddDekoi) }) { Text(stringResource(R.string.action_add_dekoi)) }
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(Dimens.spaceS), verticalArrangement = Arrangement.spacedBy(Dimens.spaceS)) {
+            PrimaryButton(onClick = onTour, enabled = !touring) { Text(stringResource(R.string.features_tour)) }
+            if (device == null) {
+                TextButton(onClick = { onNavigate(Route.AddDekoi) }) { Text(stringResource(R.string.action_add_dekoi)) }
+            }
         }
     }
 }
 
-/** One feature in the HUD frame. */
+/**
+ * One feature in the HUD frame. [spotlight] is null outside the tour; during
+ * it, the toured card is lit and the others dim.
+ */
 @Composable
 private fun FeatureCard(
     feature: Feature,
@@ -206,11 +252,28 @@ private fun FeatureCard(
     data: OwnerData,
     now: Instant,
     playing: Boolean,
+    spotlight: Boolean?,
     onNavigate: (Route) -> Unit,
     onOpenSettings: () -> Unit,
 ) {
     val words = words(feature)
-    HudFrame(Modifier.fillMaxWidth()) {
+    val spec: AnimationSpec<Float> = if (LocalReduceMotion.current) snap() else tween(SPOTLIGHT_MS)
+    val lit by animateFloatAsState(if (spotlight == true) 1f else 0f, spec, label = "lit")
+    val shown by animateFloatAsState(if (spotlight == false) DIMMED else 1f, spec, label = "dim")
+    val blue = MaterialTheme.colorScheme.primary
+    val shape = CutCornerShape(Dimens.cut)
+    HudFrame(
+        Modifier
+            .fillMaxWidth()
+            .graphicsLayer { alpha = shown }
+            .drawWithContent {
+                drawContent()
+                if (lit <= 0f) return@drawWithContent
+                val outline = shape.createOutline(size, layoutDirection, this)
+                drawOutline(outline, blue.copy(alpha = GLOW_ALPHA * lit), style = Stroke(GLOW_WIDTH.toPx()))
+                drawOutline(outline, blue.copy(alpha = lit), style = Stroke(Dimens.hairline.toPx()))
+            },
+    ) {
         Column(verticalArrangement = Arrangement.spacedBy(Dimens.spaceM)) {
             Row(horizontalArrangement = Arrangement.spacedBy(Dimens.spaceL), verticalAlignment = Alignment.CenterVertically) {
                 FeatureIcon(feature, playing, Modifier.size(ICON))
