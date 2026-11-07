@@ -1,0 +1,12 @@
+# Rotate by rename and have ulogd2 reopen the file. The agent detects the
+# new inode; truncating in place (copytruncate) could make it skip lines.
+/var/log/ulog/dekoi-scan.json {
+	daily
+	maxsize 5M
+	rotate 1
+	missingok
+	notifempty
+	postrotate
+		systemctl kill --signal=HUP ulogd2.service
+	endscript
+}

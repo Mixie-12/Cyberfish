@@ -1,0 +1,17 @@
+// Install Debian and Raspberry Pi updates every day without anyone present,
+// and reboot at night when an update needs it.
+APT::Periodic::Update-Package-Lists "1";
+APT::Periodic::Unattended-Upgrade "1";
+APT::Periodic::AutocleanInterval "7";
+
+Unattended-Upgrade::Origins-Pattern {
+	"origin=Debian,codename=${distro_codename},label=Debian";
+	"origin=Debian,codename=${distro_codename}-updates,label=Debian";
+	"origin=Debian,codename=${distro_codename}-security,label=Debian-Security";
+	"origin=Raspberry Pi Foundation,codename=${distro_codename}";
+};
+
+Unattended-Upgrade::Remove-Unused-Dependencies "true";
+Unattended-Upgrade::Automatic-Reboot "true";
+Unattended-Upgrade::Automatic-Reboot-WithUsers "true";
+Unattended-Upgrade::Automatic-Reboot-Time "03:30";

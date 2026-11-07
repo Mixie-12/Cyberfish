@@ -1,0 +1,33 @@
+# The decoys. Unprivileged in every way that matters: its own user namespace
+# (an unprivileged host uid), no capabilities, read-only root filesystem, no
+# credentials, and no access to the agent's state.
+[Unit]
+Description=DeKoi decoy services
+Wants=network-online.target
+After=network-online.target nftables.service
+
+[Container]
+ContainerName=dekoi-canary
+Image=ghcr.io/mixie-12/dekoi-canary:stable
+AutoUpdate=registry
+Network=host
+UserNS=auto
+ReadOnly=true
+NoNewPrivileges=true
+DropCapability=all
+Tmpfs=/tmp
+Volume=dekoi-canary-log:/var/log/opencanary:U
+Volume=dekoi-canary-state:/var/lib/opencanary:U
+HealthCmd=python /opt/dekoi/decoys.py /etc/opencanaryd/opencanary.conf
+HealthStartPeriod=60s
+HealthInterval=60s
+Notify=healthy
+
+[Service]
+Restart=always
+RestartSec=10
+# The first start pulls the image.
+TimeoutStartSec=900
+
+[Install]
+WantedBy=multi-user.target

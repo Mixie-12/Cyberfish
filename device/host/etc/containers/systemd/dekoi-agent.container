@@ -1,0 +1,32 @@
+# The agent. Needs the host network namespace and CAP_NET_RAW for arp-scan,
+# so it cannot use a user namespace; it runs as uid 10002 with only that one
+# capability. It reads the decoy and firewall logs read-only.
+[Unit]
+Description=DeKoi agent
+Wants=network-online.target time-sync.target
+After=network-online.target time-sync.target dekoi-canary.service
+
+[Container]
+ContainerName=dekoi-agent
+Image=ghcr.io/mixie-12/dekoi-agent:stable
+AutoUpdate=registry
+Network=host
+ReadOnly=true
+NoNewPrivileges=true
+DropCapability=all
+AddCapability=NET_RAW
+Tmpfs=/tmp
+Volume=dekoi-agent-state:/var/lib/dekoi-agent:U
+Volume=dekoi-canary-log:/var/log/opencanary:ro
+Volume=/var/log/ulog:/var/log/ulog:ro
+Volume=/etc/dekoi/claim-code:/etc/dekoi/claim-code:ro
+Notify=true
+
+[Service]
+Restart=always
+RestartSec=10
+# The first start pulls the image.
+TimeoutStartSec=900
+
+[Install]
+WantedBy=multi-user.target

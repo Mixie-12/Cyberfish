@@ -1,17 +1,19 @@
-# Tool configuration only. The agent has no runtime dependencies and is not
-# packaged; the image copies the dekoi_agent directory as is.
+# Tool configuration for the Python on the device side. The agent has no
+# runtime dependencies and is not packaged; its image copies dekoi_agent as is.
 
 [tool.ruff]
 line-length = 100
 target-version = "py313"
+src = ["agent"]
 
 [tool.ruff.lint]
 select = ["E", "F", "W", "I", "B", "UP", "S", "BLE", "SIM", "RUF", "PL"]
 ignore = ["PLR2004"]
 
 [tool.ruff.lint.per-file-ignores]
-"tests/*" = ["S101", "S108", "PLR0913"]
+"**/tests/*" = ["S101", "S108", "PLR0913"]
+"e2e/*" = ["S101", "S603", "S607"]
 
 [tool.pytest.ini_options]
-testpaths = ["tests"]
-pythonpath = ["."]
+testpaths = ["agent/tests", "tests"]
+pythonpath = ["agent"]

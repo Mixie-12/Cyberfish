@@ -1,0 +1,4 @@
+# cosign stores signatures next to the image in the registry.
+docker:
+  ghcr.io/mixie-12:
+    use-sigstore-attachments: true
