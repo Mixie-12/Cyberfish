@@ -86,6 +86,14 @@ dependencies {
     implementation(libs.lifecycle.runtime.compose)
     implementation(libs.navigation.compose)
     implementation(libs.glance.appwidget)
+    constraints {
+        implementation(libs.work.runtime) {
+            because(
+                "Glance 1.2.0 brings WorkManager 2.7.1 and Room 2.2.5, whose keep rules drop " +
+                    "constructors used by reflection under R8 full mode: release builds crash at start",
+            )
+        }
+    }
 
     implementation(platform(libs.supabase.bom))
     implementation(libs.supabase.auth)
