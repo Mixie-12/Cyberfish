@@ -111,7 +111,7 @@ sealed interface Route {
 
     @Serializable data object Licences : Route
 
-    /** The first-run tour, shown once after the first sign-in; without the tab bar. */
+    /** The tour, shown once per tour version after sign-in (ui/onboarding/FirstRun.kt); without the tab bar. */
     @Serializable data object Onboarding : Route
 
     @Serializable data object Learn : Route
