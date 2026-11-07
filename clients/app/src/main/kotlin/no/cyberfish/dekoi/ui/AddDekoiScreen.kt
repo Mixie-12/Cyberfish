@@ -20,7 +20,6 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -30,7 +29,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -123,8 +121,11 @@ private const val DRAW_IN_MS = 700
 private const val SIGNAL_MS = 3000
 
 private val LINE = 2.dp
-private val MARK = 24.dp
-private const val MARK_FROM = 0.6f
+
+private val STEP_MARK = 24.dp
+private val STEP_TICK = 16.dp
+private val STEP_DOT = 8.dp
+private val STEP_BORDER = 2.dp
 
 /**
  * Adding a DeKoi (ADR 0017): its card carries a claim code. The phone writes
@@ -196,7 +197,7 @@ fun SetupProgress(
                 }
             }
         }
-        InsetSection(title = stringResource(R.string.dekoi_setup)) { Timeline(device) }
+        InsetSection(title = stringResource(R.string.dekoi_setup)) { SetupTimeline(device, Modifier.padding(Dimens.spaceL)) }
         if (device?.needsSetupHelp(now) == true) SetupHelp()
         PrimaryButton(onClick = onDone, modifier = Modifier.fillMaxWidth()) {
             Text(stringResource(R.string.add_done), style = MaterialTheme.typography.labelLarge)
@@ -380,67 +381,87 @@ fun SetupHelp() {
     }
 }
 
-/** The steps tick off down a line as the DeKoi reports in. */
+/**
+ * The setup steps down a line (linked, first start, online, watching),
+ * ticking off as [device] reports in; null is a DeKoi just linked that the
+ * account's device list does not have yet. Here and on Your DeKoi.
+ */
 @Composable
-private fun Timeline(device: Device?) {
+fun SetupTimeline(
+    device: Device?,
+    modifier: Modifier = Modifier,
+) {
     val steps = SetupStep.entries
-    val current = steps.indexOfFirst { !device.hasDone(it) }
-    val doneText = stringResource(R.string.add_step_done)
-    val pendingText = stringResource(R.string.add_step_pending)
-    Column(Modifier.padding(Dimens.spaceL)) {
-        steps.forEachIndexed { index, step ->
-            val last = index == steps.lastIndex
-            val done = device.hasDone(step)
-            Row(
-                Modifier.height(IntrinsicSize.Min).semantics(mergeDescendants = true) {
-                    stateDescription = if (done) doneText else pendingText
-                },
-                horizontalArrangement = Arrangement.spacedBy(Dimens.spaceM),
-            ) {
-                Column(Modifier.fillMaxHeight(), horizontalAlignment = Alignment.CenterHorizontally) {
-                    StepMark(done, current = index == current)
-                    if (!last) {
-                        val line = if (done) LocalSeverityColors.current.safe.color else MaterialTheme.colorScheme.outlineVariant
-                        Box(Modifier.width(LINE).weight(1f).background(line))
-                    }
-                }
-                Text(
-                    stringResource(step.label),
-                    style = MaterialTheme.typography.bodyLarge,
-                    modifier = Modifier.padding(bottom = if (last) 0.dp else Dimens.spaceL),
-                )
-            }
+    val current = steps.firstOrNull { !device.hasDone(it) }
+    Column(modifier) {
+        steps.forEach { step ->
+            SetupStepRow(step, device.hasDone(step), current = step == current, last = step == steps.last())
         }
     }
 }
 
-/** A tick that springs in when its step is done; the next step to come is outlined in the tint. */
+/** One step: its mark, a line down to the next step, and its name. */
+@Composable
+private fun SetupStepRow(
+    step: SetupStep,
+    done: Boolean,
+    current: Boolean,
+    last: Boolean,
+) {
+    val state =
+        stringResource(
+            when {
+                done -> R.string.dekoi_step_done
+                current -> R.string.dekoi_step_current
+                else -> R.string.dekoi_step_pending
+            },
+        )
+    val line = if (done) LocalSeverityColors.current.safe.color else MaterialTheme.colorScheme.outlineVariant
+    Row(
+        Modifier.height(IntrinsicSize.Min).semantics(mergeDescendants = true) { stateDescription = state },
+        horizontalArrangement = Arrangement.spacedBy(Dimens.spaceM),
+    ) {
+        Column(Modifier.fillMaxHeight(), horizontalAlignment = Alignment.CenterHorizontally) {
+            StepMark(done, current)
+            if (!last) Box(Modifier.width(LINE).weight(1f).background(line))
+        }
+        Text(
+            stringResource(step.label),
+            style = MaterialTheme.typography.bodyLarge,
+            color = if (done || current) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(bottom = if (last) 0.dp else Dimens.section),
+        )
+    }
+}
+
+/** A hollow circle; the current step has a dot in it, and a finished one turns green with a tick that grows in as it happens. */
 @Composable
 private fun StepMark(
     done: Boolean,
     current: Boolean,
 ) {
-    val scale by animateFloatAsState(
-        if (done) 1f else MARK_FROM,
-        if (LocalReduceMotion.current) snap() else expandSpring(),
-        label = "step mark",
-    )
-    Box(Modifier.size(MARK), contentAlignment = Alignment.Center) {
-        if (done) {
-            Icon(
-                painterResource(R.drawable.ic_check_circle),
-                contentDescription = null,
-                tint = LocalSeverityColors.current.safe.color,
-                modifier =
-                    Modifier.graphicsLayer {
-                        scaleX = scale
-                        scaleY = scale
-                    },
-            )
-        } else {
-            val ring = if (current) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant
-            Box(Modifier.size(MARK - LINE * 2).border(LINE, ring, CircleShape))
+    val safe = LocalSeverityColors.current.safe.color
+    val tint = MaterialTheme.colorScheme.primary
+    val tick by animateFloatAsState(if (done) 1f else 0f, if (LocalReduceMotion.current) snap() else expandSpring(), label = "tick")
+    val ring =
+        when {
+            done -> safe
+            current -> tint
+            else -> MaterialTheme.colorScheme.outlineVariant
         }
+    Box(Modifier.size(STEP_MARK), contentAlignment = Alignment.Center) {
+        Box(Modifier.matchParentSize().border(STEP_BORDER, ring, CircleShape))
+        if (current) Box(Modifier.size(STEP_DOT).background(tint, CircleShape))
+        Icon(
+            painterResource(R.drawable.ic_check),
+            contentDescription = null,
+            Modifier.size(STEP_TICK).graphicsLayer {
+                scaleX = tick
+                scaleY = tick
+                alpha = tick
+            },
+            tint = safe,
+        )
     }
 }
 
