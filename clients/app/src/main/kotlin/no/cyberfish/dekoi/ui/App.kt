@@ -268,6 +268,7 @@ private fun SignedIn(
                     onSignOut = viewModel::signOut,
                     onDeleteAccount = viewModel::deleteAccount,
                     onNavigate = navigate,
+                    onSetWifiName = viewModel::setWifiName,
                 )
             }
         }

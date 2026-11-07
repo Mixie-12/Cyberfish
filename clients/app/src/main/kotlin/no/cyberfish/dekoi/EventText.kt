@@ -75,6 +75,19 @@ fun eventText(event: Event): EventText =
             EventText(R.string.event_ids_title, null, R.string.event_ids_why, R.string.event_intrusion_advice)
         }
 
+        "evil_twin" -> {
+            EventText(R.string.event_evil_twin_title, null, R.string.event_evil_twin_why, R.string.event_evil_twin_advice)
+        }
+
+        "new_access_point" -> {
+            EventText(
+                R.string.event_new_access_point_title,
+                null,
+                R.string.event_new_access_point_why,
+                R.string.event_new_access_point_advice,
+            )
+        }
+
         "device_offline" -> {
             EventText(R.string.event_offline_title, null, R.string.event_offline_why, R.string.event_offline_advice)
         }

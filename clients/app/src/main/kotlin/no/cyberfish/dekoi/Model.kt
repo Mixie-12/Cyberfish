@@ -25,6 +25,8 @@ data class Device(
     @SerialName("registered_at") @Serializable(TimestampSerializer::class) val registeredAt: Instant? = null,
     @SerialName("last_seen_at") @Serializable(TimestampSerializer::class) val lastSeenAt: Instant? = null,
     @SerialName("created_at") @Serializable(TimestampSerializer::class) val createdAt: Instant,
+    @SerialName("wifi_name") val wifiName: String? = null,
+    @SerialName("wifi_watch") val wifiWatchName: String? = null,
 )
 
 @Serializable

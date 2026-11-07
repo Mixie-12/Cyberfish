@@ -186,6 +186,14 @@ class AppViewModel(
         messages.value = message
     }
 
+    fun setWifiName(
+        device: Device,
+        name: String?,
+    ) = run {
+        backend.setWifiName(device, name)
+        owner.value = owner.value.copy(devices = backend.devices())
+    }
+
     private companion object {
         const val TOO_MANY_REQUESTS = 429
     }

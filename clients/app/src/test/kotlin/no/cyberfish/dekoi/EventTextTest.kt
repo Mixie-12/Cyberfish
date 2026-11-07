@@ -25,6 +25,8 @@ class EventTextTest {
                 "rogue_router",
                 "name_poisoning",
                 "ids_alert",
+                "evil_twin",
+                "new_access_point",
                 "device_offline",
                 "device_online",
             )
@@ -46,6 +48,14 @@ class EventTextTest {
         assertEquals(R.string.service_ssh, eventText(event("login_attempt", "ssh")).service)
         assertNull(eventText(event("device_offline")).service)
         assertNull(eventText(event("port_scan")).service)
+    }
+
+    @Test
+    fun `a copied Wi-Fi name tells the owner not to join it and to check their devices`() {
+        val text = eventText(event("evil_twin"))
+        assertEquals(R.string.event_evil_twin_title, text.title)
+        assertEquals(R.string.event_evil_twin_advice, text.advice)
+        assertNull(text.service)
     }
 
     @Test

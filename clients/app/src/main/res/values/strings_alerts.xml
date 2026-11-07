@@ -30,6 +30,12 @@
     <string name="event_name_poisoning_why">Your DeKoi asked for a computer that does not exist, and something answered. Tools that do this trick computers into handing over passwords.</string>
     <string name="event_ids_title">Suspicious traffic reached your DeKoi</string>
     <string name="event_ids_why">The traffic matched a known pattern of attacks or harmful programs. The details below name the pattern.</string>
+    <string name="event_evil_twin_title">Someone copied your Wi-Fi name</string>
+    <string name="event_evil_twin_why">A Wi-Fi network near your DeKoi uses the same name as yours, but with weaker protection or none. Phones and computers can join it by mistake, and whoever runs it can then see and change what they send.</string>
+    <string name="event_evil_twin_advice">Don’t join a network with your Wi-Fi name that asks for no password, or for a new one. Check which network your phones and computers are on: in their Wi-Fi settings, your network should ask for your usual password. If a device joined the copy, forget that network on it and join yours again.</string>
+    <string name="event_new_access_point_title">A new access point uses your Wi-Fi name</string>
+    <string name="event_new_access_point_why">Your DeKoi saw a new Wi-Fi access point with your network’s name and the same protection. That is normal when you add a mesh point or replace your router. It can also be someone copying your network who knows the password.</string>
+    <string name="event_new_access_point_advice">If you added or replaced Wi-Fi equipment, there is nothing to do. If not, check which network your phones and computers are on, and change your Wi-Fi password on your router.</string>
     <string name="event_offline_title">Your DeKoi went offline</string>
     <string name="event_offline_why">While it is offline, your DeKoi can’t warn you. Usually it is a power cut, an unplugged cable or a router restart.</string>
     <string name="event_offline_advice">Check that your DeKoi has power and that its network cable is plugged in. It reconnects by itself.</string>

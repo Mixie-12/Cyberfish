@@ -35,6 +35,7 @@ fun SettingsScreen(
     onSignOut: () -> Unit,
     onDeleteAccount: () -> Unit,
     onNavigate: (Route) -> Unit,
+    onSetWifiName: (Device, String?) -> Unit,
 ) {
     var confirming by remember { mutableStateOf(false) }
     Screen(stringResource(R.string.tab_settings), listState = listState) {
@@ -68,6 +69,7 @@ fun SettingsScreen(
                 )
             }
         }
+        if (devices.isNotEmpty()) item { WifiNameSection(devices, onSetWifiName) }
         item { Notifications() }
         item {
             InsetSection(title = stringResource(R.string.settings_privacy_title)) {
