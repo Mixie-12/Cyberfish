@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Network insights (InsightsScreen.kt), ADR 0015. -->
+<resources>
+    <string name="insights_title">Insights</string>
+    <string name="insights_open_subtitle">Internet, web addresses and open ports</string>
+    <string name="insights_label">%1$02d / %2$s</string>
+    <string name="insights_details">Technical details</string>
+
+    <string name="insights_internet">Internet</string>
+    <string name="insights_internet_body">Share of the last 7 days your internet worked. Every minute your DeKoi checks that your router answers, that the internet can be reached and that web addresses can be looked up.</string>
+    <string name="insights_internet_none">Your DeKoi reports its first measurements an hour after it starts.</string>
+    <plurals name="insights_uptime_summary">
+        <item quantity="one">Internet worked in %1$d of %2$d hour</item>
+        <item quantity="other">Internet worked in %1$d of %2$d hours</item>
+    </plurals>
+    <string name="insights_probe_gateway">Your router</string>
+    <string name="insights_probe_internet">The internet</string>
+    <string name="insights_probe_resolver">Web address lookups</string>
+    <string name="insights_probe_value">Usually %1$d ms, %2$s lost</string>
+    <string name="insights_probe_none">Not measured yet</string>
+    <string name="insights_probe_no_answer">No answer this week</string>
+    <string name="insights_outages_none">No outages in the last 7 days.</string>
+    <plurals name="insights_outage">
+        <item quantity="one">%1$s: no internet for about %2$d minute</item>
+        <item quantity="other">%1$s: no internet for about %2$d minutes</item>
+    </plurals>
+    <plurals name="insights_outage_home">
+        <item quantity="one">%1$s: your router did not answer for about %2$d minute</item>
+        <item quantity="other">%1$s: your router did not answer for about %2$d minutes</item>
+    </plurals>
+
+    <string name="insights_dns">DNS</string>
+    <string name="insights_dns_ok">Web addresses lead where they should.</string>
+    <string name="insights_dns_mismatch">Some web addresses lead to the wrong place.</string>
+    <string name="insights_dns_unavailable">Your DeKoi could not check this the last time it tried.</string>
+    <string name="insights_dns_unknown">Not checked yet.</string>
+    <string name="insights_dns_body">Once an hour your DeKoi looks up a few well-known addresses through your router and through an independent service, and compares the answers.</string>
+    <string name="insights_checked">Checked %1$s</string>
+    <string name="insights_resolver">Name server</string>
+
+    <string name="insights_ports">Open to the internet</string>
+    <string name="insights_ports_body">Devices can ask your router to open a port, so that others on the internet can reach them. Your DeKoi reads the list once an hour and never changes it.</string>
+    <plurals name="insights_ports_open">
+        <item quantity="one">%1$d port is open to the internet.</item>
+        <item quantity="other">%1$d ports are open to the internet.</item>
+    </plurals>
+    <string name="insights_ports_none">No device has asked your router to open a port.</string>
+    <string name="insights_ports_unknown">Your router does not say which ports are open. Routers only answer when UPnP is on in their settings, and off is the safer choice.</string>
+    <string name="insights_port">Port %1$d, %2$s</string>
+    <string name="insights_port_named">Port %1$d, %2$s, named “%3$s”</string>
+
+    <string name="insights_connection">Your connection</string>
+    <string name="insights_connection_body">Websites and services see this address when anyone in your home uses them.</string>
+    <string name="insights_public_ip">Address the internet sees</string>
+    <string name="insights_country">Country</string>
+    <string name="insights_connection_unknown">Your DeKoi reports this with its next hourly check.</string>
+    <string name="insights_bandwidth">DeKoi sees only its own traffic, so it cannot show how much each device uses. A mode that can is planned.</string>
+
+    <string name="insights_speed">Speed</string>
+    <string name="insights_speed_toggle">Test the speed at night</string>
+    <string name="insights_speed_body">Once a night your DeKoi downloads 25 MB from Cloudflare and measures how fast it arrives. It counts towards your data allowance, if you have one.</string>
+    <string name="insights_speed_value">%1$s Mbit/s</string>
+    <string name="insights_speed_off">Turn it on to see how fast your connection is.</string>
+    <string name="insights_speed_waiting">The first result arrives after the next night.</string>
+</resources>
