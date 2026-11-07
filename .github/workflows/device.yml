@@ -7,14 +7,21 @@ on:
   pull_request:
     paths: [device/**, backend/**, .github/workflows/device.yml, .hadolint.yaml]
 
-permissions:
-  contents: read
+permissions: {}
+
+concurrency:
+  group: device-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   checks:
     runs-on: ubuntu-24.04
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
       - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
       - name: Lint and format
         working-directory: device
@@ -38,59 +45,42 @@ jobs:
           && mkdir -p /etc/containers/systemd && cp /host/etc/containers/systemd/*.container /etc/containers/systemd/
           && /usr/lib/systemd/system-generators/podman-system-generator --dryrun >/dev/null'
 
-  # Abuse case 7: a device accepts only images signed with the DeKoi key. Uses
-  # the repository's policy with the namespace pointed at a local registry,
-  # a throwaway key, and the same cosign flags as the release workflow.
+  # Abuse case 7: a device accepts only the three release repositories, signed
+  # with a key on the card (device/tests/signatures.sh). Runs on Debian trixie,
+  # the card's release, whose containers-image reads keyPaths; Ubuntu 24.04's
+  # is too old.
   signatures:
     needs: checks
     runs-on: ubuntu-24.04
-    env:
-      REGISTRY: localhost:5000/dekoi
-      ALPINE: docker.io/library/alpine@sha256:3f4d6b32e26703c6082839234f43769d5046b3ac7c910033911d1e71d8cd630a
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
       - uses: sigstore/cosign-installer@756fe2d284c7292c4e9b62c8a28f1e5629c59532 # v4.1.3
         with:
           cosign-release: v3.1.4
-      - name: Publish a signed and an unsigned image to a local registry
+      - name: Signed, unsigned, foreign and misplaced images under the card's policy
         run: |
-          sudo podman run -d -p 5000:5000 docker.io/library/registry@sha256:a3d8aaa63ed8681a604f1dea0aa03f100d5895b6a58ace528858a7b332415373
-          sudo podman pull -q "$ALPINE"
-          for name in signed unsigned; do
-            sudo podman tag "$ALPINE" "$REGISTRY/$name:stable"
-            sudo podman push -q --tls-verify=false --digestfile "$RUNNER_TEMP/$name.digest" "$REGISTRY/$name:stable"
-          done
-          cd "$RUNNER_TEMP"
-          COSIGN_PASSWORD=test cosign generate-key-pair
-          COSIGN_PASSWORD=test cosign sign --yes --key cosign.key --allow-http-registry \
-            --use-signing-config=false --new-bundle-format=false --tlog-upload=false \
-            "$REGISTRY/signed@$(cat signed.digest)"
-      - name: Install the device policy for the local namespace
-        run: |
-          sed -e "s|ghcr.io/mixie-12|$REGISTRY|" -e "s|/etc/dekoi/cosign.pub|$RUNNER_TEMP/cosign.pub|" \
-            device/host/etc/containers/policy.json | sudo tee /etc/containers/policy.json
-          sudo install -d /etc/containers/registries.d
-          sed -e "s|ghcr.io/mixie-12|$REGISTRY|" device/host/etc/containers/registries.d/dekoi.yaml \
-            | sudo tee /etc/containers/registries.d/dekoi.yaml
-          sudo podman rmi --force "$REGISTRY/signed:stable" "$REGISTRY/unsigned:stable" "$ALPINE"
-      - name: Signed image is accepted
-        run: sudo podman pull --tls-verify=false "$REGISTRY/signed:stable"
-      - name: Unsigned and foreign images are refused
-        run: |
-          for image in "$REGISTRY/unsigned:stable" "$ALPINE"; do
-            if sudo podman pull --tls-verify=false "$image"; then
-              echo "accepted $image without a valid signature"
-              exit 1
-            fi
-          done
+          docker run -d --name registry \
+            docker.io/library/registry@sha256:a3d8aaa63ed8681a604f1dea0aa03f100d5895b6a58ace528858a7b332415373
+          docker run --rm --network container:registry -v "$PWD:/repo:ro" \
+            -v "$(command -v cosign):/usr/local/bin/cosign:ro" \
+            docker.io/library/debian@sha256:a72b4433de1cf7d6bae0c4cee74d0547f58601a643b3375f070c51600d63b6b2 \
+            sh /repo/device/tests/signatures.sh /repo /usr/local/bin/cosign
 
   # The real Quadlet units and images on a throwaway machine, against a local
   # Supabase (device/e2e/run.py describes what is and is not covered).
   e2e:
     needs: checks
     runs-on: ubuntu-24.04
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
       - uses: supabase/setup-cli@689adcfb80d947100a1eab127289b97d1fb07b13 # v3.2.0
         with:
           version: 3.0.0
