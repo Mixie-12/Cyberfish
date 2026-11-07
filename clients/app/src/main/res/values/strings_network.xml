@@ -40,8 +40,10 @@
         <item quantity="other">%1$d networks</item>
     </plurals>
     <string name="networks_not_reported">Not reported yet</string>
+    <string name="networks_pending">Your DeKoi reports the networks it can see after its next automatic update.</string>
     <string name="networks_home">Your home network</string>
     <string name="networks_other">Another network</string>
+    <string name="networks_dekoi_address">DeKoi’s address</string>
     <string name="networks_addresses">Addresses</string>
     <string name="networks_found">How DeKoi knows it</string>
     <string name="networks_source_interface">DeKoi is connected to it</string>
@@ -50,8 +52,8 @@
     <string name="networks_source_observed">Seen in traffic</string>
     <string name="networks_gateway">Router address</string>
     <string name="networks_devices">Devices</string>
+    <string name="networks_none_seen">None seen yet</string>
     <string name="networks_footer">DeKoi watches only the network it is plugged into.</string>
-    <string name="networks_empty">DeKoi lists the networks it can see here once it has started.</string>
 
     <string name="host_title">Device</string>
     <string name="host_online_now">Online now</string>
