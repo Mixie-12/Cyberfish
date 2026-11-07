@@ -147,6 +147,26 @@ Processors: Supabase (database, Auth, functions; EU, Stockholm), Google
 (sign-in; FCM receives the push token, a fixed notification text and the
 event id), GitHub (encrypted backups, which it cannot read).
 
+## Monitoring
+
+What should run on a schedule, for the CI work to build. Each is a
+read-only check against the project with the CI token or database
+password; a failing run emails the owner. SQL checks connect as `postgres`.
+
+| Check | Fails when | When |
+| ----- | ---------- | ---- |
+| Advisors: `supabase db advisors --remote --type all --fail-on warn` | any warning. The project's run adds Auth lints; ignore by name only those that cannot apply to Google-only sign-in on the Free plan (leaked password protection, MFA options), nothing else | daily and after every deploy |
+| Configuration drift: `supabase config diff --remote`, and `GET /v1/projects/{ref}/config/realtime` | a difference from `config.toml`, or Realtime not suspended (see "Platform settings") | daily |
+| Surface checks in `docs/runbooks/deploy-backend.md` | any unexpected status | daily |
+| Backup and restore test (`docs/runbooks/restore-backup.md`) | any step | daily |
+| Jobs: `cron.job_run_details` of the last day | a status other than `succeeded`, or a job of `cron.job` without a run | daily |
+| Database size: `pg_database_size(current_database())` | over 350 MB, 70% of the Free plan's 500 MB | daily |
+| Notify quota: events received this calendar month, an upper bound on `notify` calls | over 400,000 of the Free plan's 500,000 | daily |
+| Notify gate: hours of the last day with more than 600 events | any: pushes were held back for everyone (ADR 0016) | daily |
+| Flooding: per account, devices, setups waiting, reported events of the last day and push tokens | any account over half its limit (ADR 0016), or setups waiting over 100 in all | daily |
+| Client address: `private.rate_counters` holds `ip` buckets while devices are online | none: the platform no longer sends `CF-Connecting-IP`, and the per-address limits are off | daily |
+| CI access token expiry (`docs/runbooks/deploy-backend.md`, step 4) | less than 30 days left; a reminder in the owner's calendar, since the token cannot read its own expiry | monthly |
+
 ## Known limitations
 
 See `docs/STATUS.md`, "Known limitations".
