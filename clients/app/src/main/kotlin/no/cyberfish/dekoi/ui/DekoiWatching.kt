@@ -183,7 +183,7 @@ private fun watchDetail(
 }
 
 @Composable
-private fun dayAndMonth(date: LocalDate): String {
+fun dayAndMonth(date: LocalDate): String {
     val locale = LocalLocale.current.platformLocale
     return DateTimeFormatter.ofPattern(DateFormat.getBestDateTimePattern(locale, DAY_MONTH), locale).format(date)
 }

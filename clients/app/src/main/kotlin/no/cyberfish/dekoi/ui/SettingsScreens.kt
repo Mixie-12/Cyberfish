@@ -95,13 +95,14 @@ fun SettingsScreen(
                 AddDekoiRow(R.string.action_add_dekoi) { onNavigate(Route.AddDekoi) }
             }
         }
-        if (devices.isNotEmpty()) item { WifiNameSection(devices, onSetWifiName) }
+        if (devices.isNotEmpty()) item { WifiNameSection(devices, now, onSetWifiName) }
         item { Notifications() }
         item { WeeklySummary(weeklySummary, onWeeklySummary) }
         item { Privacy() }
         item {
             InsetSection(title = stringResource(R.string.settings_about)) {
                 KeyValueRow(stringResource(R.string.settings_version), BuildConfig.VERSION_NAME)
+                InsetRow(stringResource(R.string.features_title), onClick = { onNavigate(Route.Features()) })
                 InsetRow(stringResource(R.string.learn_title), onClick = { onNavigate(Route.Learn) })
                 InsetRow(stringResource(R.string.action_take_tour), onClick = { onNavigate(Route.Onboarding) })
                 InsetRow(stringResource(R.string.licences_title), onClick = { onNavigate(Route.Licences) })

@@ -67,11 +67,11 @@
     <string name="event_evil_twin_title">Noen har kopiert navnet på Wi-Fi-nettet ditt</string>
     <string name="event_evil_twin_action">Kopierte navnet på Wi-Fi-nettet ditt</string>
     <string name="event_evil_twin_consequence">Telefonene og datamaskinene dine kan koble seg til kopien ved en feil.</string>
-    <string name="event_evil_twin_why">Et Wi-Fi-nett i nærheten av din DeKoi bruker samme navn som ditt, men med svakere beskyttelse eller ingen. Den som står bak, kan se og endre alt enhetene sender over det nettet.</string>
+    <string name="event_evil_twin_why">Wi-Fi-vakt fant et Wi-Fi-nett i nærheten av din DeKoi som bruker samme navn som ditt, men med svakere beskyttelse eller ingen. Den som står bak, kan se og endre alt enhetene sender over det nettet.</string>
     <string name="event_new_access_point_title">Et nytt tilgangspunkt bruker navnet på Wi-Fi-nettet ditt</string>
     <string name="event_new_access_point_action">Begynte å bruke navnet på Wi-Fi-nettet ditt</string>
     <string name="event_new_access_point_consequence">Som regel er dette Wi-Fi-utstyr du har lagt til eller byttet ut.</string>
-    <string name="event_new_access_point_why">Din DeKoi så et nytt Wi-Fi-tilgangspunkt med navnet på nettverket ditt og samme beskyttelse. Det er normalt når du legger til et mesh-punkt eller bytter ruter. Det kan også være noen som kjenner passordet og kopierer nettverket ditt.</string>
+    <string name="event_new_access_point_why">Wi-Fi-vakt så et nytt Wi-Fi-tilgangspunkt med navnet på nettverket ditt og samme beskyttelse. Det er normalt når du legger til et mesh-punkt eller bytter ruter. Det kan også være noen som kjenner passordet og kopierer nettverket ditt.</string>
     <string name="event_offline_title">Din DeKoi ble frakoblet</string>
     <string name="event_offline_action">Ble frakoblet</string>
     <string name="event_offline_consequence">Din DeKoi kan ikke varsle deg før den er tilbake.</string>

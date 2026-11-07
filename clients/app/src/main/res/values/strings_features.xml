@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Features and the feature tour (ui/features). -->
+<resources>
+    <string name="features_title">Features</string>
+    <string name="features_see_all">See all features</string>
+    <string name="features_intro">Everything your DeKoi does, how each part is doing now and what it last found.</string>
+    <plurals name="features_all_on">
+        <item quantity="one">%1$d feature is on.</item>
+        <item quantity="other">All %1$d features are on.</item>
+    </plurals>
+    <plurals name="features_some_on">
+        <item quantity="one">%1$d of %2$d feature is on.</item>
+        <item quantity="other">%1$d of %2$d features are on.</item>
+    </plurals>
+    <string name="features_no_dekoi">Add a DeKoi to turn these on.</string>
+
+    <string name="features_state_learning">On, learning what is normal</string>
+    <string name="features_state_wifi_name">Needs your Wi-Fi name</string>
+    <string name="features_state_update">After the next automatic update</string>
+    <string name="features_last_found">Last found %1$s</string>
+    <string name="features_try">Try it</string>
+    <string name="features_add_wifi_name">Add your Wi-Fi name</string>
+    <string name="features_open_map">Open the map</string>
+    <string name="features_see_devices">See your devices</string>
+    <string name="features_open_insights">Open Insights</string>
+    <string name="features_open_settings">Change in Settings</string>
+    <plurals name="features_ids_rules">
+        <item quantity="one">%1$s attack pattern</item>
+        <item quantity="other">%1$s attack patterns</item>
+    </plurals>
+    <string name="features_new_learning">Alerts start once your DeKoi has known your devices for a day.</string>
+    <string name="features_ports_no_list">Your router does not share which ports are open.</string>
+
+    <string name="features_decoy">Decoy file server</string>
+    <string name="features_decoy_promise">A fake storage box on your network that sends you an alert when someone opens it.</string>
+    <string name="features_decoy_name">Shows up on your network as %1$s</string>
+    <string name="features_decoy_tour">It shows up next to your real devices, with shared folders and a login page. Signing in or opening a folder sends you an alert.</string>
+    <string name="features_ids">Intrusion detection</string>
+    <string name="features_ids_promise">Checks what reaches your DeKoi against known attack patterns.</string>
+    <string name="features_ids_tour">The patterns come from a list that security researchers keep up to date. They arrive with your DeKoi’s weekly update.</string>
+    <string name="features_scans">Scan detection</string>
+    <string name="features_scans_promise">Notices a device searching your network for devices or openings.</string>
+    <string name="features_scans_tour">Before an intruder tries anything, they look around. Your DeKoi notices a device trying address after address, or opening after opening.</string>
+    <string name="features_arp">ARP Guard</string>
+    <string name="features_arp_promise">Notices a device pretending to be another, such as your router.</string>
+    <string name="features_arp_tour">A device that pretends to be your router can read what others send. Your DeKoi notices when a second device claims an address that is taken.</string>
+    <string name="features_router">Router Guard</string>
+    <string name="features_router_promise">Notices a second device handing out network settings or announcing itself as your router.</string>
+    <string name="features_router_tour">Only your router should tell devices how to reach the internet. Another device doing it can send their traffic its own way.</string>
+    <string name="features_names">Name trap</string>
+    <string name="features_names_promise">Asks for names that do not exist, to catch a device that answers anyway.</string>
+    <string name="features_names_tour">Every few minutes your DeKoi asks your network for names nobody uses. Normal devices stay quiet. A device that answers is trying to catch sign-ins.</string>
+    <string name="features_wifi_promise">Notices a copy of your Wi-Fi nearby.</string>
+    <string name="features_wifi_tour">Your DeKoi checks the Wi-Fi networks around it with its own radio. A network with your name and weaker protection is a copy, set up to lure your devices.</string>
+    <string name="features_map">Network map</string>
+    <string name="features_map_promise">Shows the devices on your network and what each one looks like.</string>
+    <string name="features_map_tour">Your DeKoi listens to what devices say about themselves, and recognises phones, TVs, printers and more.</string>
+    <string name="features_new">New device alerts</string>
+    <string name="features_new_promise">Tells you when a device joins your network for the first time.</string>
+    <string name="features_new_tour">Your first day with DeKoi counts as your household. After that, every device it has not seen before gets an alert.</string>
+    <string name="features_internet">Internet check</string>
+    <string name="features_internet_promise">Checks your internet every minute, and that web addresses lead where they should.</string>
+    <string name="features_internet_tour">Every minute your DeKoi checks your router and the internet. Every hour it compares web address lookups with an independent service, to notice a router that sends you to the wrong place.</string>
+    <string name="features_ports_promise">Lists what your router has opened to the internet, and tells you about new openings.</string>
+    <string name="features_ports_tour">Devices can ask your router to let the internet in. Your DeKoi reads that list every hour and never changes it.</string>
+    <string name="features_summary_promise">A short note once a week: alerts, new devices and time online.</string>
+    <string name="features_summary_tour">Once a week you get a short note with three numbers: alerts, new devices, and how much of the week your DeKoi was online.</string>
+
+    <string name="features_tour">Show me around</string>
+    <string name="features_tour_count">%1$d of %2$d</string>
+    <string name="features_tour_next">Next</string>
+    <string name="features_tour_skip">Skip</string>
+    <string name="features_tour_done">Done</string>
+</resources>

@@ -111,7 +111,7 @@
         <item>Copies are often open, or less protected than the real network, so devices can join them without your password.</item>
         <item>Not every new network with your name is a copy. Mesh Wi-Fi systems and extra access points use the same name on purpose.</item>
     </string-array>
-    <string name="learn_wifi_copy_dekoi">Every few minutes your DeKoi checks the Wi-Fi networks nearby with its own radio. After learning your access points in its first day, it alerts you to any network with your name and weaker protection. It needs your Wi-Fi name for this.</string>
+    <string name="learn_wifi_copy_dekoi">With Wi-Fi Guard, your DeKoi checks the Wi-Fi networks nearby every few minutes with its own radio. After learning your access points in its first day, it alerts you to any network with your name and weaker protection. Wi-Fi Guard needs your Wi-Fi name, which you add in Settings.</string>
     <string-array name="learn_wifi_copy_steps">
         <item>If you recently added a mesh point or a new access point, this is expected and you need to do nothing.</item>
         <item>If not, don’t join a network with your name that suddenly asks for no password.</item>
