@@ -18,7 +18,6 @@ import no.cyberfish.dekoi.GoogleIdToken
 import no.cyberfish.dekoi.Network
 import no.cyberfish.dekoi.NetworkHost
 import no.cyberfish.dekoi.R
-import no.cyberfish.dekoi.shared.ClaimCode
 import java.io.IOException
 import java.time.Instant
 
@@ -92,33 +91,17 @@ class AppViewModel(
         }
     }
 
+    /** Reloads only the device list, as adding a DeKoi does every few seconds while the owner waits. */
+    fun refreshDevices() =
+        run(onFailure = { owner.value = owner.value.copy(problem = it) }) {
+            owner.value = owner.value.copy(devices = backend.devices(), problem = null)
+        }
+
     fun signIn(token: GoogleIdToken) =
         run {
             backend.signInWithGoogle(token.idToken, token.rawNonce)
             owner.value = load()
         }
-
-    /** Claims the code; onDone receives the message to show. */
-    fun claim(
-        code: ClaimCode,
-        onDone: (Int) -> Unit,
-    ) {
-        viewModelScope.launch {
-            val result =
-                try {
-                    backend.claim(code)
-                    owner.value = owner.value.copy(devices = backend.devices())
-                    R.string.add_done
-                } catch (error: RestException) {
-                    if (error.statusCode == TOO_MANY_REQUESTS) R.string.add_too_many else R.string.add_refused
-                } catch (_: HttpRequestException) {
-                    R.string.error_network
-                } catch (_: HttpRequestTimeoutException) {
-                    R.string.error_network
-                }
-            onDone(result)
-        }
-    }
 
     fun rename(
         device: Device,
@@ -184,9 +167,5 @@ class AppViewModel(
         @StringRes message: Int,
     ) {
         messages.value = message
-    }
-
-    private companion object {
-        const val TOO_MANY_REQUESTS = 429
     }
 }
