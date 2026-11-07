@@ -105,7 +105,8 @@ select results_eq(
       ('authenticated', 'register_push_token_v1'),
       ('authenticated', 'unregister_push_token_v1'),
       ('service_role', 'forget_push_token_v1'),
-      ('service_role', 'notification_targets_v1')
+      ('service_role', 'notification_targets_v1'),
+      ('service_role', 'notification_targets_v2')
   $$,
   'API roles can execute exactly the published functions'
 );
