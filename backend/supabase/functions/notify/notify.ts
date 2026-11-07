@@ -1,10 +1,11 @@
-// Sends the push notifications for one event. Whether an event notifies, and
-// whom, is decided in SQL (notification_targets_v2); this file only sends.
+// Sends the push notifications for one event, or one owner's weekly summary.
+// Whether something notifies, and whom, is decided in SQL
+// (notification_targets_v2, weekly_summary_v1); this file only sends.
 // Notification text comes from fixed templates chosen by event kind, severity
 // and the source device's kind, all three fixed vocabularies checked by the
-// database (ADR 0010, 0011). The only other event field that reaches a
-// message is its id, so nothing an attacker typed or sent can ever appear on
-// a phone.
+// database (ADR 0010, 0011). The only other values that reach a message are
+// the event id and the summary's three whole numbers, so nothing an attacker
+// typed or sent can ever appear on a phone.
 
 export interface ServiceAccount {
   project_id: string;
@@ -31,6 +32,13 @@ export interface Target {
   template: string;
   severity: string;
   host_kind: string | null;
+}
+
+export interface Summary {
+  token: string;
+  incidents: number;
+  new_devices: number;
+  uptime_percent: number;
 }
 
 // Channel ids must match the channels the app creates (Push.kt); each one
@@ -95,28 +103,68 @@ export function templateFor(key: string, hostKind: string | null = null): Templa
   return (Object.hasOwn(TEMPLATES, key) ? TEMPLATES[key] : OTHER)(noun);
 }
 
-export function fcmMessage(eventId: number, target: Target) {
-  const { title, body } = templateFor(target.template, target.host_kind);
-  const level = Object.hasOwn(CHANNELS, target.severity)
-    ? CHANNELS[target.severity]
-    : CHANNELS.warning;
+// "no alerts", "1 alert", "3 alerts".
+function counted(n: number, noun: string): string {
+  if (!Number.isSafeInteger(n) || n < 0) throw new Error("summary counts must be whole numbers");
+  if (n === 0) return `no ${noun}s`;
+  return `${n} ${noun}${n === 1 ? "" : "s"}`;
+}
+
+// Alerts are incidents as the app's Alerts tab groups them (ADR 0013).
+export function summaryTemplate(summary: Summary): Template {
+  const uptime = summary.uptime_percent;
+  if (!Number.isSafeInteger(uptime) || uptime < 0 || uptime > 100) {
+    throw new Error("uptime must be a whole percentage");
+  }
+  const counts = `${counted(summary.incidents, "alert")}, ${
+    counted(summary.new_devices, "new device")
+  }.`;
+  return {
+    title: "Your week with DeKoi",
+    body: `${counts[0].toUpperCase()}${counts.slice(1)} DeKoi was online ${uptime}% of the time.`,
+  };
+}
+
+function message(
+  token: string,
+  severity: string,
+  { title, body }: Template,
+  tag: string,
+  data: Record<string, string>,
+) {
+  const level = Object.hasOwn(CHANNELS, severity) ? CHANNELS[severity] : CHANNELS.warning;
   return {
     message: {
-      token: target.token,
+      token,
       notification: { title, body: level.prefix + body },
-      data: { event_id: String(eventId) },
+      data,
       android: {
         priority: level.channel === "updates" ? "NORMAL" : "HIGH",
         notification: {
           channel_id: level.channel,
           notification_priority: level.priority,
           visibility: "PRIVATE",
-          // Lets the app clear the notification once the alert is opened.
-          tag: `event-${eventId}`,
+          tag,
         },
       },
     },
   };
+}
+
+export function fcmMessage(eventId: number, target: Target) {
+  // The tag lets the app clear the notification once the alert is opened.
+  return message(
+    target.token,
+    target.severity,
+    templateFor(target.template, target.host_kind),
+    `event-${eventId}`,
+    { event_id: String(eventId) },
+  );
+}
+
+export function summaryMessage(summary: Summary) {
+  // One tag for every summary, so this week's replaces last week's.
+  return message(summary.token, "info", summaryTemplate(summary), "weekly-summary", {});
 }
 
 export function parseServiceAccount(json: string): ServiceAccount {
@@ -199,15 +247,26 @@ async function sameSecret(given: string, expected: string): Promise<boolean> {
   return difference === 0;
 }
 
-async function readEventId(request: Request): Promise<number | null> {
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
+
+// The events webhook posts {"event_id": <id>}; the weekly job posts
+// {"weekly_summary_for": "<user id>"} (migration 20261107193100).
+type Job = { eventId: number } | { userId: string };
+
+async function readJob(request: Request): Promise<Job | null> {
   let body: unknown;
   try {
     body = await request.json();
   } catch {
     return null;
   }
-  const id = (body as { event_id?: unknown } | null)?.event_id;
-  return Number.isSafeInteger(id) && (id as number) > 0 ? id as number : null;
+  const { event_id: id, weekly_summary_for: userId } = (body ?? {}) as {
+    event_id?: unknown;
+    weekly_summary_for?: unknown;
+  };
+  if (Number.isSafeInteger(id) && (id as number) > 0) return { eventId: id as number };
+  if (typeof userId === "string" && UUID.test(userId)) return { userId };
+  return null;
 }
 
 function isUnregistered(error: unknown): boolean {
@@ -229,6 +288,8 @@ export function createHandler(config: Config, fetchFn: typeof fetch = fetch) {
     if (!response.ok) throw new Error(`${name} failed with HTTP ${response.status}`);
     return response;
   };
+  const rows = async <T>(name: string, args: object): Promise<T[]> =>
+    await (await rpc(name, args)).json();
 
   return async (request: Request): Promise<Response> => {
     if (request.method !== "POST") return new Response(null, { status: 405 });
@@ -236,22 +297,24 @@ export function createHandler(config: Config, fetchFn: typeof fetch = fetch) {
     if (!(await sameSecret(given, config.notifySecret))) {
       return new Response(null, { status: 401 });
     }
-    const eventId = await readEventId(request);
-    if (eventId === null) return new Response(null, { status: 400 });
+    const job = await readJob(request);
+    if (job === null) return new Response(null, { status: 400 });
 
-    const targets: Target[] = await (await rpc("notification_targets_v2", { event_id: eventId }))
-      .json();
-    if (targets.length === 0) return new Response(null, { status: 204 });
+    const messages = "eventId" in job
+      ? (await rows<Target>("notification_targets_v2", { event_id: job.eventId }))
+        .map((target) => fcmMessage(job.eventId, target))
+      : (await rows<Summary>("weekly_summary_v1", { user_id: job.userId })).map(summaryMessage);
+    if (messages.length === 0) return new Response(null, { status: 204 });
 
     const token = await accessToken(config.serviceAccount, fetchFn);
     const sendUrl =
       `${config.fcmBaseUrl}/v1/projects/${config.serviceAccount.project_id}/messages:send`;
     let failed = 0;
-    for (const target of targets) {
+    for (const outgoing of messages) {
       const response = await fetchFn(sendUrl, {
         method: "POST",
         headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-        body: JSON.stringify(fcmMessage(eventId, target)),
+        body: JSON.stringify(outgoing),
       });
       if (response.ok) {
         await response.body?.cancel();
@@ -259,7 +322,7 @@ export function createHandler(config: Config, fetchFn: typeof fetch = fetch) {
       }
       // A body that is not JSON is an error other than UNREGISTERED.
       if (isUnregistered(await response.json().catch(() => null))) {
-        await (await rpc("forget_push_token_v1", { token: target.token })).body?.cancel();
+        await (await rpc("forget_push_token_v1", { token: outgoing.message.token })).body?.cancel();
         continue;
       }
       // Status only: tokens and event data stay out of logs.

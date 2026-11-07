@@ -113,9 +113,10 @@ Responses the agent must handle:
 | Operation              | How                                                        |
 | ---------------------- | ---------------------------------------------------------- |
 | Claim a device         | `claim_device_v1(claim_code, name)`                        |
-| Read own data          | `select` on `devices`, `events`, `network_hosts`, `networks` (RLS) |
+| Read own data          | `select` on `devices`, `events`, `network_hosts`, `networks`, `owner_settings` (RLS) |
 | Rename, remove device  | `update` of `name`, `delete` on `devices` (RLS)            |
 | Trust a host           | `update` of `trusted` on `network_hosts` (RLS)             |
+| Weekly summary on, off | `select`, and `insert` or `update` of `weekly_summary`, on `owner_settings` (RLS); `user_id` defaults to the caller; no row means on |
 | Push token             | `register_push_token_v1(token)`, `unregister_push_token_v1(token)` |
 | Delete account         | `delete_account_v1()`                                      |
 
@@ -130,8 +131,9 @@ mapping of their own.
 ## Scheduled jobs
 
 pg_cron runs `private.mark_offline_devices()` every 5 minutes (one
-`device_offline` event per outage) and `private.apply_retention()` nightly
-(events, hosts and networks older than 90 days).
+`device_offline` event per outage), `private.apply_retention()` nightly
+(events, hosts and networks older than 90 days) and
+`private.post_weekly_summaries()` on Sundays at 17:00 UTC.
 
 ## Notifications
 
@@ -142,3 +144,11 @@ phones to notify, with which template, severity and source kind, and sends
 FCM HTTP v1 messages whose data payload is `event_id` only. The rules are in
 `notification_targets_v1` (ADR 0007); `new_host` events notify at most once
 per DeKoi per 10 minutes, so devices that join together give one push.
+
+The weekly job posts `{"weekly_summary_for": "<user id>"}` the same way, once
+per owner with a registered DeKoi. `notify` asks `weekly_summary_v1(user_id)`,
+which returns the owner's phones with three numbers for the last 7 days
+(alerts as the app groups them into incidents, new devices, uptime in whole
+percent), or nothing when the owner turned the summary off or already had
+one in the last 6 days. The push uses a fixed template on the `updates`
+channel and carries no data.
