@@ -1,0 +1,10 @@
+# Every five minutes, starting two minutes after boot (ADR 0019).
+[Unit]
+Description=DeKoi Wi-Fi watch scan every five minutes
+
+[Timer]
+OnBootSec=2min
+OnUnitActiveSec=5min
+
+[Install]
+WantedBy=timers.target

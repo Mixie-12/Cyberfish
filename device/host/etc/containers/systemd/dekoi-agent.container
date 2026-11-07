@@ -1,6 +1,7 @@
 # The agent. Needs the host network namespace and CAP_NET_RAW for arp-scan,
 # so it cannot use a user namespace; it runs as uid 10002 with only that one
-# capability. It reads the decoy and firewall logs read-only.
+# capability. It reads the decoy and firewall logs and the host's Wi-Fi scan
+# read-only, and writes only the country the Wi-Fi scan may use (ADR 0019).
 [Unit]
 Description=DeKoi agent
 Wants=network-online.target time-sync.target
@@ -21,6 +22,8 @@ Volume=dekoi-ids-socket:/run/dekoi-ids:U
 Volume=dekoi-canary-log:/var/log/opencanary:ro
 Volume=/var/log/ulog:/var/log/ulog:ro
 Volume=/etc/dekoi/claim-code:/etc/dekoi/claim-code:ro
+Volume=/run/dekoi/wifi:/run/dekoi/wifi:ro
+Volume=/run/dekoi/wifi-country:/run/dekoi/wifi-country
 Notify=true
 
 [Service]

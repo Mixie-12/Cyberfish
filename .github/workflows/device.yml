@@ -29,14 +29,18 @@ jobs:
           docker run --rm -v "$PWD:/repo:ro" -w /repo
           hadolint/hadolint@sha256:9a3944b7fddcb947d1ffd90829ac1a6e5c30479223358f249d8b96c7d0019e27
           hadolint device/canary/Containerfile device/agent/Containerfile device/ids/Containerfile
-      - name: Firewall rules and Quadlet units on Debian Trixie
+      - name: Firewall rules, Quadlet units, the Wi-Fi scan and its units on Debian Trixie
         run: >-
           docker run --rm --cap-add NET_ADMIN -v "$PWD/device/host:/host:ro"
           debian@sha256:a72b4433de1cf7d6bae0c4cee74d0547f58601a643b3375f070c51600d63b6b2
-          sh -euc 'apt-get update -qq && apt-get install -y -qq --no-install-recommends nftables podman >/dev/null
+          sh -euc 'apt-get update -qq && apt-get install -y -qq --no-install-recommends nftables podman shellcheck systemd >/dev/null
           && nft --check --file /host/etc/nftables.conf
           && mkdir -p /etc/containers/systemd && cp /host/etc/containers/systemd/*.container /etc/containers/systemd/
-          && /usr/lib/systemd/system-generators/podman-system-generator --dryrun >/dev/null'
+          && /usr/lib/systemd/system-generators/podman-system-generator --dryrun >/dev/null
+          && shellcheck /host/usr/local/libexec/dekoi-wifi-scan
+          && install -D -m 0755 /host/usr/local/libexec/dekoi-wifi-scan /usr/local/libexec/dekoi-wifi-scan
+          && cp /host/etc/systemd/system/dekoi-wifi-scan.* /etc/systemd/system/
+          && systemd-analyze verify /etc/systemd/system/dekoi-wifi-scan.service /etc/systemd/system/dekoi-wifi-scan.timer'
 
   # Abuse case 7: a device accepts only images signed with the DeKoi key. Uses
   # the repository's policy with the namespace pointed at a local registry,
@@ -105,6 +109,8 @@ jobs:
           echo "containers:2147483647:2147483648" | sudo tee -a /etc/subuid /etc/subgid
           sudo sysctl -w net.ipv4.ip_unprivileged_port_start=0
           sudo install -D -m 0644 -t /etc/containers/systemd device/host/etc/containers/systemd/*.container
+          sudo install -D -m 0644 -t /etc/tmpfiles.d device/host/etc/tmpfiles.d/dekoi-wifi.conf
+          sudo systemd-tmpfiles --create /etc/tmpfiles.d/dekoi-wifi.conf
           # Test only: the local backend has no TLS.
           sudo sed -i '/^\[Container\]$/a Environment=DEKOI_ALLOW_HTTP=1' /etc/containers/systemd/dekoi-agent.container
       - name: Build the images under their production names
