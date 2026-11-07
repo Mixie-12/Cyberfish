@@ -65,6 +65,7 @@ import no.cyberfish.dekoi.ui.motion.SharedElementHost
 import no.cyberfish.dekoi.ui.motion.rememberNavTransitions
 import no.cyberfish.dekoi.ui.motion.screen
 import no.cyberfish.dekoi.ui.network.HostDetailScreen
+import no.cyberfish.dekoi.ui.network.InsightsScreen
 import no.cyberfish.dekoi.ui.network.NetworkScreen
 import no.cyberfish.dekoi.ui.network.NetworksScreen
 import no.cyberfish.dekoi.ui.onboarding.OnboardingOnce

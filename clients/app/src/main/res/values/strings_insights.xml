@@ -1,13 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Network insights (InsightsScreen.kt), ADR 0015. -->
+<!-- Network insights (ui/network/InsightsScreen.kt), ADR 0015. -->
 <resources>
     <string name="insights_title">Insights</string>
     <string name="insights_open_subtitle">Internet, web addresses and open ports</string>
-    <string name="insights_label">%1$02d / %2$s</string>
-    <string name="insights_details">Technical details</string>
 
     <string name="insights_internet">Internet</string>
-    <string name="insights_internet_body">Share of the last 7 days your internet worked. Every minute your DeKoi checks that your router answers, that the internet can be reached and that web addresses can be looked up.</string>
+    <string name="insights_internet_body">Every minute your DeKoi checks that your router answers, that the internet can be reached and that web addresses can be looked up.</string>
     <string name="insights_internet_none">Your DeKoi reports its first measurements an hour after it starts.</string>
     <plurals name="insights_uptime_summary">
         <item quantity="one">Internet worked in %1$d of %2$d hour</item>
@@ -19,17 +17,18 @@
     <string name="insights_probe_value">Usually %1$d ms, %2$s lost</string>
     <string name="insights_probe_none">Not measured yet</string>
     <string name="insights_probe_no_answer">No answer this week</string>
-    <string name="insights_outages_none">No outages in the last 7 days.</string>
+    <string name="insights_outages">Times without internet</string>
+    <string name="insights_outages_none">Your DeKoi found no time without internet.</string>
     <plurals name="insights_outage">
-        <item quantity="one">%1$s: no internet for about %2$d minute</item>
-        <item quantity="other">%1$s: no internet for about %2$d minutes</item>
+        <item quantity="one">No internet for about %1$d minute</item>
+        <item quantity="other">No internet for about %1$d minutes</item>
     </plurals>
     <plurals name="insights_outage_home">
-        <item quantity="one">%1$s: your router did not answer for about %2$d minute</item>
-        <item quantity="other">%1$s: your router did not answer for about %2$d minutes</item>
+        <item quantity="one">Your router did not answer for about %1$d minute</item>
+        <item quantity="other">Your router did not answer for about %1$d minutes</item>
     </plurals>
 
-    <string name="insights_dns">DNS</string>
+    <string name="insights_dns">Web addresses</string>
     <string name="insights_dns_ok">Web addresses lead where they should.</string>
     <string name="insights_dns_mismatch">Some web addresses lead to the wrong place.</string>
     <string name="insights_dns_unavailable">Your DeKoi could not check this the last time it tried.</string>
@@ -45,9 +44,10 @@
         <item quantity="other">%1$d ports are open to the internet.</item>
     </plurals>
     <string name="insights_ports_none">No device has asked your router to open a port.</string>
-    <string name="insights_ports_unknown">Your router does not say which ports are open. Routers only answer when UPnP is on in their settings, and off is the safer choice.</string>
+    <string name="insights_ports_unknown">Your router does not share which ports are open. Most routers share this only while devices may open ports by themselves, a setting that is safer off.</string>
     <string name="insights_port">Port %1$d, %2$s</string>
-    <string name="insights_port_named">Port %1$d, %2$s, named “%3$s”</string>
+    <string name="insights_port_every">Every port, %1$s</string>
+    <string name="insights_port_named">Named “%1$s”</string>
 
     <string name="insights_connection">Your connection</string>
     <string name="insights_connection_body">Websites and services see this address when anyone in your home uses them.</string>

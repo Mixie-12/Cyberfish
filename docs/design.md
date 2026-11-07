@@ -28,9 +28,9 @@ Four tabs, M3 `NavigationBar`, Material Symbols, filled when selected: Home
 (`home`), Alerts (`notifications`, badge = unseen critical and warning
 incidents not from known devices), Network (`lan`), Settings (`settings`).
 
-Pushed screens: Alert detail, Device detail (a host), Networks, Your DeKoi,
-Add DeKoi. Type-safe Navigation Compose routes (`@Serializable` objects).
-Each tab keeps its back stack; back at a non-Home tab root goes Home;
+Pushed screens: Alert detail, Device detail (a host), Networks, Insights,
+Your DeKoi, Add DeKoi. Type-safe Navigation Compose routes (`@Serializable`
+objects). Each tab keeps its back stack; back at a non-Home tab root goes Home;
 reselecting a tab pops to its root and scrolls to top. Predictive back from
 Navigation. A notification opens Alert detail over the Alerts tab.
 
@@ -96,9 +96,9 @@ each time (14)". Technical details give "First time" and "Last time". (5) Which 
 address, network, online status; opens Device detail). (6) Technical
 details collapsed (`animateContentSize`, monospace, copyable).
 
-**Network.** Header "38 devices · 3 new this week · 1 needs attention" and a
-"Networks" row. Map | List segmented control, choice saved; List is the
-default with TalkBack on.
+**Network.** Header "38 devices · 3 new this week · 1 needs attention", a
+"Networks" row and an "Insights" row per DeKoi. Map | List segmented
+control, choice saved; List is the default with TalkBack on.
 - Map: a radar in the HUD frame (ADR 0020). Gateway at the centre; ring 1
   infrastructure (switches, access points, DeKoi with the brand mark); ring
   2 everything else clustered by kind, or by room once any device has one
@@ -137,6 +137,19 @@ traffic"), gateway, device count ("None seen yet", never a bare 0), a bar
 list of kinds. Until a DeKoi has reported any, one sentence says it does so
 after its next automatic update, with its own address as "Your home
 network". Footer: "Your DeKoi watches only the network it is plugged into."
+
+**Insights.** One DeKoi's view of the network (ADR 0015), loaded each time
+the screen opens. Hero in the HUD frame: the share of the last 7 days the
+internet worked and the hourly uptime strip. Then numbered sections: (1)
+Internet: router, internet and lookup rows with typical latency, loss and
+a sparkline; times without internet, saying when the router itself did
+not answer. (2) Web addresses: the DNS check with glyph and word, the name
+server under Technical details; "See what to do" (the alert, else the
+Learn topic) when answers differ. (3) Open to the internet: ports by
+device with its kind tile, opening Device detail; port names are plain
+text. (4) Your connection: public address (copyable) and country; why
+there is no per-device bandwidth. (5) Speed: the owner's nightly test
+switch and the results with a sparkline.
 
 **Your DeKoi.** Hero in the HUD frame (fish mark, name, status, "Checked
 in 1 min ago"). The setup checklist while setting up; otherwise "What DeKoi
