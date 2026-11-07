@@ -1,10 +1,10 @@
 #!/bin/sh
-# Validates the files DeKoi Setup renders with cloud-init itself, in Debian
+# Validates the card files the shared renderer produces with cloud-init, in Debian
 # trixie, the base of the pinned Raspberry Pi OS image. Runs in a container
-# after `./gradlew :burner:test`; the command is in clients/README.md.
+# after `./gradlew :shared:test`; the command is in clients/README.md.
 set -eu
 
-rendered=/repo/clients/burner/build/rendered
+rendered=/repo/clients/shared/build/rendered
 host=/repo/device/host
 
 apt-get update -qq

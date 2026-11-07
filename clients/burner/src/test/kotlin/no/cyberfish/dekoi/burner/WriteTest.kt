@@ -1,5 +1,6 @@
 package no.cyberfish.dekoi.burner
 
+import no.cyberfish.dekoi.shared.CardContent
 import no.cyberfish.dekoi.shared.ClaimCode
 import no.cyberfish.dekoi.shared.Network
 import java.nio.file.Files
@@ -57,7 +58,7 @@ class WriteTest {
 
     @Test
     fun `Imager gets the pinned image, its uncompressed hash and the rendered files`() {
-        val image = Image("https://downloads.raspberrypi.com/x.img.xz", "a".repeat(64))
+        val image = CardContent.image.copy(url = "https://downloads.raspberrypi.com/x.img.xz", extractSha256 = "a".repeat(64))
         val drive = Drive("\\\\.\\PhysicalDrive2", "SDXC Card", 63864569856)
 
         val arguments =
@@ -88,12 +89,6 @@ class WriteTest {
         assertEquals("\"--cli\" \"C:\\Users\\A B & C%x%\\user-data\" \"\\\\.\\PhysicalDrive2\"", line)
         assertFailsWith<IllegalArgumentException> { Imager.windowsCommandLine(listOf("a\"b")) }
         assertFailsWith<IllegalArgumentException> { Imager.windowsCommandLine(listOf("C:\\dir\\")) }
-    }
-
-    @Test
-    fun `an image without HTTPS or a real hash is refused`() {
-        assertFailsWith<IllegalArgumentException> { Image("http://x/y.img.xz", "a".repeat(64)) }
-        assertFailsWith<IllegalArgumentException> { Image("https://x/y.img.xz", "A".repeat(64)) }
     }
 
     @Test

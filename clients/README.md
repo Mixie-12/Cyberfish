@@ -15,12 +15,13 @@ Requires JDK 21 and the Android SDK (platform 37). Run from this directory:
 Release builds need the public backend settings as Gradle properties:
 `-Pdekoi.supabaseUrl=... -Pdekoi.supabaseKey=... -Pdekoi.googleWebClientId=...`
 
-DeKoi Setup bundles `device/image.json`, `device/cloud-init/` and
-`device/host/` at build time. After `:burner:test`, check the rendered
-cloud-init files with cloud-init itself (from the repository root):
+`shared/` turns `device/image.json` into a constant and bundles
+`device/cloud-init/` and `device/host/` at build time, for DeKoi Setup and
+the app. After `:shared:test`, check the rendered cloud-init files with
+cloud-init itself (from the repository root):
 
 ```
-docker run --rm -v "$PWD:/repo:ro" debian:trixie@sha256:9c6e381421d0f48d1b8133e573f33c185ee16cbf505eda9c4a8a4791b25ea8a6 sh /repo/clients/burner/check-cloud-init.sh
+docker run --rm -v "$PWD:/repo:ro" debian:trixie@sha256:9c6e381421d0f48d1b8133e573f33c185ee16cbf505eda9c4a8a4791b25ea8a6 sh /repo/clients/shared/check-cloud-init.sh
 ```
 
 Run DeKoi Setup (Windows), or build its installer into
