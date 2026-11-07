@@ -67,6 +67,7 @@ import no.cyberfish.dekoi.ui.motion.screen
 import no.cyberfish.dekoi.ui.network.HostDetailScreen
 import no.cyberfish.dekoi.ui.network.NetworkScreen
 import no.cyberfish.dekoi.ui.network.NetworksScreen
+import no.cyberfish.dekoi.ui.network.PlaceDevicesScreen
 import no.cyberfish.dekoi.ui.onboarding.OnboardingOnce
 import no.cyberfish.dekoi.ui.onboarding.OnboardingScreen
 import java.time.Instant
@@ -120,6 +121,9 @@ sealed interface Route {
     @Serializable data class LearnTopic(
         val id: String,
     ) : Route
+
+    /** Putting the devices without a room into rooms, one at a time. */
+    @Serializable data object PlaceDevices : Route
 }
 
 private enum class Tab(
@@ -339,6 +343,9 @@ private fun SignedIn(
                     onWeeklySummary = viewModel::setWeeklySummary,
                     onSetWifiName = viewModel::setWifiName,
                 )
+            }
+            screen<Route.PlaceDevices> {
+                PlaceDevicesScreen(data, now, viewModel::setNameAndRoom, back)
             }
         }
     }
