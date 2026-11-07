@@ -101,22 +101,6 @@ Record the output and the date in `docs/STATUS.md`.
 
 ## Backups
 
-The Free plan has no downloadable backups. Until the project moves to a paid
-plan (decision for the owner before real customers), take a dump after every
-deploy that changes data shape, and at least weekly:
-
-```
-supabase db dump --remote=$REF -f dekoi-schema.sql
-supabase db dump --remote=$REF --data-only -f dekoi-data.sql
-```
-
-Store both encrypted (1Password document or the homelab backup), never in git.
-
-Restore test, into the local stack:
-
-```
-cd backend
-supabase start
-psql "postgresql://postgres:postgres@127.0.0.1:54322/postgres" -f dekoi-data.sql
-supabase test db
-```
+A scheduled CI job takes an encrypted backup daily and before every
+migration; `restore-backup.md` specifies it and the restore. Until the job
+runs, nothing backs up production.
