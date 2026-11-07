@@ -186,19 +186,12 @@ class AppViewModel(
         messages.value = message
     }
 
-    fun setLabel(
+    fun setNameAndRoom(
         host: NetworkHost,
         label: String?,
-    ) = run {
-        backend.setLabel(host, label)
-        owner.value = owner.value.copy(hosts = backend.hosts())
-    }
-
-    fun setRoom(
-        host: NetworkHost,
         room: String?,
     ) = run {
-        backend.setRoom(host, room)
+        backend.setNameAndRoom(host, label, room)
         owner.value = owner.value.copy(hosts = backend.hosts())
     }
 
