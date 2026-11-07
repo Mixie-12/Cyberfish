@@ -1,4 +1,6 @@
 import groovy.json.JsonSlurper
+import org.w3c.dom.Element
+import javax.xml.parsers.DocumentBuilderFactory
 
 plugins {
     alias(libs.plugins.android.application)
@@ -29,6 +31,23 @@ val decoyName: String =
         .let { it as? String ?: error("persona.json: name is missing") }
         .also { check(Regex("[a-z0-9-]{1,15}").matches(it)) { "persona.json: name is not a NetBIOS name" } }
 
+// The CyberFish mark's outline, the path "fish" in the owner's app icon, so
+// that the artwork holds the one copy (ADR 0030). It becomes the string
+// resource mark_path: vector drawables take it as their pathData and Compose
+// parses it. Checked here because it becomes XML.
+val markPath: String =
+    DocumentBuilderFactory
+        .newInstance()
+        .run {
+            setFeature("http://apache.org/xml/features/disallow-doctype-decl", true)
+            newDocumentBuilder()
+        }.parse(rootDir.resolve("../Images/cyberfish-app-icon.svg"))
+        .getElementsByTagName("path")
+        .let { paths -> (0 until paths.length).map { paths.item(it) as Element } }
+        .single { it.getAttribute("id") == "fish" }
+        .getAttribute("d")
+        .also { check(Regex("[0-9A-Za-z .,-]+").matches(it)) { "cyberfish-app-icon.svg: the fish is not plain path data" } }
+
 android {
     namespace = "no.cyberfish.dekoi"
     compileSdk = 37
@@ -47,11 +66,13 @@ android {
         buildConfigField("String", "FIREBASE_API_KEY", "\"${settings.getValue("firebaseApiKey")}\"")
         buildConfigField("String", "FIREBASE_SENDER_ID", "\"${settings.getValue("firebaseSenderId")}\"")
         buildConfigField("String", "DECOY_NAME", "\"$decoyName\"")
+        resValue("string", "mark_path", markPath)
     }
 
     buildFeatures {
         compose = true
         buildConfig = true
+        resValues = true
     }
 
     buildTypes {

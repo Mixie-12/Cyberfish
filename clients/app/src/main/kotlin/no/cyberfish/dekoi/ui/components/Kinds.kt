@@ -88,7 +88,9 @@ fun BrandTile(
 }
 
 private val ICON = 24.dp
-private const val MARK_SHARE = 0.25f
+
+// As in the app icon: the mark is 239 of its 1024 units tall.
+private const val MARK_SHARE = 0.233f
 private val HERO_ICON = 48.dp
 
 private fun tileShape(hero: Boolean) = RoundedCornerShape(if (hero) Dimens.heroRadius else Dimens.tileRadius)
