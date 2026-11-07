@@ -101,7 +101,9 @@ select results_eq(
       ('authenticated', 'claim_device_v1'),
       ('authenticated', 'delete_account_v1'),
       ('authenticated', 'register_push_token_v1'),
-      ('authenticated', 'unregister_push_token_v1')
+      ('authenticated', 'unregister_push_token_v1'),
+      ('service_role', 'forget_push_token_v1'),
+      ('service_role', 'notification_targets_v1')
   $$,
   'API roles can execute exactly the published functions'
 );
