@@ -12,3 +12,4 @@ them.
 | 0004 | [Signing device images](0004-image-signing.md)  | accepted |
 | 0005 | [Device runtime choices](0005-device-runtime.md) | accepted |
 | 0006 | [Client stack](0006-client-stack.md)            | accepted |
+| 0007 | [Push notifications](0007-push-notifications.md)    | accepted |

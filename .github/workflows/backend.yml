@@ -29,10 +29,29 @@ jobs:
       - name: Security and performance advisors
         run: supabase db advisors --type all --fail-on warn
 
+  functions:
+    runs-on: ubuntu-24.04
+    defaults:
+      run:
+        working-directory: backend/supabase/functions/notify
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: denoland/setup-deno@22d081ff2d3a40755e97629de92e3bcbfa7cf2ed # v2.0.5
+        with:
+          deno-version: 2.9.8
+      - name: Format
+        run: deno fmt --check
+      - name: Lint
+        run: deno lint
+      - name: Type check
+        run: deno check *.ts
+      - name: Tests
+        run: deno test --no-prompt
+
   # GitOps deploy to Supabase Cloud (ADR 0002). Skipped until the owner has
-  # set the SUPABASE_PROJECT_REF variable and the two secrets.
+  # set the SUPABASE_PROJECT_REF variable and the secrets.
   deploy:
-    needs: database
+    needs: [database, functions]
     if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request' && vars.SUPABASE_PROJECT_REF != ''
     runs-on: ubuntu-24.04
     concurrency:
@@ -46,11 +65,25 @@ jobs:
       SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
       SUPABASE_ENV: production
       PROJECT_REF: ${{ vars.SUPABASE_PROJECT_REF }}
+      # Written to Vault by `supabase db push` ([db.vault] in config.toml).
+      NOTIFY_URL: https://${{ vars.SUPABASE_PROJECT_REF }}.supabase.co/functions/v1/notify
+      NOTIFY_SECRET: ${{ secrets.NOTIFY_SECRET }}
+      FCM_SERVICE_ACCOUNT: ${{ secrets.FCM_SERVICE_ACCOUNT }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: supabase/setup-cli@689adcfb80d947100a1eab127289b97d1fb07b13 # v3.2.0
         with:
           version: 3.0.0
+      - name: Check the notification secrets
+        run: |
+          if [ -z "$NOTIFY_SECRET" ] || [ -z "$FCM_SERVICE_ACCOUNT" ]; then
+            echo "::error::NOTIFY_SECRET and FCM_SERVICE_ACCOUNT must be set (docs/runbooks/deploy-backend.md)"
+            exit 1
+          fi
+      - name: Set function secrets
+        run: supabase secrets set --remote="$PROJECT_REF" --yes "NOTIFY_SECRET=$NOTIFY_SECRET" "FCM_SERVICE_ACCOUNT=$FCM_SERVICE_ACCOUNT"
+      - name: Deploy functions
+        run: supabase functions deploy notify --remote="$PROJECT_REF" --use-api --yes
       - name: Apply migrations
         run: supabase db push --remote="$PROJECT_REF" --yes
       - name: Show configuration changes

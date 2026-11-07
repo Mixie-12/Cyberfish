@@ -101,3 +101,12 @@ Responses the agent must handle:
 pg_cron runs `private.mark_offline_devices()` every 5 minutes (one
 `device_offline` event per outage) and `private.apply_retention()` nightly
 (events and hosts older than 90 days).
+
+## Notifications
+
+Every insert into `events` posts `{"event_id": <id>}` with the header
+`X-Notify-Secret` to the Edge Function `notify` (pg_net trigger; URL and
+secret in Vault). `notify` asks `notification_targets_v1(event_id)` which
+phones to notify and with which template, and sends FCM HTTP v1 messages
+whose data payload is `event_id` only. The rules are in that function
+(ADR 0007).

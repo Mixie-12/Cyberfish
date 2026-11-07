@@ -54,8 +54,13 @@ default_pool_size = 20
 # Maximum number of client connections allowed.
 max_client_conn = 100
 
-# [db.vault]
-# secret_key = "env(SECRET_VALUE)"
+# Where the events webhook posts, and the secret it sends (migration
+# 20261107150000). `supabase db push` writes them to Vault when it applies a
+# migration; when the variables are unset, nothing is written and the webhook
+# stays off.
+[db.vault]
+notify_url = "env(NOTIFY_URL)"
+notify_secret = "env(NOTIFY_SECRET)"
 
 [db.migrations]
 # If disabled, migrations will be skipped during a db push or reset.
@@ -392,6 +397,10 @@ deno_version = 2
 
 # [edge_runtime.secrets]
 # secret_key = "env(SECRET_VALUE)"
+
+# Called by the events webhook with a shared secret, not by users.
+[functions.notify]
+verify_jwt = false
 
 [analytics]
 enabled = false

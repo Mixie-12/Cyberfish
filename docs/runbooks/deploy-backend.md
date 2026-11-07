@@ -25,20 +25,35 @@ one-time bootstrap, routine deploys, checks and backups.
    gh secret set SUPABASE_DB_PASSWORD --repo Mixie-12/Cyberfish
    ```
 
-6. Start the first deploy and watch it:
+6. Push notifications (ADR 0007). In the Firebase project used for the app,
+   create a service account key: Project settings, Service accounts,
+   Generate new private key. It downloads a JSON file. Store it and a new
+   random shared secret for the events webhook, then delete the file:
+
+   ```
+   gh secret set FCM_SERVICE_ACCOUNT --repo Mixie-12/Cyberfish < <path to the JSON file>
+   openssl rand -hex 32 | gh secret set NOTIFY_SECRET --repo Mixie-12/Cyberfish
+   ```
+
+   The deploy job sets both as function secrets and writes the webhook URL
+   and shared secret to Vault. Vault is written only by a `supabase db push`
+   that applies a migration, so changing `NOTIFY_SECRET` later takes effect
+   with the next migration.
+
+7. Start the first deploy and watch it:
 
    ```
    gh workflow run backend.yml --repo Mixie-12/Cyberfish --ref main
    gh run watch --repo Mixie-12/Cyberfish
    ```
 
-7. Run the surface checks below.
+8. Run the surface checks below.
 
 ## Routine deploys
 
 Merge to `main`. A change under `backend/` runs the tests and, when they
 pass, deploys. To re-apply the current state (for example after someone
-changed a setting in the dashboard), run the workflow manually as in step 6.
+changed a setting in the dashboard), run the workflow manually as in step 7.
 
 ## Surface checks (abuse case 9)
 
