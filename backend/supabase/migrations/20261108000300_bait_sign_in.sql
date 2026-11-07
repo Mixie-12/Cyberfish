@@ -1,4 +1,4 @@
--- Honeytoken user names (ADR 0023). The decoy's bait files carry fake
+-- Honeytoken user names (ADR 0024). The decoy's bait files carry fake
 -- credentials; a sign-in with one of their user names is flagged by the
 -- agent with "bait": true in the detail. Only the boolean is new: the user
 -- name was reported already, and the password never leaves the device.

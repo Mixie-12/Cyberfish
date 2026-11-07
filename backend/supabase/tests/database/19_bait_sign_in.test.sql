@@ -1,4 +1,4 @@
--- Honeytoken user names (ADR 0023): a sign-in with a user name from the
+-- Honeytoken user names (ADR 0024): a sign-in with a user name from the
 -- decoy's bait files carries "bait": true, only as a boolean, and stays
 -- critical. Every detail key accepted before is still accepted.
 begin;

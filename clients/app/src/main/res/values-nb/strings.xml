@@ -9,7 +9,7 @@
         <item quantity="other">%1$d varsler å se på</item>
     </plurals>
 
-    <string name="action_add_dekoi">Legg til DeKoi</string>
+    <string name="action_add_dekoi">Legg til en DeKoi</string>
     <string name="action_back">Tilbake</string>
     <string name="action_cancel">Avbryt</string>
     <string name="action_remove">Fjern</string>

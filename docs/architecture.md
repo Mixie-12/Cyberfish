@@ -88,7 +88,7 @@ Kinds a device may report (`private.device_event_kinds()`):
 
 | Kind             | Source                                   | Typical detail                      |
 | ---------------- | ---------------------------------------- | ----------------------------------- |
-| `login_attempt`  | decoy                                    | `username`, `path`, `client_version`, `bait` (a user name from the bait files, ADR 0023) |
+| `login_attempt`  | decoy                                    | `username`, `path`, `client_version`, `bait` (a user name from the bait files, ADR 0024) |
 | `connection`     | decoy                                    | `path`, `user_agent`, `command`, `share` |
 | `port_scan`      | firewall log, closed ports on the box    | `ports`                             |
 | `host_scan`      | ARP watcher, one host asking for many    | `targets`                           |

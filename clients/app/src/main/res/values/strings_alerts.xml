@@ -18,7 +18,7 @@
     <string name="event_login_action">Tried to sign in</string>
     <string name="event_login_consequence">Someone may be trying to get into the devices on your network.</string>
     <string name="event_login_why">Nothing on your network has a reason to sign in to your DeKoi. Someone, or a program, is trying passwords on the devices it finds.</string>
-    <!-- The user name came from the decoy's bait files (detail.bait, ADR 0023). -->
+    <!-- The user name came from the decoy's bait files (detail.bait, ADR 0024). -->
     <string name="event_login_bait_consequence">They used a password from your decoy’s files. Someone has looked through the bait and is trying what they found.</string>
     <string name="event_connection_title">%1$s opened one of your decoys</string>
     <string name="event_connection_action">Opened a decoy</string>

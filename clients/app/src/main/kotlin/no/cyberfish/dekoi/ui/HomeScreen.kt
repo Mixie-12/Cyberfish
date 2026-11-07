@@ -1,12 +1,11 @@
 package no.cyberfish.dekoi.ui
 
-import androidx.compose.animation.Crossfade
+import androidx.annotation.DrawableRes
+import androidx.annotation.StringRes
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.animateContentSize
-import androidx.compose.animation.core.FiniteAnimationSpec
 import androidx.compose.animation.core.snap
 import androidx.compose.animation.core.tween
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -20,8 +19,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
@@ -35,7 +34,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalLocale
@@ -45,6 +43,7 @@ import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
@@ -66,6 +65,7 @@ import no.cyberfish.dekoi.highestSeverity
 import no.cyberfish.dekoi.hostDisplayName
 import no.cyberfish.dekoi.isIntrusion
 import no.cyberfish.dekoi.isNew
+import no.cyberfish.dekoi.isSetUp
 import no.cyberfish.dekoi.needsAttention
 import no.cyberfish.dekoi.protection
 import no.cyberfish.dekoi.recentIntrusions
@@ -73,7 +73,7 @@ import no.cyberfish.dekoi.severityLabel
 import no.cyberfish.dekoi.status
 import no.cyberfish.dekoi.ui.components.Bar
 import no.cyberfish.dekoi.ui.components.ErrorBanner
-import no.cyberfish.dekoi.ui.components.Horizon
+import no.cyberfish.dekoi.ui.components.HudFrame
 import no.cyberfish.dekoi.ui.components.InsetRow
 import no.cyberfish.dekoi.ui.components.InsetSection
 import no.cyberfish.dekoi.ui.components.PrimaryButton
@@ -89,6 +89,10 @@ import no.cyberfish.dekoi.ui.components.StatTile
 import no.cyberfish.dekoi.ui.components.StatusRing
 import no.cyberfish.dekoi.ui.components.kindIcon
 import no.cyberfish.dekoi.ui.components.severityGlyph
+import no.cyberfish.dekoi.ui.motion.AnimatedStatus
+import no.cyberfish.dekoi.ui.motion.rememberHaptics
+import no.cyberfish.dekoi.ui.motion.sharedSeverity
+import no.cyberfish.dekoi.ui.onboarding.Welcome
 import no.cyberfish.dekoi.watchList
 import java.time.Instant
 import java.time.ZoneId
@@ -111,7 +115,6 @@ private val SKELETON_LINE = 28.dp
 private val SKELETON_BODY = 44.dp
 private val SKELETON_TILE = 120.dp
 private val SKELETON_CHART = 200.dp
-private val HORIZON_HEIGHT = 96.dp
 
 @Composable
 fun HomeScreen(
@@ -119,12 +122,16 @@ fun HomeScreen(
     now: Instant,
     refreshing: Boolean,
     listState: LazyListState,
+    welcome: Welcome,
     onRefresh: () -> Unit,
     onNavigate: (Route) -> Unit,
 ) {
     val state = protection(data.devices, data.events, data.trustedMacs, now)
     val highest = highestSeverity(recentIntrusions(data.events, data.trustedMacs, now))
     val dekoi = dekoiToShow(data.devices, now)
+    // Until a DeKoi watches the network or the owner closes it; then adding one is a row.
+    val welcoming = welcome.open && data.devices.none { it.isSetUp }
+    val add = { onNavigate(Route.AddDekoi) }
     val still = LocalReduceMotion.current
     // The ring draws in the first time Home shows it, not each time the owner comes back to it.
     var ringDrawn by rememberSaveable { mutableStateOf(false) }
@@ -145,19 +152,23 @@ fun HomeScreen(
                 }
                 LaunchedEffect(Unit) { ringDrawn = true }
             }
-            if (dekoi == null) {
-                item(key = "add") {
-                    NoDekoi({ onNavigate(Route.AddDekoi) }, { onNavigate(Route.Onboarding) }, Modifier.itemMotion(this, still))
+            if (welcoming) {
+                item(key = "welcome") {
+                    WelcomeCard(add, { onNavigate(Route.Onboarding) }, welcome::close, Modifier.itemMotion(this, still))
                 }
-                return@Screen
+            } else if (dekoi == null) {
+                item(key = "add") { InsetSection(Modifier.itemMotion(this, still)) { AddDekoiRow(R.string.action_add_dekoi, add) } }
             }
+            if (dekoi == null) return@Screen
             val attention = needsAttention(data.events, data.trustedMacs, now, ATTENTION_ITEMS)
             if (attention.isNotEmpty()) {
                 val number = ++section
                 item(key = "attention") { NeedsAttention(number, attention, data, now, onNavigate, Modifier.itemMotion(this, still)) }
             }
             val tiles = ++section
-            item(key = "tiles") { Tiles(tiles, data, dekoi, now, onNavigate, Modifier.itemMotion(this, still)) }
+            item(key = "tiles") {
+                Tiles(tiles, data, dekoi, now, onNavigate, add.takeUnless { welcoming }, Modifier.itemMotion(this, still))
+            }
             val chart = ++section
             item(key = "chart") { AlertChart(chart, data.events, now, onNavigate, Modifier.itemMotion(this, still)) }
             val latest = ++section
@@ -175,7 +186,6 @@ private fun StatusHero(
 ) {
     val color = protectionColor(state, highest)
     val still = LocalReduceMotion.current
-    val change: FiniteAnimationSpec<Float> = if (still) snap() else tween(CHANGE_MS)
     val glow by animateColorAsState(color.copy(alpha = GLOW_ALPHA), if (still) snap() else tween(CHANGE_MS), label = "glow")
     Column(
         Modifier.fillMaxWidth().padding(vertical = Dimens.spaceL),
@@ -190,11 +200,10 @@ private fun StatusHero(
             },
             drawIn = drawIn,
         )
-        Crossfade(
+        AnimatedStatus(
             state,
             Modifier.semantics(mergeDescendants = true) { liveRegion = LiveRegionMode.Polite },
-            animationSpec = change,
-            label = "status",
+            contentAlignment = Alignment.TopCenter,
         ) { shown ->
             val (title, body) = statusText(shown)
             Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(Dimens.spaceS)) {
@@ -210,17 +219,82 @@ private fun StatusHero(
     }
 }
 
-/** No DeKoi yet: the way to add one and the tour, above the brand's horizon. */
+/** One step of the welcome: its symbol, what to do and how. */
+private class WelcomeStep(
+    @param:DrawableRes val icon: Int,
+    @param:StringRes val title: Int,
+    @param:StringRes val body: Int,
+)
+
+private val welcomeSteps =
+    listOf(
+        WelcomeStep(R.drawable.ic_sd_card, R.string.home_welcome_card_title, R.string.home_welcome_card_body),
+        WelcomeStep(R.drawable.ic_cable, R.string.home_welcome_plug_title, R.string.home_welcome_plug_body),
+        WelcomeStep(R.drawable.ic_smartphone, R.string.home_welcome_watch_title, R.string.home_welcome_watch_body),
+    )
+
+/**
+ * The way in for a new owner, in the HUD frame: three numbered steps to a
+ * DeKoi that watches the network, the way to add one, and the tour.
+ */
 @Composable
-private fun NoDekoi(
+private fun WelcomeCard(
     onAdd: () -> Unit,
     onTour: () -> Unit,
+    onClose: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Column(modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(Dimens.spaceL)) {
-        PrimaryButton(onClick = onAdd, modifier = Modifier.fillMaxWidth()) { Text(stringResource(R.string.action_add_dekoi)) }
-        TextButton(onClick = onTour, modifier = Modifier.fillMaxWidth()) { Text(stringResource(R.string.action_take_tour)) }
-        Horizon(Modifier.fillMaxWidth().height(HORIZON_HEIGHT))
+    val haptics = rememberHaptics()
+    HudFrame(modifier.fillMaxWidth(), contentPadding = Dimens.gutter) {
+        Column(verticalArrangement = Arrangement.spacedBy(Dimens.spaceL)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    stringResource(R.string.home_welcome_title).headingCase(),
+                    style = MaterialTheme.typography.headlineSmall,
+                    modifier = Modifier.weight(1f).semantics { heading() },
+                )
+                IconButton(onClick = {
+                    haptics.confirm()
+                    onClose()
+                }) {
+                    Icon(
+                        painterResource(R.drawable.ic_close),
+                        contentDescription = stringResource(R.string.home_welcome_close),
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+            }
+            welcomeSteps.forEachIndexed { index, step -> WelcomeStepRow(index + 1, step) }
+            Column {
+                PrimaryButton(onClick = onAdd, modifier = Modifier.fillMaxWidth()) { Text(stringResource(R.string.action_add_dekoi)) }
+                TextButton(onClick = onTour, modifier = Modifier.fillMaxWidth()) { Text(stringResource(R.string.action_take_tour)) }
+            }
+        }
+    }
+}
+
+/** "1", the step's symbol, and what to do with how below it; read as one. */
+@Composable
+private fun WelcomeStepRow(
+    number: Int,
+    step: WelcomeStep,
+) {
+    val blue = MaterialTheme.colorScheme.primary
+    Row(
+        Modifier.semantics(mergeDescendants = true) {},
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(Dimens.spaceM),
+    ) {
+        Text(number.toString(), style = MaterialTheme.typography.label, color = blue)
+        Icon(painterResource(step.icon), contentDescription = null, modifier = Modifier.size(LINE_ICON), tint = blue)
+        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(Dimens.spaceXs)) {
+            Text(stringResource(step.title), style = MaterialTheme.typography.bodyLarge)
+            Text(
+                stringResource(step.body),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
     }
 }
 
@@ -246,17 +320,24 @@ private fun NeedsAttention(
     val resize = if (LocalReduceMotion.current) snap() else expandSpring<IntSize>()
     Section(number, stringResource(R.string.home_needs_attention), modifier.animateContentSize(resize)) {
         events.forEach { event ->
-            AttentionCard(event, data.hostFor(event.srcMac), now) { onNavigate(Route.AlertDetail(event.id)) }
+            val detail = Route.AlertDetail(event.id)
+            AttentionCard(event, data.hostFor(event.srcMac), now, detail) { onNavigate(detail) }
         }
     }
 }
 
-/** A quiet card with a hairline edge, the one kind of box on Home: each is something to act on. */
+/**
+ * A quiet card with a hairline edge, the one kind of box on Home: each is
+ * something to act on. Its severity chip moves into the hero of [detail].
+ * Only here: Latest activity may show the same alert, and a screen has one
+ * shared element per route.
+ */
 @Composable
 private fun AttentionCard(
     event: Event,
     host: NetworkHost?,
     now: Instant,
+    detail: Route,
     onClick: () -> Unit,
 ) {
     val shape = MaterialTheme.shapes.large
@@ -275,7 +356,7 @@ private fun AttentionCard(
         verticalArrangement = Arrangement.spacedBy(Dimens.spaceS),
     ) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Dimens.spaceS)) {
-            SeverityChip(event.severity)
+            SeverityChip(event.severity, Modifier.sharedSeverity(detail))
             Text(
                 occurrence,
                 style = MaterialTheme.typography.labelMedium.tabular(),
@@ -323,6 +404,7 @@ private fun SourceLine(host: NetworkHost?) {
     }
 }
 
+/** The four tiles, Your DeKoi among them, and under them [onAddAnother] as a row unless the welcome offers it. */
 @Composable
 private fun Tiles(
     number: Int,
@@ -330,6 +412,7 @@ private fun Tiles(
     dekoi: Device,
     now: Instant,
     onNavigate: (Route) -> Unit,
+    onAddAnother: (() -> Unit)?,
     modifier: Modifier = Modifier,
 ) {
     val zone = ZoneId.systemDefault()
@@ -371,6 +454,7 @@ private fun Tiles(
                 { tile -> ChecksTile(dekoi, now, { onNavigate(Route.Dekoi(dekoi.id)) }, tile) },
             ),
         )
+        onAddAnother?.let { InsetSection { AddDekoiRow(R.string.home_add_another, it) } }
     }
 }
 

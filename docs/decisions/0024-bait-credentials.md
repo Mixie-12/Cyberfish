@@ -1,4 +1,4 @@
-# 0023: Fake credentials in the bait files
+# 0024: Fake credentials in the bait files
 
 Status: accepted, 2026-11-07
 
