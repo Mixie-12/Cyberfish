@@ -202,6 +202,15 @@ class AppViewModel(
             ownerSettings.value = OwnerSettings(weeklySummary = on)
         }
 
+    fun setNameAndRoom(
+        host: NetworkHost,
+        label: String?,
+        room: String?,
+    ) = run {
+        backend.setNameAndRoom(host, label, room)
+        owner.value = owner.value.copy(hosts = backend.hosts())
+    }
+
     private companion object {
         const val TOO_MANY_REQUESTS = 429
     }

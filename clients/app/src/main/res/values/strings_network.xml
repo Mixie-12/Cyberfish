@@ -1,41 +1,110 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Network tab, device detail and networks (NetworkScreens.kt). -->
+<!-- Network tab, device detail and networks (ui/network). -->
 <resources>
-    <string name="network_body">Devices your DeKoi has seen on your network. New ones are marked.</string>
+    <plurals name="network_devices">
+        <item quantity="one">%1$d device</item>
+        <item quantity="other">%1$d devices</item>
+    </plurals>
+    <plurals name="network_need_attention">
+        <item quantity="one">%1$d needs attention</item>
+        <item quantity="other">%1$d need attention</item>
+    </plurals>
     <string name="network_new">New</string>
-    <string name="network_known">Known</string>
+    <string name="network_known">Known device</string>
     <string name="network_private">Phone or tablet with a private address</string>
     <string name="network_unknown_maker">Unknown maker</string>
     <string name="network_empty">Your DeKoi lists the devices on your network here within 15 minutes of starting.</string>
+    <string name="network_view_map">Map</string>
+    <string name="network_view_list">List</string>
+    <string name="network_attention">Needs attention</string>
+    <string name="network_new_this_week">New this week</string>
+    <string name="network_online">Online</string>
+    <string name="network_not_seen">Not seen recently</string>
+    <string name="network_no_room">No room</string>
+    <string name="network_search">Search devices</string>
+    <string name="network_search_clear">Clear search</string>
+    <string name="network_sort">Sort: %1$s</string>
+    <string name="network_sort_name">Name</string>
+    <string name="network_sort_last_seen">Last seen</string>
+    <string name="network_sort_kind">Kind</string>
+    <string name="network_by_room">By room</string>
+    <string name="network_no_match">No devices match your search.</string>
+    <string name="network_map_footer">Shows the devices your DeKoi can see, not how they are connected.</string>
+    <string name="network_map_description">Map of the devices your DeKoi can see. %1$s</string>
+    <string name="network_show_list">Show as list</string>
+    <string name="network_show_all">Show all</string>
+
     <string name="networks_title">Networks</string>
     <plurals name="networks_count">
         <item quantity="one">%1$d network</item>
         <item quantity="other">%1$d networks</item>
     </plurals>
+    <string name="networks_not_reported">Not reported yet</string>
+    <string name="networks_pending">Your DeKoi reports the networks it can see after its next automatic update.</string>
     <string name="networks_home">Your home network</string>
     <string name="networks_other">Another network</string>
+    <string name="networks_dekoi_address">Your DeKoi’s address</string>
     <string name="networks_addresses">Addresses</string>
-    <string name="networks_found">How DeKoi knows it</string>
-    <string name="networks_source_interface">DeKoi is connected to it</string>
+    <string name="networks_found">How your DeKoi knows it</string>
+    <string name="networks_source_interface">Your DeKoi is connected to it</string>
     <string name="networks_source_router_advertisement">Announced by a router</string>
     <string name="networks_source_dhcp_route">Reached through a router</string>
     <string name="networks_source_observed">Seen in traffic</string>
     <string name="networks_gateway">Router address</string>
     <string name="networks_devices">Devices</string>
-    <string name="networks_footer">DeKoi watches only the network it is plugged into.</string>
-    <string name="networks_empty">DeKoi lists the networks it can see here once it has started.</string>
+    <string name="networks_none_seen">None seen yet</string>
+    <string name="networks_footer">Your DeKoi watches only the network it is plugged into.</string>
 
+    <string name="host_title">Device</string>
+    <string name="host_online_now">Online now</string>
+    <string name="host_attention_body">It caused an alert in the last 24 hours.</string>
+    <string name="host_what_to_do">See what to do</string>
+    <string name="host_history">Last 14 days</string>
+    <plurals name="host_history_count">
+        <item quantity="one">%1$d alert from this device</item>
+        <item quantity="other">%1$d alerts from this device</item>
+    </plurals>
+    <string name="host_history_none">No alerts from this device.</string>
     <string name="host_see_alerts">See all alerts from this device</string>
     <string name="host_about">About</string>
     <string name="host_connection">Connection</string>
     <string name="host_model">Model</string>
+    <string name="host_system">System</string>
     <string name="host_announced_name">Announced name</string>
     <string name="host_services">Services it announces</string>
     <string name="host_address">Address</string>
+    <string name="host_network">Network</string>
     <string name="host_first_seen">First seen</string>
     <string name="host_last_seen">Last seen</string>
     <string name="host_last_seen_ago">Last seen %1$s</string>
     <string name="host_private_note">This device uses a private hardware address, which hides its maker. Phones and tablets do this to protect their owners’ privacy.</string>
-    <string name="host_known">I know this device</string>
-    <string name="host_missing">DeKoi no longer lists this device.</string>
+    <string name="host_mark_known">Mark as known</string>
+    <string name="host_unmark_known">Remove from known devices</string>
+    <string name="host_edit">Name and room</string>
+    <string name="host_edit_hint">Give it a name or say which room it is in</string>
+    <string name="host_name">Name</string>
+    <string name="host_room">Room</string>
+    <string name="host_suggested_rooms">Suggested rooms</string>
+    <string-array name="host_rooms">
+        <item>Living room</item>
+        <item>Kitchen</item>
+        <item>Bedroom</item>
+        <item>Office</item>
+        <item>Hallway</item>
+    </string-array>
+    <string name="host_missing">Your DeKoi no longer lists this device.</string>
+
+    <!-- Operating systems (ADR 0010 vocabulary), as their makers write them. -->
+    <string name="os_android">Android</string>
+    <string name="os_ios">iOS</string>
+    <string name="os_ipados">iPadOS</string>
+    <string name="os_macos">macOS</string>
+    <string name="os_windows">Windows</string>
+    <string name="os_linux">Linux</string>
+    <string name="os_chromeos">ChromeOS</string>
+    <string name="os_tvos">tvOS</string>
+    <string name="os_webos">webOS</string>
+    <string name="os_tizen">Tizen</string>
+    <string name="os_fire_os">Fire OS</string>
+    <string name="os_other">Another system</string>
 </resources>

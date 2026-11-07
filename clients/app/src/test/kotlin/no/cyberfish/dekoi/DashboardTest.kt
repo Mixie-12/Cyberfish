@@ -51,15 +51,6 @@ class DashboardTest {
         severityName = severity.name.lowercase(),
     )
 
-    private fun host(firstSeenAgo: Duration) =
-        NetworkHost(deviceId = "d", mac = "aa", ip = "192.168.1.2", firstSeenAt = now.minus(firstSeenAgo), lastSeenAt = now)
-
-    @Test
-    fun `a host is new for a week after DeKoi first sees it`() {
-        assertEquals(true, host(Duration.ofDays(6)).isNew(now))
-        assertEquals(false, host(Duration.ofDays(7)).isNew(now))
-    }
-
     @Test
     fun `a DeKoi is setting up until it has registered and checked in, then online or offline`() {
         assertEquals(DekoiStatus.SETTING_UP, device("a", registered = false, seenAgo = null).status(now))

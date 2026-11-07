@@ -122,6 +122,23 @@ class Backend(
         client.from("owner_settings").upsert(buildJsonObject { put("weekly_summary", on) }) { onConflict = "user_id" }
     }
 
+    /** The owner's name for a host and the room it is in; null clears either (ADR 0013). */
+    suspend fun setNameAndRoom(
+        host: NetworkHost,
+        label: String?,
+        room: String?,
+    ) {
+        client.from("network_hosts").update({
+            set("label", label)
+            set("room", room)
+        }) {
+            filter {
+                eq("device_id", host.deviceId)
+                eq("mac", host.mac)
+            }
+        }
+    }
+
     private companion object {
         const val EVENT_LIMIT = 200L
     }

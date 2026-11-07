@@ -1,6 +1,5 @@
 package no.cyberfish.dekoi
 
-import java.time.Duration
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
@@ -8,13 +7,8 @@ import java.time.ZoneId
 // What Home and Your DeKoi count and pick from the owner's data. Plain
 // functions, so the screens only lay the results out.
 
-/** A host first seen this recently counts as new. */
-val NEW_HOST_WINDOW: Duration = Duration.ofDays(7)
-
 /** Longest DeKoi name the backend accepts (devices.name). */
 const val MAX_DEKOI_NAME = 40
-
-fun NetworkHost.isNew(now: Instant): Boolean = Duration.between(firstSeenAt, now) < NEW_HOST_WINDOW
 
 /** How a DeKoi is doing, the most worrying first. */
 enum class DekoiStatus { OFFLINE, SETTING_UP, ONLINE }

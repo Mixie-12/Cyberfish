@@ -71,34 +71,44 @@ monospace, copyable).
 **Network.** Header "38 devices · 3 new this week · 1 needs attention" and a
 "Networks" row. Map | List segmented control, choice saved; List is the
 default with TalkBack on.
-- Map: gateway at the centre; ring 1 infrastructure (switches, access
-  points, DeKoi with the brand mark); ring 2 everything else clustered by
-  kind. 40 dp tiles with a status dot (online green, not seen recently hollow
-  grey), severity halo for recent alerts, "New" badge. Thin straight spokes,
-  dashed when not seen recently. Over 40 devices: kind bubbles with counts,
-  tap to zoom in. Pinch zoom, pan, double-tap reset. Footer: "Shows the
-  devices DeKoi can see, not how they are connected." For TalkBack the map is
-  one node with a summary and a "Show as list" action.
+- Map: a radar in the HUD frame (ADR 0020). Gateway at the centre; ring 1
+  infrastructure (switches, access points, DeKoi with the brand mark); ring
+  2 everything else clustered by kind, or by room once any device has one
+  (room names outside the ring). 40 dp round nodes with the kind glyph, a
+  status dot (online filled, not seen recently hollow), severity halo for
+  alerts in 24 h, "New" badge. Hairline spokes in the accent at low
+  opacity, dashed when not seen recently. Over 40 devices: one bubble per
+  cluster with its count; tapping it scales in to that cluster. Pinch zoom;
+  pan once zoomed in (one finger otherwise scrolls the page); double-tap
+  fits. Footer: "Shows the devices your DeKoi can see, not how they are
+  connected." For TalkBack the map is one node with a summary and a "Show
+  as list" action.
 - List: search, sort (name, last seen, kind); sections Needs attention, New
-  this week, Online, Not seen recently. Row: tile, name, "Looks like a TV · LG
-  · 192.168.1.23", status.
-- Display name: host name, else model, else maker plus kind ("LG TV"), else
-  "Unknown device"; private addresses use `network_private`.
+  this week, Online, Not seen recently, or By room once any device has one.
+  Row: tile with status dot, name, "Looks like a TV · LG · 192.168.1.23",
+  severity, Known device or New tag.
+- Display name: the owner's name (ADR 0013), else host name, else model,
+  else maker plus kind ("LG TV"), else "Unknown device"; private addresses
+  use `network_private`.
 
-**Device detail.** (1) Hero: 96 dp kind tile with its idle animation, shared
-element from list or map; name, "Looks like a TV", status pill ("Online now"
-or "Last seen 2 h ago"), Known or New chip. (2) Attention card if it caused
-an alert in 24 h. (3) 14-day sparkline and "See all alerts from this
-device". (4) About: maker, model, system (`os`), announced name, service
-labels as plain chips. (5) Connection: address, network, hardware address
-(copyable), private-address note, first and last seen. (6) Known toggle.
+**Device detail.** (1) Hero in the HUD frame: 96 dp kind tile with its idle
+animation, shared element from list or map; name, "Looks like a TV", room,
+status ("Online now" or "Last seen 2 h ago"), Known device or New tag. (2)
+Attention card if it caused an alert in 24 h, linking to that alert. (3)
+14-day sparkline and "See all alerts from this device". (4) About: maker,
+model, system (`os`), announced name, service labels as plain tags. (5)
+Connection: address, network, hardware address (copyable), private-address
+note, first and last seen. (6) "Mark as known" (undone by "Remove from known devices") and "Name and room": a sheet
+with both fields and suggested rooms (those in use, then common ones).
 
 **Networks.** One card per network: "Your home network" (contains DeKoi's
 `local_ip`) or "Another network", the CIDR, the source in plain words
-(interface: "DeKoi is connected to it"; router_advertisement: "Announced by
+(interface: "Your DeKoi is connected to it"; router_advertisement: "Announced by
 a router"; dhcp_route: "Reached through a router"; observed: "Seen in
-traffic"), gateway, device count, a bar list of kinds. Footer: "DeKoi
-watches only the network it is plugged into."
+traffic"), gateway, device count ("None seen yet", never a bare 0), a bar
+list of kinds. Until a DeKoi has reported any, one sentence says it does so
+after its next automatic update, with its own address as "Your home
+network". Footer: "Your DeKoi watches only the network it is plugged into."
 
 **Your DeKoi.** Hero in the HUD frame (fish mark, name, status, "Checked
 in 1 min ago"). The setup checklist while setting up; otherwise "What DeKoi

@@ -69,6 +69,9 @@ import kotlinx.serialization.Serializable
 import no.cyberfish.dekoi.R
 import no.cyberfish.dekoi.alertBadgeCount
 import no.cyberfish.dekoi.shared.DesignTokens
+import no.cyberfish.dekoi.ui.network.HostDetailScreen
+import no.cyberfish.dekoi.ui.network.NetworkScreen
+import no.cyberfish.dekoi.ui.network.NetworksScreen
 import java.time.Instant
 
 /** Every place in the app. The four tab roots, then the screens pushed on a tab. */
@@ -250,7 +253,7 @@ private fun SignedIn(
             }
             composable<Route.HostDetail> { entry ->
                 val route = entry.toRoute<Route.HostDetail>()
-                HostDetailScreen(data, now, route.deviceId, route.mac, viewModel::setTrusted, navigate, back)
+                HostDetailScreen(data, now, route.deviceId, route.mac, viewModel::setTrusted, viewModel::setNameAndRoom, navigate, back)
             }
             composable<Route.Networks> {
                 NetworksScreen(data, back)
