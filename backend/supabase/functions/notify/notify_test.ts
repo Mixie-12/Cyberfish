@@ -1,9 +1,10 @@
 import { deepStrictEqual, equal, notEqual, ok } from "node:assert/strict";
 import {
   accessToken,
-  ALERT_CHANNEL,
   createHandler,
+  fcmMessage,
   type ServiceAccount,
+  type Target,
   templateFor,
 } from "./notify.ts";
 
@@ -49,7 +50,7 @@ function fakeFetch(targets: unknown[], fcmStatus = 200, fcmBody: unknown = {}) {
   const fetchFn = (input: string | URL | Request, init?: RequestInit) => {
     const url = String(input);
     calls.push({ url, body: String(init?.body ?? "") });
-    if (url === `${SUPABASE}/rest/v1/rpc/notification_targets_v1`) {
+    if (url === `${SUPABASE}/rest/v1/rpc/notification_targets_v2`) {
       return Promise.resolve(Response.json(targets));
     }
     if (url === `${SUPABASE}/rest/v1/rpc/forget_push_token_v1`) {
@@ -76,6 +77,15 @@ async function handler(fetchFn: typeof fetch) {
     },
     fetchFn,
   );
+}
+
+function target(
+  token: string,
+  template: string,
+  severity = "warning",
+  hostKind: string | null = null,
+): Target {
+  return { token, template, severity, host_kind: hostKind };
 }
 
 function webhook(body: unknown, secret = SECRET): Request {
@@ -108,8 +118,24 @@ Deno.test("every event kind has its own template; anything else gets the generic
   equal(templateFor("device_offline").title, "Your DeKoi went offline");
 });
 
+Deno.test("titles name the device kind from the fixed list, nothing else", () => {
+  equal(templateFor("port_scan", "tv").title, "A TV searched your network for openings");
+  equal(templateFor("port_scan", null).title, "A device searched your network for openings");
+  equal(templateFor("port_scan", "<b>evil</b>").title, templateFor("port_scan").title);
+  equal(templateFor("port_scan", "__proto__").title, templateFor("port_scan").title);
+});
+
+Deno.test("severity picks the channel; anything unexpected is an ordinary alert", () => {
+  const channel = (severity: string) =>
+    fcmMessage(1, target("t", "port_scan", severity)).message.android.notification.channel_id;
+  equal(channel("critical"), "alerts_urgent");
+  equal(channel("warning"), "alerts");
+  equal(channel("info"), "updates");
+  equal(channel("constructor"), "alerts");
+});
+
 Deno.test("a wrong or missing secret is refused before anything else happens", async () => {
-  const { calls, fetchFn } = fakeFetch([{ token: "phone", template: "login_attempt" }]);
+  const { calls, fetchFn } = fakeFetch([target("phone", "login_attempt")]);
   const handle = await handler(fetchFn);
   equal((await handle(webhook({ event_id: 1 }, "wrong"))).status, 401);
   const noHeader = new Request("http://notify.test/", { method: "POST", body: "{}" });
@@ -130,13 +156,15 @@ Deno.test("no targets means no token request and no message", async () => {
   const { calls, fetchFn } = fakeFetch([]);
   const handle = await handler(fetchFn);
   equal((await handle(webhook({ event_id: 7 }))).status, 204);
-  deepStrictEqual(calls.map((c) => c.url), [`${SUPABASE}/rest/v1/rpc/notification_targets_v1`]);
+  deepStrictEqual(calls.map((c) => c.url), [`${SUPABASE}/rest/v1/rpc/notification_targets_v2`]);
   deepStrictEqual(JSON.parse(calls[0].body), { event_id: 7 });
 });
 
 Deno.test("only the event id and the fixed template reach the message", async () => {
   const attacker = "<b>root</b>; rm -rf / \u001b[31m";
-  const { calls, fetchFn } = fakeFetch([{ token: "phone-1", template: "login_attempt" }]);
+  const { calls, fetchFn } = fakeFetch([
+    target("phone-1", "login_attempt", "critical", "computer"),
+  ]);
   const handle = await handler(fetchFn);
   const response = await handle(webhook({
     event_id: 42,
@@ -152,16 +180,27 @@ Deno.test("only the event id and the fixed template reach the message", async ()
   deepStrictEqual(JSON.parse(sends[0].body), {
     message: {
       token: "phone-1",
-      notification: templateFor("login_attempt"),
+      notification: {
+        title: "A computer tried to sign in to your DeKoi",
+        body: "Act now. Tap to see what happened and what to do.",
+      },
       data: { event_id: "42" },
-      android: { priority: "HIGH", notification: { channel_id: ALERT_CHANNEL } },
+      android: {
+        priority: "HIGH",
+        notification: {
+          channel_id: "alerts_urgent",
+          notification_priority: "PRIORITY_HIGH",
+          visibility: "PRIVATE",
+          tag: "event-42",
+        },
+      },
     },
   });
 });
 
 Deno.test("a token FCM reports as unregistered is forgotten", async () => {
   const { calls, fetchFn } = fakeFetch(
-    [{ token: "gone", template: "device_offline" }],
+    [target("gone", "device_offline")],
     404,
     {
       error: {
@@ -181,7 +220,7 @@ Deno.test("a token FCM reports as unregistered is forgotten", async () => {
 });
 
 Deno.test("other FCM errors keep the token and report a failure", async () => {
-  const { calls, fetchFn } = fakeFetch([{ token: "phone", template: "port_scan" }], 500, {
+  const { calls, fetchFn } = fakeFetch([target("phone", "port_scan")], 500, {
     error: { code: 500, status: "INTERNAL" },
   });
   const handle = await handler(fetchFn);

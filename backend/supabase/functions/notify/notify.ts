@@ -1,8 +1,10 @@
 // Sends the push notifications for one event. Whether an event notifies, and
-// whom, is decided in SQL (notification_targets_v1); this file only sends.
-// Notification text comes from fixed templates chosen by event kind, and the
-// only event field that reaches a message is its id, so nothing an attacker
-// typed or sent can ever appear on a phone.
+// whom, is decided in SQL (notification_targets_v2); this file only sends.
+// Notification text comes from fixed templates chosen by event kind, severity
+// and the source device's kind, all three fixed vocabularies checked by the
+// database (ADR 0010, 0011). The only other event field that reaches a
+// message is its id, so nothing an attacker typed or sent can ever appear on
+// a phone.
 
 export interface ServiceAccount {
   project_id: string;
@@ -24,49 +26,92 @@ interface Template {
   body: string;
 }
 
-interface Target {
+export interface Target {
   token: string;
   template: string;
+  severity: string;
+  host_kind: string | null;
 }
 
-// Must match the notification channel the app creates.
-export const ALERT_CHANNEL = "alerts";
+// Channel ids must match the channels the app creates (Push.kt); each one
+// carries one severity (ADR 0011).
+const CHANNELS: Record<string, { channel: string; priority: string; prefix: string }> = {
+  critical: { channel: "alerts_urgent", priority: "PRIORITY_HIGH", prefix: "Act now. " },
+  warning: { channel: "alerts", priority: "PRIORITY_DEFAULT", prefix: "Check soon. " },
+  info: { channel: "updates", priority: "PRIORITY_LOW", prefix: "" },
+};
 
 const FCM_SCOPE = "https://www.googleapis.com/auth/firebase.messaging";
 const ALERT_BODY = "Tap to see what happened and what to do.";
 
+// The source device as the subject of a title. Keys are the host kinds of
+// ADR 0010; anything else reads "A device".
+const SUBJECTS: Record<string, string> = {
+  router: "A router",
+  switch: "A network switch",
+  access_point: "A Wi-Fi access point",
+  computer: "A computer",
+  phone: "A phone",
+  tablet: "A tablet",
+  tv: "A TV",
+  media_player: "A streaming box",
+  speaker: "A speaker",
+  game_console: "A games console",
+  printer: "A printer",
+  camera: "A camera",
+  storage: "A storage box",
+  smart_home: "A smart home device",
+  wearable: "A watch",
+  server: "A server",
+};
+
 // Wording follows the event titles in the app's string resources.
-const TEMPLATES: Record<string, Template> = {
-  login_attempt: { title: "Someone tried to sign in to your DeKoi", body: ALERT_BODY },
-  connection: { title: "A device opened one of your decoys", body: ALERT_BODY },
-  port_scan: { title: "A device searched your network for openings", body: ALERT_BODY },
-  host_scan: { title: "A device searched your whole network", body: ALERT_BODY },
-  arp_spoof: { title: "A device is pretending to be another device", body: ALERT_BODY },
-  rogue_dhcp: { title: "A second device is handing out network settings", body: ALERT_BODY },
-  rogue_router: { title: "A second device announces itself as your router", body: ALERT_BODY },
-  name_poisoning: { title: "A device answers questions it should not", body: ALERT_BODY },
-  ids_alert: { title: "Suspicious traffic reached your DeKoi", body: ALERT_BODY },
-  device_offline: {
+const TEMPLATES: Record<string, (subject: string) => Template> = {
+  login_attempt: (s) => ({ title: `${s} tried to sign in to your DeKoi`, body: ALERT_BODY }),
+  connection: (s) => ({ title: `${s} opened one of your decoys`, body: ALERT_BODY }),
+  port_scan: (s) => ({ title: `${s} searched your network for openings`, body: ALERT_BODY }),
+  host_scan: (s) => ({ title: `${s} searched your whole network`, body: ALERT_BODY }),
+  arp_spoof: (s) => ({ title: `${s} is pretending to be another device`, body: ALERT_BODY }),
+  rogue_dhcp: (s) => ({ title: `${s} is handing out network settings`, body: ALERT_BODY }),
+  rogue_router: (s) => ({ title: `${s} announces itself as your router`, body: ALERT_BODY }),
+  name_poisoning: (s) => ({ title: `${s} answers questions it should not`, body: ALERT_BODY }),
+  ids_alert: (s) => ({ title: `${s} sent suspicious traffic to your DeKoi`, body: ALERT_BODY }),
+  device_offline: () => ({
     title: "Your DeKoi went offline",
     body:
       "It can’t warn you until it’s back. Check that it has power and that its cable is plugged in.",
-  },
+  }),
 };
 
-const OTHER: Template = { title: "Activity on your DeKoi", body: ALERT_BODY };
+const OTHER = (): Template => ({ title: "Activity on your DeKoi", body: ALERT_BODY });
 
-export function templateFor(key: string): Template {
-  return Object.hasOwn(TEMPLATES, key) ? TEMPLATES[key] : OTHER;
+export function templateFor(key: string, hostKind: string | null = null): Template {
+  const subject = hostKind !== null && Object.hasOwn(SUBJECTS, hostKind)
+    ? SUBJECTS[hostKind]
+    : "A device";
+  return (Object.hasOwn(TEMPLATES, key) ? TEMPLATES[key] : OTHER)(subject);
 }
 
-export function fcmMessage(token: string, eventId: number, templateKey: string) {
-  const { title, body } = templateFor(templateKey);
+export function fcmMessage(eventId: number, target: Target) {
+  const { title, body } = templateFor(target.template, target.host_kind);
+  const level = Object.hasOwn(CHANNELS, target.severity)
+    ? CHANNELS[target.severity]
+    : CHANNELS.warning;
   return {
     message: {
-      token,
-      notification: { title, body },
+      token: target.token,
+      notification: { title, body: level.prefix + body },
       data: { event_id: String(eventId) },
-      android: { priority: "HIGH", notification: { channel_id: ALERT_CHANNEL } },
+      android: {
+        priority: level.channel === "updates" ? "NORMAL" : "HIGH",
+        notification: {
+          channel_id: level.channel,
+          notification_priority: level.priority,
+          visibility: "PRIVATE",
+          // Lets the app clear the notification once the alert is opened.
+          tag: `event-${eventId}`,
+        },
+      },
     },
   };
 }
@@ -191,7 +236,7 @@ export function createHandler(config: Config, fetchFn: typeof fetch = fetch) {
     const eventId = await readEventId(request);
     if (eventId === null) return new Response(null, { status: 400 });
 
-    const targets: Target[] = await (await rpc("notification_targets_v1", { event_id: eventId }))
+    const targets: Target[] = await (await rpc("notification_targets_v2", { event_id: eventId }))
       .json();
     if (targets.length === 0) return new Response(null, { status: 204 });
 
@@ -203,7 +248,7 @@ export function createHandler(config: Config, fetchFn: typeof fetch = fetch) {
       const response = await fetchFn(sendUrl, {
         method: "POST",
         headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-        body: JSON.stringify(fcmMessage(target.token, eventId, target.template)),
+        body: JSON.stringify(fcmMessage(eventId, target)),
       });
       if (response.ok) {
         await response.body?.cancel();
