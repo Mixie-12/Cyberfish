@@ -27,6 +27,7 @@ one-time bootstrap, routine deploys, checks and backups.
    | Data API Config               | Read-write | `config push` (exposed schemas) |
    | Database, Database Config, SSL Enforcement, Network Restrictions, Realtime Config, Storage Config | Read | `config diff` |
    | Connection Pooling            | Read       | `db push` connection            |
+   | Add-ons                       | Read       | `config push` (checks add-ons first; found by the first deploy) |
 
    Nothing else: no API Keys, API Key Secrets, Backups, branches or
    organization permissions. Migrations use the database password, not the
