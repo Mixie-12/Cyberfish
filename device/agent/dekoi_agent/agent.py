@@ -145,7 +145,7 @@ class Agent:
         arguments = self._auth() | {
             "agent_version": self.config.agent_version,
             "services": running_services(self.decoys, listening_ports()),
-            "local_ip": inventory.local_ip(self.config.api_url),
+            "local_ip": inventory.local_ip(),
         }
         try:
             api.call(self.config, "device_heartbeat_v1", arguments)

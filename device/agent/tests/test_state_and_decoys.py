@@ -2,7 +2,7 @@ import stat
 from pathlib import Path
 
 from dekoi_agent.decoys import listening_ports, load_decoys, running_services
-from dekoi_agent.inventory import mac_for, parse_arp_scan
+from dekoi_agent.inventory import mac_for, parse_arp_scan, scan_target
 from dekoi_agent.state import MAX_QUEUE, State
 
 CANARY_CONFIG = Path(__file__).parents[2] / "canary" / "opencanary.conf"
@@ -73,6 +73,28 @@ def test_parse_arp_scan() -> None:
         {"mac": "3c:22:fb:00:00:01", "ip": "192.168.1.1", "vendor": "Apple, Inc."},
         {"mac": "02:11:22:33:44:55", "ip": "192.168.1.7"},
     ]
+
+
+ROUTE_HEADER = (
+    "Iface\tDestination\tGateway \tFlags\tRefCnt\tUse\tMetric\tMask\t\tMTU\tWindow\tIRTT\n"
+)
+
+
+def test_scan_target_is_the_connected_home_subnet(tmp_path: Path) -> None:
+    table = tmp_path / "route"
+    table.write_text(
+        ROUTE_HEADER
+        + "eth0\t00000000\t0101A8C0\t0003\t0\t0\t100\t00000000\t0\t0\t0\n"
+        + "eth0\t0001A8C0\t00000000\t0001\t0\t0\t100\t00FFFFFF\t0\t0\t0\n"
+    )
+    assert scan_target("192.168.1.20", table) == ("eth0", "192.168.1.0/24")
+
+
+def test_scan_target_is_capped_on_large_networks(tmp_path: Path) -> None:
+    table = tmp_path / "route"
+    table.write_text(ROUTE_HEADER + "eth0\t0000010A\t00000000\t0001\t0\t0\t0\t0000FFFF\t0\t0\t0\n")
+    assert scan_target("10.1.7.4", table) == ("eth0", "10.1.4.0/22")
+    assert scan_target("172.16.0.1", table) is None
 
 
 def test_mac_for_uses_complete_neighbour_entries(tmp_path: Path) -> None:

@@ -61,7 +61,7 @@ def backend(monkeypatch: pytest.MonkeyPatch) -> FakeBackend:
     fake = FakeBackend()
     monkeypatch.setattr(api, "call", fake)
     monkeypatch.setattr(agent_module, "listening_ports", lambda: {22, 80})
-    monkeypatch.setattr(agent_module.inventory, "local_ip", lambda url: "192.168.1.20")
+    monkeypatch.setattr(agent_module.inventory, "local_ip", lambda: "192.168.1.20")
     monkeypatch.setattr(agent_module.inventory, "mac_for", lambda ip: None)
     monkeypatch.setattr(agent_module.inventory, "scan_hosts", lambda: [])
     return fake
