@@ -71,6 +71,13 @@ Kinds a device may report (`private.device_event_kinds()`):
 | `name_poisoning` | LLMNR, NBT-NS and mDNS probes            | `protocol`                          |
 | `ids_alert`      | Suricata                                 | `signature`, `category`, `severity`, `signature_id` |
 
+The backend writes three more kinds itself (`private.event_kinds()`):
+`device_offline` and `device_online` (scheduled job and heartbeat), and
+`new_host`. Once a DeKoi's first inventory row is 24 hours old, a trigger on
+`network_hosts` turns the first sighting of a hardware address into a
+`new_host` event carrying its `src_mac` and `src_ip` (ADR 0015). The
+learning period is per DeKoi; an address another DeKoi knows is still new.
+
 `detail` accepts only these fields: strings up to 256 characters without
 control characters; `targets`, `severity` and `signature_id` as non-negative
 integers; `ports` as up to 64 numbers. Payload excerpts are never accepted.
@@ -130,7 +137,8 @@ pg_cron runs `private.mark_offline_devices()` every 5 minutes (one
 
 Every insert into `events` posts `{"event_id": <id>}` with the header
 `X-Notify-Secret` to the Edge Function `notify` (pg_net trigger; URL and
-secret in Vault). `notify` asks `notification_targets_v1(event_id)` which
-phones to notify and with which template, and sends FCM HTTP v1 messages
-whose data payload is `event_id` only. The rules are in that function
-(ADR 0007).
+secret in Vault). `notify` asks `notification_targets_v2(event_id)` which
+phones to notify, with which template, severity and source kind, and sends
+FCM HTTP v1 messages whose data payload is `event_id` only. The rules are in
+`notification_targets_v1` (ADR 0007); `new_host` events notify at most once
+per DeKoi per 10 minutes, so devices that join together give one push.

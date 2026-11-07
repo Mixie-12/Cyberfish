@@ -107,6 +107,7 @@ Deno.test("every event kind has its own template; anything else gets the generic
     "rogue_router",
     "name_poisoning",
     "ids_alert",
+    "new_host",
     "device_offline",
   ];
   const generic = templateFor("something_new");
@@ -123,6 +124,20 @@ Deno.test("titles name the device kind from the fixed list, nothing else", () =>
   equal(templateFor("port_scan", null).title, "A device searched your network for openings");
   equal(templateFor("port_scan", "<b>evil</b>").title, templateFor("port_scan").title);
   equal(templateFor("port_scan", "__proto__").title, templateFor("port_scan").title);
+});
+
+Deno.test("a new device is named by its kind and goes to the updates channel", () => {
+  equal(templateFor("new_host").title, "A new device joined your network");
+  equal(templateFor("new_host", "phone").title, "A new phone joined your network");
+  equal(templateFor("new_host", "<b>evil</b>").title, "A new device joined your network");
+  const { message } = fcmMessage(9, target("t", "new_host", "info", "tv"));
+  equal(message.notification.title, "A new TV joined your network");
+  equal(
+    message.notification.body,
+    "Tap to see what it looks like. If you know it, mark it as known.",
+  );
+  equal(message.android.notification.channel_id, "updates");
+  equal(message.android.priority, "NORMAL");
 });
 
 Deno.test("severity picks the channel; anything unexpected is an ordinary alert", () => {

@@ -44,38 +44,43 @@ const CHANNELS: Record<string, { channel: string; priority: string; prefix: stri
 const FCM_SCOPE = "https://www.googleapis.com/auth/firebase.messaging";
 const ALERT_BODY = "Tap to see what happened and what to do.";
 
-// The source device as the subject of a title. Keys are the host kinds of
-// ADR 0010; anything else reads "A device".
-const SUBJECTS: Record<string, string> = {
-  router: "A router",
-  switch: "A network switch",
-  access_point: "A Wi-Fi access point",
-  computer: "A computer",
-  phone: "A phone",
-  tablet: "A tablet",
-  tv: "A TV",
-  media_player: "A streaming box",
-  speaker: "A speaker",
-  game_console: "A games console",
-  printer: "A printer",
-  camera: "A camera",
-  storage: "A storage box",
-  smart_home: "A smart home device",
-  wearable: "A watch",
-  server: "A server",
+// The source device as the noun of a title. Keys are the host kinds of ADR
+// 0010; anything else reads "device". Every noun starts with a consonant
+// sound, so titles say "A".
+const NOUNS: Record<string, string> = {
+  router: "router",
+  switch: "network switch",
+  access_point: "Wi-Fi access point",
+  computer: "computer",
+  phone: "phone",
+  tablet: "tablet",
+  tv: "TV",
+  media_player: "streaming box",
+  speaker: "speaker",
+  game_console: "games console",
+  printer: "printer",
+  camera: "camera",
+  storage: "storage box",
+  smart_home: "smart home device",
+  wearable: "watch",
+  server: "server",
 };
 
 // Wording follows the event titles in the app's string resources.
-const TEMPLATES: Record<string, (subject: string) => Template> = {
-  login_attempt: (s) => ({ title: `${s} tried to sign in to your DeKoi`, body: ALERT_BODY }),
-  connection: (s) => ({ title: `${s} opened one of your decoys`, body: ALERT_BODY }),
-  port_scan: (s) => ({ title: `${s} searched your network for openings`, body: ALERT_BODY }),
-  host_scan: (s) => ({ title: `${s} searched your whole network`, body: ALERT_BODY }),
-  arp_spoof: (s) => ({ title: `${s} is pretending to be another device`, body: ALERT_BODY }),
-  rogue_dhcp: (s) => ({ title: `${s} is handing out network settings`, body: ALERT_BODY }),
-  rogue_router: (s) => ({ title: `${s} announces itself as your router`, body: ALERT_BODY }),
-  name_poisoning: (s) => ({ title: `${s} answers questions it should not`, body: ALERT_BODY }),
-  ids_alert: (s) => ({ title: `${s} sent suspicious traffic to your DeKoi`, body: ALERT_BODY }),
+const TEMPLATES: Record<string, (noun: string) => Template> = {
+  login_attempt: (n) => ({ title: `A ${n} tried to sign in to your DeKoi`, body: ALERT_BODY }),
+  connection: (n) => ({ title: `A ${n} opened one of your decoys`, body: ALERT_BODY }),
+  port_scan: (n) => ({ title: `A ${n} searched your network for openings`, body: ALERT_BODY }),
+  host_scan: (n) => ({ title: `A ${n} searched your whole network`, body: ALERT_BODY }),
+  arp_spoof: (n) => ({ title: `A ${n} is pretending to be another device`, body: ALERT_BODY }),
+  rogue_dhcp: (n) => ({ title: `A ${n} is handing out network settings`, body: ALERT_BODY }),
+  rogue_router: (n) => ({ title: `A ${n} announces itself as your router`, body: ALERT_BODY }),
+  name_poisoning: (n) => ({ title: `A ${n} answers questions it should not`, body: ALERT_BODY }),
+  ids_alert: (n) => ({ title: `A ${n} sent suspicious traffic to your DeKoi`, body: ALERT_BODY }),
+  new_host: (n) => ({
+    title: `A new ${n} joined your network`,
+    body: "Tap to see what it looks like. If you know it, mark it as known.",
+  }),
   device_offline: () => ({
     title: "Your DeKoi went offline",
     body:
@@ -86,10 +91,8 @@ const TEMPLATES: Record<string, (subject: string) => Template> = {
 const OTHER = (): Template => ({ title: "Activity on your DeKoi", body: ALERT_BODY });
 
 export function templateFor(key: string, hostKind: string | null = null): Template {
-  const subject = hostKind !== null && Object.hasOwn(SUBJECTS, hostKind)
-    ? SUBJECTS[hostKind]
-    : "A device";
-  return (Object.hasOwn(TEMPLATES, key) ? TEMPLATES[key] : OTHER)(subject);
+  const noun = hostKind !== null && Object.hasOwn(NOUNS, hostKind) ? NOUNS[hostKind] : "device";
+  return (Object.hasOwn(TEMPLATES, key) ? TEMPLATES[key] : OTHER)(noun);
 }
 
 export function fcmMessage(eventId: number, target: Target) {
