@@ -67,11 +67,11 @@
     <string name="event_evil_twin_title">Someone copied your Wi-Fi name</string>
     <string name="event_evil_twin_action">Copied your Wi-Fi name</string>
     <string name="event_evil_twin_consequence">Your phones and computers could join the copy by mistake.</string>
-    <string name="event_evil_twin_why">A Wi-Fi network near your DeKoi uses the same name as yours, but with weaker protection or none. Whoever runs it can see and change what devices that join it send.</string>
+    <string name="event_evil_twin_why">Wi-Fi Guard found a Wi-Fi network near your DeKoi that uses the same name as yours, but with weaker protection or none. Whoever runs it can see and change what devices that join it send.</string>
     <string name="event_new_access_point_title">A new access point uses your Wi-Fi name</string>
     <string name="event_new_access_point_action">Started using your Wi-Fi name</string>
     <string name="event_new_access_point_consequence">Usually this is Wi-Fi equipment you added or replaced.</string>
-    <string name="event_new_access_point_why">Your DeKoi saw a new Wi-Fi access point with your network’s name and the same protection. That is normal when you add a mesh point or replace your router. It can also be someone copying your network who knows the password.</string>
+    <string name="event_new_access_point_why">Wi-Fi Guard saw a new Wi-Fi access point with your network’s name and the same protection. That is normal when you add a mesh point or replace your router. It can also be someone copying your network who knows the password.</string>
     <string name="event_offline_title">Your DeKoi went offline</string>
     <string name="event_offline_action">Went offline</string>
     <string name="event_offline_consequence">Your DeKoi can’t warn you until it is back.</string>

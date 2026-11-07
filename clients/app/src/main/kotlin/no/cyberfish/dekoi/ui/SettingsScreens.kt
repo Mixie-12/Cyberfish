@@ -106,7 +106,7 @@ fun SettingsScreen(
                 )
             }
         }
-        if (devices.isNotEmpty()) item { WifiNameSection(devices, onSetWifiName) }
+        if (devices.isNotEmpty()) item { WifiNameSection(devices, now, onSetWifiName) }
         item { Notifications() }
         item { WeeklySummary(weeklySummary, onWeeklySummary) }
         item { Privacy() }
