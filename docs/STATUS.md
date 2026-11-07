@@ -24,6 +24,7 @@ owner's bootstrap; Phase 7 (hardware) for a session with a Pi.
 | cosign image signing key, password   | GitHub secrets `COSIGN_PRIVATE_KEY`, `COSIGN_PASSWORD`; 1Password vault "Encryption", item "DeKoi cosign image signing key" |
 | cosign public key                    | `device/host/etc/dekoi/cosign.pub` (on every card)        |
 | Android release keystore, password   | GitHub secrets `ANDROID_KEYSTORE_BASE64`, `ANDROID_KEYSTORE_PASSWORD`; 1Password item "DeKoi Android release signing key". Alias `dekoi`. Certificate SHA-256 `7F:57:59:C5:01:5B:FC:7A:34:7A:72:35:35:54:07:91:96:E6:21:58:5A:9F:EE:69:44:75:86:A7:E8:43:67:41` |
+| Notification webhook secret          | GitHub secret `NOTIFY_SECRET` (generated 2026-11-07; written to Vault and the function by the deploy job) |
 | Supabase access token, DB password   | Not created yet (owner action 1)                          |
 | Google web client secret, Firebase service account | Not created yet (owner action 3)            |
 
@@ -52,7 +53,14 @@ down, no typed password in the backend. Signature enforcement tested.
 All screens, plain language for every event kind, Google sign-in with nonce,
 QR scanning without camera permission. 12 unit tests, Android lint clean.
 
-### Phase 5: Notifications (in progress, parallel branch)
+### Phase 5: Notifications (backend done, app in progress)
+Decision function in SQL (coalescing per device and source per 10 minutes,
+trusted sources never, device_offline always, device_online never), events
+trigger through pg_net with the webhook URL and secret in Vault, `notify`
+Edge Function sending FCM HTTP v1 with fixed templates (ADR 0007). 106
+pgTAP tests and 8 Deno tests; verified end to end locally against a mock FCM.
+The backend deploys without Firebase; pushes start once the service account
+secret exists.
 
 ### Phase 6: DeKoi Setup (in progress, parallel branch)
 
@@ -73,9 +81,12 @@ QR scanning without camera permission. 12 unit tests, Android lint clean.
    - OAuth client "Android": package `no.cyberfish.dekoi`, SHA-256 from the
      table above. No secret.
    - Firebase project on the same Google Cloud project, Android app
-     `no.cyberfish.dekoi`; its public values become variables (names in the
-     Phase 5 report), and a service account key for FCM the secret
-     `FCM_SERVICE_ACCOUNT`.
+     `no.cyberfish.dekoi`. Its public values become the repository
+     variables `FIREBASE_PROJECT_ID`, `FIREBASE_APP_ID`, `FIREBASE_API_KEY`,
+     `FIREBASE_SENDER_ID`. A service account key (Project settings, Service
+     accounts, Generate new private key) becomes the secret
+     `FCM_SERVICE_ACCOUNT`: `gh secret set FCM_SERVICE_ACCOUNT < key.json`,
+     then delete the file.
 4. Phase 7 session: a Raspberry Pi 4 or 5, a memory card, a card reader, a
    network cable, an Android phone; about one hour.
 
