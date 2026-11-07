@@ -50,6 +50,21 @@ navigation graph existed.
   second after it started, six times, and the phone's log had already
   dropped the app's lines. The 240-block limit is the fix for the most
   likely cause; the details on the screen say what happened if it is not.
+- Found with v0.2.4: writes ran 7 to 34 seconds, then stopped with "Could
+  not read from device, result == -1 errno 0" behind "The reader did not
+  complete a command"; the reader stayed attached throughout. A transfer
+  had failed, most likely libaums' fixed 5-second transfer timeout while
+  the card paused, and libaums sends the next command without a reset, so
+  every retry met a reader still inside the old command. Now any failed
+  transfer is followed by Reset Recovery (USB MSC BOT 1.0, 5.3.4: Bulk-Only
+  Mass Storage Reset, then Clear Feature HALT on both endpoints through
+  libaums' native clear-halt, which resets the host's data toggle too)
+  before the command goes again, six times at most: about 30 seconds for a
+  card that pauses, as Linux allows a command. A unit attention for a
+  reset (ASC 29h) is retried; one for a changed card still stops the
+  write. Not chosen: our own UsbCommunication with a longer timeout, which
+  would need native code for clear-halt; libaums' UsbRequest mode, whose
+  read path waits for the wrong request.
 - Navigation effects run only once the back stack has an entry.
 
 ## Consequences

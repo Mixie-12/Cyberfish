@@ -3,6 +3,7 @@ package no.cyberfish.dekoi
 import android.hardware.usb.UsbEndpoint
 import android.hardware.usb.UsbInterface
 import me.jahnen.libaums.core.usb.UsbCommunication
+import java.io.IOException
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import kotlin.random.Random
@@ -27,16 +28,30 @@ private const val DATA_PROTECT = 0x07
 private const val BECOMING_READY = 0x04
 private const val WRITE_PROTECTED = 0x27
 private const val MEDIUM_CHANGED = 0x28
+private const val RESET_OCCURRED = 0x29
 private const val MEDIUM_NOT_PRESENT = 0x3A
 private const val INVALID_FIELD = 0x24
 
 private const val BLOCK = 512
+
+// What AndroidUsbCommunication throws when a transfer times out on the owner's phone.
+private const val TRANSFER_FAILED = "Could not read from device, result == -1 errno 0 null"
+
+/** UsbEndpoint's constructor is a stub that throws on the JVM; the reader only compares endpoints. */
+private fun endpoint(): UsbEndpoint {
+    val unsafe = Class.forName("sun.misc.Unsafe")
+    val instance = unsafe.getDeclaredField("theUnsafe").apply { isAccessible = true }.get(null)
+    return unsafe.getMethod("allocateInstance", Class::class.java).invoke(instance, UsbEndpoint::class.java) as UsbEndpoint
+}
 
 /**
  * A USB card reader as the phone sees it: SCSI commands over bulk-only
  * transport (USB MSC BOT 1.0). Its sense data is the 18 bytes asked for,
  * and its additional length can say it has more, as real readers do. It
  * refuses reads and writes of more than [maxBlocks] blocks in one command.
+ * Its [failingTransfer]th data transfer to it fails like a timeout; then it
+ * refuses every transfer until a Bulk-Only Mass Storage Reset, after which
+ * it reports the reset once.
  */
 private class SimulatedReader(
     private val card: ByteArray?,
@@ -45,29 +60,46 @@ private class SimulatedReader(
     private val locked: Boolean = false,
     private val additionalSenseLength: Int = 10,
     private val maxBlocks: Int = Int.MAX_VALUE,
+    private val failingTransfer: Int = 0,
 ) : UsbCommunication {
     private val toHost = ArrayDeque<ByteBuffer>()
     private var write: Write? = null
+    private var dataTransfers = 0
+    private var outOfStep = false
+    private var resetReported = true
+    var resets = 0
+        private set
     private var senseKey = 0
     private var senseCode = 0
     private var senseQualifier = 0
 
+    /** A WRITE(10) whose data is still coming; [refusal] is the sense it ends with, if it fails. */
     private class Write(
         val tag: Int,
         var offset: Int,
         var remaining: Int,
-        val refused: Boolean,
+        val refusal: Pair<Int, Int>?,
     )
 
     override fun bulkOutTransfer(src: ByteBuffer): Int {
+        if (outOfStep) throw IOException(TRANSFER_FAILED)
         val count = src.remaining()
         val pending = write
-        if (pending == null) command(src) else data(pending, src)
+        if (pending == null) {
+            command(src)
+        } else {
+            if (++dataTransfers == failingTransfer) {
+                outOfStep = true
+                throw IOException(TRANSFER_FAILED)
+            }
+            data(pending, src)
+        }
         return count
     }
 
     // As AndroidUsbCommunication: the bytes land at the position, which moves past them.
     override fun bulkInTransfer(dest: ByteBuffer): Int {
+        if (outOfStep) throw IOException(TRANSFER_FAILED)
         val next = toHost.first()
         val count = minOf(next.remaining(), dest.remaining())
         dest.put(next.array(), next.position(), count)
@@ -86,7 +118,15 @@ private class SimulatedReader(
         val offset = big.getInt(17) * BLOCK
         val blocks = big.getShort(22).toInt()
         val bytes = blocks * BLOCK
-        when (cbw[15].toInt() and 0xFF) {
+        val opcode = cbw[15].toInt() and 0xFF
+        val refusal =
+            when {
+                opcode != READ_10 && opcode != WRITE_10 -> null
+                !resetReported -> (UNIT_ATTENTION to RESET_OCCURRED).also { resetReported = true }
+                blocks > maxBlocks -> ILLEGAL_REQUEST to INVALID_FIELD
+                else -> null
+            }
+        when (opcode) {
             INQUIRY -> {
                 answer(tag, ByteArray(36))
             }
@@ -104,11 +144,11 @@ private class SimulatedReader(
             }
 
             READ_10 -> {
-                if (blocks > maxBlocks) refuse(tag, bytes) else answer(tag, checkNotNull(card).copyOfRange(offset, offset + bytes))
+                if (refusal != null) refuse(tag, bytes, refusal) else answer(tag, checkNotNull(card).copyOfRange(offset, offset + bytes))
             }
 
             WRITE_10 -> {
-                write = Write(tag, offset, bytes, refused = blocks > maxBlocks)
+                write = Write(tag, offset, bytes, refusal)
             }
 
             else -> {
@@ -122,26 +162,24 @@ private class SimulatedReader(
         src: ByteBuffer,
     ) {
         val count = src.remaining()
-        val kept = !locked && !pending.refused
-        if (kept) src.get(checkNotNull(card), pending.offset, count) else src.position(src.limit())
+        val refusal = pending.refusal ?: (DATA_PROTECT to WRITE_PROTECTED).takeIf { locked }
+        if (refusal == null) src.get(checkNotNull(card), pending.offset, count) else src.position(src.limit())
         pending.offset += count
         pending.remaining -= count
         if (pending.remaining > 0) return
         write = null
-        when {
-            pending.refused -> fail(ILLEGAL_REQUEST, INVALID_FIELD)
-            locked -> fail(DATA_PROTECT, WRITE_PROTECTED)
-        }
-        status(pending.tag, kept)
+        refusal?.let { (key, code) -> fail(key, code) }
+        status(pending.tag, refusal == null)
     }
 
     // The data phase still runs, as the host asked for it; the status says the command failed.
     private fun refuse(
         tag: Int,
         bytes: Int,
+        refusal: Pair<Int, Int>,
     ) {
         toHost += ByteBuffer.wrap(ByteArray(bytes))
-        fail(ILLEGAL_REQUEST, INVALID_FIELD)
+        fail(refusal.first, refusal.second)
         status(tag, false)
     }
 
@@ -219,10 +257,11 @@ private class SimulatedReader(
         toHost += csw
     }
 
-    override val inEndpoint: UsbEndpoint get() = error("Not simulated")
-    override val outEndpoint: UsbEndpoint get() = error("Not simulated")
+    override val inEndpoint: UsbEndpoint = endpoint()
+    override val outEndpoint: UsbEndpoint = endpoint()
     override val usbInterface: UsbInterface get() = error("Not simulated")
 
+    // Only the Bulk-Only Mass Storage Reset: back to waiting for a command.
     override fun controlTransfer(
         requestType: Int,
         request: Int,
@@ -230,11 +269,21 @@ private class SimulatedReader(
         index: Int,
         buffer: ByteArray,
         length: Int,
-    ): Int = error("Not simulated")
+    ): Int {
+        check(requestType == 0x21 && request == 0xFF && index == 0) { "Not simulated" }
+        outOfStep = false
+        write = null
+        toHost.clear()
+        resetReported = false
+        resets++
+        return 0
+    }
 
     override fun resetDevice() = error("Not simulated")
 
-    override fun clearFeatureHalt(endpoint: UsbEndpoint) = error("Not simulated")
+    override fun clearFeatureHalt(endpoint: UsbEndpoint) {
+        check(endpoint === inEndpoint || endpoint === outEndpoint) { "Not this reader's endpoint" }
+    }
 
     override fun close() = Unit
 }
@@ -247,7 +296,7 @@ class ScsiBlockDeviceTest {
         locked: Boolean = false,
         additionalSenseLength: Int = 10,
         maxBlocks: Int = Int.MAX_VALUE,
-    ) = ScsiBlockDevice(SimulatedReader(card, unitAttentions, becomingReady, locked, additionalSenseLength, maxBlocks), 0)
+    ) = ScsiBlockDevice(SimulatedReader(card, unitAttentions, becomingReady, locked, additionalSenseLength, maxBlocks), 0, 0)
 
     @Test
     fun `an empty slot is no card`() {
@@ -299,6 +348,19 @@ class ScsiBlockDeviceTest {
         card.read(1, read)
         assertContentEquals(written, read.array())
         assertEquals(read.limit(), read.position())
+    }
+
+    @Test
+    fun `a reader that stops in the middle of a write is reset, and the write goes on`() {
+        // libaums 0.10.0 sends the next command without a reset, so every retry fails.
+        val reader = SimulatedReader(ByteArray(4096 * BLOCK), maxBlocks = 240, failingTransfer = 3)
+        val card = assertNotNull(inserted(ScsiBlockDevice(reader, 0, 0)))
+        val written = Random(9).nextBytes(CHUNK)
+        card.write(1, ByteBuffer.wrap(written))
+        val read = ByteBuffer.allocate(CHUNK)
+        card.read(1, read)
+        assertContentEquals(written, read.array())
+        assertEquals(1, reader.resets)
     }
 
     @Test

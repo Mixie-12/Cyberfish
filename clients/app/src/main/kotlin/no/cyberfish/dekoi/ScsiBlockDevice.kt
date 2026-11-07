@@ -33,7 +33,6 @@ import me.jahnen.libaums.core.driver.scsi.commands.sense.ScsiRequestSense
 import me.jahnen.libaums.core.driver.scsi.commands.sense.ScsiRequestSenseResponse
 import me.jahnen.libaums.core.driver.scsi.commands.sense.SenseException
 import me.jahnen.libaums.core.driver.scsi.commands.sense.UnitAttention
-import me.jahnen.libaums.core.usb.PipeException
 import me.jahnen.libaums.core.usb.UsbCommunication
 import java.io.IOException
 import java.nio.ByteBuffer
@@ -43,7 +42,8 @@ import java.nio.ByteBuffer
  * fae7261, which no release has (ADR 0029). In 0.10.0 every REQUEST SENSE
  * throws IllegalArgumentException, so a reader that reports anything, an
  * empty slot or a card just put in, closes the app. Also changed: reads and
- * writes go in commands of at most 240 blocks, a retried
+ * writes go in commands of at most 240 blocks, any failed transfer is
+ * followed by Reset Recovery before the command goes again, a retried
  * command starts from the buffer it was given, a transfer that moves nothing
  * ends the data phase instead of looping, the status is read even after
  * short data, and the InitRequired handling, which libaums never triggers,
@@ -55,6 +55,8 @@ import java.nio.ByteBuffer
 internal class ScsiBlockDevice(
     private val usb: UsbCommunication,
     private val lun: Byte,
+    /** The mass storage interface's number, which the reset names. */
+    private val interfaceId: Int,
 ) : BlockDeviceDriver {
     private val commandBuffer = ByteBuffer.allocate(COMMAND_SIZE)
     private val statusBuffer = ByteBuffer.allocate(CommandStatusWrapper.SIZE)
@@ -161,12 +163,18 @@ internal class ScsiBlockDevice(
                 if (command.direction == Direction.NONE) return
             } catch (error: NotReadyTryAgain) {
                 last = error
+            } catch (error: UnitAttention) {
+                // A reset, the reader's or Reset Recovery's, is reported once and
+                // the command goes again. A changed card stops the write.
+                if (error.additionalSenseCode.toInt() != RESET_OCCURRED) throw error
+                last = error
             } catch (error: SenseException) {
                 throw error
-            } catch (error: PipeException) {
-                reset()
-                last = error
             } catch (error: IOException) {
+                // A failed transfer leaves the reader inside the command, where
+                // the next command block would arrive as data: libaums 0.10.0
+                // resets only after a stall, so one failure became six.
+                reset(error)
                 last = error
             }
             Thread.sleep(RETRY_DELAY_MS)
@@ -225,7 +233,6 @@ internal class ScsiBlockDevice(
             }
 
             CommandStatusWrapper.PHASE_ERROR -> {
-                reset()
                 throw IOException("Phase error")
             }
 
@@ -235,10 +242,13 @@ internal class ScsiBlockDevice(
         }
     }
 
-    // Bulk-Only Mass Storage Reset (USB MSC BOT 1.0, 3.1), then both endpoints out of halt.
-    private fun reset() {
-        if (usb.controlTransfer(RESET_TYPE, RESET_REQUEST, 0, usb.usbInterface.id, ByteArray(0), 0) == -1) {
-            throw IOException("Reset failed")
+    /**
+     * Reset Recovery (USB MSC BOT 1.0, 5.3.4): Bulk-Only Mass Storage Reset,
+     * then both endpoints out of halt, so the reader waits for a new command.
+     */
+    private fun reset(after: IOException) {
+        if (usb.controlTransfer(RESET_TYPE, RESET_REQUEST, 0, interfaceId, ByteArray(0), 0) < 0) {
+            throw IOException("The reader did not take a reset", after)
         }
         usb.clearFeatureHalt(usb.inEndpoint)
         usb.clearFeatureHalt(usb.outEndpoint)
@@ -255,5 +265,8 @@ internal class ScsiBlockDevice(
         const val RETRY_DELAY_MS = 100L
         const val RESET_TYPE = 0x21
         const val RESET_REQUEST = 0xFF
+
+        // Additional sense code 29h: power on, reset or bus device reset occurred (SPC).
+        const val RESET_OCCURRED = 0x29
     }
 }
