@@ -153,7 +153,7 @@ def main() -> None:
         active = subprocess.run(
             ["systemctl", "is-active", "--quiet", "dekoi-ids.service"], check=False
         )
-        return active.returncode == 0 and "engine started" in journal
+        return active.returncode == 0 and "engine started" in journal.lower()
 
     wait_for("IDS loaded its rules and is capturing, locked down", ids_running)
 
