@@ -9,11 +9,13 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyItemScope
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLocale
@@ -73,7 +75,7 @@ private fun SectionTitle(
     )
 }
 
-/** A numbered section: its label, then its content. Space and hairlines set it apart, not a card. */
+/** A numbered section: its label and a hairline to the edge, then its content. Space and the line set it apart, not a card. */
 @Composable
 fun Section(
     number: Int,
@@ -81,8 +83,11 @@ fun Section(
     modifier: Modifier = Modifier,
     content: @Composable ColumnScope.() -> Unit,
 ) {
-    Column(modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(Dimens.spaceM)) {
-        SectionTitle(number, title)
+    Column(modifier.fillMaxWidth().padding(top = Dimens.spaceS), verticalArrangement = Arrangement.spacedBy(Dimens.spaceL)) {
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Dimens.spaceM)) {
+            SectionTitle(number, title)
+            Hairline(Modifier.weight(1f))
+        }
         content()
     }
 }

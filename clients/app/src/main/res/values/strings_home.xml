@@ -11,19 +11,36 @@
     <string name="status_setting_up_body">The first start can take up to 10 minutes. You can leave this screen.</string>
     <string name="status_no_device_title">Add your DeKoi</string>
     <string name="status_no_device_body">Prepare the memory card with DeKoi Setup on a computer, then scan the code it shows.</string>
-    <string name="stat_decoys">Decoy services</string>
+    <string name="home_status">Status</string>
+    <string name="home_protections">Protections</string>
+    <string name="home_protections_paused">Paused while offline</string>
+    <plurals name="home_protections_all">
+        <item quantity="one">%1$d protection on</item>
+        <item quantity="other">All %1$d protections on</item>
+    </plurals>
+    <plurals name="home_protections_some">
+        <item quantity="one">%1$d of %2$d protection on</item>
+        <item quantity="other">%1$d of %2$d protections on</item>
+    </plurals>
+    <string name="home_needs_attention">Needs attention</string>
+    <string name="home_see_what_to_do">See what to do</string>
+    <string name="home_overview">At a glance</string>
     <string name="stat_devices_seen">Devices on your network</string>
-    <string name="home_latest_activity">Latest activity</string>
-    <string name="home_no_activity">Nothing has touched your decoys yet. That is how it should be.</string>
-    <string name="home_your_dekoi">Your DeKoi</string>
     <plurals name="stat_new_this_week">
         <item quantity="one">%1$d new this week</item>
         <item quantity="other">%1$d new this week</item>
     </plurals>
     <string name="stat_alerts">Alerts in 7 days</string>
+    <string name="home_your_dekoi">Your DeKoi</string>
+    <string name="stat_decoys">Decoy services</string>
     <plurals name="home_alerts_count">
         <item quantity="one">%1$d alert</item>
         <item quantity="other">%1$d alerts</item>
     </plurals>
     <string name="home_chart_bar">%1$s: %2$s</string>
+    <string name="home_chart_severity">%1$s: %2$d</string>
+    <string name="home_chart_hint">Tap a day to see its alerts.</string>
+    <string name="home_latest_activity">Latest activity</string>
+    <string name="home_no_activity">Nothing has touched your decoys yet. That is how it should be.</string>
+    <string name="home_see_all_alerts">See all alerts</string>
 </resources>
