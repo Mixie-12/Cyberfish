@@ -53,7 +53,7 @@ down, no typed password in the backend. Signature enforcement tested.
 All screens, plain language for every event kind, Google sign-in with nonce,
 QR scanning without camera permission. 12 unit tests, Android lint clean.
 
-### Phase 5: Notifications (backend done, app in progress)
+### Phase 5: Notifications (done, phone test pending)
 Decision function in SQL (coalescing per device and source per 10 minutes,
 trusted sources never, device_offline always, device_online never), events
 trigger through pg_net with the webhook URL and secret in Vault, `notify`
@@ -61,6 +61,11 @@ Edge Function sending FCM HTTP v1 with fixed templates (ADR 0007). 106
 pgTAP tests and 8 Deno tests; verified end to end locally against a mock FCM.
 The backend deploys without Firebase; pushes start once the service account
 secret exists.
+App: FCM started from Gradle properties (no google-services.json), token
+registered after sign-in and removed before sign-out, alerts channel, tapping
+opens the event, one plain-language permission request on Android 13+. FCM
+tokens are deprecated in firebase-messaging 26 but still work; app and
+function move to installation IDs together later (ADR 0007).
 
 ### Phase 6: DeKoi Setup (groundwork done, UI in progress)
 Card file rendering (user-data with the host files, netplan network-config;

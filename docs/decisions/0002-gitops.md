@@ -33,8 +33,12 @@ reproduce).
   only by the deploy job, which runs only on pushes to `main` after tests pass,
   never on pull requests, with read-only repository permissions and a
   concurrency group so deploys never overlap.
-- The access token is account-wide. The Supabase account holding the DeKoi
-  project should hold nothing else, so a leaked token reaches only DeKoi.
+- The access token is scoped to the DeKoi project and to the permissions
+  the deploy commands need (scoped tokens, generally available since
+  September 2026; list in `docs/runbooks/deploy-backend.md`), with an expiry
+  of at most a year. Changing auth settings requires Project Settings
+  read-write, which also allows pausing or deleting the project; accepted
+  so that sign-in configuration stays in git.
 - Branch protection is not available for private repositories on the GitHub
   Free plan, so anyone with write access to the repository can deploy. Today
   that is only the owner. Revisit before adding collaborators.

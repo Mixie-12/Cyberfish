@@ -14,7 +14,25 @@ one-time bootstrap, routine deploys, checks and backups.
    Let Supabase generate the database password and store it in 1Password.
 3. Note the project ref (the subdomain of the project URL) and the
    publishable key (Project Settings, API Keys). Both are public values.
-4. Create an access token (Account, Access Tokens) named `github-ci-dekoi`.
+4. Create a scoped access token (Account, Access Tokens) named
+   `github-ci-dekoi`: resource only the `dekoi` project, expiry one year at
+   most, preset "No access", then exactly these permissions:
+
+   | Permission                    | Level      | Used by                         |
+   | ----------------------------- | ---------- | ------------------------------- |
+   | Edge Functions                | Read-write | `functions deploy`              |
+   | Edge Function Secrets         | Read-write | `secrets set`                   |
+   | Auth Config                   | Read-write | `config push` (Google sign-in)  |
+   | Project Settings              | Read-write | required with Auth Config       |
+   | Data API Config               | Read-write | `config push` (exposed schemas) |
+   | Database, Database Config, SSL Enforcement, Network Restrictions, Realtime Config, Storage Config | Read | `config diff` |
+   | Connection Pooling            | Read       | `db push` connection            |
+
+   Nothing else: no API Keys, API Key Secrets, Backups, branches or
+   organization permissions. Migrations use the database password, not the
+   token. If a deploy fails with 403, the response lists the missing
+   permissions; tokens cannot be edited, so create a replacement with them
+   added and record the change here.
 5. Store everything in GitHub. Values for secrets are typed at the prompt, so
    they never appear in the shell history or in chat:
 
