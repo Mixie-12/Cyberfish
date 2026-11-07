@@ -37,7 +37,8 @@ private val SHIELD = 48.dp
 
 /**
  * The status hero: a thin ring with a soft glow around a shield, in the
- * status colour. The ring draws in once when it appears and moves to a new
+ * status colour. The ring draws in when it appears, unless [drawIn] is
+ * false because the owner has already seen it, and moves to a new
  * [fraction] when that changes, such as a setup step completing.
  * Decorative; the status text beside it carries the meaning.
  */
@@ -46,9 +47,10 @@ fun StatusRing(
     color: Color,
     modifier: Modifier = Modifier,
     fraction: Float = 1f,
+    drawIn: Boolean = true,
 ) {
     val reduceMotion = LocalReduceMotion.current
-    val sweep = remember { Animatable(if (reduceMotion) fraction else 0f) }
+    val sweep = remember { Animatable(if (reduceMotion || !drawIn) fraction else 0f) }
     LaunchedEffect(fraction, reduceMotion) {
         if (reduceMotion) sweep.snapTo(fraction) else sweep.animateTo(fraction, tween(DRAW_IN_MS, easing = FastOutSlowInEasing))
     }

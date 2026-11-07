@@ -265,6 +265,7 @@ private fun SignedIn(
                         viewModel.remove(it)
                         back()
                     },
+                    onNavigate = navigate,
                     onBack = back,
                 )
             }

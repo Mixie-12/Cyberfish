@@ -37,16 +37,21 @@ Alerts filtered to that service; Home tiles to their tabs.
 
 ## Screens
 
-**Home.** (1) Status hero: 120 dp ring around a shield, coloured by
-`Protection`, existing `status_*` strings, polite live region, ring draws in
-once (700 ms). (2) "Needs attention": up to three critical or warning alert
-cards (severity chip, title, device chip, "See what to do"); hidden when
+**Home.** Numbered sections ("01 / STATUS"), each label followed by a
+hairline. (1) Status hero: 120 dp ring around a shield, coloured by
+`Protection`, with a soft glow of that colour behind it; existing `status_*`
+strings, polite live region, ring draws in once (700 ms), not on every
+return. (2) "Needs attention": up to three critical or warning alerts of the
+last 24 h, one per source device, on quiet hairline-edged cards (severity
+chip, title, device, "See what to do"), each opening its alert; hidden when
 none. (3) 2x2 tiles: devices on your network (count, "3 new this week"),
 alerts in 7 days (count and sparkline), Your DeKoi (status, last check-in),
-decoys ("8 running"); tabular figures roll on change (300 ms); one column
-above font scale 1.5. (4) Seven-day bar chart stacked by severity; tapping a
-bar opens Alerts for that day. (5) Latest five events. `PullToRefreshBox`
-replaces the Refresh button.
+checks ("All 8 checks on", amber when one fails, grey while
+offline; opens Your DeKoi); tabular figures roll on change (300 ms); one
+column above font scale 1.5. (4) Seven-day bar chart stacked by severity;
+tapping a bar opens Alerts for that day. (5) Latest five events.
+`PullToRefreshBox` replaces the Refresh button. Without a DeKoi: "Add DeKoi"
+above the horizon.
 
 **Alerts.** Filter chips: All, Act now, Check soon, For your information,
 and a removable "From this device" chip. Sticky day headers. Row: 40 dp
@@ -95,13 +100,24 @@ a router"; dhcp_route: "Reached through a router"; observed: "Seen in
 traffic"), gateway, device count, a bar list of kinds. Footer: "DeKoi
 watches only the network it is plugged into."
 
-**Your DeKoi.** Hero (brand-mark tile, name, status, "Checked in 1 min
-ago"); 7-day uptime strip, one segment per hour from `device_online` and
-`device_offline` events; decoy grid, one tile per `Device.services` entry
-(plain name, "Touched 3 times this week", sparkline); details (software
-version, address, linked since); rename inline, Remove with confirmation;
-the setup checklist while setting up. No CPU, temperature, disk or bandwidth:
-the heartbeat does not report them.
+**Your DeKoi.** Hero in the HUD frame (fish mark, name, status, "Checked
+in 1 min ago"). The setup checklist while setting up; otherwise "What DeKoi
+watches" (ADR 0013): one row per monitor in plain words with the numbers
+the DeKoi reports ("Checking traffic against 48,213 known attack patterns",
+"Updated 3 Nov"), a green check when on, amber when failing, grey otherwise
+and while offline; the software version and when it last updated; the
+reported names collapsed under Technical details. Software from before
+ADR 0013 lists only its decoys and says more detail follows the next
+automatic update; no row is made up. 7-day uptime strip, one segment per
+hour from `device_online` and `device_offline` events. Decoy grid, one tile
+per `Device.services` entry (plain name, "Touched 3 times this week",
+sparkline; opens Alerts for that service). "Try your decoy" while online
+(ADR 0018): the storage login page at `http://<local_ip>` when `http` runs,
+the file share at `\\<local_ip>` (Windows) and `smb://<local_ip>` (Mac)
+when `smb` runs, each with where to type it, and that signing in sends an
+alert. Details (name with inline rename, address, linked since); Remove
+with confirmation. No CPU, temperature, disk or bandwidth: the heartbeat
+does not report them.
 
 **Settings.** Inset grouped list: Account (email, Sign out); Your DeKoi
 devices; Add DeKoi; Notifications (channel state, opens system channel
