@@ -1,0 +1,117 @@
+-- The privilege model as a whole: what each API role can reach, and the
+-- invariants every future migration must keep.
+begin;
+create extension if not exists pgtap with schema extensions;
+select plan(7);
+
+select is_empty(
+  $$
+    select c.oid::regclass::text
+    from pg_class as c
+    join pg_namespace as n on n.oid = c.relnamespace
+    where n.nspname in ('public', 'private')
+      and c.relkind in ('r', 'p')
+      and not c.relrowsecurity
+  $$,
+  'every table in public and private has row level security enabled'
+);
+
+select is_empty(
+  $$
+    select p.oid::regprocedure::text
+    from pg_proc as p
+    join pg_namespace as n on n.oid = p.pronamespace
+    where n.nspname in ('public', 'private')
+      and not coalesce('search_path=""' = any (p.proconfig), false)
+  $$,
+  'every function in public and private pins an empty search_path'
+);
+
+select is_empty(
+  $$
+    select r.role || ' ' || c.oid::regclass::text
+    from pg_class as c
+    join pg_namespace as n on n.oid = c.relnamespace
+    cross join (values ('anon'), ('service_role')) as r (role)
+    where n.nspname in ('public', 'private')
+      and c.relkind in ('r', 'p', 'v', 'm', 'f')
+      and (
+        has_table_privilege(r.role, c.oid, 'select,insert,update,delete,truncate,references,trigger')
+        or has_any_column_privilege(r.role, c.oid, 'select,insert,update,references')
+      )
+  $$,
+  'anon and service_role hold no table privileges'
+);
+
+select results_eq(
+  $$
+    select c.relname::text collate "default", p.privilege
+    from pg_class as c
+    join pg_namespace as n on n.oid = c.relnamespace
+    cross join unnest(array['select', 'insert', 'update', 'delete', 'truncate', 'references', 'trigger'])
+      as p (privilege)
+    where n.nspname in ('public', 'private')
+      and c.relkind in ('r', 'p')
+      and has_table_privilege('authenticated', c.oid, p.privilege)
+    order by 1, 2
+  $$,
+  $$
+    values
+      ('devices', 'delete'),
+      ('devices', 'select'),
+      ('events', 'select'),
+      ('network_hosts', 'select')
+  $$,
+  'authenticated holds exactly the expected table privileges'
+);
+
+select results_eq(
+  $$
+    select (c.relname::text || '.' || a.attname::text) collate "default"
+    from pg_attribute as a
+    join pg_class as c on c.oid = a.attrelid
+    join pg_namespace as n on n.oid = c.relnamespace
+    where n.nspname in ('public', 'private')
+      and c.relkind in ('r', 'p')
+      and a.attnum > 0
+      and not a.attisdropped
+      and has_column_privilege('authenticated', c.oid, a.attnum, 'update')
+    order by 1
+  $$,
+  $$ values ('devices.name'), ('network_hosts.trusted') $$,
+  'authenticated may update only device names and host trust'
+);
+
+select results_eq(
+  $$
+    select r.role, p.proname::text collate "default"
+    from pg_proc as p
+    join pg_namespace as n on n.oid = p.pronamespace
+    cross join (values ('anon'), ('authenticated'), ('service_role')) as r (role)
+    where n.nspname in ('public', 'private')
+      and has_function_privilege(r.role, p.oid, 'execute')
+    order by 1, 2
+  $$,
+  $$
+    values
+      ('anon', 'device_events_v1'),
+      ('anon', 'device_heartbeat_v1'),
+      ('anon', 'device_hosts_v1'),
+      ('anon', 'device_register_v1'),
+      ('authenticated', 'claim_device_v1'),
+      ('authenticated', 'delete_account_v1'),
+      ('authenticated', 'register_push_token_v1'),
+      ('authenticated', 'unregister_push_token_v1')
+  $$,
+  'API roles can execute exactly the published functions'
+);
+
+select ok(
+  not has_schema_privilege('anon', 'private', 'usage')
+    and not has_schema_privilege('authenticated', 'private', 'usage')
+    and not exists (select 1 from pg_extension where extname = 'pg_graphql'),
+  'the private schema is unreachable and GraphQL is disabled'
+);
+
+select * from finish();
+rollback;
