@@ -152,8 +152,17 @@ against a simulated reader in `ScsiBlockDeviceTest`. Plugging the reader in
 could also close it (navigation before the graph existed), fixed in
 `ui/App.kt`. With v0.2.3 each write then stopped about a second in, six
 times; v0.2.4 sends reads and writes in commands of at most 240 blocks,
-as Linux does, and shows the cause under "Technical details". A full
-write on the reader is not verified yet.
+as Linux does, and shows the cause under "Technical details". v0.2.6 adds
+Reset Recovery after a failed transfer; v0.2.8 does it without libaums'
+native code, whose JNI names do not match its classes (ADR 0029).
+
+The owner's reader (MXTronics "MXT USB Device", `aaaa:8816`) still fails:
+it dropped off USB once while being plugged in, its first write fails at
+random (within half a second, or after up to 34 seconds), and from then
+on it answers nothing, not the class reset and not INQUIRY on a fresh
+connection, until it is unplugged. Not verified: a full write with any
+other reader. DeKoi Setup on a computer writes cards through the
+operating system's driver.
 
 Needs hardware, not verified: the decoy in Windows Explorer and Finder on
 the owner's LAN; the Wi-Fi watch against a real evil twin; the Pi running
