@@ -1,4 +1,4 @@
-# 0026: Daily read-only checks of production
+# 0027: Daily read-only checks of production
 
 Status: accepted, 2026-11-07
 
