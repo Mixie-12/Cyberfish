@@ -1,6 +1,7 @@
 package no.cyberfish.dekoi.burner
 
 import no.cyberfish.dekoi.shared.ClaimCode
+import no.cyberfish.dekoi.shared.Network
 import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.io.path.createTempDirectory

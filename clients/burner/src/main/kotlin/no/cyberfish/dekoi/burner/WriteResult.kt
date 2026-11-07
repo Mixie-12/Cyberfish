@@ -1,6 +1,8 @@
 package no.cyberfish.dekoi.burner
 
 import no.cyberfish.dekoi.shared.ClaimCode
+import no.cyberfish.dekoi.shared.CloudInit
+import no.cyberfish.dekoi.shared.Network
 import java.nio.file.Files
 import java.nio.file.Path
 

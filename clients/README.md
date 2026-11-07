@@ -1,7 +1,8 @@
 # clients
 
-Gradle root for the Kotlin code: `shared/` (claim-code format and design
-tokens, plain Kotlin), `app/` (Android) and `burner/` (DeKoi Setup).
+Gradle root for the Kotlin code: `shared/` (claim-code format, cloud-init
+rendering and design tokens, plain Kotlin), `app/` (Android) and `burner/`
+(DeKoi Setup).
 
 Requires JDK 21 and the Android SDK (platform 37). Run from this directory:
 

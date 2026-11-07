@@ -1,6 +1,5 @@
-package no.cyberfish.dekoi.burner
+package no.cyberfish.dekoi.shared
 
-import no.cyberfish.dekoi.shared.ClaimCode
 import javax.crypto.SecretKeyFactory
 import javax.crypto.spec.PBEKeySpec
 
@@ -30,8 +29,9 @@ sealed interface Network {
 }
 
 /**
- * Renders the cloud-init files DeKoi Setup gives to Raspberry Pi Imager.
- * Pure: the caller supplies the template and the files it includes.
+ * Renders a card's cloud-init files, for DeKoi Setup (which gives them to
+ * Raspberry Pi Imager) and for the app (which writes the card itself, ADR
+ * 0014). Pure: the caller supplies the template and the files it includes.
  */
 object CloudInit {
     private val include = Regex("""^( +)content: !file (\S+)$""")
