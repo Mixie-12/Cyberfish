@@ -1,0 +1,163 @@
+name: monitor
+
+# Every day: read-only checks of production (docs/security.md,
+# "Monitoring"). A failed check opens an issue, or comments on the open
+# one. Logs and issues carry check names and counts only, never addresses,
+# keys or owners' data.
+
+on:
+  schedule:
+    - cron: "23 6 * * *"
+  workflow_dispatch:
+
+permissions: {}
+
+defaults:
+  run:
+    shell: bash
+
+# Two runs at once could both find no issue and open two.
+concurrency:
+  group: monitor
+  cancel-in-progress: false
+
+jobs:
+  # The request goes where a device's goes, with the publishable key only.
+  headers:
+    if: vars.SUPABASE_PROJECT_REF != ''
+    runs-on: ubuntu-24.04
+    permissions: {}
+    env:
+      API: https://${{ vars.SUPABASE_PROJECT_REF }}.supabase.co/rest/v1
+      KEY: ${{ vars.SUPABASE_PUBLISHABLE_KEY }}
+    steps:
+      - name: The client address and country reach the database
+        run: |
+          reply="$(curl -fsS -X POST "$API/rpc/self_check_v1" -H "apikey: $KEY" \
+            -H "Content-Type: application/json" -d '{}')"
+          echo "$reply"
+          if ! jq -e '.client_address == true and .country == true' <<< "$reply" > /dev/null; then
+            echo "::error::cf-connecting-ip or cf-ipcountry does not reach the database; per-address limits, public addresses, countries and the Wi-Fi radio are off"
+            exit 1
+          fi
+
+  # Token permissions: those `config diff` lists, and Realtime Config read.
+  config:
+    if: vars.SUPABASE_PROJECT_REF != ''
+    runs-on: ubuntu-24.04
+    environment: production
+    permissions:
+      contents: read
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      PROJECT_REF: ${{ vars.SUPABASE_PROJECT_REF }}
+      # What the deploy job in backend.yml gives config.toml.
+      SUPABASE_ENV: production
+      NOTIFY_URL: https://${{ vars.SUPABASE_PROJECT_REF }}.supabase.co/functions/v1/notify
+      SUPABASE_AUTH_EXTERNAL_GOOGLE_ENABLED: ${{ vars.GOOGLE_WEB_CLIENT_ID != '' }}
+      SUPABASE_AUTH_EXTERNAL_GOOGLE_CLIENT_ID: ${{ vars.GOOGLE_WEB_CLIENT_ID }}
+      SUPABASE_AUTH_EXTERNAL_GOOGLE_SECRET: ${{ secrets.GOOGLE_WEB_CLIENT_SECRET }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: supabase/setup-cli@689adcfb80d947100a1eab127289b97d1fb07b13 # v3.2.0
+        with:
+          version: 3.0.0
+      - name: Configuration matches config.toml
+        working-directory: backend
+        run: supabase config diff --remote="$PROJECT_REF" --exit-code
+      - name: Realtime is suspended
+        if: ${{ !cancelled() }}
+        run: |
+          suspended="$(curl -fsS "https://api.supabase.com/v1/projects/$PROJECT_REF/config/realtime" \
+            -H @<(printf 'Authorization: Bearer %s\n' "$SUPABASE_ACCESS_TOKEN") | jq .suspend)"
+          echo "suspend: $suspended"
+          if [ "$suspended" != true ]; then
+            echo "::error::Realtime is not suspended; see docs/security.md, Platform settings"
+            exit 1
+          fi
+
+  # Token permission: Database read. The query runs as supabase_read_only_user.
+  database:
+    if: vars.SUPABASE_PROJECT_REF != ''
+    runs-on: ubuntu-24.04
+    environment: production
+    permissions:
+      contents: read
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      PROJECT_REF: ${{ vars.SUPABASE_PROJECT_REF }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          sparse-checkout: backend
+      - name: Size, notify quota, flooding and jobs
+        working-directory: backend
+        run: |
+          # The jobs the migrations leave scheduled, applied in order.
+          jobs="$(grep -ho 'cron\.\(un\)\?schedule([^,)]*' supabase/migrations/*.sql | tr -d "'" |
+            jq -Rnc 'reduce (inputs | split("(")) as [$call, $name] ({};
+              if $call == "cron.unschedule" then del(.[$name]) else .[$name] = true end) | keys')"
+          rows="$(jq -n --rawfile sql monitor.sql --arg jobs "$jobs" '{query: $sql, parameters: [$jobs]}' |
+            curl -fsS -X POST "https://api.supabase.com/v1/projects/$PROJECT_REF/database/query/read-only" \
+              -H @<(printf 'Authorization: Bearer %s\n' "$SUPABASE_ACCESS_TOKEN") \
+              -H "Content-Type: application/json" --data-binary @-)"
+          jq -r '.[] | "\(.name): \(.value), at most \(.maximum)"' <<< "$rows"
+          jq -e 'length > 0 and all(.[]; .value <= .maximum)' <<< "$rows" > /dev/null
+
+  # Token permission: Advisors read, which the token in use does not have
+  # (docs/STATUS.md, owner actions). Until then this job fails.
+  advisors:
+    if: vars.SUPABASE_PROJECT_REF != ''
+    runs-on: ubuntu-24.04
+    environment: production
+    permissions:
+      contents: read
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      PROJECT_REF: ${{ vars.SUPABASE_PROJECT_REF }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: supabase/setup-cli@689adcfb80d947100a1eab127289b97d1fb07b13 # v3.2.0
+        with:
+          version: 3.0.0
+      # Ignored by name, because they cannot apply to sign-in with Google
+      # only on the Free plan: leaked password protection, MFA options.
+      - name: Security and performance advisors
+        working-directory: backend
+        run: |
+          supabase db advisors --remote="$PROJECT_REF" --type all --level warn --output-format json \
+            > "$RUNNER_TEMP/advisors.json"
+          jq -r '.results[] | "\(.level) \(.name): \(.detail)"' "$RUNNER_TEMP/advisors.json"
+          jq -e '[.results[] | select(.level != "INFO")
+            | select(.name != "auth_leaked_password_protection" and .name != "auth_insufficient_mfa_options")]
+            | length == 0' "$RUNNER_TEMP/advisors.json" > /dev/null
+
+  report:
+    needs: [headers, config, database, advisors]
+    if: failure()
+    runs-on: ubuntu-24.04
+    permissions:
+      issues: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      NEEDS: ${{ toJSON(needs) }}
+      RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+      TITLE: Production monitoring failed
+    steps:
+      - name: Open the issue, or comment on the open one
+        run: |
+          failed="$(jq -r '[to_entries[] | select(.value.result == "failure") | .key] | join(", ")' <<< "$NEEDS")"
+          body="Failed: $failed. Run: $RUN_URL. What each check means: docs/security.md, \"Monitoring\"."
+          number="$(gh issue list --state open --search "\"$TITLE\" in:title" --json number,title |
+            jq -r --arg title "$TITLE" 'map(select(.title == $title)) | first | .number // empty')"
+          if [ -n "$number" ]; then
+            gh issue comment "$number" --body "$body"
+          else
+            gh issue create --title "$TITLE" --body "$body"
+          fi

@@ -7,10 +7,12 @@ FROM docker.io/library/python:3.13-slim-trixie@sha256:09a17cad02668ae61ece136b4f
 RUN apt-get update \
  && apt-get install -y --no-install-recommends build-essential \
  && rm -rf /var/lib/apt/lists/*
+# requirements.txt is the complete set; --no-deps because it overrides some
+# of OpenCanary's exact pins (canary/overrides.txt).
 COPY canary/requirements.txt /tmp/requirements.txt
 RUN python -m venv /opt/venv \
  && /opt/venv/bin/pip install --no-cache-dir --disable-pip-version-check --require-hashes \
-    -r /tmp/requirements.txt
+    --no-deps -r /tmp/requirements.txt
 COPY canary/render.py /tmp/render.py
 COPY canary/persona /tmp/persona
 WORKDIR /tmp/persona

@@ -111,7 +111,7 @@ public address and country (from request headers) for its owner only.
 - The country comes from the `cf-ipcountry` header of the device's own
   request. A wrong country only affects that device's radio; unknown means
   off. Whether the header reaches PostgREST on the hosted project is
-  pending verification.
+  checked daily (`self_check_v1`, "Monitoring"); not yet run.
 - Residual risk: iw prints WPS strings as raw bytes, so a crafted beacon can
   add lines to the scan text. It cannot make an open access point look
   protected (the privacy bit is printed from the kernel before any
@@ -225,23 +225,26 @@ event id), GitHub (encrypted backups, which it cannot read).
 
 ## Monitoring
 
-What should run on a schedule, for the CI work to build. Each is a
-read-only check against the project with the CI token or database
-password; a failing run emails the owner. SQL checks connect as `postgres`.
+`.github/workflows/monitor.yml` runs the built checks every morning,
+read-only (ADR 0027). A failure opens the issue "Production monitoring
+failed", or comments on the open one, with the failed jobs and the run;
+logs hold check names, counts and booleans, never addresses or keys. The
+database checks are `backend/monitor.sql`, run through the Management
+API's read-only endpoint as `supabase_read_only_user`.
 
-| Check | Fails when | When |
-| ----- | ---------- | ---- |
-| Advisors: `supabase db advisors --remote --type all --fail-on warn` | any warning. The project's run adds Auth lints; ignore by name only those that cannot apply to Google-only sign-in on the Free plan (leaked password protection, MFA options), nothing else | daily and after every deploy |
-| Configuration drift: `supabase config diff --remote`, and `GET /v1/projects/{ref}/config/realtime` | a difference from `config.toml`, or Realtime not suspended (see "Platform settings") | daily |
-| Surface checks in `docs/runbooks/deploy-backend.md` | any unexpected status | daily |
-| Backup and restore test (`docs/runbooks/restore-backup.md`) | any step | daily |
-| Jobs: `cron.job_run_details` of the last day | a status other than `succeeded`, or a job of `cron.job` without a run | daily |
-| Database size: `pg_database_size(current_database())` | over 350 MB, 70% of the Free plan's 500 MB | daily |
-| Notify quota: events received this calendar month, an upper bound on `notify` calls | over 400,000 of the Free plan's 500,000 | daily |
-| Notify gate: hours of the last day with more than 600 events | any: pushes were held back for everyone (ADR 0016) | daily |
-| Flooding: per account, devices, setups waiting, reported events of the last day and push tokens | any account over half its limit (ADR 0016), or setups waiting over 100 in all | daily |
-| Client address: `private.rate_counters` holds `ip` buckets while devices are online | none: the platform no longer sends `CF-Connecting-IP`, and the per-address limits are off | daily |
-| CI access token expiry (`docs/runbooks/deploy-backend.md`, step 4) | less than 30 days left; a reminder in the owner's calendar, since the token cannot read its own expiry | monthly |
+| Check | Fails when | Status |
+| ----- | ---------- | ------ |
+| Advisors: `supabase db advisors --remote --type all --level warn` | any warning or error, except by name the two Auth lints that cannot apply to Google-only sign-in on the Free plan (leaked password protection, MFA options) | built, daily (not after each deploy); needs the token's Advisors read (`docs/STATUS.md`, owner action 1) |
+| Configuration drift: `supabase config diff --remote --exit-code`, and `GET /v1/projects/{ref}/config/realtime` | a difference from `config.toml`, or Realtime not suspended (see "Platform settings") | built, daily; fails until Realtime is suspended |
+| Client headers: `self_check_v1` through the public API with the publishable key | `cf-connecting-ip` or `cf-ipcountry` does not reach the database, so the per-address limits, public addresses, countries and the Wi-Fi radio are off | built, daily; needs no token |
+| Jobs: `cron.job` and `cron.job_run_details` | an active job set other than the one the migrations schedule, a job without a run in the last 25 hours (8 days for weekly jobs), or a run of the last day that did not succeed | built, daily |
+| Database size: `pg_database_size(current_database())` | over 350 MB, 70% of the Free plan's 500 MB | built, daily |
+| Notify quota: events received this calendar month, an upper bound on `notify` calls | over 400,000 of the Free plan's 500,000 | built, daily |
+| Notify gate: hours of the last day with more than 600 events | any: pushes were held back for everyone (ADR 0016) | built, daily |
+| Flooding: per account, devices, setups waiting, events reported in any hour of the last day, push tokens | any account over half its limit (ADR 0016), or setups waiting over 100 in all | built, daily |
+| Surface checks in `docs/runbooks/deploy-backend.md` | any unexpected status | not built |
+| Backup and restore test (`docs/runbooks/restore-backup.md`) | any step | not built |
+| CI access token expiry (`docs/runbooks/deploy-backend.md`, step 4) | less than 30 days left; a reminder in the owner's calendar, since the token cannot read its own expiry | monthly, by hand |
 
 ## Known limitations
 
