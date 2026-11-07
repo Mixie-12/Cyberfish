@@ -124,6 +124,16 @@ signature policy tests; the end-to-end test with the production units
 `device_hosts_v2`, `device_wifi_v1`, no typed password in the backend).
 Locally: HTTP 429 and the notify gate; backup dump and restore.
 
+v0.2.0 app (2026-11-07): the released APK crashes at every start
+(WorkManager 2.7.1 from Glance under R8 full mode; debug builds are not
+shrunk, so CI stayed green). Fixed by "app: run WorkManager 2.12 so
+release builds start"; the widget showed only its header, fixed by "app:
+keep the widget header to its own height". Both verified on the API 37
+emulator with a release build signed by the debug key; a fixed release
+is not cut yet. CI does not start a release build, so a crash like this
+passes it. Google sign-in with debug builds works only on the machine
+whose debug key is in `infra/google/main.tf` (`6def...`).
+
 Needs hardware, not verified: the card writer with a real USB card reader;
 the decoy in Windows Explorer and Finder on the owner's LAN; the Wi-Fi
 watch against a real evil twin; the Pi running the new images after its
