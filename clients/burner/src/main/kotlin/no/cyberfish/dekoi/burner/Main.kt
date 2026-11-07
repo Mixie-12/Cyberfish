@@ -56,6 +56,7 @@ import androidx.compose.ui.window.rememberWindowState
 import no.cyberfish.dekoi.shared.ClaimCode
 import no.cyberfish.dekoi.shared.Network
 import java.awt.Dimension
+import java.text.Collator
 import java.util.Locale
 
 fun main() =
@@ -409,7 +410,8 @@ private fun Waiting(
 
 private fun size(drive: Drive) = text("card_size", drive.sizeBytes / 1e9)
 
-// Two-letter codes, as the Wi-Fi regulatory domain needs, with their names.
+// Two-letter codes, as the Wi-Fi regulatory domain needs, with their names
+// in the window's language and in its alphabetical order (Æ, Ø, Å last in Bokmål).
 private val countries: Map<String, String> =
     Locale
         .getISOCountries()
@@ -418,7 +420,7 @@ private val countries: Map<String, String> =
                 .Builder()
                 .setRegion(it)
                 .build()
-                .displayCountry
+                .getDisplayCountry(uiLocale)
         }.entries
-        .sortedBy { it.value }
+        .sortedWith(compareBy(Collator.getInstance(uiLocale)) { it.value })
         .associate { it.toPair() }

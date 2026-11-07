@@ -33,3 +33,9 @@ Run DeKoi Setup (Windows), or build its installer into
 ./gradlew :burner:run
 ./gradlew :burner:packageMsi -Pdekoi.version=0.1.0
 ```
+
+DeKoi Setup shows Bokmål when the Windows display language is Norwegian,
+English otherwise (ADR 0025). Its text is in
+`burner/src/main/resources/no/cyberfish/dekoi/burner/strings*.properties`.
+To see the Bokmål text on an English Windows, start it with
+`JAVA_TOOL_OPTIONS=-Duser.language=nb` in the environment.
