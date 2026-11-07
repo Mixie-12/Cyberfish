@@ -52,6 +52,7 @@ import no.cyberfish.dekoi.ui.components.InsetRow
 import no.cyberfish.dekoi.ui.components.InsetSection
 import no.cyberfish.dekoi.ui.components.KeyValueRow
 import no.cyberfish.dekoi.ui.components.Screen
+import no.cyberfish.dekoi.ui.motion.rememberHaptics
 import java.time.Instant
 
 @Composable
@@ -67,6 +68,7 @@ fun SettingsScreen(
     onSetWifiName: (Device, String?) -> Unit,
 ) {
     var confirming by remember { mutableStateOf(false) }
+    val haptics = rememberHaptics()
     val now = Instant.now()
     Screen(stringResource(R.string.tab_settings), listState = listState) {
         item {
@@ -122,6 +124,7 @@ fun SettingsScreen(
             body = R.string.settings_delete_confirm_body,
             confirm = R.string.action_delete,
             onConfirm = {
+                haptics.confirm()
                 confirming = false
                 onDeleteAccount()
             },
@@ -348,10 +351,15 @@ private fun WeeklySummary(
     on: Boolean?,
     onChange: (Boolean) -> Unit,
 ) {
+    val haptics = rememberHaptics()
     InsetSection(footer = stringResource(R.string.settings_weekly_summary_footer)) {
         InsetRow(
             stringResource(R.string.settings_weekly_summary),
-            modifier = Modifier.toggleable(on == true, enabled = on != null, role = Role.Switch, onValueChange = onChange),
+            modifier =
+                Modifier.toggleable(on == true, enabled = on != null, role = Role.Switch) {
+                    haptics.toggle(it)
+                    onChange(it)
+                },
             trailing = { Switch(checked = on == true, onCheckedChange = null, enabled = on != null) },
         )
     }

@@ -109,6 +109,7 @@ import no.cyberfish.dekoi.ui.components.KindTile
 import no.cyberfish.dekoi.ui.components.PrimaryButton
 import no.cyberfish.dekoi.ui.components.Screen
 import no.cyberfish.dekoi.ui.components.StatusRing
+import no.cyberfish.dekoi.ui.motion.rememberHaptics
 import no.cyberfish.dekoi.ungroupedOffset
 import java.time.Instant
 
@@ -149,6 +150,14 @@ fun AddDekoiScreen(
     val device = linkedId?.let { id -> data.devices.firstOrNull { it.id == id } }
     val settingUp = linkedId != null && device?.isSetUp != true
     Poll(settingUp, onRefresh)
+    val haptics = rememberHaptics()
+    // Confirms once that the code linked; not again when rotating composes the screen anew.
+    var confirmed by rememberSaveable { mutableStateOf(linkedId != null) }
+    LaunchedEffect(linkedId != null) {
+        if (linkedId == null || confirmed) return@LaunchedEffect
+        haptics.confirm()
+        confirmed = true
+    }
 
     Screen(stringResource(R.string.add_title), onBack = onBack) {
         val failedReload = data.problem?.takeIf { settingUp }
@@ -255,6 +264,7 @@ private fun Prepare(
 ) {
     var fromComputer by rememberSaveable { mutableStateOf(false) }
     val reduceMotion = LocalReduceMotion.current
+    val haptics = rememberHaptics()
     Column(
         (if (reduceMotion) Modifier else Modifier.animateContentSize(expandSpring())).fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(Dimens.section),
@@ -275,7 +285,10 @@ private fun Prepare(
             )
         }
         OutlinedButton(
-            onClick = { fromComputer = !fromComputer },
+            onClick = {
+                fromComputer = !fromComputer
+                haptics.toggle(fromComputer)
+            },
             modifier = Modifier.fillMaxWidth().heightIn(min = Dimens.touchTarget),
             contentPadding = ButtonDefaults.ButtonWithIconContentPadding,
         ) {
