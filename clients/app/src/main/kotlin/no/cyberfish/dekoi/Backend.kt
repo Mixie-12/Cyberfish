@@ -10,6 +10,7 @@ import io.github.jan.supabase.createSupabaseClient
 import io.github.jan.supabase.postgrest.Postgrest
 import io.github.jan.supabase.postgrest.from
 import io.github.jan.supabase.postgrest.postgrest
+import io.github.jan.supabase.postgrest.query.Columns
 import io.github.jan.supabase.postgrest.query.Order
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.serialization.json.buildJsonObject
@@ -106,6 +107,19 @@ class Backend(
     suspend fun deleteAccount() {
         client.postgrest.rpc("delete_account_v1")
         client.auth.signOut(SignOutScope.LOCAL)
+    }
+
+    /** RLS returns only the caller's row, if they have one. */
+    suspend fun settings(): OwnerSettings =
+        client
+            .from("owner_settings")
+            .select(Columns.list("weekly_summary"))
+            .decodeList<OwnerSettings>()
+            .firstOrNull() ?: OwnerSettings()
+
+    /** The row's user_id defaults to the caller; weekly_summary is the only column the app may write. */
+    suspend fun setWeeklySummary(on: Boolean) {
+        client.from("owner_settings").upsert(buildJsonObject { put("weekly_summary", on) }) { onConflict = "user_id" }
     }
 
     private companion object {

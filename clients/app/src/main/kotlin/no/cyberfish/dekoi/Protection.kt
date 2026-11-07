@@ -15,8 +15,8 @@ val ATTENTION_WINDOW: Duration = Duration.ofHours(24)
 /** A new device that has not come online by then gets troubleshooting help. */
 val SETUP_HELP_AFTER: Duration = Duration.ofMinutes(20)
 
-// Everything a device reports is suspicious; only device_online and
-// device_offline come from the backend itself (private.device_event_kinds()).
+// Everything a device reports is suspicious (private.device_event_kinds());
+// device_online, device_offline and new_host come from the backend itself.
 private val INTRUSION_KINDS =
     setOf(
         "login_attempt",

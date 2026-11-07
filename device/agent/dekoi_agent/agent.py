@@ -6,7 +6,7 @@ import subprocess
 import time
 from collections.abc import Callable
 
-from . import api, identify, inventory, lan
+from . import api, dns_check, health, identify, inventory, lan, monitors, upnp
 from .config import Config
 from .decoys import listening_ports, load_decoys, running_services
 from .detect import Collapser, ScanDetector
@@ -19,6 +19,8 @@ BATCH_SIZE = 200
 HEARTBEAT_SECONDS = 60
 INVENTORY_SECONDS = 15 * 60
 PROBE_SECONDS = 15 * 60
+MEASURE_SECONDS = 60
+HEALTH_SECONDS = 60 * 60
 REGISTER_SECONDS = 30
 MAX_BACKOFF_SECONDS = 5 * 60
 REMOVED_BACKOFF_SECONDS = 60 * 60
@@ -70,6 +72,13 @@ class Agent:
         self.heartbeat_schedule = Schedule(HEARTBEAT_SECONDS)
         self.inventory_schedule = Schedule(INVENTORY_SECONDS)
         self.probe_schedule = Schedule(PROBE_SECONDS)
+        self.monitors = monitors.Monitors(clock())
+        self.health = health.Health(*api.backend_address(config))
+        self.integrity = dns_check.Integrity()
+        self.gateway_description: str | None = None
+        self.speed_test_wanted = False
+        self.measure_schedule = Schedule(MEASURE_SECONDS)
+        self.health_schedule = Schedule(HEALTH_SECONDS)
 
     def tick(self) -> None:
         at = self.clock()
@@ -86,6 +95,10 @@ class Agent:
             self.inventory(at)
         if self.probe_schedule.ready(at):
             self.probe(at)
+        if self.measure_schedule.ready(at):
+            self.measure(at)
+        if self.health_schedule.ready(at):
+            self.report_health(at)
 
     def collect(self, at: float) -> None:
         self._identify()
@@ -110,12 +123,20 @@ class Agent:
                 found.append(event)
         self.detector.expire(at)
         own_ips = {address for address in [inventory.local_ip()] if address}
-        found += [e for line in self.ids.read_lines() if (e := parse_suricata(line, own_ips))]
-        for frame in self.listeners.arp_frames():
+        ids_lines = self.ids.read_lines()
+        self.monitors.ids(at, ids_lines)
+        found += [e for line in ids_lines if (e := parse_suricata(line, own_ips))]
+        frames = self.listeners.arp_frames()
+        if frames:
+            # Every inventory scan puts ARP frames on the wire.
+            self.monitors.alive("arp_watch", at + 2 * INVENTORY_SECONDS)
+        for frame in frames:
             arp = lan.parse_arp(frame)
             if arp:
                 found += self.arp.observe(at, arp)
         advertisements = self.listeners.router_advertisements()
+        # Silence is normal here: many networks have no IPv6 router.
+        self.monitors.alive("router_watch", at + HEARTBEAT_SECONDS)
         for router, _, prefixes in advertisements:
             for prefix in prefixes:
                 self.networks.advertised(prefix, router)
@@ -130,6 +151,10 @@ class Agent:
             if found is None or found[0] in self.arp.own_macs:
                 continue
             mac, address, facts = found
+            if address and address == self.arp.gateway_ip:
+                self.gateway_description = (
+                    upnp.description_url(facts, address) or self.gateway_description
+                )
             self.identities.observe(mac, facts)
             self.networks.source_address(address)
 
@@ -182,10 +207,12 @@ class Agent:
                 }
                 for ip, protocol in lan.probe_name_poisoning()
             ]
+            self.monitors.alive("name_poisoning", at + 2 * PROBE_SECONDS)
             address = inventory.local_ip()
             target = inventory.scan_target(address) if address else None
             if target:
                 servers = lan.probe_dhcp_servers(lan.interface_mac(target[0]))
+                self.monitors.alive("dhcp_watch", at + 2 * PROBE_SECONDS)
                 known, new = lan.newcomers(self.state.dhcp_servers, servers, lan.default_gateway())
                 self.state.dhcp_servers = known
                 found += [
@@ -230,6 +257,8 @@ class Agent:
             return
         self.state.device_id = str(device_id)
         self.save()
+        # The probes and the inventory start only now.
+        self.monitors.started_at = at
         log.info("registered as device %s", self.state.device_id)
 
     def send(self, at: float) -> None:
@@ -246,17 +275,38 @@ class Agent:
         self.send_schedule.succeeded(at)
 
     def heartbeat(self, at: float) -> None:
+        services = running_services(self.decoys, listening_ports())
+        self.monitors.decoys(at, len(services), len(self.decoys))
+        if self.config.scan_log.exists():
+            self.monitors.alive("port_scan", at)
         arguments = self._auth() | {
             "agent_version": self.config.agent_version,
-            "services": running_services(self.decoys, listening_ports()),
+            "services": services,
             "local_ip": inventory.local_ip(),
         }
+        report = {
+            "monitors": self.monitors.report(at),
+            "images": self.monitors.images(self.config.canary_log.parent / "image"),
+        }
         try:
-            api.call(self.config, "device_heartbeat_v1", arguments)
+            self._send_heartbeat(arguments, report)
         except api.ApiError as error:
             self._failed(self.heartbeat_schedule, at, error)
             return
         self.heartbeat_schedule.succeeded(at)
+
+    def _send_heartbeat(self, arguments: dict, report: dict) -> None:
+        """Version 2 with the monitoring report. Version 1 when the backend
+        is older (404) or refuses the report (400), so the device stays
+        online either way."""
+        try:
+            api.call(self.config, "device_heartbeat_v2", arguments | report)
+        except api.ApiError as error:
+            if not (error.missing or error.malformed):
+                raise
+            if error.malformed:
+                log.error("backend rejected the monitoring report as malformed: %s", error)
+            api.call(self.config, "device_heartbeat_v1", arguments)
 
     def inventory(self, at: float) -> None:
         """Hosts with what they say about themselves, and networks (ADR 0010).
@@ -269,6 +319,7 @@ class Agent:
             log.warning("service discovery search failed: %s", error)
         try:
             hosts = inventory.scan_hosts()
+            self.monitors.alive("inventory", at + 2 * INVENTORY_SECONDS, hosts=len(hosts))
             self._identify()
             arguments = self._auth() | {
                 "hosts": [self.identities.describe(host) for host in hosts],
@@ -283,6 +334,38 @@ class Agent:
             self.inventory_schedule.failed(at, ceiling=INVENTORY_SECONDS)
             return
         self.inventory_schedule.succeeded(at)
+
+    def measure(self, at: float) -> None:
+        """The minute's probes of the gateway, the resolver and the internet."""
+        self.health.measure(at, lan.default_gateway(), dns_check.lan_resolver())
+        self.measure_schedule.succeeded(at)
+
+    def report_health(self, at: float) -> None:
+        """The hourly network report (ADR 0015): probe aggregates, the DNS
+        check, the gateway's port mappings and, at night while the owner wants
+        one, a speed test. A failed report is retried with the next hour's."""
+        resolver = dns_check.lan_resolver()
+        arguments = self._auth() | {
+            "samples": self.health.samples(at),
+            "dns": self.integrity.check(resolver) if resolver else None,
+            "resolver": resolver,
+            "forwards": upnp.port_mappings(self.gateway_description, lan.default_gateway()),
+            "download_mbps": (
+                health.speed_test() if self.speed_test_wanted and health.night(at) else None
+            ),
+        }
+        try:
+            reply = api.call(self.config, "device_health_v1", arguments)
+        except api.ApiError as error:
+            if not error.malformed:
+                log.warning("health report failed: %s", error)
+                self.health_schedule.failed(at, ceiling=HEALTH_SECONDS)
+                return
+            log.error("backend rejected the health report as malformed, dropping it")
+            reply = None
+        self.health.reported()
+        self.speed_test_wanted = isinstance(reply, dict) and reply.get("speed_test") is True
+        self.health_schedule.succeeded(at)
 
     def save(self) -> None:
         self.state.save(self.config.state_path)
