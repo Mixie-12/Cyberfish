@@ -1,5 +1,6 @@
 package no.cyberfish.dekoi
 
+import kotlinx.serialization.json.Json
 import no.cyberfish.dekoi.ui.learn.learnTopicFor
 import java.time.Instant
 import kotlin.test.Test
@@ -101,5 +102,16 @@ class EventTextTest {
         val spoof = event("arp_spoof", detail = EventDetail(claimedIp = "192.168.1.1"))
         assertEquals(listOf(Fact.ClaimedRouter), facts(listOf(spoof), setOf("192.168.1.1")))
         assertTrue(facts(listOf(spoof), setOf("192.168.1.254")).isEmpty())
+    }
+
+    @Test
+    fun `a sign-in with a name from the bait files says the bait was read`() {
+        val detail = Json.decodeFromString<EventDetail>("""{"username": "familie.admin", "bait": true}""")
+        val bait = eventText(event("login_attempt", service = "smb", detail = detail))
+        val ordinary = eventText(event("login_attempt", service = "smb", detail = EventDetail(username = "admin")))
+        assertEquals(R.string.event_login_bait_consequence, bait.consequence)
+        assertEquals(R.string.event_login_consequence, ordinary.consequence)
+        assertEquals(ordinary.copy(consequence = bait.consequence), bait)
+        assertFalse(Json.decodeFromString<EventDetail>("""{"username": "admin"}""").bait)
     }
 }

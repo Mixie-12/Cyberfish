@@ -215,6 +215,8 @@ data class EventDetail(
     val category: String? = null,
     val share: String? = null,
     val file: String? = null,
+    /** The sign-in used a user name from the decoy's bait files (ADR 0023). */
+    val bait: Boolean = false,
 )
 
 @Serializable
