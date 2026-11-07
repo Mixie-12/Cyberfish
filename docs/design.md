@@ -14,7 +14,9 @@ it: ADR 0010. Wording rules: CLAUDE.md, "Writing".
    shows what DeKoi sees, not cabling. DeKoi cannot block devices; the app
    explains how to block them in the router.
 5. Calm motion. Motion explains a change. At most one idle loop on screen,
-   only on a hero, none when the system animation scale is 0.
+   only on a hero, none when the system animation scale is 0. One exception:
+   a very likely attack opens with an alarm that pulses for 3 s, then holds
+   still.
 6. Attacker text is inert: host names, models, user names and service
    labels are plain `Text` only, never links, never in notifications, never
    the only label.
@@ -22,8 +24,8 @@ it: ADR 0010. Wording rules: CLAUDE.md, "Writing".
 ## Navigation
 
 Four tabs, M3 `NavigationBar`, Material Symbols, filled when selected: Home
-(`home`), Alerts (`notifications`, badge = critical and warning alerts in the
-last 24 h not from known devices), Network (`lan`), Settings (`settings`).
+(`home`), Alerts (`notifications`, badge = unseen critical and warning
+incidents not from known devices), Network (`lan`), Settings (`settings`).
 
 Pushed screens: Alert detail, Device detail (a host), Networks, Your DeKoi,
 Add DeKoi. Type-safe Navigation Compose routes (`@Serializable` objects).
@@ -47,20 +49,36 @@ above font scale 1.5. (4) Seven-day bar chart stacked by severity; tapping a
 bar opens Alerts for that day. (5) Latest five events. `PullToRefreshBox`
 replaces the Refresh button.
 
-**Alerts.** Filter chips: All, Act now, Check soon, For your information,
-and a removable "From this device" chip. Sticky day headers. Row: 40 dp
-severity tile, title (two lines max), subtitle "Looks like a phone · 14 times
-· 21:14", chevron. Alerts from known devices are dimmed with "Known device".
-Rows use `animateItem()`.
+**Alerts.** A calm timeline of incidents (ADR 0013), grouped by
+`incidents()` in `Incidents.kt`: events from one DeKoi and one source, each
+within 30 minutes of the one before. Filter chips: All, Unread, and one
+Severity chip with a menu; a removable "From this device", decoy or day chip
+from a cross-link. Sticky day headers. A vertical line with one node per
+incident (severity glyph on its container colour, grey once seen) and one
+card: the lead event's title (the most serious event), "14 events ·
+15:13–15:20", chevron. Seen incidents are grey and lighter; known devices
+are dimmed with "Known device". Entries use `animateItem()`.
 
-**Alert detail.** Severity-coloured container band with glyph, severity
-word, title, time and count. Then: What happened; device card (kind tile,
-name, "looks like", maker and model, address, network, online status; opens
-Device detail); What to do (numbered steps from `Guidance.kt`, inline "Copy
-hardware address"); "I know this device" outlined button after the steps,
-with a confirmation for `arp_spoof`, `rogue_dhcp`, `rogue_router`,
-`name_poisoning`; Technical details collapsed (`animateContentSize`,
-monospace, copyable).
+**Alert detail.** One incident; opening it marks its events seen and clears
+their notifications. (1) A very likely attack of critical severity opens
+with the alarm hero: the source's kind tile at the centre of rings that
+pulse outwards in the critical colour for 3 s, then a steady glow (static
+without animations). Everything else opens with a still band in the
+severity's container colour. Both carry glyph, severity word, title, one
+consequence sentence, day, count and time span. (2) "Is this a real
+threat?" from `threat()` in `Guidance.kt`: "Very likely an attack" (a
+sign-in attempt; `arp_spoof`, `rogue_dhcp`, `name_poisoning`), "Possibly an
+attack" (scans, decoy connections, `rogue_router`, IDS alerts), "Probably
+harmless" (a known device, DeKoi's own status), each with one plain
+sentence. (3) "Do this now" for a very likely attack, else "What to do":
+the numbered steps as a checklist the owner can tick (on the phone only),
+inline "Copy hardware address"; then "I know this device", outlined, with a
+confirmation for `arp_spoof`, `rogue_dhcp`, `rogue_router`,
+`name_poisoning`. (4) What happened: explanation, specifics in plain words
+(decoys, well-known openings, a claimed router address) and the events on a
+small timeline. (5) Which device (kind tile, name, "looks like", maker and
+model, address, network, online status; opens Device detail). (6)
+Technical details collapsed (`animateContentSize`, monospace, copyable).
 
 **Network.** Header "38 devices · 3 new this week · 1 needs attention" and a
 "Networks" row. Map | List segmented control, choice saved; List is the
@@ -195,10 +213,10 @@ animation scale is 0):
 
 ## Alerts
 
-Template: title naming the device kind; severity chip and one consequence
-sentence; what happened (counts and times); which device; numbered steps
-(find, disconnect by kind, secure), "I know this device" last, technical
-details collapsed. Disconnect step by kind:
+Template: title naming the device kind; severity and one consequence
+sentence; whether it is a real threat; numbered steps (find, disconnect by
+kind, secure); "I know this device"; what happened (counts and times); which
+device; technical details collapsed. Disconnect step by kind:
 
 | Kinds | Step |
 | ----- | ---- |
@@ -242,6 +260,8 @@ bundled fonts.
 ## Avoid
 
 Alarm styling and words ("hacked", exclamation marks, red everywhere),
+except the alarm hero of a very likely attack: one strong signal for real
+alarms, calm for everything else; warnings never move, info stays grey;
 security scores, pie charts, 3D, parallax; map lines that imply cabling;
 data DeKoi does not have; attacker text in notifications or as links;
 trusting or blocking from a notification or a swipe; animated list rows
