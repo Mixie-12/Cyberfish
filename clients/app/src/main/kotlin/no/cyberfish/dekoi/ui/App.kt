@@ -61,6 +61,8 @@ import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
 import no.cyberfish.dekoi.R
 import no.cyberfish.dekoi.alertBadgeCount
+import no.cyberfish.dekoi.isSetUp
+import no.cyberfish.dekoi.ui.components.Screen
 import java.time.Instant
 
 /** Every place in the app. The four tab roots, then the screens pushed on a tab. */
@@ -201,7 +203,7 @@ private fun SignedIn(
         navController.navigate(Route.AlertDetail(eventId))
         viewModel.eventOpened()
     }
-    NotificationPermission(hasDevice = data.devices.isNotEmpty())
+    NotificationPermission(setUp = data.devices.any { it.isSetUp })
 
     // Screens link to tab roots as well as pushed screens; a tab root switches tabs.
     val navigate: (Route) -> Unit = { route ->
@@ -264,6 +266,10 @@ private fun SignedIn(
             }
             composable<Route.AddDekoi> {
                 AddDekoiScreen(data, now, onRefresh = viewModel::refreshDevices, onNavigate = navigate, onBack = back)
+            }
+            // An empty screen until the card-writing work brings its own (ADR 0014).
+            composable<Route.WriteCard> {
+                Screen(stringResource(R.string.add_write_card), onBack = back) { }
             }
             composable<Route.Licences> {
                 LicencesScreen(back)

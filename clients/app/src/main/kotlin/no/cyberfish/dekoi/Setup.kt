@@ -18,6 +18,9 @@ fun setupSteps(device: Device?): List<SetupStep> =
         SetupStep(R.string.setup_protecting, device?.services.orEmpty().isNotEmpty()),
     )
 
+/** True once every setup step is done: the DeKoi is watching the network. */
+val Device.isSetUp: Boolean get() = setupSteps(this).all { it.done }
+
 /** A claim code is shown in groups of this many characters. */
 const val CODE_GROUP = 4
 

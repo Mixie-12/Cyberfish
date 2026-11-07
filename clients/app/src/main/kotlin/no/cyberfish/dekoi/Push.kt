@@ -55,13 +55,13 @@ fun firebaseOptions(
 /** The event a notification points at. Any app can start MainActivity with extras, so only a positive id counts. */
 fun eventIdFrom(extra: String?): Long? = extra?.toLongOrNull()?.takeIf { it > 0 }
 
-/** Ask once, after the first DeKoi is linked; a refusal is final. Only Android 13 and later ask at all. */
+/** Ask once, after a DeKoi has finished its setup; a refusal is final. Only Android 13 and later ask at all. */
 fun shouldAskForNotifications(
     sdk: Int,
     granted: Boolean,
     askedBefore: Boolean,
-    hasDevice: Boolean,
-): Boolean = sdk >= Build.VERSION_CODES.TIRAMISU && !granted && !askedBefore && hasDevice
+    deviceSetUp: Boolean,
+): Boolean = sdk >= Build.VERSION_CODES.TIRAMISU && !granted && !askedBefore && deviceSetUp
 
 suspend fun <T> Task<T>.await(): T =
     suspendCancellableCoroutine { continuation ->

@@ -4,6 +4,8 @@ import no.cyberfish.dekoi.shared.ClaimCode
 import java.time.Instant
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+import kotlin.test.assertTrue
 
 class SetupTest {
     private val now = Instant.parse("2026-11-07T12:00:00Z")
@@ -17,6 +19,13 @@ class SetupTest {
         assertEquals(listOf(true, true, false, false), done(claimed.copy(registeredAt = now)))
         assertEquals(listOf(true, true, true, false), done(claimed.copy(registeredAt = now, lastSeenAt = now)))
         assertEquals(listOf(true, true, true, true), done(claimed.copy(registeredAt = now, lastSeenAt = now, services = listOf("ssh"))))
+    }
+
+    @Test
+    fun `a DeKoi is set up once it watches the network`() {
+        val online = Device(id = "d", name = "DeKoi 7F3K", createdAt = now, registeredAt = now, lastSeenAt = now)
+        assertFalse(online.isSetUp)
+        assertTrue(online.copy(services = listOf("ssh")).isSetUp)
     }
 
     @Test

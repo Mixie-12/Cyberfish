@@ -97,6 +97,7 @@ import no.cyberfish.dekoi.HostKind
 import no.cyberfish.dekoi.R
 import no.cyberfish.dekoi.SetupStep
 import no.cyberfish.dekoi.groupedOffset
+import no.cyberfish.dekoi.isSetUp
 import no.cyberfish.dekoi.needsSetupHelp
 import no.cyberfish.dekoi.scanQrCode
 import no.cyberfish.dekoi.setupSteps
@@ -111,7 +112,7 @@ import no.cyberfish.dekoi.ui.components.StatusRing
 import no.cyberfish.dekoi.ungroupedOffset
 import java.time.Instant
 
-private const val POLL_MS = 5000L
+private const val POLL_MS = 15_000L
 private const val STEP_MS = 300
 private val STEP_DISTANCE = 30.dp
 
@@ -143,7 +144,7 @@ fun AddDekoiScreen(
     val claiming by add.claiming.collectAsStateWithLifecycle()
     val problem by add.problem.collectAsStateWithLifecycle()
     val device = linkedId?.let { id -> data.devices.firstOrNull { it.id == id } }
-    val settingUp = linkedId != null && setupSteps(device).any { !it.done }
+    val settingUp = linkedId != null && device?.isSetUp != true
     Poll(settingUp, onRefresh)
 
     Screen(stringResource(R.string.add_title), onBack = onBack) {
@@ -176,7 +177,7 @@ fun SetupProgress(
 ) {
     val steps = setupSteps(device)
     val done = steps.count { it.done }
-    val finished = done == steps.size
+    val finished = device?.isSetUp == true
     val started = device?.registeredAt != null
     Column(verticalArrangement = Arrangement.spacedBy(Dimens.section)) {
         Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
