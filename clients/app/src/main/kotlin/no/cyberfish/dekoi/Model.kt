@@ -123,6 +123,8 @@ data class Event(
     val count: Int = 1,
     val detail: EventDetail = EventDetail(),
     @SerialName("severity") val severityName: String? = null,
+    /** When the owner opened the incident this event belongs to; null until then (ADR 0013). */
+    @SerialName("seen_at") @Serializable(TimestampSerializer::class) val seenAt: Instant? = null,
 ) {
     val severity: Severity get() = Severity.of(severityName)
 }

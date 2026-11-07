@@ -302,7 +302,7 @@ private fun AttentionCard(
                 modifier = Modifier.weight(1f),
             )
         }
-        Text(eventTitle(event), style = MaterialTheme.typography.titleMedium)
+        Text(eventTitle(event, host), style = MaterialTheme.typography.titleMedium)
         SourceLine(host)
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Dimens.spaceXs)) {
             Text(

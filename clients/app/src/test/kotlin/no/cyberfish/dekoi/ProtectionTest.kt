@@ -51,7 +51,7 @@ class ProtectionTest {
     fun `a new device on the network is information, not an attack`() {
         val joined = event("new_host").copy(severityName = "info")
         assertEquals(Protection.PROTECTED, protection(listOf(device()), listOf(joined), emptySet(), now))
-        assertEquals(0, alertBadgeCount(listOf(joined), emptySet(), now))
+        assertEquals(0, alertBadgeCount(listOf(joined), emptySet()))
     }
 
     @Test
@@ -97,23 +97,5 @@ class ProtectionTest {
             }
         assertEquals(Severity.CRITICAL, highestSeverity(events))
         assertNull(highestSeverity(emptyList()))
-    }
-
-    @Test
-    fun `the badge counts recent serious alerts from devices the owner does not know`() {
-        fun alert(
-            severity: Severity,
-            ago: Duration = Duration.ofHours(1),
-            mac: String = "3c:22:fb:00:00:01",
-        ) = event("connection", ago, mac).copy(severityName = severity.name.lowercase())
-        val events =
-            listOf(
-                alert(Severity.CRITICAL),
-                alert(Severity.WARNING),
-                alert(Severity.INFO),
-                alert(Severity.CRITICAL, ago = Duration.ofHours(25)),
-                alert(Severity.CRITICAL, mac = "3c:22:fb:00:00:02"),
-            )
-        assertEquals(2, alertBadgeCount(events, setOf("3c:22:fb:00:00:02"), now))
     }
 }

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Alerts tab and alert detail (AlertsScreens.kt, EventText.kt). -->
+<!-- Alerts timeline and incident detail (AlertsScreens.kt, AlertDetailScreen.kt, EventText.kt, Incidents.kt). -->
 <resources>
     <string name="service_ftp">file server</string>
     <string name="service_http">storage login page</string>
@@ -9,42 +9,124 @@
     <string name="service_rdp">remote desktop</string>
     <string name="service_vnc">screen sharing</string>
     <string name="service_other">service</string>
-    <string name="event_login_title">Someone tried to sign in to the decoy %1$s</string>
-    <string name="event_login_why">Nothing on your network has a reason to sign in to your DeKoi. Someone, or a program, is trying passwords on the devices it finds. That is how break-ins usually start.</string>
-    <string name="event_connection_title">A device opened the decoy %1$s</string>
+    <string name="port_web">web pages</string>
+    <string name="port_file_sharing">file sharing</string>
+
+    <!-- Titles about another device take its subject (subject_* in strings_guidance.xml) and follow notify.ts. -->
+    <string name="event_login_title">%1$s tried to sign in to your DeKoi</string>
+    <string name="event_login_action">Tried to sign in</string>
+    <string name="event_login_consequence">Someone may be trying to get into the devices on your network.</string>
+    <string name="event_login_why">Nothing on your network has a reason to sign in to your DeKoi. Someone, or a program, is trying passwords on the devices it finds.</string>
+    <string name="event_connection_title">%1$s opened one of your decoys</string>
+    <string name="event_connection_action">Opened a decoy</string>
     <string name="event_connection_why">Your DeKoi pretends to be a storage box. Ordinary devices leave it alone, so a visit means something on your network is looking around.</string>
-    <string name="event_scan_title">A device searched your network for openings</string>
-    <string name="event_scan_why">Trying address after address to find open doors is one of the first things an intruder or a harmful program does after getting in.</string>
-    <string name="event_intrusion_advice">Look at the details below. If you don’t recognise the device, disconnect it from your network, change your Wi-Fi password, and change the passwords of your important accounts. If it is your own device running network tools, mark it as known.</string>
-    <string name="event_host_scan_title">A device searched your whole network</string>
-    <string name="event_host_scan_why">It asked for the addresses of many devices in a short time. Network tools do this, and so does an intruder mapping what to attack next.</string>
-    <string name="event_arp_spoof_title">A device is pretending to be another device</string>
-    <string name="event_arp_spoof_why">It claimed an address that belongs to another device on your network. This is how an attacker puts itself between your devices and the internet to read or change your traffic.</string>
-    <string name="event_arp_spoof_advice">Find the device in the details below. If you don’t recognise it, disconnect it from your network, restart your router and change your Wi-Fi password.</string>
-    <string name="event_rogue_dhcp_title">A second device is handing out network settings</string>
+    <string name="event_probe_consequence">Something on your network may be looking for a way in.</string>
+    <string name="event_scan_title">%1$s searched your network for openings</string>
+    <string name="event_scan_action">Searched for openings</string>
+    <string name="event_scan_why">It tried many openings on your DeKoi in a short time, looking for a way in. Network tools do this, and so do harmful programs.</string>
+    <string name="event_host_scan_title">%1$s searched your whole network</string>
+    <string name="event_host_scan_action">Searched the whole network</string>
+    <string name="event_host_scan_consequence">Something on your network may be mapping your devices.</string>
+    <string name="event_host_scan_why">It asked for the addresses of many devices in a short time. Network tools do this, and so do harmful programs looking for other devices.</string>
+    <string name="event_arp_spoof_title">%1$s is pretending to be another device</string>
+    <string name="event_arp_spoof_action">Pretended to be another device</string>
+    <string name="event_arp_spoof_consequence">It could read or change your internet traffic.</string>
+    <string name="event_arp_spoof_why">It claimed an address that belongs to another device on your network, so traffic meant for that device can go to it instead.</string>
+    <string name="event_rogue_dhcp_title">%1$s is handing out network settings</string>
+    <string name="event_rogue_dhcp_action">Handed out network settings</string>
     <string name="event_rogue_dhcp_why">Normally only your router gives devices their network settings. Another device doing it can send your traffic through itself.</string>
-    <string name="event_rogue_router_title">A second device announces itself as your router</string>
-    <string name="event_rogue_router_why">A new device started announcing itself as a router. That can redirect your devices’ traffic through it.</string>
-    <string name="event_rogue_advice">Find the device in the details below. If you don’t recognise it, disconnect it from your network and restart your router.</string>
-    <string name="event_name_poisoning_title">A device answers questions it should not</string>
+    <string name="event_rogue_router_title">%1$s announces itself as your router</string>
+    <string name="event_rogue_router_action">Announced itself as a router</string>
+    <string name="event_rogue_router_why">A new device started announcing itself as a router. Some smart home hubs do this, but it can also redirect your devices’ traffic through it.</string>
+    <string name="event_redirect_consequence">It could send your devices’ traffic through itself.</string>
+    <string name="event_name_poisoning_title">%1$s answers questions it should not</string>
+    <string name="event_name_poisoning_action">Answered for a computer that does not exist</string>
+    <string name="event_name_poisoning_consequence">It could trick computers into handing over passwords.</string>
     <string name="event_name_poisoning_why">Your DeKoi asked for a computer that does not exist, and something answered. Tools that do this trick computers into handing over passwords.</string>
-    <string name="event_ids_title">Suspicious traffic reached your DeKoi</string>
-    <string name="event_ids_why">The traffic matched a known pattern of attacks or harmful programs. The details below name the pattern.</string>
-    <string name="event_new_host_title">A new device joined your network</string>
-    <string name="event_new_host_why">Your DeKoi saw this device on your network for the first time. Usually it is a new phone, a guest or a smart home gadget. Sometimes it is someone using your Wi-Fi without asking.</string>
-    <string name="event_new_host_advice">If you know the device, mark it as known. If you don’t recognise it, disconnect it from your network and change your Wi-Fi password.</string>
+    <string name="event_ids_title">%1$s sent suspicious traffic to your DeKoi</string>
+    <string name="event_ids_action">Sent suspicious traffic</string>
+    <string name="event_ids_consequence">A device on your network may be running a harmful program.</string>
+    <string name="event_ids_why">The traffic matched a known pattern of attacks or harmful programs. The technical details name the pattern.</string>
+    <string name="event_new_host_title">%1$s joined your network for the first time</string>
+    <string name="event_new_host_action">Joined your network</string>
+    <string name="event_new_host_consequence">If no one in your home knows it, someone may be using your Wi-Fi without asking.</string>
+    <string name="event_new_host_why">Your DeKoi saw this device on your network for the first time. Usually it is a new phone, a guest or a smart home gadget.</string>
     <string name="event_offline_title">Your DeKoi went offline</string>
-    <string name="event_offline_why">While it is offline, your DeKoi can’t warn you. Usually it is a power cut, an unplugged cable or a router restart.</string>
-    <string name="event_offline_advice">Check that your DeKoi has power and that its network cable is plugged in. It reconnects by itself.</string>
+    <string name="event_offline_action">Went offline</string>
+    <string name="event_offline_consequence">Your DeKoi can’t warn you until it is back.</string>
+    <string name="event_offline_why">Usually it is a power cut, an unplugged cable or a router restart.</string>
     <string name="event_online_title">Your DeKoi is online</string>
+    <string name="event_online_action">Came back online</string>
+    <string name="event_online_consequence">Your DeKoi is watching your network.</string>
     <string name="event_online_why">Your DeKoi checks in every minute and is watching your network.</string>
-    <string name="event_online_advice">Nothing to do.</string>
     <string name="event_other_title">Activity on your DeKoi</string>
-    <string name="event_other_why">Your DeKoi noticed something it has no plain description for yet.</string>
-    <string name="event_why">Why it matters</string>
+    <string name="event_other_action">Activity</string>
+    <string name="event_other_consequence">Your DeKoi noticed something it has no plain description for yet.</string>
+    <string name="event_other_why">This happens when your DeKoi is newer than the app. The technical details show what it saw.</string>
+
+    <string name="alert_fact_decoys">It went for these decoys: %1$s.</string>
+    <string name="alert_fact_openings">Among the openings it tried were %1$s.</string>
+    <string name="alert_fact_router">It claimed your router’s address, so your devices may be sending their internet traffic to it.</string>
+
+    <plurals name="alert_times">
+        <item quantity="one">%1$d time</item>
+        <item quantity="other">%1$d times</item>
+    </plurals>
+    <plurals name="alert_openings">
+        <item quantity="one">%1$d opening</item>
+        <item quantity="other">%1$d openings</item>
+    </plurals>
+    <plurals name="alert_addresses">
+        <item quantity="one">%1$d address</item>
+        <item quantity="other">%1$d addresses</item>
+    </plurals>
+    <!-- From one time of day to another, as in 15:13–15:20. -->
+    <string name="alert_time_range">%1$s–%2$s</string>
+    <string name="alert_known">Known device</string>
+
+    <string name="alerts_filter_all">All</string>
+    <string name="alerts_filter_unread">Unread</string>
+    <string name="alerts_filter_severity">How urgent</string>
+    <string name="alerts_filter_any_severity">Any</string>
+    <string name="alerts_filter_device">From this device</string>
+    <string name="alerts_filter_decoy">On the %1$s decoy</string>
+    <string name="alerts_filter_remove">Remove filter</string>
+    <string name="alerts_today">Today</string>
+    <string name="alerts_yesterday">Yesterday</string>
+    <!-- TalkBack state of an incident on the timeline: its severity word, and whether it is unread. -->
+    <string name="alerts_unread_state">%1$s, unread</string>
+    <string name="alerts_empty">No alerts yet. When your DeKoi notices something on your network, it shows up here.</string>
+    <string name="alerts_empty_filtered">No alerts match these filters.</string>
+    <string name="alerts_show_all">Show all alerts</string>
+
+    <string name="alert_missing">This alert is no longer available.</string>
+    <string name="alert_do_now">Do this now</string>
     <string name="event_advice">What to do</string>
+    <string name="alert_nothing_to_do">Nothing to do.</string>
+    <string name="alert_what_happened">What happened</string>
+    <plurals name="alert_show_each_time">
+        <item quantity="one">Show each time (%1$d)</item>
+        <item quantity="other">Show each time (%1$d)</item>
+    </plurals>
+    <string name="alert_device">Which device</string>
+    <string name="alert_device_network">Network</string>
+    <string name="alert_device_status">Status</string>
+    <string name="alert_device_online">Online now</string>
+    <string name="alert_device_unlisted">DeKoi has not listed this device yet.</string>
+    <string name="alert_device_dekoi">Your DeKoi</string>
+
+    <string name="event_trust">Mark as known</string>
+    <string name="event_trust_hint">If you know this device, mark it as known. DeKoi then stops warning you about it.</string>
+    <string name="event_trusted">Marked as known. Activity from it no longer counts as a warning.</string>
+    <string name="event_untrust">Remove from known devices</string>
+    <string name="alert_trust_confirm_title">Mark this device as known?</string>
+    <string name="alert_trust_confirm_body">Do this only if you set it up yourself, such as a second router or a Wi-Fi extender. A device doing this without your knowledge can see your traffic, and DeKoi would stop warning you about it.</string>
+    <string name="alert_trust_confirm">Mark as known</string>
+
     <string name="event_details">Technical details</string>
     <string name="event_detail_time">When</string>
+    <string name="event_detail_started">First time</string>
+    <string name="event_detail_ended">Last time</string>
     <string name="event_detail_source">From</string>
     <string name="event_detail_mac">Hardware address</string>
     <string name="event_detail_vendor">Maker</string>
@@ -61,19 +143,4 @@
     <string name="event_detail_server">Server</string>
     <string name="event_detail_protocol">Method</string>
     <string name="event_detail_targets">Addresses asked for</string>
-    <plurals name="event_repeated">
-        <item quantity="one">Happened once</item>
-        <item quantity="other">Happened %1$d times</item>
-    </plurals>
-    <string name="event_trust">I know this device</string>
-    <string name="event_trusted">Marked as known. Activity from it no longer counts as a warning.</string>
-    <string name="event_untrust">Forget this device</string>
-    <plurals name="alert_times">
-        <item quantity="one">%1$d time</item>
-        <item quantity="other">%1$d times</item>
-    </plurals>
-    <string name="alert_known">Known device</string>
-    <string name="alert_device">Device</string>
-    <string name="alert_missing">This alert is no longer available.</string>
-    <string name="alerts_empty">No alerts here.</string>
 </resources>

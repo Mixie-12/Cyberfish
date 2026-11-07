@@ -230,7 +230,7 @@ private fun SignedIn(
         Transitions(with(LocalDensity.current) { PUSH_DISTANCE.roundToPx() }, LocalLayoutDirection.current, reduceMotion, tabSwitch)
 
     Scaffold(
-        bottomBar = { TabBar(currentTab, alertBadgeCount(data.events, data.trustedMacs, now), ::selectTab) },
+        bottomBar = { TabBar(currentTab, alertBadgeCount(data.events, data.trustedMacs), ::selectTab) },
         snackbarHost = { SnackbarHost(snackbar) },
         containerColor = MaterialTheme.colorScheme.background,
     ) { padding ->
@@ -247,13 +247,29 @@ private fun SignedIn(
                 HomeScreen(data, now, refreshing, listStates.getValue(Tab.HOME), viewModel::refresh, navigate)
             }
             composable<Route.Alerts> {
-                AlertsScreen(data, now, Route.FilteredAlerts(), listStates.getValue(Tab.ALERTS), navigate, onBack = null)
+                AlertsScreen(
+                    data,
+                    now,
+                    Route.FilteredAlerts(),
+                    listStates.getValue(Tab.ALERTS),
+                    viewModel::refresh,
+                    navigate,
+                    onBack = null,
+                )
             }
             composable<Route.FilteredAlerts> { entry ->
-                AlertsScreen(data, now, entry.toRoute(), rememberLazyListState(), navigate, onBack = back)
+                AlertsScreen(data, now, entry.toRoute(), rememberLazyListState(), viewModel::refresh, navigate, onBack = back)
             }
             composable<Route.AlertDetail> { entry ->
-                AlertDetailScreen(data, entry.toRoute<Route.AlertDetail>().eventId, viewModel::setTrusted, navigate, back)
+                AlertDetailScreen(
+                    data,
+                    now,
+                    entry.toRoute<Route.AlertDetail>().eventId,
+                    onAcknowledge = viewModel::acknowledge,
+                    onTrust = viewModel::setTrusted,
+                    onNavigate = navigate,
+                    onBack = back,
+                )
             }
             composable<Route.Network> {
                 NetworkScreen(data, now, listStates.getValue(Tab.NETWORK), navigate)

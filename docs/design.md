@@ -15,7 +15,9 @@ the brand, ADR 0020. Data behind it: ADR 0010. Wording rules: CLAUDE.md,
    shows what DeKoi sees, not cabling. DeKoi cannot block devices; the app
    explains how to block them in the router.
 5. Calm motion. Motion explains a change. At most one idle loop on screen,
-   only on a hero, none when the system animation scale is 0.
+   only on a hero, none when the system animation scale is 0. One exception:
+   a very likely attack opens with an alarm that pulses for 3 s, then holds
+   still.
 6. Attacker text is inert: host names, models, user names and service
    labels are plain `Text` only, never links, never in notifications, never
    the only label.
@@ -23,8 +25,8 @@ the brand, ADR 0020. Data behind it: ADR 0010. Wording rules: CLAUDE.md,
 ## Navigation
 
 Four tabs, M3 `NavigationBar`, Material Symbols, filled when selected: Home
-(`home`), Alerts (`notifications`, badge = critical and warning alerts in the
-last 24 h not from known devices), Network (`lan`), Settings (`settings`).
+(`home`), Alerts (`notifications`, badge = unseen critical and warning
+incidents not from known devices), Network (`lan`), Settings (`settings`).
 
 Pushed screens: Alert detail, Device detail (a host), Networks, Your DeKoi,
 Add DeKoi. Type-safe Navigation Compose routes (`@Serializable` objects).
@@ -53,20 +55,46 @@ tapping a bar opens Alerts for that day. (5) Latest five events.
 `PullToRefreshBox` replaces the Refresh button. Without a DeKoi: "Add DeKoi"
 above the horizon.
 
-**Alerts.** Filter chips: All, Act now, Check soon, For your information,
-and a removable "From this device" chip. Sticky day headers. Row: 40 dp
-severity tile, title (two lines max), subtitle "Looks like a phone · 14 times
-· 21:14", chevron. Alerts from known devices are dimmed with "Known device".
-Rows use `animateItem()`.
+**Alerts.** A calm timeline of incidents (ADR 0013), grouped by
+`incidents()` in `Incidents.kt`: events from one DeKoi and one source, each
+within 30 minutes of the one before; the most serious event leads and sets
+the severity. In the app an incident is an "alert" and its events are
+"times"; "event" appears only in Technical details. Filter chips: All,
+Unread, and one "How urgent" chip with a menu; a removable "From this
+device", decoy or day chip from a cross-link. Sticky day headers. No
+cards: a hairline runs down the side with one dot per incident, and each
+entry is the severity glyph and word, the lead event's title and "14 times
+· 15:13–15:20", with a chevron. Unseen incidents are
+bright: the dot glows, and the dot, glyph and word carry the severity
+colour, nothing else does. Seen incidents are grey and quiet: a hollow grey
+dot, grey glyph and word, a lighter title. Known devices are dimmed with
+"Known device". Entries use `animateItem()`.
 
-**Alert detail.** Severity-coloured container band with glyph, severity
-word, title, time and count. Then: What happened; device card (kind tile,
-name, "looks like", maker and model, address, network, online status; opens
-Device detail); What to do (numbered steps from `Guidance.kt`, inline "Copy
-hardware address"); "I know this device" outlined button after the steps,
-with a confirmation for `arp_spoof`, `rogue_dhcp`, `rogue_router`,
-`name_poisoning`; Technical details collapsed (`animateContentSize`,
-monospace, copyable).
+**Alert detail.** One incident; opening it marks its events seen
+(`acknowledge_events_v1`) and clears their notifications. (1) A critical
+incident that is very likely an attack opens with the alarm hero inside a
+HUD frame (ADR 0020): the source's kind tile at the centre of rings that
+pulse outwards in the critical colour for 3 s, then a steady glow (static
+without animations). Everything else opens with a still, unboxed header:
+warnings never move, info stays grey. Both carry glyph and severity word
+in the severity colour, title, one consequence sentence, day, count and
+time span. (2) "Is this a real threat?" from `threat()` in `Guidance.kt`:
+"Very likely an attack" (a sign-in attempt, an opened bait file;
+`arp_spoof`, `rogue_dhcp`, `name_poisoning`, `dns_hijack`, `evil_twin`),
+"Possibly an attack" (scans, decoy connections, `rogue_router`, IDS alerts,
+kinds the app does not know yet), "Probably harmless" (a known device,
+DeKoi's own status), each with one plain sentence. (3) "Do this now" for
+the alarm, else "What to do": the numbered steps as a checklist the owner
+can tick (on the phone only, not stored), one action per step; a step that
+names the hardware address has it below, copyable. Then "Mark as known",
+outlined (undone with "Remove from known devices"), with a confirmation
+when the incident includes `arp_spoof`, `rogue_dhcp`,
+`rogue_router` or `name_poisoning`. (4) What happened: explanation,
+specifics in plain words (decoys, well-known openings, a claimed router
+address) and the events on a small timeline, the first eight, then "Show
+each time (14)". Technical details give "First time" and "Last time". (5) Which device (kind tile, name, "looks like", maker and model,
+address, network, online status; opens Device detail). (6) Technical
+details collapsed (`animateContentSize`, monospace, copyable).
 
 **Network.** Header "38 devices · 3 new this week · 1 needs attention" and a
 "Networks" row. Map | List segmented control, choice saved; List is the
@@ -281,18 +309,19 @@ animation scale is 0):
 
 ## Alerts
 
-Template: title naming the device kind; severity chip and one consequence
-sentence; what happened (counts and times); which device; numbered steps
-(find, disconnect by kind, secure), "I know this device" last, technical
-details collapsed. Disconnect step by kind:
+Template: title naming the device kind; severity and one consequence
+sentence; whether it is a real threat; numbered steps (find, disconnect by
+kind, secure); "Mark as known"; what happened (counts and times); which
+device; technical details collapsed. Disconnect steps by kind, one action
+per step (a slash separates steps):
 
-| Kinds | Step |
-| ----- | ---- |
-| phone, tablet, wearable | Ask who in your home owns it. On it, turn off Wi-Fi. |
+| Kinds | Steps |
+| ----- | ----- |
+| phone, tablet, wearable | Ask who in your home owns it. / On it, turn off Wi-Fi. |
 | computer | Unplug its network cable or turn off its Wi-Fi. Leave it switched on. |
 | tv, media_player, speaker, game_console, printer | Unplug it from power. |
-| camera, smart_home | Unplug it or take out its batteries. Reset it and update its software before using it again. |
-| storage, server | Shut it down from its app or power button, then unplug its network cable, so no files are lost. |
+| camera, smart_home | Unplug it or take out its batteries. / Reset it and update its software before using it again. |
+| storage, server | Shut it down from its app or power button, so no files are lost. / Then unplug its network cable. |
 | router, access_point, switch | If you have more than one, unplug the extra ones one at a time. If this is the box from your internet provider, restart it instead. |
 | unknown | If no one recognises it, block it in your router's app or settings page by its hardware address [Copy]. |
 
@@ -329,6 +358,8 @@ in the same file. No Lottie, no Accompanist.
 ## Avoid
 
 Alarm styling and words ("hacked", exclamation marks, red everywhere),
+except the alarm hero of a very likely attack: one strong signal for real
+alarms, calm for everything else; warnings never move, info stays grey;
 security scores, pie charts, 3D, parallax; map lines that imply cabling;
 data DeKoi does not have; attacker text in notifications or as links;
 trusting or blocking from a notification or a swipe; animated list rows
