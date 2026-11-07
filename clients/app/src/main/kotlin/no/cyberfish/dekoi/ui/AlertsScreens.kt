@@ -212,7 +212,7 @@ private fun WhatToDo(
             steps.forEachIndexed { index, step ->
                 Row(horizontalArrangement = Arrangement.spacedBy(Dimens.spaceM)) {
                     Text("${index + 1}.", style = MaterialTheme.typography.bodyLarge.tabular(), color = MaterialTheme.colorScheme.primary)
-                    Text(stringResource(step), style = MaterialTheme.typography.bodyLarge)
+                    Text(stringResource(step.text), style = MaterialTheme.typography.bodyLarge)
                 }
             }
         }

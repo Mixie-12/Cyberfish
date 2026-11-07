@@ -3,10 +3,14 @@ package no.cyberfish.dekoi
 import androidx.annotation.StringRes
 
 /**
- * What the owner should do about an event, as numbered steps. The steps
- * depend on what kind of problem it is and on what the source device looks
- * like, so "disconnect it" becomes "unplug its power" for a TV and "turn off
- * its Wi-Fi" for a phone. All wording lives in strings_guidance.xml.
+ * What the owner should do about an event, as numbered steps (docs/design.md,
+ * "Alerts"). The steps depend on what kind of problem it is and on what the
+ * source device looks like, so "disconnect it" becomes "unplug it from power"
+ * for a TV and "turn off Wi-Fi" for a phone. All wording lives in
+ * strings_guidance.xml.
+ *
+ * No step links to the router's web page: it is cleartext, and during ARP
+ * spoofing opening it would hand the router password to the attacker.
  */
 enum class Response {
     INTRUSION,
@@ -23,50 +27,59 @@ fun responseFor(kind: String): Response =
         else -> Response.INTRUSION
     }
 
-/** How to take a device of this kind off the network, in the owner's terms. */
-@StringRes
-fun disconnectStep(kind: HostKind): Int =
+/** One numbered step. A step that names the source's hardware address offers to copy it. */
+data class Step(
+    @param:StringRes val text: Int,
+    val usesHardwareAddress: Boolean = false,
+)
+
+/** How to take a device of this kind off the network (the table in docs/design.md, "Alerts"). */
+fun disconnectStep(kind: HostKind): Step =
     when (kind) {
-        HostKind.PHONE, HostKind.TABLET, HostKind.COMPUTER, HostKind.WEARABLE -> R.string.step_disconnect_wifi
+        HostKind.PHONE, HostKind.TABLET, HostKind.WEARABLE -> Step(R.string.step_disconnect_personal)
 
-        HostKind.TV, HostKind.MEDIA_PLAYER, HostKind.SPEAKER, HostKind.GAME_CONSOLE,
-        HostKind.PRINTER, HostKind.CAMERA, HostKind.SMART_HOME, HostKind.STORAGE, HostKind.SERVER,
-        -> R.string.step_disconnect_power
+        HostKind.COMPUTER -> Step(R.string.step_disconnect_computer)
 
-        HostKind.ROUTER, HostKind.SWITCH, HostKind.ACCESS_POINT -> R.string.step_disconnect_network_gear
+        HostKind.TV, HostKind.MEDIA_PLAYER, HostKind.SPEAKER, HostKind.GAME_CONSOLE, HostKind.PRINTER,
+        -> Step(R.string.step_disconnect_power)
 
-        HostKind.UNKNOWN -> R.string.step_disconnect_unknown
+        HostKind.CAMERA, HostKind.SMART_HOME -> Step(R.string.step_disconnect_smart_home)
+
+        HostKind.STORAGE, HostKind.SERVER -> Step(R.string.step_disconnect_storage)
+
+        HostKind.ROUTER, HostKind.ACCESS_POINT, HostKind.SWITCH -> Step(R.string.step_disconnect_network_gear)
+
+        HostKind.UNKNOWN -> Step(R.string.step_disconnect_unknown, usesHardwareAddress = true)
     }
 
 /** Where to look for a device of this kind. */
-@StringRes
-fun findStep(kind: HostKind): Int =
+fun findStep(kind: HostKind): Step =
     when (kind) {
-        HostKind.PHONE, HostKind.TABLET, HostKind.WEARABLE -> R.string.step_find_personal
-        HostKind.COMPUTER -> R.string.step_find_computer
-        HostKind.TV, HostKind.MEDIA_PLAYER, HostKind.SPEAKER, HostKind.GAME_CONSOLE -> R.string.step_find_entertainment
-        HostKind.PRINTER, HostKind.STORAGE, HostKind.SERVER -> R.string.step_find_office
-        HostKind.CAMERA, HostKind.SMART_HOME -> R.string.step_find_smart_home
-        HostKind.ROUTER, HostKind.SWITCH, HostKind.ACCESS_POINT -> R.string.step_find_network_gear
-        HostKind.UNKNOWN -> R.string.step_find_unknown
+        HostKind.PHONE, HostKind.TABLET, HostKind.WEARABLE -> Step(R.string.step_find_personal)
+        HostKind.COMPUTER -> Step(R.string.step_find_computer)
+        HostKind.TV, HostKind.MEDIA_PLAYER, HostKind.SPEAKER, HostKind.GAME_CONSOLE -> Step(R.string.step_find_entertainment)
+        HostKind.PRINTER, HostKind.STORAGE, HostKind.SERVER -> Step(R.string.step_find_office)
+        HostKind.CAMERA, HostKind.SMART_HOME -> Step(R.string.step_find_smart_home)
+        HostKind.ROUTER, HostKind.SWITCH, HostKind.ACCESS_POINT -> Step(R.string.step_find_network_gear)
+        HostKind.UNKNOWN -> Step(R.string.step_find_unknown, usesHardwareAddress = true)
     }
 
 /**
- * The steps for an event whose source looks like [source]. A device the owner
- * already marked as known only needs the last step, in case it changed.
+ * The steps for an event whose source looks like [source]: find it,
+ * disconnect it, then secure the network. "I know this device" is not a
+ * step; the alert offers it after them.
  */
 fun steps(
     kind: String,
     source: HostKind,
-): List<Int> =
+): List<Step> =
     when (responseFor(kind)) {
         Response.INTRUSION -> {
             listOf(
                 findStep(source),
                 disconnectStep(source),
-                R.string.step_change_wifi_password,
-                R.string.step_change_account_passwords,
-                R.string.step_mark_known,
+                Step(R.string.step_change_wifi_password),
+                Step(R.string.step_change_account_passwords),
             )
         }
 
@@ -74,18 +87,65 @@ fun steps(
             listOf(
                 findStep(source),
                 disconnectStep(source),
-                R.string.step_restart_router,
-                R.string.step_change_wifi_password,
+                Step(R.string.step_restart_router),
+                Step(R.string.step_change_wifi_password),
             )
         }
 
         Response.OFFLINE -> {
-            listOf(R.string.step_check_power, R.string.step_check_cable, R.string.step_wait_reconnect)
+            listOf(Step(R.string.step_check_power), Step(R.string.step_check_cable), Step(R.string.step_wait_reconnect))
         }
 
         Response.NONE -> {
             emptyList()
         }
+    }
+
+// Marking one of these sources as known silences an attack on every
+// device's traffic, and a second router or extender is easy to mistake for
+// a familiar device, so the app asks first.
+private val CONFIRM_TRUST = setOf("arp_spoof", "rogue_dhcp", "rogue_router", "name_poisoning")
+
+/** Whether "I know this device" asks for confirmation for an event of this kind. */
+fun trustNeedsConfirmation(kind: String): Boolean = kind in CONFIRM_TRUST
+
+enum class ThreatLevel { LIKELY, POSSIBLE, UNLIKELY }
+
+/** The answer to "Is this a real threat?": how likely, and one plain sentence on why. */
+data class Threat(
+    val level: ThreatLevel,
+    @param:StringRes val reason: Int,
+)
+
+// A device that impersonates another or answers for a name. rogue_router
+// is not here: Thread border routers send router advertisements legitimately.
+private val IMPERSONATION_KINDS = setOf("arp_spoof", "rogue_dhcp", "name_poisoning")
+private val DEKOI_STATUS_KINDS = setOf("device_offline", "device_online")
+
+/**
+ * How likely an incident with events of these [kinds] is a real attack. A
+ * sign-in attempt or an impersonation is one; a scan or a decoy connection
+ * may be an app or a network tool; anything from a device the owner marked
+ * as known, and DeKoi's own status, is probably harmless.
+ */
+fun threat(
+    kinds: Set<String>,
+    knownSource: Boolean,
+): Threat =
+    when {
+        knownSource -> Threat(ThreatLevel.UNLIKELY, R.string.threat_known)
+        "login_attempt" in kinds -> Threat(ThreatLevel.LIKELY, R.string.threat_sign_in)
+        kinds.any { it in IMPERSONATION_KINDS } -> Threat(ThreatLevel.LIKELY, R.string.threat_impersonation)
+        DEKOI_STATUS_KINDS.containsAll(kinds) -> Threat(ThreatLevel.UNLIKELY, R.string.threat_status)
+        else -> Threat(ThreatLevel.POSSIBLE, R.string.threat_probing)
+    }
+
+@StringRes
+fun threatLabel(level: ThreatLevel): Int =
+    when (level) {
+        ThreatLevel.LIKELY -> R.string.threat_likely
+        ThreatLevel.POSSIBLE -> R.string.threat_possible
+        ThreatLevel.UNLIKELY -> R.string.threat_unlikely
     }
 
 /** One short line on how serious it is, for the top of an alert. */
@@ -141,4 +201,31 @@ fun looksLike(kind: HostKind): Int =
         HostKind.WEARABLE -> R.string.looks_like_wearable
         HostKind.SERVER -> R.string.looks_like_server
         HostKind.UNKNOWN -> R.string.looks_like_unknown
+    }
+
+/**
+ * A device of this kind as the subject of an alert title, "A phone". The
+ * same words as SUBJECTS in backend/supabase/functions/notify/notify.ts, so
+ * the alert reads like the notification that led to it (ADR 0011).
+ */
+@StringRes
+fun subject(kind: HostKind): Int =
+    when (kind) {
+        HostKind.ROUTER -> R.string.subject_router
+        HostKind.SWITCH -> R.string.subject_switch
+        HostKind.ACCESS_POINT -> R.string.subject_access_point
+        HostKind.COMPUTER -> R.string.subject_computer
+        HostKind.PHONE -> R.string.subject_phone
+        HostKind.TABLET -> R.string.subject_tablet
+        HostKind.TV -> R.string.subject_tv
+        HostKind.MEDIA_PLAYER -> R.string.subject_media_player
+        HostKind.SPEAKER -> R.string.subject_speaker
+        HostKind.GAME_CONSOLE -> R.string.subject_game_console
+        HostKind.PRINTER -> R.string.subject_printer
+        HostKind.CAMERA -> R.string.subject_camera
+        HostKind.STORAGE -> R.string.subject_storage
+        HostKind.SMART_HOME -> R.string.subject_smart_home
+        HostKind.WEARABLE -> R.string.subject_wearable
+        HostKind.SERVER -> R.string.subject_server
+        HostKind.UNKNOWN -> R.string.subject_unknown
     }

@@ -5,22 +5,35 @@
     <string name="severity_warning">Check soon</string>
     <string name="severity_info">For your information</string>
 
+    <string name="threat_title">Is this a real threat?</string>
+    <string name="threat_likely">Very likely an attack</string>
+    <string name="threat_possible">Possibly an attack</string>
+    <string name="threat_unlikely">Probably harmless</string>
+    <string name="threat_sign_in">Something tried passwords on your DeKoi. No ordinary device in a home does that.</string>
+    <string name="threat_impersonation">Ordinary devices never pretend to be another device. This is how someone gets between your devices and the internet.</string>
+    <string name="threat_probing">Some apps and network tools do this too. If you don’t recognise the device, treat it as an attack.</string>
+    <string name="threat_known">It comes from a device you marked as known, so it is most likely you or one of your own tools.</string>
+    <string name="threat_status">This is about your DeKoi itself, not an attack.</string>
+
     <string name="step_find_personal">Find the device. It looks like a phone, tablet or watch, so check the ones people in your home and your guests carry.</string>
     <string name="step_find_computer">Find the device. It looks like a computer, so check the laptops and desktops in your home.</string>
     <string name="step_find_entertainment">Find the device. It looks like a TV, streaming box, speaker or games console, so check your living room and bedrooms.</string>
     <string name="step_find_office">Find the device. It looks like a printer or storage box, so check where you keep office equipment.</string>
     <string name="step_find_smart_home">Find the device. It looks like a camera or a smart home device, such as a plug, bulb, thermostat or doorbell.</string>
     <string name="step_find_network_gear">Find the device. It looks like network equipment, such as a router, Wi-Fi extender or network switch.</string>
-    <string name="step_find_unknown">Find the device. Your router’s app or web page lists connected devices with their hardware address, shown under Technical details.</string>
+    <string name="step_find_unknown">Find the device. Your router’s app or settings page lists the connected devices by their hardware address.</string>
 
-    <string name="step_disconnect_wifi">If you don’t recognise it, turn off its Wi-Fi, or remove and block it in your router’s app.</string>
-    <string name="step_disconnect_power">If you don’t recognise it, unplug its power. If it has a network cable, unplug that too.</string>
-    <string name="step_disconnect_network_gear">If you don’t recognise it, unplug its network cable from your router. If it is your own router, restart it instead.</string>
-    <string name="step_disconnect_unknown">If you don’t recognise it, block its hardware address in your router’s app, or unplug it once you have found it.</string>
+    <!-- Disconnect steps: the table in docs/design.md, "Alerts", word for word. -->
+    <string name="step_disconnect_personal">Ask who in your home owns it. On it, turn off Wi-Fi.</string>
+    <string name="step_disconnect_computer">Unplug its network cable or turn off its Wi-Fi. Leave it switched on.</string>
+    <string name="step_disconnect_power">Unplug it from power.</string>
+    <string name="step_disconnect_smart_home">Unplug it or take out its batteries. Reset it and update its software before using it again.</string>
+    <string name="step_disconnect_storage">Shut it down from its app or power button, then unplug its network cable, so no files are lost.</string>
+    <string name="step_disconnect_network_gear">If you have more than one, unplug the extra ones one at a time. If this is the box from your internet provider, restart it instead.</string>
+    <string name="step_disconnect_unknown">If no one recognises it, block it in your router’s app or settings page by its hardware address.</string>
 
     <string name="step_change_wifi_password">Change your Wi-Fi password. Devices that don’t get the new password can no longer join.</string>
     <string name="step_change_account_passwords">Change the passwords of your important accounts, such as email and banking, from a device you trust.</string>
-    <string name="step_mark_known">If it is your own device running network tools, mark it as known so it no longer alerts you.</string>
     <string name="step_restart_router">Restart your router, so every device gets its network settings from the router again.</string>
     <string name="step_check_power">Check that your DeKoi has power. Its light should be on.</string>
     <string name="step_check_cable">Check that its network cable is plugged in at both ends.</string>
@@ -61,6 +74,25 @@
     <string name="looks_like_wearable">Looks like a watch or wearable</string>
     <string name="looks_like_server">Looks like a server</string>
     <string name="looks_like_unknown">DeKoi can’t tell what this is yet</string>
+
+    <!-- An alert title's subject; the same words as SUBJECTS in notify.ts (ADR 0011). -->
+    <string name="subject_router">A router</string>
+    <string name="subject_switch">A network switch</string>
+    <string name="subject_access_point">A Wi-Fi access point</string>
+    <string name="subject_computer">A computer</string>
+    <string name="subject_phone">A phone</string>
+    <string name="subject_tablet">A tablet</string>
+    <string name="subject_tv">A TV</string>
+    <string name="subject_media_player">A streaming box</string>
+    <string name="subject_speaker">A speaker</string>
+    <string name="subject_game_console">A games console</string>
+    <string name="subject_printer">A printer</string>
+    <string name="subject_camera">A camera</string>
+    <string name="subject_storage">A storage box</string>
+    <string name="subject_smart_home">A smart home device</string>
+    <string name="subject_wearable">A watch</string>
+    <string name="subject_server">A server</string>
+    <string name="subject_unknown">A device</string>
 
     <!-- A host's maker and kind, as in "LG TV" (HostName.kt). -->
     <string name="host_maker_kind">%1$s %2$s</string>
