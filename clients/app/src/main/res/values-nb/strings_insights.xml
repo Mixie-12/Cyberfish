@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Nettverksinnsikt (ui/network/InsightsScreen.kt), ADR 0015. -->
+<resources>
+    <string name="insights_title">Innsikt</string>
+    <string name="insights_open_subtitle">Internett, nettadresser og åpne porter</string>
+
+    <string name="insights_internet">Internett</string>
+    <string name="insights_internet_body">Hvert minutt sjekker din DeKoi at ruteren svarer, at internett kan nås og at nettadresser kan slås opp.</string>
+    <string name="insights_internet_none">Din DeKoi rapporterer de første målingene en time etter at den har startet.</string>
+    <plurals name="insights_uptime_summary">
+        <item quantity="one">Internett virket i %1$d av %2$d time</item>
+        <item quantity="other">Internett virket i %1$d av %2$d timer</item>
+    </plurals>
+    <string name="insights_probe_gateway">Ruteren din</string>
+    <string name="insights_probe_internet">Internett</string>
+    <string name="insights_probe_resolver">Oppslag av nettadresser</string>
+    <string name="insights_probe_value">Vanligvis %1$d ms, %2$s tapt</string>
+    <string name="insights_probe_none">Ikke målt ennå</string>
+    <string name="insights_probe_no_answer">Ingen svar denne uken</string>
+    <string name="insights_outages">Tider uten internett</string>
+    <string name="insights_outages_none">Din DeKoi fant ingen tid uten internett.</string>
+    <plurals name="insights_outage">
+        <item quantity="one">Uten internett i omtrent %1$d minutt</item>
+        <item quantity="other">Uten internett i omtrent %1$d minutter</item>
+    </plurals>
+    <plurals name="insights_outage_home">
+        <item quantity="one">Ruteren din svarte ikke i omtrent %1$d minutt</item>
+        <item quantity="other">Ruteren din svarte ikke i omtrent %1$d minutter</item>
+    </plurals>
+
+    <string name="insights_dns">Nettadresser</string>
+    <string name="insights_dns_ok">Nettadressene fører dit de skal.</string>
+    <string name="insights_dns_mismatch">Noen nettadresser fører til feil sted.</string>
+    <string name="insights_dns_unavailable">Din DeKoi fikk ikke sjekket dette sist den prøvde.</string>
+    <string name="insights_dns_unknown">Ikke sjekket ennå.</string>
+    <string name="insights_dns_body">En gang i timen slår din DeKoi opp noen kjente adresser gjennom ruteren din og gjennom en uavhengig tjeneste, og sammenligner svarene.</string>
+    <string name="insights_checked">Sjekket %1$s</string>
+    <string name="insights_resolver">Navnetjener</string>
+
+    <string name="insights_ports">Åpent mot internett</string>
+    <string name="insights_ports_body">Enheter kan be ruteren åpne en port, slik at andre på internett kan nå dem. Din DeKoi leser listen en gang i timen og endrer den aldri.</string>
+    <plurals name="insights_ports_open">
+        <item quantity="one">%1$d port er åpen mot internett.</item>
+        <item quantity="other">%1$d porter er åpne mot internett.</item>
+    </plurals>
+    <string name="insights_ports_none">Ingen enhet har bedt ruteren din om å åpne en port.</string>
+    <string name="insights_ports_unknown">Ruteren din deler ikke hvilke porter som er åpne. De fleste rutere deler dette bare når enheter selv får åpne porter, og den innstillingen er tryggere å slå av.</string>
+    <string name="insights_port">Port %1$d, %2$s</string>
+    <string name="insights_port_every">Alle porter, %1$s</string>
+    <string name="insights_port_named">Kalt «%1$s»</string>
+
+    <string name="insights_connection">Tilkoblingen din</string>
+    <string name="insights_connection_body">Nettsteder og tjenester ser denne adressen når noen i hjemmet ditt bruker dem.</string>
+    <string name="insights_public_ip">Adressen internett ser</string>
+    <string name="insights_country">Land</string>
+    <string name="insights_connection_unknown">Din DeKoi rapporterer dette ved neste sjekk, en gang i timen.</string>
+    <string name="insights_bandwidth">DeKoi ser bare sin egen trafikk, så den kan ikke vise hvor mye hver enhet bruker. En modus som kan det, er planlagt.</string>
+
+    <string name="insights_speed">Hastighet</string>
+    <string name="insights_speed_toggle">Test hastigheten om natten</string>
+    <string name="insights_speed_body">En gang per natt laster din DeKoi ned 25 MB fra Cloudflare og måler hvor fort det kommer frem. Det teller med i datakvoten din, hvis du har en.</string>
+    <string name="insights_speed_value">%1$s Mbit/s</string>
+    <string name="insights_speed_off">Slå det på for å se hvor rask tilkoblingen din er.</string>
+    <string name="insights_speed_waiting">Det første resultatet kommer etter neste natt.</string>
+</resources>

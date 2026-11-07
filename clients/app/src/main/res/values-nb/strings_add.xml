@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="add_title">Legg til en DeKoi</string>
+
+    <string name="add_prepare_title">Gjør klar din DeKoi</string>
+    <string name="add_prepare_body">Din DeKoi starter fra et minnekort som kobler den til kontoen din. Gjør klar minnekortet én gang, og koble så til din DeKoi.</string>
+    <string name="add_write_card">Gjør klar minnekortet med denne telefonen</string>
+    <string name="add_write_card_hint">Du trenger en USB-C-kortleser til minnekortet.</string>
+    <string name="add_computer_card">Jeg har gjort klar et minnekort med DeKoi Setup på en datamaskin</string>
+
+    <string name="add_code_body">DeKoi Setup viser en QR-kode. Skann den, eller skriv inn koden under den.</string>
+    <string name="add_scan">Skann koden</string>
+    <string name="add_scan_failed">Skanningen virket ikke. Skriv inn koden under QR-koden i stedet.</string>
+    <string name="add_manual_label">Kode</string>
+    <string name="add_manual_button">Legg til</string>
+    <string name="add_invalid">Det er ikke en DeKoi-kode. Sjekk den og prøv igjen.</string>
+    <string name="add_refused">Denne koden kan ikke brukes. Gjør klar minnekortet på nytt for å få en ny.</string>
+    <string name="add_too_many">Gjør ferdig oppsettet av din andre DeKoi først.</string>
+
+    <string name="add_linked_title">Din DeKoi er koblet til kontoen din</string>
+    <string name="add_linked_done">Din DeKoi passer på nettverket ditt</string>
+    <string name="add_plug_in_title">Koble den til nå</string>
+    <string name="add_plug_in_card">Sett minnekortet i din DeKoi.</string>
+    <string name="add_plug_in_cable">Koble nettverkskabelen til din DeKoi og til ruteren din.</string>
+    <string name="add_plug_in_power">Koble til strømmen. Første oppstart tar noen minutter.</string>
+    <string name="add_help_card">Minnekortet sitter i din DeKoi.</string>
+    <string name="add_help_power">Din DeKoi har strøm.</string>
+    <string name="add_help_cable">Nettverkskabelen går fra din DeKoi til ruteren din.</string>
+    <string name="add_help_wifi">Hvis du valgte Wi-Fi, er navnet og passordet riktige.</string>
+    <string name="add_help_again">Hvis den fortsatt ikke dukker opp, gjør klar minnekortet på nytt.</string>
+    <string name="add_step_done">Ferdig</string>
+    <string name="add_step_pending">Ikke ennå</string>
+    <string name="add_done">Ferdig</string>
+</resources>

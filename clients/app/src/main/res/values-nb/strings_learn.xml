@@ -1,0 +1,189 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="learn_title">Lær mer</string>
+    <string name="learn_intro">Korte forklaringer på det DeKoi ser etter, og hva du kan gjøre i hvert tilfelle.</string>
+    <string name="learn_section_dekoi">Dette gjør DeKoi</string>
+    <string name="learn_section_you">Dette kan du gjøre</string>
+    <string name="learn_open">Les</string>
+    <string name="learn_missing">Dette emnet finnes ikke i denne versjonen av appen.</string>
+
+    <string name="learn_honeypot_title">Slik virker en lokkedue</string>
+    <string name="learn_honeypot_summary">Hvorfor en boks uten innhold kan fortelle deg så mye.</string>
+    <string-array name="learn_honeypot_body">
+        <item>En honningkrukke, på engelsk «honeypot», er en lokkedue: noe som ser interessant ut, men som ikke inneholder noe av verdi. Sikkerhetsfolk har lenge brukt slike for å oppdage inntrengere tidlig.</item>
+        <item>Din DeKoi er en slik. På nettverket ditt ser den ut som en lagringsboks for bilder og sikkerhetskopier, og den dukker opp når noen ser seg rundt på nettverket fra en datamaskin.</item>
+        <item>Ingen av dine egne enheter har noen grunn til å bruke den. Så når noe prøver å åpne den, logge på den eller teste den, er det verdt å vite om.</item>
+        <item>Derfor kommer det få varsler, og de betyr noe. DeKoi trenger ikke gjette hva som er normalt på nettverket ditt: hver gang noe rører den, er det et signal.</item>
+        <item>DeKoi ser det som sendes til den, og det som sendes til alle enheter samtidig. Den ser ikke privat trafikk mellom de andre enhetene dine.</item>
+    </string-array>
+    <string name="learn_honeypot_dekoi">Din DeKoi kjører flere lokkeduer samtidig, for eksempel en delt mappe, en nettside og en fjerninnlogging. Den noterer hvilken enhet som rørte dem og hvordan, og sender et varsel til telefonen din. Appen viser hvilket brukernavn som ble prøvd, aldri passordet.</string>
+    <string-array name="learn_honeypot_steps">
+        <item>La din DeKoi stå i strømmen og være koblet til ruteren, der den kan se nettverket ditt.</item>
+        <item>Hvis du er nysgjerrig, kan du åpne den fra din egen datamaskin. Du får da et varsel, og så kan du merke datamaskinen din som kjent.</item>
+        <item>Når et varsel kommer, åpne det og følg stegene.</item>
+    </string-array>
+
+    <string name="learn_sign_in_title">Noen prøvde å logge på</string>
+    <string name="learn_sign_in_summary">En enhet prøvde et brukernavn og passord på din DeKoi.</string>
+    <string-array name="learn_sign_in_body">
+        <item>Din DeKoi har måter å logge på, slik mange ekte lagringsbokser og datamaskiner har. Ingen hjemme hos deg har en konto på den, så ingen har noen grunn til å prøve.</item>
+        <item>Et påloggingsforsøk betyr som regel én av to ting: en person som tester hva de kan komme inn på, eller skadelig programvare på en av enhetene dine som prøver vanlige passord på alt den finner.</item>
+        <item>Uansett leter noe på nettverket ditt etter en vei inn. Hvis det prøver seg på din DeKoi, prøver det seg kanskje på de andre enhetene dine også.</item>
+        <item>Noen ganger er årsaken ufarlig, for eksempel et nysgjerrig familiemedlem. Varselet sier hvilken enhet det var, så du kan finne ut av det.</item>
+    </string-array>
+    <string name="learn_sign_in_dekoi">Din DeKoi noterer tidspunktet, enheten, hvordan den prøvde å logge på og brukernavnet den brukte. Appen viser aldri passordet. Gjentatte forsøk fra samme enhet blir samlet i ett varsel.</string>
+    <string-array name="learn_sign_in_steps">
+        <item>Åpne varselet og se hvilken enhet det kom fra.</item>
+        <item>Hvis du ikke kjenner den igjen, ta den av nettverket. Stegene i varselet viser hvordan for den typen enhet.</item>
+        <item>Bytt passordene til de viktige kontoene dine, som e-post og nettbank, fra en enhet du vet er trygg, og slå på totrinnsbekreftelse der du kan.</item>
+        <item>Hvis det var deg eller noen du kjenner, merk enheten som kjent.</item>
+    </string-array>
+
+    <string name="learn_port_scan_title">Søk etter åpninger</string>
+    <string name="learn_port_scan_summary">En enhet sjekket hvilke dører din DeKoi har åpne.</string>
+    <string-array name="learn_port_scan_body">
+        <item>Hver enhet på et nettverk har nummererte dører, kalt porter, som andre enheter bruker for å nå den. En skriver lytter bak én dør, en nettside bak en annen.</item>
+        <item>En portskanning er en enhet som raskt banker på mange av disse dørene for å se hvilke som åpner seg. Det er ofte første steg før et angrep: å finne ut hva som finnes der.</item>
+        <item>Noen vanlige verktøy skanner også, for eksempel nettverksapper og enkelte sikkerhetsprogrammer. En skanning fra en enhet du kjenner, kan være ufarlig. En skanning fra en du ikke kjenner, bør du gjøre noe med.</item>
+        <item>DeKoi kjenner også mønstrene til vanlige angrepsverktøy. Når trafikk til din DeKoi passer med et av dem, får du et varsel om det også.</item>
+    </string-array>
+    <string name="learn_port_scan_dekoi">Din DeKoi legger merke til når en enhet prøver mange av dørene dens på kort tid, og forteller deg hvilken enhet det var og hvor mange dører den prøvde. Bare lokkeduene svarer, så skanningen finner ikke noe ekte.</string>
+    <string-array name="learn_port_scan_steps">
+        <item>Se hvilken enhet skanningen kom fra.</item>
+        <item>Hvis du ikke kjenner den igjen, ta den av nettverket og følg stegene i varselet.</item>
+        <item>Hvis det er en datamaskin du kjenner, se etter programmer du ikke har installert, og kjør en sikkerhetsskanning på den.</item>
+    </string-array>
+
+    <string name="learn_network_sweep_title">Søk gjennom nettverket</string>
+    <string name="learn_network_sweep_summary">En enhet spurte etter hver eneste adresse på nettverket ditt.</string>
+    <string-array name="learn_network_sweep_body">
+        <item>Hver enhet på hjemmenettverket ditt har en adresse. Et søk gjennom nettverket er når én enhet spør etter hver adresse etter tur, for å lage en liste over alt som finnes der.</item>
+        <item>Det er som når noen går nedover en gate og prøver hver eneste inngangsdør. Ofte er det slik en inntrenger, eller skadelig programvare, finner ut hva den skal gå løs på videre.</item>
+        <item>Noen rutere, nettverksapper og smarthussentraler søker gjennom nettverket for å finne enheter. Et søk fra ruteren din eller fra en sentral du eier, er som regel ufarlig.</item>
+        <item>DeKoi hører et slikt søk bare hvis nettverket sender det videre. Noe Wi-Fi-utstyr holder disse spørsmålene tilbake, så et søk fra en enhet på Wi-Fi kan passere uten at DeKoi merker det.</item>
+    </string-array>
+    <string name="learn_network_sweep_dekoi">Din DeKoi hører disse spørsmålene fordi de sendes til alle enheter samtidig. Når én enhet spør etter mange adresser på kort tid, får du et varsel som sier hvilken enhet det er.</string>
+    <string-array name="learn_network_sweep_steps">
+        <item>Se hvilken enhet søket kom fra.</item>
+        <item>Hvis det er ruteren din eller en sentral du eier, merk den som kjent. Da får du ikke flere varslinger om den.</item>
+        <item>Hvis du ikke kjenner den igjen, ta den av nettverket og følg stegene i varselet.</item>
+    </string-array>
+
+    <string name="learn_impersonation_title">Enheter som utgir seg for å være andre</string>
+    <string name="learn_impersonation_summary">En enhet hevder å ha en adresse eller et navn som tilhører en annen, ofte ruteren din.</string>
+    <string-array name="learn_impersonation_body">
+        <item>På et hjemmenettverk finner enhetene hverandre ved å spørre høyt: hvem har denne adressen? Enheten som har den, svarer.</item>
+        <item>Ingenting kontrollerer disse svarene. En enhet kan svare for en adresse som ikke er dens egen, ofte ruterens. De andre enhetene dine sender da trafikken sin gjennom den uten å vite det. Dette kalles ARP-spoofing.</item>
+        <item>En enhet i en slik posisjon kan lese og endre det som går gjennom den. Du bør handle med en gang.</item>
+        <item>Et lignende triks virker med navn. Når en datamaskin leter etter et navn som ikke finnes, kan en enhet svare at den har det navnet, og slik samle inn passord.</item>
+    </string-array>
+    <string name="learn_impersonation_dekoi">Din DeKoi legger merke til når en ny enhet hevder å ha en adresse mens den første fortsatt er der, særlig når det er adressen til ruteren din. Den spør også av og til etter navn som ikke finnes, og varsler deg når noe svarer.</string>
+    <string-array name="learn_impersonation_steps">
+        <item>Åpne varselet og finn enheten det nevner.</item>
+        <item>Ta den enheten av nettverket.</item>
+        <item>Start ruteren på nytt, så alle enheter lærer på nytt hvem som er hvem.</item>
+        <item>Bytt passordene til de viktige kontoene dine med mobildata, ikke med hjemmenettverket.</item>
+    </string-array>
+
+    <string name="learn_fake_settings_title">Falske nettverksinnstillinger</string>
+    <string name="learn_fake_settings_summary">En annen enhet deler ut nettverksinnstillinger, noe bare ruteren din skal gjøre.</string>
+    <string-array name="learn_fake_settings_body">
+        <item>Når en enhet kobler seg til nettverket ditt, spør den etter innstillingene sine: sin egen adresse, og hvor den skal sende trafikken. Ruteren svarer, og enheten følger instruksjonene.</item>
+        <item>Hvis en annen enhet også svarer, kan noen av enhetene dine følge dens instruksjoner i stedet. Trafikken deres kan da gå gjennom den, der den kan leses eller sendes et annet sted.</item>
+        <item>Fagnavnene er «rogue DHCP server» og «rogue router», altså en falsk DHCP-server eller en falsk ruter.</item>
+        <item>Ofte er årsaken uskyldig: en ekstra ruter eller et Wi-Fi-punkt som er koblet til med sine egne innstillinger slått på. Det skaper likevel problemer og er verdt å rette opp.</item>
+    </string-array>
+    <string name="learn_fake_settings_dekoi">Din DeKoi spør jevnlig etter innstillinger, slik en ny enhet ville gjort, og sjekker hvem som svarer. Hvis noe annet enn ruteren din svarer, eller en annen enhet melder seg som ruter, får du et varsel.</string>
+    <string-array name="learn_fake_settings_steps">
+        <item>Se hvilken enhet varselet nevner.</item>
+        <item>Hvis det er en ekstra ruter eller et Wi-Fi-punkt du eier, sett enheten i tilgangspunkt- eller bromodus, så bare hovedruteren deler ut innstillinger. Bruksanvisningen forklarer hvordan.</item>
+        <item>Hvis du ikke kjenner den igjen, ta den av nettverket og start ruteren på nytt.</item>
+    </string-array>
+
+    <string name="learn_wifi_copy_title">Kopier av Wi-Fi-nettet ditt</string>
+    <string name="learn_wifi_copy_summary">Et Wi-Fi-nett i nærheten bruker navnet på nettverket ditt.</string>
+    <string-array name="learn_wifi_copy_body">
+        <item>Telefoner og bærbare datamaskiner kobler seg til Wi-Fi etter navnet. Hvis to nettverk har samme navn, kan en enhet koble seg til hvilket som helst av dem.</item>
+        <item>En kopi av Wi-Fi-nettet ditt, på engelsk kalt «evil twin», er et nettverk som er satt opp i nærheten med ditt navn, for å lokke enhetene dine over på det. Den som står bak, kan lese og endre det disse enhetene sender.</item>
+        <item>Kopier er ofte åpne eller dårligere beskyttet enn det ekte nettverket, så enheter kan koble seg til uten passordet ditt.</item>
+        <item>Ikke alle nye nettverk med ditt navn er kopier. Mesh-systemer for Wi-Fi og ekstra tilgangspunkter bruker samme navn med vilje.</item>
+    </string-array>
+    <string name="learn_wifi_copy_dekoi">Med noen minutters mellomrom sjekker din DeKoi Wi-Fi-nettene i nærheten med sin egen radio. Når den har lært tilgangspunktene dine det første døgnet, varsler den deg om alle nettverk med ditt navn og svakere beskyttelse. Den trenger navnet på Wi-Fi-nettet ditt for å gjøre dette.</string>
+    <string-array name="learn_wifi_copy_steps">
+        <item>Hvis du nylig har lagt til et mesh-punkt eller et nytt tilgangspunkt, er dette ventet, og du trenger ikke gjøre noe.</item>
+        <item>Hvis ikke, ikke koble deg til et nettverk med ditt navn som plutselig ikke ber om passord.</item>
+        <item>Sjekk i appen til ruteren at Wi-Fi-nettet ditt bruker WPA3- eller WPA2-sikkerhet og et langt passord.</item>
+    </string-array>
+
+    <string name="learn_new_device_title">Nye enheter</string>
+    <string name="learn_new_device_summary">Noe koblet seg til nettverket ditt for første gang.</string>
+    <string-array name="learn_new_device_body">
+        <item>DeKoi holder oversikt over enhetene på nettverket ditt. Etter det første døgnet sier den fra når en enhet den aldri har sett før, kobler seg til.</item>
+        <item>Som regel er dette gode nyheter: en ny telefon, en gjest, en smarthøyttaler du nettopp har satt opp. Varselet sier hva enheten ser ut som, så du kan kjenne den igjen.</item>
+        <item>Noen ganger er det en nabo som kjenner Wi-Fi-passordet ditt, eller noe som ikke skal være der.</item>
+        <item>Mange telefoner bruker en privat Wi-Fi-adresse for hvert nettverk og bytter den av og til. De kan da dukke opp som nye selv om du kjenner dem.</item>
+    </string-array>
+    <string name="learn_new_device_dekoi">Din DeKoi noterer hva slags enhet det ser ut til å være, produsenten der den kan se det, og når enheten koblet seg til, og viser den som ny i nettverkslisten. Nye enheter er til orientering. Din DeKoi kan ikke blokkere dem.</string>
+    <string-array name="learn_new_device_steps">
+        <item>Se hva enheten ser ut som, og når den koblet seg til.</item>
+        <item>Hvis du kjenner den, merk den som kjent.</item>
+        <item>Hvis ikke, bytt Wi-Fi-passordet og koble dine egne enheter til på nytt. Det som ikke kjenner det nye passordet, faller ut.</item>
+    </string-array>
+
+    <string name="learn_port_forward_title">Åpen mot internett</string>
+    <string name="learn_port_forward_summary">En enhet ba ruteren slippe internett inn til den.</string>
+    <string-array name="learn_port_forward_body">
+        <item>Ruteren holder vanligvis internett ute: enheter hjemme kan nå ut, men ingenting utenfra kan komme inn.</item>
+        <item>En portvideresending er et unntak: en dør fra internett rett til én enhet hjemme. Spillkonsoller, kameraer og apper for fjerntilgang åpner noen ganger en slik dør selv, gjennom en funksjon i ruteren som heter UPnP.</item>
+        <item>En åpen dør er ikke et problem i seg selv, men hvem som helst på internett kan banke på den. Hvis enheten bak har et svakt passord eller gammel programvare, kan noen utenfra prøve å komme seg inn.</item>
+    </string-array>
+    <string name="learn_port_forward_dekoi">Hver time leser din DeKoi listen over åpne dører fra ruteren, hvis ruteren deler den, uten å endre noe. Den sier fra når en ny dør dukker opp, og hvilken enhet den fører til.</string>
+    <string-array name="learn_port_forward_steps">
+        <item>Se hvilken enhet døren fører til, og om du bruker den enheten når du er borte fra hjemmet.</item>
+        <item>Hvis ikke, slå av fjerntilgang i appen til enheten, eller fjern videresendingen i appen til ruteren.</item>
+        <item>Hvis ingen enhet trenger det, slå av UPnP i appen til ruteren, så enheter ikke kan åpne dører på egen hånd.</item>
+    </string-array>
+
+    <string name="learn_dns_tampering_title">DNS-manipulering</string>
+    <string name="learn_dns_tampering_summary">Navn på nettsteder fører til feil sted på nettverket ditt.</string>
+    <string-array name="learn_dns_tampering_body">
+        <item>Når du skriver navnet på et nettsted, spør enheten først etter adressen, omtrent som å slå opp et nummer i telefonkatalogen. Vanligvis er det ruteren som svarer.</item>
+        <item>Hvis noen endrer denne telefonkatalogen, kan navnet du skriver, føre et annet sted, for eksempel til en kopi av nettsiden til banken din som er laget for å samle inn passord.</item>
+        <item>Dette kalles DNS-manipulering. Det kan skje når en angriper eller skadelig programvare endrer innstillingene på ruteren din.</item>
+    </string-array>
+    <string name="learn_dns_tampering_dekoi">Hver time slår din DeKoi opp en fast liste med kjente navn to ganger: én gang gjennom nettverket ditt, og én gang gjennom en pålitelig tjeneste over en kryptert forbindelse. Hvis svarene fortsetter å være forskjellige, får du et varsel.</string>
+    <string-array name="learn_dns_tampering_steps">
+        <item>Til dette er løst, logg på nettsteder med mobildata i stedet for Wi-Fi-nettet hjemme.</item>
+        <item>Start ruteren på nytt. Hvis varselet kommer tilbake, be internettleverandøren om hjelp, eller tilbakestill ruteren slik bruksanvisningen beskriver, og gi den et nytt administratorpassord.</item>
+        <item>Se etter programmer du ikke har installert, på datamaskinene dine.</item>
+    </string-array>
+
+    <string name="learn_home_safety_title">Slik holder du hjemmenettverket trygt</string>
+    <string name="learn_home_safety_summary">Noen få vaner som gjør problemer mindre sannsynlige.</string>
+    <string-array name="learn_home_safety_body">
+        <item>De fleste problemer på et hjemmenettverk kommer gjennom et svakt passord, en gammel enhet som ikke lenger får oppdateringer, eller et program som ikke burde vært installert.</item>
+        <item>Noen få vaner lukker de fleste av disse dørene. Ingen av dem krever teknisk kunnskap.</item>
+        <item>Din DeKoi er ett lag: den sier fra når den legger merke til noe. Disse vanene gjør det mindre sannsynlig at noe går galt i det hele tatt.</item>
+    </string-array>
+    <string name="learn_home_safety_dekoi">Din DeKoi ser etter enheter som ser seg rundt på nettverket ditt eller utgir seg for å være noe annet, og forteller deg hva du kan gjøre. Den kan ikke blokkere enheter, så stegene den gir deg, gjør du i ruteren eller på selve enheten.</string>
+    <string-array name="learn_home_safety_steps">
+        <item>Gi Wi-Fi-nettet ditt et langt passord, og bruk WPA3- eller WPA2-sikkerhet.</item>
+        <item>Bytt administratorpassordet på ruteren fra det den kom med.</item>
+        <item>Hold ruteren, telefonene og datamaskinene oppdatert. Slå på automatiske oppdateringer der du kan.</item>
+        <item>Sett gjester og smarthusenheter på et gjestenettverk, hvis ruteren din har det.</item>
+        <item>Bruk et eget passord for hver viktige konto, og slå på totrinnsbekreftelse.</item>
+    </string-array>
+
+    <string name="scene_decoy">Enhetene dine koblet til ruteren, og din DeKoi ved siden av dem, som ingenting rører.</string>
+    <string name="scene_touch">En ukjent enhet når fram til din DeKoi, og et varsel dukker opp på en telefon.</string>
+    <string name="scene_steps">Et kort med tre nummererte steg som krysses av ett etter ett.</string>
+    <string name="scene_watch">Din DeKoi midt i nettverket ditt, som holder utkikk i alle retninger.</string>
+    <string name="scene_probe">En enhet som banker på den ene døren etter den andre på din DeKoi.</string>
+    <string name="scene_sweep">En enhet som oppsøker alle de andre enhetene på nettverket etter tur.</string>
+    <string name="scene_impostor">En enhet som utgir seg for å være ruteren din, med trafikken fra en telefon gjennom seg.</string>
+    <string name="scene_settings">En telefon som spør etter nettverksinnstillinger og får to svar, ett fra ruteren din og ett fra en annen enhet.</string>
+    <string name="scene_wifi_copy">To Wi-Fi-nett med samme navn, og en telefon som kobler seg til kopien.</string>
+    <string name="scene_new_device">En ny enhet som dukker opp blant enhetene på nettverket ditt.</string>
+    <string name="scene_exposed">Et kamera hjemme hos deg med en åpen vei ut mot internett.</string>
+    <string name="scene_dns">En telefon som spør om veien til et nettsted og blir sendt til en kopi.</string>
+</resources>

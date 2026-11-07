@@ -1,0 +1,165 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="service_ftp">filserver</string>
+    <string name="service_http">påloggingsside for lagring</string>
+    <string name="service_ssh">fjerninnlogging</string>
+    <string name="service_telnet">fjernterminal</string>
+    <string name="service_database">database</string>
+    <string name="service_rdp">fjernskrivebord</string>
+    <string name="service_vnc">skjermdeling</string>
+    <string name="service_file_share">delt mappe</string>
+    <string name="service_other">tjeneste</string>
+    <string name="port_web">nettsider</string>
+    <string name="port_file_sharing">fildeling</string>
+
+    <!-- The subject (subject_*) can be neuter (et nettbrett), so no title refers back to it with den or det. -->
+    <string name="event_login_title">%1$s prøvde å logge på din DeKoi</string>
+    <string name="event_login_action">Prøvde å logge på</string>
+    <string name="event_login_consequence">Noen prøver kanskje å komme seg inn på enhetene på nettverket ditt.</string>
+    <string name="event_login_why">Ingenting på nettverket ditt har noen grunn til å logge på din DeKoi. Noen, eller et program, prøver ut passord på enhetene som finnes på nettverket.</string>
+    <string name="event_connection_title">%1$s åpnet en av lokkeduene dine</string>
+    <string name="event_connection_action">Åpnet en lokkedue</string>
+    <string name="event_connection_why">Din DeKoi later som den er en lagringsboks. Vanlige enheter lar den være i fred, så et besøk betyr at noe på nettverket ditt ser seg rundt.</string>
+    <string name="event_probe_consequence">Noe på nettverket ditt leter kanskje etter en vei inn.</string>
+    <string name="event_scan_title">%1$s lette etter åpninger på nettverket ditt</string>
+    <string name="event_scan_action">Lette etter åpninger</string>
+    <string name="event_scan_why">Den prøvde mange åpninger på din DeKoi på kort tid for å finne en vei inn. Nettverksverktøy gjør dette, og det gjør skadelige programmer også.</string>
+    <string name="event_host_scan_title">%1$s søkte gjennom hele nettverket ditt</string>
+    <string name="event_host_scan_action">Søkte gjennom hele nettverket</string>
+    <string name="event_host_scan_consequence">Noe på nettverket ditt kartlegger kanskje enhetene dine.</string>
+    <string name="event_host_scan_why">Den spurte etter adressene til mange enheter på kort tid. Nettverksverktøy gjør dette, og det gjør også skadelige programmer som leter etter andre enheter.</string>
+    <string name="event_arp_spoof_title">%1$s utgir seg for å være en annen enhet</string>
+    <string name="event_arp_spoof_action">Utga seg for å være en annen enhet</string>
+    <string name="event_arp_spoof_consequence">Den kan lese eller endre internettrafikken din.</string>
+    <string name="event_arp_spoof_why">Den hevdet å ha en adresse som tilhører en annen enhet på nettverket ditt. Da kan trafikk som skal til den andre enheten, gå til denne i stedet.</string>
+    <string name="event_rogue_dhcp_title">%1$s deler ut nettverksinnstillinger</string>
+    <string name="event_rogue_dhcp_action">Delte ut nettverksinnstillinger</string>
+    <string name="event_rogue_dhcp_why">Vanligvis er det bare ruteren som gir enhetene nettverksinnstillingene deres. En annen enhet som gjør det, kan sende trafikken din gjennom seg selv.</string>
+    <string name="event_rogue_router_title">%1$s melder seg som ruteren din</string>
+    <string name="event_rogue_router_action">Meldte seg som ruter</string>
+    <string name="event_rogue_router_why">En ny enhet har begynt å melde seg som ruter. Noen smarthussentraler gjør dette, men den kan også lede trafikken fra enhetene dine gjennom seg selv.</string>
+    <string name="event_redirect_consequence">Den kan sende trafikken fra enhetene dine gjennom seg selv.</string>
+    <string name="event_name_poisoning_title">%1$s svarer på spørsmål som er ment for andre</string>
+    <string name="event_name_poisoning_action">Svarte for en datamaskin som ikke finnes</string>
+    <string name="event_name_poisoning_consequence">Den kan lure datamaskiner til å gi fra seg passord.</string>
+    <string name="event_name_poisoning_why">Din DeKoi spurte etter en datamaskin som ikke finnes, og noe svarte. Verktøy som gjør dette, lurer datamaskiner til å gi fra seg passord.</string>
+    <string name="event_ids_title">%1$s sendte mistenkelig trafikk til din DeKoi</string>
+    <string name="event_ids_action">Sendte mistenkelig trafikk</string>
+    <string name="event_ids_consequence">En enhet på nettverket ditt kjører kanskje et skadelig program.</string>
+    <string name="event_ids_why">Trafikken passet med et kjent mønster for angrep eller skadelige programmer. De tekniske detaljene viser hvilket mønster.</string>
+    <string name="event_new_host_title">%1$s koblet seg til nettverket ditt for første gang</string>
+    <string name="event_new_host_action">Koblet seg til nettverket ditt</string>
+    <string name="event_new_host_consequence">Hvis ingen hjemme kjenner den igjen, bruker kanskje noen Wi-Fi-nettet ditt uten å spørre.</string>
+    <string name="event_new_host_why">Din DeKoi så denne enheten på nettverket ditt for første gang. Som regel er det en ny telefon, en gjest eller en smarthusenhet.</string>
+    <string name="event_file_access_title">Noen åpnet en lokkefil på din DeKoi</string>
+    <string name="event_file_access_action">Åpnet en lokkefil i den delte mappen</string>
+    <string name="event_file_access_consequence">Noen på nettverket ditt ser gjennom filer som ikke er deres.</string>
+    <string name="event_file_access_why">Din DeKoi viser en delt mappe med fristende filnavn, men det er ikke noe ekte i filene. Ingen hjemme hos deg trenger disse filene, så den som åpner en av dem, leter etter passord, penger eller personlige papirer på nettverket ditt.</string>
+    <string name="event_port_forward_title">%1$s kan nå nås fra internett</string>
+    <string name="event_port_forward_action">Åpnet en vei inn fra internett</string>
+    <string name="event_port_forward_consequence">Hvem som helst på internett kan nå prøve å koble seg til den.</string>
+    <string name="event_port_forward_why">En enhet på nettverket ditt ba ruteren om å åpne en port mot internett, og ruteren gjorde det. Spillkonsoller, kameraer og fildelingsapper gjør dette slik at andre kan koble seg til dem.</string>
+    <string name="event_dns_hijack_title">Noen nettadresser fører til feil sted</string>
+    <string name="event_dns_hijack_action">Ga feil adresser for nettsteder</string>
+    <string name="event_dns_hijack_consequence">Nettsteder du åpner på dette nettverket, er kanskje ikke de ekte.</string>
+    <string name="event_dns_hijack_why">Din DeKoi slo opp kjente nettadresser gjennom ruteren din og gjennom en uavhengig tjeneste. To ganger på rad var svarene forskjellige. Noen kan ha endret innstillingene på ruteren din.</string>
+    <string name="event_evil_twin_title">Noen har kopiert navnet på Wi-Fi-nettet ditt</string>
+    <string name="event_evil_twin_action">Kopierte navnet på Wi-Fi-nettet ditt</string>
+    <string name="event_evil_twin_consequence">Telefonene og datamaskinene dine kan koble seg til kopien ved en feil.</string>
+    <string name="event_evil_twin_why">Et Wi-Fi-nett i nærheten av din DeKoi bruker samme navn som ditt, men med svakere beskyttelse eller ingen. Den som står bak, kan se og endre alt enhetene sender over det nettet.</string>
+    <string name="event_new_access_point_title">Et nytt tilgangspunkt bruker navnet på Wi-Fi-nettet ditt</string>
+    <string name="event_new_access_point_action">Begynte å bruke navnet på Wi-Fi-nettet ditt</string>
+    <string name="event_new_access_point_consequence">Som regel er dette Wi-Fi-utstyr du har lagt til eller byttet ut.</string>
+    <string name="event_new_access_point_why">Din DeKoi så et nytt Wi-Fi-tilgangspunkt med navnet på nettverket ditt og samme beskyttelse. Det er normalt når du legger til et mesh-punkt eller bytter ruter. Det kan også være noen som kjenner passordet og kopierer nettverket ditt.</string>
+    <string name="event_offline_title">Din DeKoi ble frakoblet</string>
+    <string name="event_offline_action">Ble frakoblet</string>
+    <string name="event_offline_consequence">Din DeKoi kan ikke varsle deg før den er tilbake.</string>
+    <string name="event_offline_why">Som regel skyldes det strømbrudd, en kabel som er trukket ut, eller at ruteren har startet på nytt.</string>
+    <string name="event_online_title">Din DeKoi er tilkoblet</string>
+    <string name="event_online_action">Ble tilkoblet igjen</string>
+    <string name="event_online_consequence">Din DeKoi passer på nettverket ditt.</string>
+    <string name="event_online_why">Din DeKoi melder seg hvert minutt og passer på nettverket ditt.</string>
+    <string name="event_other_title">Aktivitet på din DeKoi</string>
+    <string name="event_other_action">Aktivitet</string>
+    <string name="event_other_consequence">Din DeKoi la merke til noe den ennå ikke har en enkel forklaring på.</string>
+    <string name="event_other_why">Dette skjer når din DeKoi er nyere enn appen. De tekniske detaljene viser hva den så.</string>
+
+    <string name="alert_fact_decoys">Den gikk etter disse lokkeduene: %1$s.</string>
+    <string name="alert_fact_openings">Blant åpningene den prøvde, var %1$s.</string>
+    <string name="alert_fact_router">Den hevdet å ha adressen til ruteren din, så enhetene dine sender kanskje internettrafikken sin til den.</string>
+
+    <plurals name="alert_times">
+        <item quantity="one">%1$d gang</item>
+        <item quantity="other">%1$d ganger</item>
+    </plurals>
+    <plurals name="alert_openings">
+        <item quantity="one">%1$d åpning</item>
+        <item quantity="other">%1$d åpninger</item>
+    </plurals>
+    <plurals name="alert_addresses">
+        <item quantity="one">%1$d adresse</item>
+        <item quantity="other">%1$d adresser</item>
+    </plurals>
+    <string name="alert_time_range">%1$s–%2$s</string>
+
+    <string name="alerts_filter_all">Alle</string>
+    <string name="alerts_filter_unread">Uleste</string>
+    <string name="alerts_filter_severity">Hastegrad</string>
+    <string name="alerts_filter_any_severity">Alle</string>
+    <string name="alerts_filter_device">Fra denne enheten</string>
+    <!-- The service name stands alone, so it needs no gender or case. -->
+    <string name="alerts_filter_decoy">Lokkedue: %1$s</string>
+    <string name="alerts_filter_remove">Fjern filteret</string>
+    <string name="alerts_today">I dag</string>
+    <string name="alerts_yesterday">I går</string>
+    <string name="alerts_unread_state">%1$s, ulest</string>
+    <string name="alerts_empty">Ingen varsler ennå. Når din DeKoi legger merke til noe på nettverket ditt, dukker det opp her.</string>
+    <string name="alerts_empty_filtered">Ingen varsler passer med disse filtrene.</string>
+    <string name="alerts_show_all">Vis alle varsler</string>
+
+    <string name="alert_missing">Dette varselet finnes ikke lenger.</string>
+    <string name="alert_do_now">Gjør dette nå</string>
+    <string name="event_advice">Dette gjør du</string>
+    <string name="alert_nothing_to_do">Du trenger ikke gjøre noe.</string>
+    <string name="alert_what_happened">Dette skjedde</string>
+    <plurals name="alert_show_each_time">
+        <item quantity="one">Vis hver gang (%1$d)</item>
+        <item quantity="other">Vis hver gang (%1$d)</item>
+    </plurals>
+    <string name="alert_device">Hvilken enhet</string>
+    <string name="alert_device_network">Nettverk</string>
+    <string name="alert_device_status">Status</string>
+    <string name="alert_device_online">Tilkoblet nå</string>
+    <string name="alert_device_unlisted">DeKoi har ikke ført opp denne enheten ennå.</string>
+    <string name="alert_device_dekoi">Din DeKoi</string>
+
+    <string name="event_trust_hint">Hvis du kjenner denne enheten, merk den som kjent. Da slutter DeKoi å varsle deg om den.</string>
+    <string name="event_trusted">Merket som kjent. Aktivitet fra den regnes ikke lenger som en advarsel.</string>
+    <string name="alert_trust_confirm_title">Merke denne enheten som kjent?</string>
+    <string name="alert_trust_confirm_body">Gjør dette bare hvis du har satt den opp selv, for eksempel en ekstra ruter eller en Wi-Fi-forsterker. En enhet som gjør dette uten at du vet om det, kan se trafikken din, og da ville DeKoi sluttet å varsle deg om den.</string>
+
+    <string name="alert_learn_more">Les mer</string>
+
+    <string name="event_details">Tekniske detaljer</string>
+    <string name="event_detail_time">Når</string>
+    <string name="event_detail_started">Første gang</string>
+    <string name="event_detail_ended">Siste gang</string>
+    <string name="event_detail_source">Fra</string>
+    <string name="event_detail_mac">Maskinvareadresse</string>
+    <string name="event_detail_vendor">Produsent</string>
+    <string name="event_detail_port">Port</string>
+    <string name="event_detail_username">Brukernavn som ble prøvd</string>
+    <string name="event_detail_path">Adresse som ble bedt om</string>
+    <string name="event_detail_client">Program</string>
+    <string name="event_detail_command">Kommando</string>
+    <string name="event_detail_ports">Porter som ble prøvd</string>
+    <string name="event_detail_signature">Mønster</string>
+    <string name="event_detail_category">Kategori</string>
+    <string name="event_detail_claimed_ip">Adressen den hevdet å ha</string>
+    <string name="event_detail_previous_mac">Maskinvareadressen til den egentlige eieren</string>
+    <string name="event_detail_server">Server</string>
+    <string name="event_detail_protocol">Metode</string>
+    <string name="event_detail_targets">Adresser den spurte etter</string>
+    <string name="event_detail_share">Delt mappe</string>
+    <string name="event_detail_file">Fil som ble åpnet</string>
+</resources>
