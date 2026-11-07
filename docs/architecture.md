@@ -99,7 +99,12 @@ Responses the agent must handle:
 | 400  | malformed input                          | drop the batch, log it; never retry it      |
 | 403  | registration refused or secret rejected  | before registration: retry with backoff;    |
 |      |                                          | after: device was removed, back off to 1 h  |
+| 429  | over a request limit                     | keep the batch, retry with backoff          |
 | 5xx, network error | backend unavailable            | keep the batch, retry with backoff          |
+
+Every write through the Data API passes `guard.check_request()` first,
+which counts it per client address and per user (ADR 0016, limits in
+`private.request_limits()`).
 
 ## App API (v1)
 

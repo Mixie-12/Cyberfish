@@ -40,6 +40,7 @@ The data flow and every contract are in `docs/architecture.md`.
 | 8  | Attacker-controlled strings in notifications                     | fixed templates by event kind; payload carries the event id only | tested with Phase 5 (`notify` function tests) |
 | 9  | Anything beyond the intended surface on the project URL          | public schema only, GraphQL dropped, no buckets, no publications | verified 2026-11-07 against production: anonymous reads 401, private schema and GraphQL not exposed, no buckets, notify refuses requests without the secret |
 | 10 | Secrets in git history                                           | secrets only in GitHub secrets and 1Password                | tested: `gitleaks` on every push |
+| 11 | Flooding the API from one address or account                    | write limits per address and per user in PostgREST's pre-request function (ADR 0016) | tested: `10_request_limits`; HTTP 429 through the local gateway verified 2026-11-08 |
 
 Further: typed passwords never leave the device (tested: agent `test_sources`,
 end-to-end assertion that the attacker's password is absent from the backend).
@@ -69,7 +70,9 @@ Object-level and function-level authorization (API1, API5): RLS and exact
 function grants, tested. Authentication (API2): Supabase Auth, device secrets.
 Property-level authorization (API3): column grants (only `name` and `trusted`
 are writable), tested. Resource consumption (API4): batch limits, pending-claim
-limit, bounded fields; no edge rate limit without a custom domain (ADR 0001).
+limit, bounded fields, write limits per address and per user (ADR 0016),
+tested; reads are bounded by statement timeouts and `max_rows`, with
+aggregates and query plans off; no edge firewall without a custom domain.
 Business flows (API6): single-use pairing. SSRF (API7): the only outbound call
 from the backend goes to a fixed FCM URL. Misconfiguration (API8): see A02.
 Inventory (API9): one documented API (`docs/architecture.md`). Unsafe
@@ -92,8 +95,10 @@ and passkey sign-in, manual linking and MFA enrolment off; no redirect URLs
 besides the site URL; access tokens valid 15 minutes; refresh tokens single
 use, with reuse after 10 seconds ending the session; Auth's own rate limits
 per address (Google sign-in and refresh share `token_refresh`, verified in
-the Auth source). Only the `public` schema is exposed; Realtime has no
-published tables and Storage no buckets (`00_hardening`).
+the Auth source). PostgREST, from a migration: the pre-request check of
+ADR 0016, no OpenAPI description, no aggregates, no query plans. Only the
+`public` schema is exposed; Realtime has no published tables and Storage
+no buckets (`00_hardening`).
 
 Settings that the current CI token cannot write. Each needs the owner once:
 either a one-time bootstrap check, or a replacement token with the named
