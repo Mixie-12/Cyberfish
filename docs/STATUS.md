@@ -185,17 +185,14 @@ but does nothing (tested 2026-11-07, Genesys 05e3:0749).
 9. Decide on Cloud KMS billing (about 1 USD a month) before the first key
    retires on 2026-12-31; then `rotate-keys.md`, "Switch new cards to the
    Cloud KMS key".
-10. Update the canary's twisted, pyasn1 and urllib3
-    (`device/canary/requirements.txt`): OSV-Scanner reports High
-    vulnerabilities.
-11. Decide before real customers: Supabase Pro (daily backups, PITR as an
+10. Decide before real customers: Supabase Pro (daily backups, PITR as an
     add-on, no pausing, session time-outs, higher quotas) and a custom
     domain with a firewall in front of the API (ADR 0016).
-12. After v0.2.0 and the KMS switch, rewrite the Pi's card with the phone
+11. After v0.2.0 and the KMS switch, rewrite the Pi's card with the phone
     or DeKoi Setup for the new host configuration: the decoy's firewall
     ports, the Wi-Fi scan, trust in the three release repositories only.
     Then retire the first key (`rotate-keys.md`, "Retire the first key").
-13. Optional: repeat the ARP sweep from a PC connected by cable.
+12. Optional: repeat the ARP sweep from a PC connected by cable.
 
 ## Known limitations
 
@@ -215,7 +212,7 @@ but does nothing (tested 2026-11-07, Genesys 05e3:0749).
 - No edge firewall without a custom domain (ADR 0016): a flood from many
   accounts can hold back everyone's pushes for an hour or fill the 500 MB
   database within weeks. The checks in `docs/security.md`, "Monitoring",
-  are specified but not built; only the weekly advisors run.
+  run daily (`monitor.yml`, ADR 0026); not yet run against production.
 - Free Supabase plan: nightly dumps, no point-in-time recovery; sessions
   never expire; the project may pause after a week of low activity.
 - A phone's push language changes when the app next opens signed in;
