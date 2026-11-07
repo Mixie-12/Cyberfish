@@ -1,0 +1,212 @@
+BSS 58:1d:d8:40:82:e8(on wlan0)
+	last seen: 3071.155s [boottime]
+	TSF: 2348678676 usec (0d, 00:39:08)
+	freq: 2437.0
+	beacon interval: 100 TUs
+	capability: ESS Privacy SpectrumMgmt ShortSlotTime RadioMeasure (0x1511)
+	signal: -42.00 dBm
+	last seen: 2695 ms ago
+	Information elements from Probe Response frame:
+	SSID: Livebox-8A12
+	Supported rates: 1.0* 2.0* 5.5* 11.0* 18.0 24.0 36.0 54.0
+	DS Parameter set: channel 6
+	Country: FR	Environment: bogus
+		Channels [1 - 13] @ 20 dBm
+	Power constraint: 0 dB
+	TPC report: TX power: 13 dBm
+	ERP: Barker_Preamble_Mode
+	Extended supported rates: 6.0 9.0 12.0 48.0
+	RSN:	 * Version: 1
+		 * Group cipher: CCMP
+		 * Pairwise ciphers: CCMP
+		 * Authentication suites: PSK
+		 * Capabilities: 16-PTKSA-RC 1-GTKSA-RC MFP-capable (0x008c)
+	BSS Load:
+		 * station count: 0
+		 * channel utilisation: 16/255
+		 * available admission capacity: 0 [*32us]
+	RM enabled capabilities:
+		Capabilities: 0x33 0x4f 0x00 0x00 0x00
+			Link Measurement
+			Neighbor Report
+			Beacon Passive Measurement
+			Beacon Active Measurement
+			Frame Measurement
+			Channel Load
+			Noise Histogram Measurement
+			Statistics Measurement
+			Transmit Stream/Category Measurement
+		Nonoperating Channel Max Measurement Duration: 0
+		Measurement Pilot Capability: 0
+	AP Channel Report:
+		 * operating class: 134
+		 * channel(s): 37
+	AP Channel Report:
+		 * operating class: 128
+		 * channel(s): 100
+	Supported operating classes:
+		 * current operating class: 81
+		 * operating class: 4
+		 * operating class: 11
+		 * operating class: 12
+		 * operating class: 81
+		 * operating class: 83
+		 * operating class: 84
+	HT capabilities:
+		Capabilities: 0x19ef
+			RX LDPC
+			HT20/HT40
+			SM Power Save disabled
+			RX HT20 SGI
+			RX HT40 SGI
+			TX STBC
+			RX STBC 1-stream
+			Max AMSDU length: 7935 bytes
+			DSSS/CCK HT40
+		Maximum RX AMPDU length 65535 bytes (exponent: 0x003)
+		Minimum RX AMPDU time spacing: 4 usec (0x05)
+		HT RX MCS rate indexes supported: 0-23
+		HT TX MCS rate indexes are undefined
+	HT operation:
+		 * primary channel: 6
+		 * secondary channel offset: no secondary
+		 * STA channel width: 20 MHz
+		 * RIFS: 1
+		 * HT protection: no
+		 * non-GF present: 0
+		 * OBSS non-GF present: 0
+		 * dual beacon: 0
+		 * dual CTS protection: 0
+		 * STBC beacon: 0
+		 * L-SIG TXOP Prot: 0
+		 * PCO active: 0
+		 * PCO phase: 0
+	Overlapping BSS scan params:
+		 * passive dwell: 20 TUs
+		 * active dwell: 10 TUs
+		 * channel width trigger scan interval: 300 s
+		 * scan passive total per channel: 200 TUs
+		 * scan active total per channel: 20 TUs
+		 * BSS width channel transition delay factor: 5
+		 * OBSS Scan Activity Threshold: 0.25 %
+	Extended capabilities:
+		 * HT Information Exchange Supported
+		 * Extended Channel Switching
+		 * Event
+		 * BSS Transition
+		 * SSID List
+		 * Interworking
+		 * Operating Mode Notification
+		 * Reserved Reserved Channel Schedule Management
+		 * Reserved Channel Schedule Management
+		 * TWT Responder Support
+		 * 85
+	802.11u Interworking:
+		Network Options: 0x0
+			Network Type: 0 (Private)
+	802.11u Advertisement:
+		Query Response Info: 0x7f
+			Query Response Length Limit: 127
+			ANQP
+	WPS:	 * Version: 1.0
+		 * Wi-Fi Protected Setup State: 2 (Configured)
+		 * AP setup locked: 0x01
+		 * Response Type: 3 (AP)
+		 * UUID: 4d168c8d-f89c-ae8f-fae0-b2758849c99b
+		 * Manufacturer: Sagemcom
+		 * Model: SagemcomFast5694_OFR
+		 * Model Number: SG_LB7_4.0.0
+		 * Serial Number: LK24009FF
+		 * Primary Device Type: 6-0050f204-1
+		 * Device name: Livebox 7
+		 * Config methods: Label
+		 * RF Bands: 0x3
+		 * Version2: 2.0
+	WMM:	 * Parameter version 1
+		 * BE: CW 15-1023, AIFSN 3
+		 * BK: CW 15-1023, AIFSN 7
+		 * VI: CW 7-15, AIFSN 2, TXOP 3008 usec
+		 * VO: CW 3-7, AIFSN 2, TXOP 1504 usec
+BSS 58:1d:d8:40:82:e0(on wlan0) -- associated
+	last seen: 3073.588s [boottime]
+	TSF: 2352161558 usec (0d, 00:39:12)
+	freq: 6135.0
+	beacon interval: 100 TUs
+	capability: ESS Privacy SpectrumMgmt RadioMeasure (0x1111)
+	signal: -51.00 dBm
+	last seen: 262 ms ago
+	Information elements from Probe Response frame:
+	SSID: Livebox-8A12
+	Supported rates: 6.0* 9.0 12.0 18.0 24.0* 36.0 48.0 54.0
+	Country: FR	Environment: bogus
+		Extension ID: 254 Regulatory Class: 131 Coverage class: 0 (up to 0m)
+		Extension ID: 254 Regulatory Class: 132 Coverage class: 0 (up to 0m)
+		Extension ID: 254 Regulatory Class: 133 Coverage class: 0 (up to 0m)
+		Extension ID: 254 Regulatory Class: 134 Coverage class: 0 (up to 0m)
+		Extension ID: 254 Regulatory Class: 136 Coverage class: 0 (up to 0m)
+		Extension ID: 254 Regulatory Class: 137 Coverage class: 0 (up to 0m)
+	Power constraint: 0 dB
+	TPC report: TX power: 20 dBm
+	Extended supported rates: 61.5*
+	RSN:	 * Version: 1
+		 * Group cipher: CCMP
+		 * Pairwise ciphers: CCMP
+		 * Authentication suites: SAE
+		 * Capabilities: 16-PTKSA-RC 1-GTKSA-RC MFP-required MFP-capable (0x00cc)
+	BSS Load:
+		 * station count: 1
+		 * channel utilisation: 3/255
+		 * available admission capacity: 0 [*32us]
+	RM enabled capabilities:
+		Capabilities: 0x33 0x4f 0x00 0x00 0x00
+			Link Measurement
+			Neighbor Report
+			Beacon Passive Measurement
+			Beacon Active Measurement
+			Frame Measurement
+			Channel Load
+			Noise Histogram Measurement
+			Statistics Measurement
+			Transmit Stream/Category Measurement
+		Nonoperating Channel Max Measurement Duration: 0
+		Measurement Pilot Capability: 0
+	AP Channel Report:
+		 * operating class: 128
+		 * channel(s): 100
+	AP Channel Report:
+		 * operating class: 81
+		 * channel(s): 6
+	Supported operating classes:
+		 * current operating class: 134
+		 * operating class: 131
+		 * operating class: 132
+		 * operating class: 133
+		 * operating class: 134
+	Extended capabilities:
+		 * Extended Channel Switching
+		 * Event
+		 * BSS Transition
+		 * Multiple BSSID
+		 * SSID List
+		 * Interworking
+		 * Operating Mode Notification
+		 * Reserved Reserved Channel Schedule Management
+		 * Reserved Channel Schedule Management
+		 * TWT Responder Support
+		 * 80
+		 * 85
+	802.11u Interworking:
+		Network Options: 0x0
+			Network Type: 0 (Private)
+	802.11u Advertisement:
+		Query Response Info: 0x7f
+			Query Response Length Limit: 127
+			ANQP
+	Transmit Power Envelope:
+	Transmit Power Envelope: <invalid: 9 bytes: 1c 14 14 14 14 14 14 14 14>
+	Transmit Power Envelope: <invalid: 9 bytes: 5c 14 14 14 14 14 14 14 14>
+	WMM:	 * Parameter version 1
+		 * BE: CW 15-1023, AIFSN 3
+		 * BK: CW 15-1023, AIFSN 7
+		 * VI: CW 7-15, AIFSN 2, TXOP 3008 usec
+		 * VO: CW 3-7, AIFSN 2, TXOP 1504 usec
