@@ -4,6 +4,7 @@ import me.jahnen.libaums.core.driver.BlockDeviceDriver
 import no.cyberfish.dekoi.shared.CardContent
 import no.cyberfish.dekoi.shared.ClaimCode
 import java.io.Closeable
+import java.io.IOException
 import java.nio.ByteBuffer
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -47,7 +48,7 @@ class CardWritingTest {
         bytes: Long = 31_914_983_424,
         connection: Connection = Connection(),
         blockSize: Int = 512,
-    ) = OpenCard(reader.name, SizedCard(bytes / blockSize, blockSize), connection)
+    ) = OpenCard(reader, SizedCard(bytes / blockSize, blockSize), connection)
 
     private fun confirm(card: OpenCard = card()): OpenCard {
         writing.look(listOf(reader))
@@ -136,6 +137,16 @@ class CardWritingTest {
         writing.failed(WriteFailure.CARD_ERROR)
         writing.look(listOf(reader))
         assertEquals(WriteState.Failed(WriteFailure.CARD_ERROR), writing.state.value)
+    }
+
+    @Test
+    fun aFailedWriteSaysWhatHappenedAndWhetherTheReaderIsStillThere() {
+        confirm()
+        writing.erase()
+        writing.failed(WriteFailure.CARD_ERROR, IOException("The reader did not complete a command"), readerConnected = false)
+
+        val detail = (writing.state.value as WriteState.Failed).detail
+        assertEquals("IOException: The reader did not complete a command\nReader no longer connected", detail)
     }
 
     @Test

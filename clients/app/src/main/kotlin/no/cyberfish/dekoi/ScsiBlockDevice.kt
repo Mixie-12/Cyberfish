@@ -36,6 +36,7 @@ import me.jahnen.libaums.core.driver.scsi.commands.sense.UnitAttention
 import me.jahnen.libaums.core.usb.UsbCommunication
 import java.io.IOException
 import java.nio.ByteBuffer
+import java.nio.ByteOrder
 
 /**
  * libaums 0.10.0's ScsiBlockDevice with the upstream fixes d78996b and
@@ -43,7 +44,8 @@ import java.nio.ByteBuffer
  * throws IllegalArgumentException, so a reader that reports anything, an
  * empty slot or a card just put in, closes the app. Also changed: reads and
  * writes go in commands of at most 240 blocks, any failed transfer is
- * followed by Reset Recovery before the command goes again, a retried
+ * followed by Reset Recovery, or a port reset when the reader refuses it,
+ * before the command goes again, a retried
  * command starts from the buffer it was given, a transfer that moves nothing
  * ends the data phase instead of looping, the status is read even after
  * short data, and the InitRequired handling, which libaums never triggers,
@@ -153,9 +155,11 @@ internal class ScsiBlockDevice(
         val start = buffer.position()
         val end = buffer.limit()
         var last: IOException? = null
+        var first: String? = null
         repeat(ATTEMPTS) {
             buffer.limit(end)
             buffer.position(start)
+            val began = System.nanoTime()
             try {
                 if (send(command, buffer)) return
                 requestSense()
@@ -174,12 +178,23 @@ internal class ScsiBlockDevice(
                 // A failed transfer leaves the reader inside the command, where
                 // the next command block would arrive as data: libaums 0.10.0
                 // resets only after a stall, so one failure became six.
+                first = first ?: "${sent()} failed after ${(System.nanoTime() - began) / NANOS_PER_MS} ms"
                 reset(error)
                 last = error
             }
             Thread.sleep(RETRY_DELAY_MS)
         }
-        throw IOException("The reader did not complete a command", last)
+        throw IOException("The reader did not complete a command" + (first?.let { "; first $it" } ?: ""), last)
+    }
+
+    /** The command block sent last, for the technical details: its opcode, and where a read or write went. */
+    private fun sent(): String {
+        val bytes = commandBuffer.array()
+        val opcode = bytes[CDB_OFFSET].toInt() and BYTE_MASK
+        val length = ByteBuffer.wrap(bytes, LENGTH_OFFSET, Int.SIZE_BYTES).order(ByteOrder.LITTLE_ENDIAN).int
+        val block = ByteBuffer.wrap(bytes, CDB_OFFSET + 2, Int.SIZE_BYTES).order(ByteOrder.BIG_ENDIAN).int
+        val name = "SCSI %02Xh".format(opcode)
+        return if (opcode == READ_10 || opcode == WRITE_10) "$name at block $block, $length bytes," else name
     }
 
     /** Asks why the last command failed; throws the SenseException for an error. */
@@ -245,13 +260,22 @@ internal class ScsiBlockDevice(
     /**
      * Reset Recovery (USB MSC BOT 1.0, 5.3.4): Bulk-Only Mass Storage Reset,
      * then both endpoints out of halt, so the reader waits for a new command.
+     * A reader that refuses it gets a port reset, as Linux's usb-storage
+     * escalates (usb_stor_port_reset): it starts again as if plugged in,
+     * keeps its address and the app's connection, and reports the reset as
+     * unit attention 29h, which [transfer] retries.
      */
     private fun reset(after: IOException) {
-        if (usb.controlTransfer(RESET_TYPE, RESET_REQUEST, 0, interfaceId, ByteArray(0), 0) < 0) {
-            throw IOException("The reader did not take a reset", after)
+        if (usb.controlTransfer(RESET_TYPE, RESET_REQUEST, 0, interfaceId, ByteArray(0), 0) >= 0) {
+            usb.clearFeatureHalt(usb.inEndpoint)
+            usb.clearFeatureHalt(usb.outEndpoint)
+            return
         }
-        usb.clearFeatureHalt(usb.inEndpoint)
-        usb.clearFeatureHalt(usb.outEndpoint)
+        try {
+            usb.resetDevice()
+        } catch (error: IOException) {
+            throw IOException("The reader took neither a reset nor a port reset: ${error.message}", after)
+        }
     }
 
     private companion object {
@@ -268,5 +292,13 @@ internal class ScsiBlockDevice(
 
         // Additional sense code 29h: power on, reset or bus device reset occurred (SPC).
         const val RESET_OCCURRED = 0x29
+
+        // Command block wrapper layout (USB MSC BOT 1.0, 5.1) and SBC opcodes.
+        const val LENGTH_OFFSET = 8
+        const val CDB_OFFSET = 15
+        const val READ_10 = 0x28
+        const val WRITE_10 = 0x2A
+        const val BYTE_MASK = 0xFF
+        const val NANOS_PER_MS = 1_000_000
     }
 }

@@ -6,6 +6,7 @@ import android.app.PendingIntent
 import android.app.Service
 import android.content.Intent
 import android.content.pm.ServiceInfo
+import android.hardware.usb.UsbManager
 import android.os.IBinder
 import android.os.PowerManager
 import android.util.Log
@@ -96,7 +97,9 @@ class WriteCardService : Service() {
             finish(R.string.write_notification_written)
         } catch (error: IOException) {
             Log.w(CARD_LOG_TAG, "Writing the card failed", error)
-            writing.failed(downloadFailure(error), error)
+            // Tells a reader that lost power or was unplugged from one that stopped answering.
+            val connected = getSystemService(UsbManager::class.java).deviceList.containsKey(card.reader.id)
+            writing.failed(downloadFailure(error), error, connected)
             finish(R.string.write_notification_failed)
         } finally {
             wakeLock.release()

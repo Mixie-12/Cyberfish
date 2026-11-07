@@ -17,10 +17,11 @@ data class Reader(
 
 /** A card in a reader the owner chose, open until it is written or let go. */
 class OpenCard(
-    val name: String,
+    val reader: Reader,
     val device: BlockDeviceDriver,
     connection: Closeable,
 ) : Closeable by connection {
+    val name: String get() = reader.name
     val bytes: Long get() = device.blocks * device.blockSize
 }
 
@@ -139,16 +140,22 @@ class CardWriting(
         if (states.value is WriteState.Writing) states.value = WriteState.Written(code)
     }
 
-    /** Stops with [failure]; [cause], when there is one, goes in the technical details. */
+    /**
+     * Stops with [failure]. The technical details hold [cause], when there is
+     * one, and whether the phone still saw the reader afterwards, when known.
+     */
     @Synchronized
     fun failed(
         failure: WriteFailure,
         cause: Throwable? = null,
+        readerConnected: Boolean? = null,
     ) {
         val current = states.value
         if (current is WriteState.Opening || current is WriteState.Confirm || current is WriteState.Writing) {
             release()
-            states.value = WriteState.Failed(failure, detail = cause?.let(::technicalDetail))
+            val presence = readerConnected?.let { if (it) "Reader still connected" else "Reader no longer connected" }
+            val detail = listOfNotNull(cause?.let(::technicalDetail), presence).joinToString("\n").ifEmpty { null }
+            states.value = WriteState.Failed(failure, detail = detail)
         }
     }
 

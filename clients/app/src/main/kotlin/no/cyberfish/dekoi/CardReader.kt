@@ -119,7 +119,7 @@ fun openCard(
                 onCard { inserted(ScsiBlockDevice(connection, lun.toByte(), storage.id)) }
             }
         val card = cards.singleOrNull() ?: throw WriteFailed(if (cards.isEmpty()) WriteFailure.NO_CARD else WriteFailure.SEVERAL_CARDS)
-        opened = OpenCard(reader.name, card, connection)
+        opened = OpenCard(reader, card, connection)
         return opened
     } finally {
         if (opened == null) connection.close()

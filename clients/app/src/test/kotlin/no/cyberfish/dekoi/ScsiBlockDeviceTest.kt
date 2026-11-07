@@ -13,6 +13,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
+import kotlin.test.assertTrue
 
 private const val INQUIRY = 0x12
 private const val TEST_UNIT_READY = 0x00
@@ -50,8 +51,8 @@ private fun endpoint(): UsbEndpoint {
  * and its additional length can say it has more, as real readers do. It
  * refuses reads and writes of more than [maxBlocks] blocks in one command.
  * Its [failingTransfer]th data transfer to it fails like a timeout; then it
- * refuses every transfer until a Bulk-Only Mass Storage Reset, after which
- * it reports the reset once.
+ * refuses every transfer until a Bulk-Only Mass Storage Reset, or a port
+ * reset when it [refusesReset], after which it reports the reset once.
  */
 private class SimulatedReader(
     private val card: ByteArray?,
@@ -61,6 +62,8 @@ private class SimulatedReader(
     private val additionalSenseLength: Int = 10,
     private val maxBlocks: Int = Int.MAX_VALUE,
     private val failingTransfer: Int = 0,
+    private val refusesReset: Boolean = false,
+    private val staysOutOfStep: Boolean = false,
 ) : UsbCommunication {
     private val toHost = ArrayDeque<ByteBuffer>()
     private var write: Write? = null
@@ -68,6 +71,8 @@ private class SimulatedReader(
     private var outOfStep = false
     private var resetReported = true
     var resets = 0
+        private set
+    var portResets = 0
         private set
     private var senseKey = 0
     private var senseCode = 0
@@ -271,15 +276,23 @@ private class SimulatedReader(
         length: Int,
     ): Int {
         check(requestType == 0x21 && request == 0xFF && index == 0) { "Not simulated" }
-        outOfStep = false
-        write = null
-        toHost.clear()
-        resetReported = false
+        if (refusesReset) return -1
+        startAgain()
         resets++
         return 0
     }
 
-    override fun resetDevice() = error("Not simulated")
+    override fun resetDevice() {
+        startAgain()
+        portResets++
+    }
+
+    private fun startAgain() {
+        outOfStep = staysOutOfStep
+        write = null
+        toHost.clear()
+        resetReported = false
+    }
 
     override fun clearFeatureHalt(endpoint: UsbEndpoint) {
         check(endpoint === inEndpoint || endpoint === outEndpoint) { "Not this reader's endpoint" }
@@ -361,6 +374,32 @@ class ScsiBlockDeviceTest {
         card.read(1, read)
         assertContentEquals(written, read.array())
         assertEquals(1, reader.resets)
+    }
+
+    @Test
+    fun `a reader that refuses the reset gets a port reset, and the write goes on`() {
+        // The owner's reader refused the Bulk-Only Mass Storage Reset; Linux then resets the port.
+        val reader = SimulatedReader(ByteArray(4096 * BLOCK), maxBlocks = 240, failingTransfer = 3, refusesReset = true)
+        val card = assertNotNull(inserted(ScsiBlockDevice(reader, 0, 0)))
+        val written = Random(11).nextBytes(CHUNK)
+        card.write(1, ByteBuffer.wrap(written))
+        val read = ByteBuffer.allocate(CHUNK)
+        card.read(1, read)
+        assertContentEquals(written, read.array())
+        assertEquals(1, reader.portResets)
+    }
+
+    @Test
+    fun `a reader that never answers again names the command and how long it took`() {
+        val reader = SimulatedReader(ByteArray(4096 * BLOCK), failingTransfer = 1, refusesReset = true, staysOutOfStep = true)
+        val card = assertNotNull(inserted(ScsiBlockDevice(reader, 0, 0)))
+        val error = assertFailsWith<IOException> { card.write(16, ByteBuffer.allocate(8 * BLOCK)) }
+        assertTrue(
+            error.message.orEmpty().startsWith(
+                "The reader did not complete a command; first SCSI 2Ah at block 16, 4096 bytes, failed after ",
+            ),
+            error.message,
+        )
     }
 
     @Test

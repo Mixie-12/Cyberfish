@@ -62,7 +62,14 @@ navigation graph existed.
   before the command goes again, six times at most: about 30 seconds for a
   card that pauses, as Linux allows a command. A unit attention for a
   reset (ASC 29h) is retried; one for a changed card still stops the
-  write. Not chosen: our own UsbCommunication with a longer timeout, which
+  write. With v0.2.6 the owner's reader (MXTronics "MXT USB Device",
+  `aaaa:8816`, an unregistered vendor ID) refused that reset, eleven times
+  in a row. A refused reset is now followed by a port reset
+  (`USBDEVFS_RESET` through libaums), as Linux's usb-storage escalates;
+  the reader restarts as if plugged in and keeps the app's connection. The
+  details name the first failed command, its block, how long it ran, and
+  whether the phone still saw the reader afterwards. Not chosen: our own
+  UsbCommunication with a longer timeout, which
   would need native code for clear-halt; libaums' UsbRequest mode, whose
   read path waits for the wrong request.
 - Navigation effects run only once the back stack has an entry.
