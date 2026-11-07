@@ -33,11 +33,19 @@ jobs:
           PROJECT_REF: ${{ vars.SUPABASE_PROJECT_REF }}
           PUBLISHABLE_KEY: ${{ vars.SUPABASE_PUBLISHABLE_KEY }}
           GOOGLE_WEB_CLIENT_ID: ${{ vars.GOOGLE_WEB_CLIENT_ID }}
+          FIREBASE_PROJECT_ID: ${{ vars.FIREBASE_PROJECT_ID }}
+          FIREBASE_APP_ID: ${{ vars.FIREBASE_APP_ID }}
+          FIREBASE_API_KEY: ${{ vars.FIREBASE_API_KEY }}
+          FIREBASE_SENDER_ID: ${{ vars.FIREBASE_SENDER_ID }}
         run: >-
           ./gradlew --no-daemon :app:assembleRelease
           -Pdekoi.supabaseUrl="https://$PROJECT_REF.supabase.co"
           -Pdekoi.supabaseKey="$PUBLISHABLE_KEY"
           -Pdekoi.googleWebClientId="$GOOGLE_WEB_CLIENT_ID"
+          -Pdekoi.firebaseProjectId="$FIREBASE_PROJECT_ID"
+          -Pdekoi.firebaseAppId="$FIREBASE_APP_ID"
+          -Pdekoi.firebaseApiKey="$FIREBASE_API_KEY"
+          -Pdekoi.firebaseSenderId="$FIREBASE_SENDER_ID"
           -Pdekoi.version="${GITHUB_REF_NAME#v}"
           -Pdekoi.versionCode="$GITHUB_RUN_NUMBER"
       - name: Sign and check the signer

@@ -32,6 +32,7 @@ credentials = { module = "androidx.credentials:credentials", version.ref = "cred
 credentials-play-services = { module = "androidx.credentials:credentials-play-services-auth", version.ref = "credentials" }
 googleid = { module = "com.google.android.libraries.identity.googleid:googleid", version = "1.2.1" }
 code-scanner = { module = "com.google.android.gms:play-services-code-scanner", version = "16.1.0" }
+firebase-messaging = { module = "com.google.firebase:firebase-messaging", version = "26.0.1" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

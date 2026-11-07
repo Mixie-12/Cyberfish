@@ -76,6 +76,15 @@ private fun SignedIn(
             viewModel.dismissMessage()
         }
     }
+    LaunchedEffect(Unit) { viewModel.registerPush() }
+    val openEvent by viewModel.openEvent.collectAsStateWithLifecycle()
+    LaunchedEffect(openEvent) {
+        openEvent?.let {
+            navController.navigate("event/$it")
+            viewModel.eventOpened()
+        }
+    }
+    NotificationPermission(hasDevice = data.devices.isNotEmpty())
 
     Scaffold(
         bottomBar = { TabBar(navController) },

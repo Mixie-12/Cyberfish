@@ -5,11 +5,19 @@ plugins {
 }
 
 // Public settings, passed as -Pdekoi.<name>=... (CI takes them from repository
-// variables). The publishable key is the anon role and is guarded by RLS.
-// Debug builds may leave them empty; release builds refuse to.
+// variables). The publishable key is the anon role and is guarded by RLS; the
+// Firebase values identify the app to FCM and are public by design.
+// Debug builds may leave them empty (push is then off); release builds refuse to.
 val settings =
-    listOf("supabaseUrl", "supabaseKey", "googleWebClientId")
-        .associateWith { providers.gradleProperty("dekoi.$it").getOrElse("") }
+    listOf(
+        "supabaseUrl",
+        "supabaseKey",
+        "googleWebClientId",
+        "firebaseProjectId",
+        "firebaseAppId",
+        "firebaseApiKey",
+        "firebaseSenderId",
+    ).associateWith { providers.gradleProperty("dekoi.$it").getOrElse("") }
 
 android {
     namespace = "no.cyberfish.dekoi"
@@ -24,6 +32,10 @@ android {
         buildConfigField("String", "SUPABASE_URL", "\"${settings.getValue("supabaseUrl")}\"")
         buildConfigField("String", "SUPABASE_KEY", "\"${settings.getValue("supabaseKey")}\"")
         buildConfigField("String", "GOOGLE_WEB_CLIENT_ID", "\"${settings.getValue("googleWebClientId")}\"")
+        buildConfigField("String", "FIREBASE_PROJECT_ID", "\"${settings.getValue("firebaseProjectId")}\"")
+        buildConfigField("String", "FIREBASE_APP_ID", "\"${settings.getValue("firebaseAppId")}\"")
+        buildConfigField("String", "FIREBASE_API_KEY", "\"${settings.getValue("firebaseApiKey")}\"")
+        buildConfigField("String", "FIREBASE_SENDER_ID", "\"${settings.getValue("firebaseSenderId")}\"")
     }
 
     buildFeatures {
@@ -84,6 +96,7 @@ dependencies {
     implementation(libs.credentials.play.services)
     implementation(libs.googleid)
     implementation(libs.code.scanner)
+    implementation(libs.firebase.messaging)
 
     testImplementation(libs.kotlin.test.junit4)
 }

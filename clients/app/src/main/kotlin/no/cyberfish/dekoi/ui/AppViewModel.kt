@@ -18,6 +18,7 @@ import no.cyberfish.dekoi.GoogleIdToken
 import no.cyberfish.dekoi.NetworkHost
 import no.cyberfish.dekoi.R
 import no.cyberfish.dekoi.shared.ClaimCode
+import java.io.IOException
 
 data class OwnerData(
     val devices: List<Device> = emptyList(),
@@ -32,6 +33,7 @@ data class OwnerData(
 
 class AppViewModel(
     private val backend: Backend,
+    private val pushToken: suspend () -> String?,
 ) : ViewModel() {
     val session: StateFlow<SessionStatus> get() = backend.session
 
@@ -46,6 +48,25 @@ class AppViewModel(
     fun dismissMessage() {
         messages.value = null
     }
+
+    private val openEvents = MutableStateFlow<Long?>(null)
+
+    /** An event a tapped notification asked to show, or null. */
+    val openEvent: StateFlow<Long?> = openEvents.asStateFlow()
+
+    fun open(eventId: Long) {
+        openEvents.value = eventId
+    }
+
+    fun eventOpened() {
+        openEvents.value = null
+    }
+
+    /** Called whenever the app is open and signed in, so a rotated token always reaches the backend. */
+    fun registerPush() =
+        run {
+            pushToken()?.let { backend.registerPushToken(it) }
+        }
 
     fun refresh() =
         run {
@@ -102,8 +123,10 @@ class AppViewModel(
         owner.value = owner.value.copy(hosts = backend.hosts())
     }
 
+    /** Stops pushes to this phone first; a failure leaves the user signed in rather than alerting a signed-out phone. */
     fun signOut() =
         run {
+            pushToken()?.let { backend.unregisterPushToken(it) }
             backend.signOut()
             owner.value = OwnerData()
         }
@@ -123,6 +146,9 @@ class AppViewModel(
             } catch (_: HttpRequestException) {
                 show(R.string.error_network)
             } catch (_: HttpRequestTimeoutException) {
+                show(R.string.error_network)
+            } catch (_: IOException) {
+                // FCM could not hand out a token, usually for want of a connection.
                 show(R.string.error_network)
             }
         }

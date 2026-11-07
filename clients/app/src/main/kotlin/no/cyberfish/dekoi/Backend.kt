@@ -92,6 +92,14 @@ class Backend(
         }
     }
 
+    suspend fun registerPushToken(token: String) {
+        client.postgrest.rpc("register_push_token_v1", buildJsonObject { put("token", token) })
+    }
+
+    suspend fun unregisterPushToken(token: String) {
+        client.postgrest.rpc("unregister_push_token_v1", buildJsonObject { put("token", token) })
+    }
+
     /** Deletes the account and everything in it, then forgets the session here. */
     suspend fun deleteAccount() {
         client.postgrest.rpc("delete_account_v1")
