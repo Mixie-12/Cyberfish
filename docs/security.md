@@ -84,6 +84,28 @@ nonce. Network: cleartext forbidden in release. Platform: no exported components
 except the launcher; no WebView. Code: R8 in release, lint clean, dependencies
 pinned. Resilience: out of MVP scope.
 
+## Platform settings
+
+Auth, from `backend/supabase/config.toml` and applied by CI: sign-up open,
+through Google only, with the nonce checked; email, phone, anonymous, Web3
+and passkey sign-in, manual linking and MFA enrolment off; no redirect URLs
+besides the site URL; access tokens valid 15 minutes; refresh tokens single
+use, with reuse after 10 seconds ending the session; Auth's own rate limits
+per address (Google sign-in and refresh share `token_refresh`, verified in
+the Auth source). Only the `public` schema is exposed; Realtime has no
+published tables and Storage no buckets (`00_hardening`).
+
+Settings that the current CI token cannot write. Each needs the owner once:
+either a one-time bootstrap check, or a replacement token with the named
+permission so CI owns the setting.
+
+| Setting | Required | How |
+| ------- | -------- | --- |
+| Realtime service | off: nothing in DeKoi uses Realtime, and while it runs anyone with the publishable key can broadcast on public channels and use up the plan's Realtime quota | Management API `PATCH /v1/projects/{ref}/config/realtime` with `{"suspend": true, "private_only": true}` from CI (token permission "Realtime Config" read-write), or Realtime, Settings, "Enable Realtime service" |
+| SSL enforcement for direct database connections | on | `[db.ssl_enforcement] enabled = true` in `config.toml` once the token has "SSL Enforcement" read-write; `config push` fails on it before |
+| Auth audit logs in the database | off: the rows hold addresses and are not deleted with the account | dashboard only: Authentication, Audit Logs, "Write audit logs to the database" |
+| Auth IP address forwarding (`Sb-Forwarded-For`) | off (the default for new projects): otherwise a caller with a secret key chooses the address Auth counts | dashboard only: Authentication, Rate Limits |
+
 ## Known limitations
 
 See `docs/STATUS.md`, "Known limitations".
