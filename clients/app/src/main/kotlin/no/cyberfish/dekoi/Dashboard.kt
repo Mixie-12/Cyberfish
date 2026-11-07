@@ -117,3 +117,26 @@ fun nameToSave(
     typed: String,
     current: String,
 ): String? = cleanName(typed).trim().takeIf { it.isNotEmpty() && it != current }
+
+/**
+ * A way into the decoy that the owner can try from a computer on the same
+ * network (ADR 0018): the decoy [service] that must be running for it, and
+ * what goes before the DeKoi's address to open it.
+ */
+enum class DecoyEntrance(
+    val service: String,
+    val prefix: String,
+) {
+    LOGIN_PAGE("http", "http://"),
+    WINDOWS_SHARE("smb", "\\\\"),
+    MAC_SHARE("smb", "smb://"),
+}
+
+/**
+ * The ways into this DeKoi's decoy and the address to open for each: only
+ * while it is online at a known address, and only through decoys it runs.
+ */
+fun Device.decoyEntrances(now: Instant): Map<DecoyEntrance, String> {
+    val address = localIp?.takeIf { status(now) == DekoiStatus.ONLINE } ?: return emptyMap()
+    return DecoyEntrance.entries.filter { it.service in services }.associateWith { it.prefix + address }
+}

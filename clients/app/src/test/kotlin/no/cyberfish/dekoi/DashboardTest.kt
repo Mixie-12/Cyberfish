@@ -17,11 +17,13 @@ class DashboardTest {
         online: Boolean = true,
         seenAgo: Duration? = Duration.ofMinutes(1),
         services: List<String> = emptyList(),
+        ip: String? = null,
     ) = Device(
         id = id,
         name = "DeKoi $id",
         online = online,
         services = services,
+        localIp = ip,
         registeredAt = if (registered) now.minus(Duration.ofDays(1)) else null,
         lastSeenAt = seenAgo?.let { now.minus(it) },
         createdAt = now.minus(Duration.ofDays(1)),
@@ -187,7 +189,7 @@ class DashboardTest {
     fun `the name field drops control characters, stops at the limit and never splits a character`() {
         assertEquals("Living room", cleanName("Living\n room\u0007"))
         assertEquals("a".repeat(MAX_DEKOI_NAME), cleanName("a".repeat(MAX_DEKOI_NAME + 5)))
-        val fish = "🐟"
+        val fish = "\uD83D\uDC1F"
         assertEquals("a".repeat(MAX_DEKOI_NAME - 1), cleanName("a".repeat(MAX_DEKOI_NAME - 1) + fish))
     }
 
@@ -196,5 +198,28 @@ class DashboardTest {
         assertEquals("Hallway", nameToSave("  Hallway ", "DeKoi 3NFP"))
         assertNull(nameToSave("   ", "DeKoi 3NFP"))
         assertNull(nameToSave("DeKoi 3NFP ", "DeKoi 3NFP"))
+    }
+
+    @Test
+    fun `the decoy is tried at the DeKoi's address, through the decoys it runs`() {
+        val both = device("d", services = listOf("http", "smb", "ssh"), ip = "192.168.1.5")
+        assertEquals(
+            mapOf(
+                DecoyEntrance.LOGIN_PAGE to "http://192.168.1.5",
+                DecoyEntrance.WINDOWS_SHARE to "\\\\192.168.1.5",
+                DecoyEntrance.MAC_SHARE to "smb://192.168.1.5",
+            ),
+            both.decoyEntrances(now),
+        )
+        val web = device("d", services = listOf("http", "ssh"), ip = "192.168.1.5")
+        assertEquals(listOf(DecoyEntrance.LOGIN_PAGE), web.decoyEntrances(now).keys.toList())
+    }
+
+    @Test
+    fun `the decoy cannot be tried while the DeKoi is offline or its address is not known`() {
+        val offline = device("d", online = false, services = listOf("http", "smb"), ip = "192.168.1.5")
+        assertEquals(emptyMap(), offline.decoyEntrances(now))
+        val noAddress = device("d", services = listOf("http", "smb"))
+        assertEquals(emptyMap(), noAddress.decoyEntrances(now))
     }
 }

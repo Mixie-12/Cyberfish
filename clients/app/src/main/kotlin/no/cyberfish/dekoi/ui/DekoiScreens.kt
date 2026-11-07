@@ -26,6 +26,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -62,11 +63,13 @@ import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
+import no.cyberfish.dekoi.DecoyEntrance
 import no.cyberfish.dekoi.DekoiStatus
 import no.cyberfish.dekoi.Device
 import no.cyberfish.dekoi.R
 import no.cyberfish.dekoi.SetupStep
 import no.cyberfish.dekoi.cleanName
+import no.cyberfish.dekoi.decoyEntrances
 import no.cyberfish.dekoi.hasDone
 import no.cyberfish.dekoi.nameToSave
 import no.cyberfish.dekoi.needsSetupHelp
@@ -176,6 +179,11 @@ fun DekoiScreen(
         if (device.services.isNotEmpty()) {
             val number = ++section
             item(key = "decoys") { Decoys(number, device, data.events, now, onNavigate, Modifier.itemMotion(this, still)) }
+        }
+        val entrances = device.decoyEntrances(now)
+        if (entrances.isNotEmpty()) {
+            val number = ++section
+            item(key = "try") { TryDecoy(number, entrances, Modifier.itemMotion(this, still)) }
         }
         val details = ++section
         item(key = "details") { Details(details, device, onRename, Modifier.itemMotion(this, still)) }
@@ -373,6 +381,50 @@ private fun StepMark(
             },
             tint = safe,
         )
+    }
+}
+
+/**
+ * How to see the decoy as an intruder would, from a computer on the same
+ * network (ADR 0018): what to open, where, and its address. Trying it
+ * sends an alert, as for an intruder.
+ */
+@Composable
+private fun TryDecoy(
+    number: Int,
+    entrances: Map<DecoyEntrance, String>,
+    modifier: Modifier = Modifier,
+) {
+    Section(number, stringResource(R.string.dekoi_try), modifier) {
+        Text(stringResource(R.string.dekoi_try_body), style = MaterialTheme.typography.bodyLarge)
+        Column {
+            entrances.forEach { (entrance, address) ->
+                Hairline()
+                EntranceRow(entrance, address)
+            }
+            Hairline()
+        }
+    }
+}
+
+@Composable
+private fun EntranceRow(
+    entrance: DecoyEntrance,
+    address: String,
+) {
+    val (what, where) =
+        when (entrance) {
+            DecoyEntrance.LOGIN_PAGE -> R.string.dekoi_try_login to R.string.dekoi_try_login_where
+            DecoyEntrance.WINDOWS_SHARE -> R.string.dekoi_try_windows to R.string.dekoi_try_windows_where
+            DecoyEntrance.MAC_SHARE -> R.string.dekoi_try_mac to R.string.dekoi_try_mac_where
+        }
+    Column(Modifier.fillMaxWidth().padding(vertical = Dimens.spaceL), verticalArrangement = Arrangement.spacedBy(Dimens.spaceXs)) {
+        Text(stringResource(what), style = MaterialTheme.typography.titleMedium)
+        Text(stringResource(where), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        // Selectable, so a long press copies it to send to the computer.
+        SelectionContainer(Modifier.padding(top = Dimens.spaceXs)) {
+            Text(address, style = MaterialTheme.typography.address)
+        }
     }
 }
 

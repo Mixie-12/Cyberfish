@@ -66,6 +66,14 @@
         <item quantity="other">Touched %1$d times this week</item>
     </plurals>
     <string name="dekoi_not_touched">Not touched this week</string>
+    <string name="dekoi_try">Try your decoy</string>
+    <string name="dekoi_try_body">On a computer on this network, open your decoy to see what an intruder sees. Signing in with a made-up name and password, or opening a shared folder, sends you an alert.</string>
+    <string name="dekoi_try_login">Storage login page</string>
+    <string name="dekoi_try_login_where">Open the address in a web browser</string>
+    <string name="dekoi_try_windows">File share on Windows</string>
+    <string name="dekoi_try_windows_where">Type the address into the File Explorer address bar</string>
+    <string name="dekoi_try_mac">File share on a Mac</string>
+    <string name="dekoi_try_mac_where">In Finder, choose Go, then Connect to Server, and type the address</string>
     <string name="dekoi_details">Details</string>
     <string name="dekoi_rename">Rename</string>
     <string name="dekoi_linked_since">Linked since</string>
