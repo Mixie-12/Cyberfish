@@ -82,7 +82,7 @@ fun OnboardingScreen(
     val action =
         when {
             !last -> R.string.onboarding_next
-            needsDekoi -> R.string.onboarding_add
+            needsDekoi -> R.string.action_add_dekoi
             else -> R.string.onboarding_done
         }
     Column(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {

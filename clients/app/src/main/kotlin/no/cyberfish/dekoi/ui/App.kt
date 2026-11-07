@@ -71,6 +71,7 @@ import no.cyberfish.dekoi.ui.network.NetworksScreen
 import no.cyberfish.dekoi.ui.network.PlaceDevicesScreen
 import no.cyberfish.dekoi.ui.onboarding.OnboardingOnce
 import no.cyberfish.dekoi.ui.onboarding.OnboardingScreen
+import no.cyberfish.dekoi.ui.onboarding.rememberWelcome
 import java.time.Instant
 
 /** Every place in the app. The four tab roots, then the screens pushed on a tab. */
@@ -113,7 +114,7 @@ sealed interface Route {
 
     @Serializable data object Licences : Route
 
-    /** The first-run tour, shown once after the first sign-in; without the tab bar. */
+    /** The tour, shown once per tour version after sign-in (ui/onboarding/FirstRun.kt); without the tab bar. */
     @Serializable data object Onboarding : Route
 
     @Serializable data object Learn : Route
@@ -186,6 +187,8 @@ private fun SignedIn(
     val reduceMotion = LocalReduceMotion.current
     val tabSwitch = remember { TabSwitch() }
     val listStates = Tab.entries.associateWith { rememberLazyListState() }
+    // Here rather than on Home, so it is not read again on every return to Home.
+    val welcome = rememberWelcome()
     // A tab root names its tab; a pushed screen belongs to the tab it was pushed on.
     var lastTab by rememberSaveable { mutableStateOf(Tab.HOME) }
     val currentTab = entry?.rootTab() ?: lastTab
@@ -208,8 +211,14 @@ private fun SignedIn(
 
     fun selectTab(tab: Tab) {
         if (tab == currentTab) {
-            navController.popBackStack(tab.route, inclusive = false)
-            scope.launch { listStates.getValue(tab).scrollToTop(reduceMotion) }
+            val list = listStates.getValue(tab)
+            // A root that comes back from under a pushed screen is not laid out, so an
+            // animated scroll has nothing to move and stops where it is: it opens at the top instead.
+            if (navController.popBackStack(tab.route, inclusive = false)) {
+                list.requestScrollToItem(0)
+            } else {
+                scope.launch { list.scrollToTop(reduceMotion) }
+            }
             return
         }
         tabSwitch.active = true
@@ -262,7 +271,7 @@ private fun SignedIn(
             predictivePopExitTransition = { transitions.exit(this, Direction.BACK_GESTURE) },
         ) {
             screen<Route.Home> {
-                HomeScreen(data, now, refreshing, listStates.getValue(Tab.HOME), viewModel::refresh, navigate)
+                HomeScreen(data, now, refreshing, listStates.getValue(Tab.HOME), welcome, viewModel::refresh, navigate)
             }
             screen<Route.Alerts> {
                 AlertsScreen(

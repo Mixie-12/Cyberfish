@@ -11,7 +11,7 @@
         <item quantity="other">%1$d alerts to look at</item>
     </plurals>
 
-    <string name="action_add_dekoi">Add DeKoi</string>
+    <string name="action_add_dekoi">Add a DeKoi</string>
     <string name="action_back">Back</string>
     <string name="action_cancel">Cancel</string>
     <string name="action_remove">Remove</string>

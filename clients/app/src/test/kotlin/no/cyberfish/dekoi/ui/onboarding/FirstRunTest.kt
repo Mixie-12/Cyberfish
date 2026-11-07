@@ -13,15 +13,22 @@ class FirstRunTest {
 
     @Test
     fun `the tour is shown the first time only`() {
-        val marker = File(folder.root, "onboarding_seen")
+        val marker = tourMarker(folder.root)
         assertTrue(firstTime(marker))
         assertFalse(firstTime(marker))
         assertFalse(firstTime(marker))
     }
 
     @Test
+    fun `an owner who saw the first tour sees this one once`() {
+        assertTrue(File(folder.root, "onboarding_seen").createNewFile())
+        assertTrue(firstTime(tourMarker(folder.root)))
+        assertFalse(firstTime(tourMarker(folder.root)))
+    }
+
+    @Test
     fun `storage that cannot hold the marker skips the tour`() {
-        val marker = File(folder.root, "missing/onboarding_seen")
+        val marker = tourMarker(File(folder.root, "missing"))
         assertFalse(firstTime(marker))
         assertFalse(firstTime(marker))
     }
