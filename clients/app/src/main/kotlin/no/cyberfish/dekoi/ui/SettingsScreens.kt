@@ -5,8 +5,10 @@ import android.content.Intent
 import android.provider.Settings
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -17,6 +19,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import no.cyberfish.dekoi.BuildConfig
 import no.cyberfish.dekoi.Device
@@ -35,6 +38,8 @@ fun SettingsScreen(
     onSignOut: () -> Unit,
     onDeleteAccount: () -> Unit,
     onNavigate: (Route) -> Unit,
+    weeklySummary: Boolean?,
+    onWeeklySummary: (Boolean) -> Unit,
 ) {
     var confirming by remember { mutableStateOf(false) }
     Screen(stringResource(R.string.tab_settings), listState = listState) {
@@ -69,6 +74,7 @@ fun SettingsScreen(
             }
         }
         item { Notifications() }
+        item { WeeklySummary(weeklySummary, onWeeklySummary) }
         item {
             InsetSection(title = stringResource(R.string.settings_privacy_title)) {
                 Text(
@@ -127,6 +133,21 @@ private fun Notifications() {
                     Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName),
                 )
             },
+        )
+    }
+}
+
+/** Stored with the account, so it applies to every phone; off and disabled until the setting has loaded. */
+@Composable
+private fun WeeklySummary(
+    on: Boolean?,
+    onChange: (Boolean) -> Unit,
+) {
+    InsetSection(footer = stringResource(R.string.settings_weekly_summary_footer)) {
+        InsetRow(
+            stringResource(R.string.settings_weekly_summary),
+            modifier = Modifier.toggleable(on == true, enabled = on != null, role = Role.Switch, onValueChange = onChange),
+            trailing = { Switch(checked = on == true, onCheckedChange = null, enabled = on != null) },
         )
     }
 }

@@ -2,7 +2,7 @@
 -- invariants every future migration must keep.
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(7);
+select plan(8);
 
 select is_empty(
   $$
@@ -61,9 +61,27 @@ select results_eq(
       ('devices', 'select'),
       ('events', 'select'),
       ('network_hosts', 'select'),
-      ('networks', 'select')
+      ('networks', 'select'),
+      ('owner_settings', 'select')
   $$,
   'authenticated holds exactly the expected table privileges'
+);
+
+select results_eq(
+  $$
+    select (c.relname::text || '.' || a.attname::text) collate "default"
+    from pg_attribute as a
+    join pg_class as c on c.oid = a.attrelid
+    join pg_namespace as n on n.oid = c.relnamespace
+    where n.nspname in ('public', 'private')
+      and c.relkind in ('r', 'p')
+      and a.attnum > 0
+      and not a.attisdropped
+      and has_column_privilege('authenticated', c.oid, a.attnum, 'insert')
+    order by 1
+  $$,
+  $$ values ('owner_settings.weekly_summary') $$,
+  'authenticated may insert only the weekly summary setting'
 );
 
 select results_eq(
@@ -79,8 +97,8 @@ select results_eq(
       and has_column_privilege('authenticated', c.oid, a.attnum, 'update')
     order by 1
   $$,
-  $$ values ('devices.name'), ('network_hosts.label'), ('network_hosts.room'), ('network_hosts.trusted') $$,
-  'authenticated may update only device names and host names, rooms and trust'
+  $$ values ('devices.name'), ('network_hosts.label'), ('network_hosts.room'), ('network_hosts.trusted'), ('owner_settings.weekly_summary') $$,
+  'authenticated may update only device names, host names, rooms and trust, and the weekly summary setting'
 );
 
 select results_eq(
@@ -108,7 +126,8 @@ select results_eq(
       ('authenticated', 'unregister_push_token_v1'),
       ('service_role', 'forget_push_token_v1'),
       ('service_role', 'notification_targets_v1'),
-      ('service_role', 'notification_targets_v2')
+      ('service_role', 'notification_targets_v2'),
+      ('service_role', 'weekly_summary_v1')
   $$,
   'API roles can execute exactly the published functions'
 );

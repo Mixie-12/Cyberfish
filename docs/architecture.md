@@ -72,6 +72,13 @@ Kinds a device may report (`private.device_event_kinds()`):
 | `name_poisoning` | LLMNR, NBT-NS and mDNS probes            | `protocol`                          |
 | `ids_alert`      | Suricata                                 | `signature`, `category`, `severity`, `signature_id` |
 
+The backend writes three more kinds itself (`private.event_kinds()`):
+`device_offline` and `device_online` (scheduled job and heartbeat), and
+`new_host`. Once a DeKoi's first inventory row is 24 hours old, a trigger on
+`network_hosts` turns the first sighting of a hardware address into a
+`new_host` event carrying its `src_mac` and `src_ip` (ADR 0015). The
+learning period is per DeKoi; an address another DeKoi knows is still new.
+
 `detail` accepts only these fields: strings up to 256 characters without
 control characters; `targets`, `severity` and `signature_id` as non-negative
 integers; `ports` as up to 64 numbers. Payload excerpts are never accepted.
@@ -131,11 +138,12 @@ Responses the agent must handle:
 | Operation              | How                                                        |
 | ---------------------- | ---------------------------------------------------------- |
 | Claim a device         | `claim_device_v1(claim_code, name)`                        |
-| Read own data          | `select` on `devices`, `events`, `network_hosts`, `networks` (RLS) |
+| Read own data          | `select` on `devices`, `events`, `network_hosts`, `networks`, `owner_settings` (RLS) |
 | Rename, remove device  | `update` of `name`, `delete` on `devices` (RLS)            |
 | Trust a host           | `update` of `trusted` on `network_hosts` (RLS)             |
 | Name a host, its room  | `update` of `label` (1 to 40 characters) and `room` (1 to 32), no control characters, on `network_hosts` (RLS) |
 | Mark events seen       | `acknowledge_events_v1(event_ids)`: up to 500 ids, own devices' events only; `events.seen_at` keeps the first time; returns the number newly marked |
+| Weekly summary on, off | `select`, and `insert` or `update` of `weekly_summary`, on `owner_settings` (RLS); `user_id` defaults to the caller; no row means on |
 | Push token             | `register_push_token_v1(token)`, `unregister_push_token_v1(token)` |
 | Delete account         | `delete_account_v1()`                                      |
 
@@ -150,14 +158,24 @@ mapping of their own.
 ## Scheduled jobs
 
 pg_cron runs `private.mark_offline_devices()` every 5 minutes (one
-`device_offline` event per outage) and `private.apply_retention()` nightly
-(events, hosts and networks older than 90 days).
+`device_offline` event per outage), `private.apply_retention()` nightly
+(events, hosts and networks older than 90 days) and
+`private.post_weekly_summaries()` on Sundays at 17:00 UTC.
 
 ## Notifications
 
 Every insert into `events` posts `{"event_id": <id>}` with the header
 `X-Notify-Secret` to the Edge Function `notify` (pg_net trigger; URL and
-secret in Vault). `notify` asks `notification_targets_v1(event_id)` which
-phones to notify and with which template, and sends FCM HTTP v1 messages
-whose data payload is `event_id` only. The rules are in that function
-(ADR 0007).
+secret in Vault). `notify` asks `notification_targets_v2(event_id)` which
+phones to notify, with which template, severity and source kind, and sends
+FCM HTTP v1 messages whose data payload is `event_id` only. The rules are in
+`notification_targets_v1` (ADR 0007); `new_host` events notify at most once
+per DeKoi per 10 minutes, so devices that join together give one push.
+
+The weekly job posts `{"weekly_summary_for": "<user id>"}` the same way, once
+per owner with a registered DeKoi. `notify` asks `weekly_summary_v1(user_id)`,
+which returns the owner's phones with three numbers for the last 7 days
+(alerts as the app groups them into incidents, new devices, uptime in whole
+percent), or nothing when the owner turned the summary off or already had
+one in the last 6 days. The push uses a fixed template on the `updates`
+channel and carries no data.
