@@ -25,10 +25,6 @@ __pycache__/
 .pytest_cache/
 .ruff_cache/
 
-# Supabase CLI local state
-backend/supabase/.temp/
-backend/supabase/.branches/
-
 # OS
 .DS_Store
 Thumbs.db
