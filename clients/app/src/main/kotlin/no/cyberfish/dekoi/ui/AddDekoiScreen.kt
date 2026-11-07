@@ -198,12 +198,13 @@ fun SetupProgress(
         }
         InsetSection(title = stringResource(R.string.dekoi_setup)) { Timeline(steps) }
         if (device?.needsSetupHelp(now) == true) {
-            InsetSection(title = stringResource(R.string.setup_help_title)) {
-                Text(
-                    stringResource(R.string.setup_help_body),
-                    style = MaterialTheme.typography.bodyLarge,
-                    modifier = Modifier.padding(Dimens.spaceL),
-                )
+            InsetSection(title = stringResource(R.string.setup_help_title), footer = stringResource(R.string.add_help_again)) {
+                StepList {
+                    StepItem(R.drawable.ic_sd_card, R.string.add_help_card)
+                    StepItem(R.drawable.ic_power, R.string.add_help_power)
+                    StepItem(R.drawable.ic_cable, R.string.add_help_cable)
+                    StepItem(R.drawable.ic_wifi, R.string.add_help_wifi)
+                }
             }
         }
         WideButton(onDone) { Text(stringResource(R.string.add_done), style = MaterialTheme.typography.labelLarge) }

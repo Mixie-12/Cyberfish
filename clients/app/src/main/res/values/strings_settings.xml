@@ -7,9 +7,7 @@
     <string name="settings_devices">Your DeKoi devices</string>
 
     <string name="settings_notifications">Notifications</string>
-    <string name="settings_channel_urgent">Alerts that say Act now</string>
-    <string name="settings_channel_alerts">Alerts that say Check soon, and a DeKoi going offline</string>
-    <string name="settings_channel_updates">Alerts for your information</string>
+    <string name="settings_channel_alerts">Also when a DeKoi goes offline</string>
     <string name="settings_notifications_on">On</string>
     <string name="settings_notifications_off">Off</string>
     <string name="settings_notifications_footer">Tap a kind of notification to change it in your phone’s settings.</string>

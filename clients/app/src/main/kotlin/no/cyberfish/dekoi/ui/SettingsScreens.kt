@@ -220,18 +220,18 @@ private fun Privacy() {
     }
 }
 
-/** A notification channel (Push.kt) and what it carries, in the words of the alert levels. */
+/** A notification channel (Push.kt), named as the system settings name it, and what else it carries. */
 private class Channel(
     val id: String,
     @param:StringRes val name: Int,
-    @param:StringRes val carries: Int,
+    @param:StringRes val alsoCarries: Int? = null,
 )
 
 private val channels =
     listOf(
-        Channel(URGENT_CHANNEL, R.string.notification_channel_urgent, R.string.settings_channel_urgent),
+        Channel(URGENT_CHANNEL, R.string.notification_channel_urgent),
         Channel(ALERT_CHANNEL, R.string.notification_channel_alerts, R.string.settings_channel_alerts),
-        Channel(UPDATES_CHANNEL, R.string.notification_channel_updates, R.string.settings_channel_updates),
+        Channel(UPDATES_CHANNEL, R.string.notification_channel_updates),
     )
 
 /**
@@ -257,7 +257,7 @@ private fun Notifications() {
         channels.forEach { channel ->
             InsetRow(
                 stringResource(channel.name),
-                subtitle = stringResource(channel.carries),
+                subtitle = channel.alsoCarries?.let { stringResource(it) },
                 trailing = {
                     Text(
                         if (channel.id in allowed) on else off,

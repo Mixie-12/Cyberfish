@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Notification channels and the lock-screen version of an alert (ADR 0011). -->
 <resources>
-    <string name="notification_channel_urgent">Urgent alerts</string>
-    <string name="notification_channel_updates">Updates about your DeKoi</string>
+    <string name="notification_channel_urgent">Alerts to act on now</string>
+    <string name="notification_channel_updates">For your information</string>
     <string name="notification_public_title">DeKoi</string>
     <string name="notification_public_text">New alert about your network</string>
 </resources>

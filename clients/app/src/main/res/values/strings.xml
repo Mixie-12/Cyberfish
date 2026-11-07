@@ -23,12 +23,12 @@
     <string name="updated_ago">Updated %1$s</string>
     <string name="last_seven_days">Last 7 days</string>
 
-    <string name="notification_channel_alerts">Alerts about your network</string>
+    <string name="notification_channel_alerts">Alerts to check soon</string>
     <string name="notifications_ask_title">Get alerts on this phone</string>
     <string name="notifications_ask_body">When something on your network touches your DeKoi, or your DeKoi goes offline, it can tell you right away. Allow notifications to get these alerts.</string>
     <string name="notifications_ask_allow">Continue</string>
     <string name="notifications_ask_later">Not now</string>
 
-    <string name="error_network">Can’t reach DeKoi right now. Check your internet connection.</string>
+    <string name="error_network">Can’t connect right now. Check this phone’s internet connection.</string>
     <string name="error_generic">Something went wrong. Try again.</string>
 </resources>
