@@ -1,6 +1,7 @@
 package no.cyberfish.dekoi
 
 import androidx.annotation.StringRes
+import java.time.Instant
 
 /** The home network's name the owner gives for the Wi-Fi watch (ADR 0019), as the backend accepts it. */
 object WifiName {
@@ -32,13 +33,19 @@ enum class WifiWatch {
 val Device.wifiWatch: WifiWatch? get() = WifiWatch.of(wifiWatchName)
 
 /**
- * One plain sentence on what the watch is doing for [device], or why it is
- * off. A name the DeKoi has not picked up yet (it asks every few minutes)
- * reads as starting.
+ * One plain sentence on what Wi-Fi Guard is doing for [device], or why it
+ * is off. A name the DeKoi has not picked up yet (it asks every few
+ * minutes) reads as starting. Software with Wi-Fi Guard always reports a
+ * state, so none at all means it arrives with an update, unless the DeKoi
+ * has only just started or updated.
  */
 @StringRes
-fun wifiWatchText(device: Device): Int {
+fun wifiWatchText(
+    device: Device,
+    now: Instant,
+): Int {
     if (device.wifiName == null) return R.string.wifi_watch_add
+    if (device.wifiWatchName == null && !device.startedRecently(now)) return R.string.wifi_watch_update
     return when (device.wifiWatch) {
         WifiWatch.WATCHING -> R.string.wifi_watch_watching
         WifiWatch.LEARNING -> R.string.wifi_watch_learning

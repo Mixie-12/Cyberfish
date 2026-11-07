@@ -155,6 +155,15 @@ fun DekoiScreen(
             val number = ++section
             item(key = "watching") { Watching(number, device, status, now, Modifier.itemMotion(this, still)) }
         }
+        item(key = "features") {
+            InsetSection(Modifier.itemMotion(this, still)) {
+                InsetRow(
+                    stringResource(R.string.features_see_all),
+                    titleColor = MaterialTheme.colorScheme.primary,
+                    onClick = { onNavigate(Route.Features(device.id)) },
+                )
+            }
+        }
         val uptime = ++section
         item(key = "uptime") { UptimeCard(uptime, device, data.events, now, Modifier.itemMotion(this, still)) }
         if (device.services.isNotEmpty()) {
@@ -264,8 +273,9 @@ private fun TryDecoy(
     }
 }
 
+/** One way into the decoy: what it is, where to type it, and the address, selectable. */
 @Composable
-private fun EntranceRow(
+fun EntranceRow(
     entrance: DecoyEntrance,
     address: String,
 ) {

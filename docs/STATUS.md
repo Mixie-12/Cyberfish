@@ -119,6 +119,9 @@ records why.
 - Pushes in the phone's language, English or Bokmål, through
   `register_push_token_v2` and `notification_targets_v3` (ADR 0025); the
   severity colour on every notification; "Mark all as read" on Alerts.
+- Features screen with live status from the DeKoi's reports and a feature
+  tour; the Wi-Fi watch is called Wi-Fi Guard in the app (`docs/design.md`,
+  "Features").
 
 Verified by CI on `main` (`9dc0efd`, `b69caca`): pgTAP 19 files, 417 tests,
 advisors clean; `notify` 18 tests; agent 212 tests, ruff clean; app 158,
