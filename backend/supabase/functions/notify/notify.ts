@@ -76,6 +76,13 @@ const TEMPLATES: Record<string, (subject: string) => Template> = {
   rogue_router: (s) => ({ title: `${s} announces itself as your router`, body: ALERT_BODY }),
   name_poisoning: (s) => ({ title: `${s} answers questions it should not`, body: ALERT_BODY }),
   ids_alert: (s) => ({ title: `${s} sent suspicious traffic to your DeKoi`, body: ALERT_BODY }),
+  // The source of a Wi-Fi event is an access point that is not on the
+  // network, so these name no device; the network name never appears.
+  evil_twin: () => ({ title: "Someone copied your Wi-Fi name", body: ALERT_BODY }),
+  new_access_point: () => ({
+    title: "A new access point uses your Wi-Fi name",
+    body: ALERT_BODY,
+  }),
   device_offline: () => ({
     title: "Your DeKoi went offline",
     body:
