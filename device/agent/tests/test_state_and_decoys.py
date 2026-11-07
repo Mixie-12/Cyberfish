@@ -30,13 +30,14 @@ def test_enqueue_numbers_events_and_bounds_the_queue() -> None:
     assert state.next_event_id == MAX_QUEUE + 4
 
 
-def test_decoys_come_from_the_canary_config() -> None:
+def test_decoys_are_the_canary_config_and_the_file_share() -> None:
     decoys = load_decoys(CANARY_CONFIG)
     assert decoys == {
         21: "ftp",
         22: "ssh",
         23: "telnet",
         80: "http",
+        445: "smb",
         3306: "mysql",
         3389: "rdp",
         5900: "vnc",
