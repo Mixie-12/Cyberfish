@@ -11,6 +11,7 @@ import androidx.annotation.StringRes
 enum class Response {
     INTRUSION,
     IMPERSONATION,
+    NEWCOMER,
     OFFLINE,
     NONE,
 }
@@ -18,6 +19,7 @@ enum class Response {
 fun responseFor(kind: String): Response =
     when (kind) {
         "arp_spoof", "rogue_dhcp", "rogue_router" -> Response.IMPERSONATION
+        "new_host" -> Response.NEWCOMER
         "device_offline" -> Response.OFFLINE
         "device_online" -> Response.NONE
         else -> Response.INTRUSION
@@ -76,6 +78,16 @@ fun steps(
                 disconnectStep(source),
                 R.string.step_restart_router,
                 R.string.step_change_wifi_password,
+            )
+        }
+
+        // Most new devices belong to the household or a guest, so knowing it comes first.
+        Response.NEWCOMER -> {
+            listOf(
+                findStep(source),
+                R.string.step_mark_known_newcomer,
+                disconnectStep(source),
+                R.string.step_change_wifi_password_newcomer,
             )
         }
 

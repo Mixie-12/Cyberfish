@@ -30,6 +30,9 @@
     <string name="event_name_poisoning_why">Your DeKoi asked for a computer that does not exist, and something answered. Tools that do this trick computers into handing over passwords.</string>
     <string name="event_ids_title">Suspicious traffic reached your DeKoi</string>
     <string name="event_ids_why">The traffic matched a known pattern of attacks or harmful programs. The details below name the pattern.</string>
+    <string name="event_new_host_title">A new device joined your network</string>
+    <string name="event_new_host_why">Your DeKoi saw this device on your network for the first time. Usually it is a new phone, a guest or a smart home gadget. Sometimes it is someone using your Wi-Fi without asking.</string>
+    <string name="event_new_host_advice">If you know the device, mark it as known. If you don’t recognise it, disconnect it from your network and change your Wi-Fi password.</string>
     <string name="event_offline_title">Your DeKoi went offline</string>
     <string name="event_offline_why">While it is offline, your DeKoi can’t warn you. Usually it is a power cut, an unplugged cable or a router restart.</string>
     <string name="event_offline_advice">Check that your DeKoi has power and that its network cable is plugged in. It reconnects by itself.</string>
