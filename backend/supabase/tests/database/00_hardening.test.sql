@@ -60,8 +60,11 @@ select results_eq(
       ('devices', 'delete'),
       ('devices', 'select'),
       ('events', 'select'),
+      ('health_samples', 'select'),
       ('network_hosts', 'select'),
-      ('networks', 'select')
+      ('networks', 'select'),
+      ('port_forwards', 'select'),
+      ('speed_tests', 'select')
   $$,
   'authenticated holds exactly the expected table privileges'
 );
@@ -79,8 +82,8 @@ select results_eq(
       and has_column_privilege('authenticated', c.oid, a.attnum, 'update')
     order by 1
   $$,
-  $$ values ('devices.name'), ('network_hosts.trusted') $$,
-  'authenticated may update only device names and host trust'
+  $$ values ('devices.name'), ('devices.speed_test'), ('network_hosts.trusted') $$,
+  'authenticated may update only device names, the speed test setting and host trust'
 );
 
 select results_eq(
@@ -96,6 +99,7 @@ select results_eq(
   $$
     values
       ('anon', 'device_events_v1'),
+      ('anon', 'device_health_v1'),
       ('anon', 'device_heartbeat_v1'),
       ('anon', 'device_hosts_v1'),
       ('anon', 'device_hosts_v2'),
