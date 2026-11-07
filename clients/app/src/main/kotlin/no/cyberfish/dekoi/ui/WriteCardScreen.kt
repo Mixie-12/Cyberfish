@@ -6,6 +6,7 @@ import android.text.format.Formatter
 import android.util.Log
 import androidx.activity.compose.BackHandler
 import androidx.annotation.StringRes
+import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
@@ -19,6 +20,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.CutCornerShape
+import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -70,8 +72,10 @@ import no.cyberfish.dekoi.openCard
 import no.cyberfish.dekoi.shared.CardContent
 import no.cyberfish.dekoi.shared.ClaimCode
 import no.cyberfish.dekoi.ui.components.HudFrame
+import no.cyberfish.dekoi.ui.components.InsetSection
 import no.cyberfish.dekoi.ui.components.PrimaryButton
 import no.cyberfish.dekoi.ui.components.Screen
+import no.cyberfish.dekoi.ui.components.TechnicalDetailsRow
 
 /**
  * Writing a card with this phone through a USB card reader (ADR 0014, 0017):
@@ -124,7 +128,7 @@ fun WriteCardScreen(
                     writing.opened(openCard(context, reader))
                 } catch (error: WriteFailed) {
                     Log.w(CARD_LOG_TAG, "Opening the card failed", error)
-                    writing.failed(error.failure)
+                    writing.failed(error.failure, error)
                 }
             }
         }
@@ -415,7 +419,27 @@ private fun Failed(
         }
     Step(R.string.write_step_failed) {
         Body(message)
+        failed.detail?.let { TechnicalDetail(it) }
         Action(R.string.action_try_again, onTryAgain)
+    }
+}
+
+/** Collapsed: what the reader, the phone or the download reported, for whoever helps the owner. */
+@Composable
+private fun TechnicalDetail(text: String) {
+    var open by rememberSaveable { mutableStateOf(false) }
+    InsetSection(Modifier.animateContentSize()) {
+        TechnicalDetailsRow(open) { open = it }
+        if (open) {
+            SelectionContainer {
+                Text(
+                    text,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(vertical = Dimens.spaceM),
+                )
+            }
+        }
     }
 }
 

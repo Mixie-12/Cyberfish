@@ -73,6 +73,8 @@ sealed interface WriteState {
         val failure: WriteFailure,
         /** The card's size, when it was the problem. */
         val bytes: Long? = null,
+        /** What the reader, the phone or the download reported, from [technicalDetail]. */
+        val detail: String? = null,
     ) : WriteState
 }
 
@@ -137,12 +139,16 @@ class CardWriting(
         if (states.value is WriteState.Writing) states.value = WriteState.Written(code)
     }
 
+    /** Stops with [failure]; [cause], when there is one, goes in the technical details. */
     @Synchronized
-    fun failed(failure: WriteFailure) {
+    fun failed(
+        failure: WriteFailure,
+        cause: Throwable? = null,
+    ) {
         val current = states.value
         if (current is WriteState.Opening || current is WriteState.Confirm || current is WriteState.Writing) {
             release()
-            states.value = WriteState.Failed(failure)
+            states.value = WriteState.Failed(failure, detail = cause?.let(::technicalDetail))
         }
     }
 

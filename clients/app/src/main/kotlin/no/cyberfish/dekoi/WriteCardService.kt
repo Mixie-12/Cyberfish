@@ -55,12 +55,12 @@ class WriteCardService : Service() {
         }
         try {
             startForeground(NOTIFICATION_ID, notification(R.string.write_notification_writing, ongoing = true), TYPE)
-        } catch (_: SecurityException) {
+        } catch (error: SecurityException) {
             // Android allows the type only while DeKoi may use a connected USB device: the reader is gone.
-            return stop(card, writing)
-        } catch (_: IllegalStateException) {
+            return stop(card, writing, error)
+        } catch (error: IllegalStateException) {
             // DeKoi went to the background in the moment between the tap and this.
-            return stop(card, writing)
+            return stop(card, writing, error)
         }
         job = scope.launch { card.use { write(it, writing) } }
         return START_NOT_STICKY
@@ -69,9 +69,11 @@ class WriteCardService : Service() {
     private fun stop(
         card: OpenCard,
         writing: CardWriting,
+        error: RuntimeException,
     ): Int {
+        Log.w(CARD_LOG_TAG, "Writing could not start", error)
         card.close()
-        writing.failed(WriteFailure.CARD_ERROR)
+        writing.failed(WriteFailure.CARD_ERROR, error)
         stopSelf()
         return START_NOT_STICKY
     }
@@ -94,7 +96,7 @@ class WriteCardService : Service() {
             finish(R.string.write_notification_written)
         } catch (error: IOException) {
             Log.w(CARD_LOG_TAG, "Writing the card failed", error)
-            writing.failed(downloadFailure(error))
+            writing.failed(downloadFailure(error), error)
             finish(R.string.write_notification_failed)
         } finally {
             wakeLock.release()

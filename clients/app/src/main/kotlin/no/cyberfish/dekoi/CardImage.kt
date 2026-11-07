@@ -55,6 +55,21 @@ internal inline fun <T> onCard(operation: () -> T): T =
         throw WriteFailed(WriteFailure.CARD_ERROR, error)
     }
 
+// The chain and length of a technical detail; libaums wraps at most three deep.
+private const val DETAIL_CAUSES = 6
+private const val DETAIL_LENGTH = 1000
+
+/**
+ * Why writing stopped, for the technical details under the failure: each
+ * cause's type and message, outermost first, as plain text.
+ */
+fun technicalDetail(error: Throwable): String =
+    generateSequence(error) { it.cause }
+        .take(DETAIL_CAUSES)
+        .joinToString("\n") { "${it.javaClass.simpleName}: ${it.message.orEmpty()}" }
+        .filter { it == '\n' || !it.isISOControl() }
+        .take(DETAIL_LENGTH)
+
 /** What a download error means for the owner: a damaged file, or a lost connection. */
 fun downloadFailure(error: IOException): WriteFailure =
     when (error) {

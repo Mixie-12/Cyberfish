@@ -193,4 +193,17 @@ class CardImageTest {
         assertFalse(suitableCard(512, 7_948_206_080, pinned.copy(extractSize = 8_000_000_000)), "an image larger than the card")
         assertFailsWith<IllegalArgumentException> { write(FakeCard(raw.size, blocks = 4_000_000_000L / 512)) }
     }
+
+    @Test
+    fun `the technical detail names every cause, as plain text`() {
+        val error =
+            WriteFailed(
+                WriteFailure.CARD_ERROR,
+                IOException("The reader did not complete a command", IOException("errno 22\u0007 Invalid")),
+            )
+        assertEquals(
+            "WriteFailed: CARD_ERROR\nIOException: The reader did not complete a command\nIOException: errno 22 Invalid",
+            technicalDetail(error),
+        )
+    }
 }
