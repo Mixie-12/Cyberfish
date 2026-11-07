@@ -198,8 +198,14 @@ private fun SignedIn(
 
     fun selectTab(tab: Tab) {
         if (tab == currentTab) {
-            navController.popBackStack(tab.route, inclusive = false)
-            scope.launch { listStates.getValue(tab).scrollToTop(reduceMotion) }
+            val list = listStates.getValue(tab)
+            // A root that comes back from under a pushed screen is not laid out, so an
+            // animated scroll has nothing to move and stops where it is: it opens at the top instead.
+            if (navController.popBackStack(tab.route, inclusive = false)) {
+                list.requestScrollToItem(0)
+            } else {
+                scope.launch { list.scrollToTop(reduceMotion) }
+            }
             return
         }
         tabSwitch.active = true
