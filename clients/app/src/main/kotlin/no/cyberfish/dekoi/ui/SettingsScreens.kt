@@ -294,11 +294,11 @@ private fun notificationSettings(
 }
 
 /**
- * What the app is built with, grouped by licence, from the Gradle
- * dependencies (`./gradlew :app:dependencies --configuration
- * releaseRuntimeClasspath`). Licences that require their text to travel
- * with the app have it in res/raw; Google's terms are named with their
- * address.
+ * What the app is built with, grouped by licence: the Gradle dependencies
+ * (`./gradlew :app:dependencies --configuration releaseRuntimeClasspath`)
+ * and the fonts of ADR 0020. Licences that require their text to travel
+ * with the app have it in res/raw, the fonts' copied from UX/UI; Google's
+ * terms are named with their address.
  */
 private class Licence(
     @param:StringRes val name: Int,
@@ -330,6 +330,8 @@ private val licences =
         ),
         Licence(R.string.licence_mit, listOf("supabase-kt"), text = R.raw.licence_supabase_kt),
         Licence(R.string.licence_mit, listOf("SLF4J"), text = R.raw.licence_slf4j),
+        Licence(R.string.licence_ofl, listOf("Michroma"), text = R.raw.licence_ofl_michroma),
+        Licence(R.string.licence_ofl, listOf("JetBrains Mono"), text = R.raw.licence_ofl_jetbrains_mono),
         Licence(
             R.string.licence_android_sdk,
             listOf("Google Play services", "Google Identity Services"),
