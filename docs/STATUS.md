@@ -123,6 +123,9 @@ records why.
 - Features screen with live status from the DeKoi's reports and a feature
   tour; the Wi-Fi watch is called Wi-Fi Guard in the app (`docs/design.md`,
   "Features").
+- The CyberFish mark drawn from the path in `Images/cyberfish-app-icon.svg`
+  with its fill, edge and glow, in the app, widget, status bar icon and
+  DeKoi Setup (ADR 0030).
 
 Verified by CI on `main` (`9dc0efd`, `b69caca`): pgTAP 19 files, 417 tests,
 advisors clean; `notify` 18 tests; agent 212 tests, ruff clean; app 158,
@@ -147,7 +150,10 @@ reader closed the app every time, because libaums 0.10.0 cannot read
 sense data; the app now carries the fixed SCSI driver (ADR 0029), proven
 against a simulated reader in `ScsiBlockDeviceTest`. Plugging the reader in
 could also close it (navigation before the graph existed), fixed in
-`ui/App.kt`. A full write on the reader after the fix is not verified yet.
+`ui/App.kt`. With v0.2.3 each write then stopped about a second in, six
+times; v0.2.4 sends reads and writes in commands of at most 240 blocks,
+as Linux does, and shows the cause under "Technical details". A full
+write on the reader is not verified yet.
 
 Needs hardware, not verified: the decoy in Windows Explorer and Finder on
 the owner's LAN; the Wi-Fi watch against a real evil twin; the Pi running
