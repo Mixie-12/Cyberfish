@@ -28,7 +28,6 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -59,7 +58,6 @@ fun main() =
             DekoiTheme {
                 val scope = rememberCoroutineScope()
                 val setup = remember { Setup(scope) }
-                LaunchedEffect(setup) { setup.lookForCards() }
                 val screen by setup.screen.collectAsState()
                 Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
                     Column(
@@ -101,6 +99,13 @@ private fun ColumnScope.SetupScreen(
     setup: Setup,
 ) {
     when (screen) {
+        Screen.Welcome -> {
+            Title("DeKoi Setup")
+            Body("DeKoi Setup prepares the memory card for your DeKoi.")
+            Body("When it is done, it shows a code that links your DeKoi to the app on your phone.")
+            OutlinedButton(onClick = setup::lookForCards) { Text("Start") }
+        }
+
         Screen.Looking -> {
             Waiting("Looking for SD cards")
         }
@@ -123,8 +128,12 @@ private fun ColumnScope.SetupScreen(
             ChooseCard(screen.drives, setup)
         }
 
+        is Screen.ListFailed -> {
+            Failed(screen.details, setup)
+        }
+
         is Screen.ChooseNetwork -> {
-            ChooseNetwork(screen.drive, setup)
+            ChooseNetwork(screen.drive, screen.network, setup)
         }
 
         is Screen.Confirm -> {
@@ -137,12 +146,12 @@ private fun ColumnScope.SetupScreen(
             Body("Leave the card in until DeKoi Setup says it is ready.")
         }
 
-        is Screen.Failed -> {
+        is Screen.WriteFailed -> {
             Failed(screen.details, setup)
         }
 
         is Screen.Done -> {
-            Done(screen.code, setup)
+            Done(screen.code, screen.cable, setup)
         }
     }
 }
@@ -188,12 +197,14 @@ private fun ChooseCard(
 @Composable
 private fun ChooseNetwork(
     drive: Drive,
+    network: Network,
     setup: Setup,
 ) {
-    var wifi by remember { mutableStateOf(false) }
-    var name by remember { mutableStateOf("") }
-    var password by remember { mutableStateOf("") }
-    var country by remember { mutableStateOf(Locale.getDefault().country.takeIf { it in countries } ?: "GB") }
+    val entered = network as? Network.WiFi
+    var wifi by remember { mutableStateOf(entered != null) }
+    var name by remember { mutableStateOf(entered?.ssid ?: "") }
+    var password by remember { mutableStateOf(entered?.password ?: "") }
+    var country by remember { mutableStateOf(entered?.country ?: Locale.getDefault().country.takeIf { it in countries } ?: "GB") }
     var problem by remember { mutableStateOf<String?>(null) }
 
     Title("How will your DeKoi connect?")
@@ -259,7 +270,7 @@ private fun Confirm(
     Body("Windows will ask whether Raspberry Pi Imager may make changes. Choose Yes.")
     Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
         OutlinedButton(onClick = { setup.write(drive, network) }) { Text("Erase and write") }
-        TextButton(onClick = { setup.choose(drive) }) { Text("Back") }
+        TextButton(onClick = { setup.choose(drive, network) }) { Text("Back") }
     }
 }
 
@@ -283,6 +294,7 @@ private fun Failed(
 @Composable
 private fun ColumnScope.Done(
     code: ClaimCode,
+    cable: Boolean,
     setup: Setup,
 ) {
     Title("Your card is ready")
@@ -294,11 +306,26 @@ private fun ColumnScope.Done(
         fontFamily = FontFamily.Monospace,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
     )
-    Body("In the DeKoi app, choose Add DeKoi and scan this code. If scanning does not work, type the code shown under it.")
-    Text("Insert the card and plug in your DeKoi", style = MaterialTheme.typography.titleMedium)
+    nextSteps(code, cable).forEachIndexed { index, text -> Body("${index + 1}. $text") }
     Spacer(Modifier.height(8.dp))
     OutlinedButton(onClick = setup::lookForCards) { Text("Prepare another card") }
 }
+
+/** What the owner does after the card is written (docs/runbooks/setup-and-pair.md). */
+internal fun nextSteps(
+    code: ClaimCode,
+    cable: Boolean,
+): List<String> =
+    listOf(
+        "Open the DeKoi app on your phone and tap Add DeKoi.",
+        "Scan the code. The app then shows the same name, ${code.shortName}. If scanning does not work, type the code.",
+        "Put the card in your DeKoi.",
+        if (cable) {
+            "Connect the network cable to your router, then the power."
+        } else {
+            "Connect the power. Your DeKoi joins the Wi-Fi by itself."
+        },
+    )
 
 /** Dark modules on white with a four-module quiet zone, in light and dark mode alike, so phones can read it. */
 @Composable
