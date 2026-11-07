@@ -27,6 +27,10 @@ Google account is personal (no organization) and has no billing account.
   and debug) are created in the console: Google offers no API for them on
   projects without an organization, and Firebase does not create them through
   its API. `docs/runbooks/google-firebase.md` lists the exact steps.
+- The web client ID is read from Firebase's app config by `publish.sh`, never
+  copied by hand, and the backend deploy asks Google to confirm the ID and
+  secret belong together before using them. Found in the hardware test: a
+  hand-copied Android client ID broke sign-in with error 28444.
 
 ## Consequences
 
