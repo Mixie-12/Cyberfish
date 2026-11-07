@@ -226,7 +226,7 @@ event id), GitHub (encrypted backups, which it cannot read).
 ## Monitoring
 
 `.github/workflows/monitor.yml` runs the built checks every morning,
-read-only (ADR 0026). A failure opens the issue "Production monitoring
+read-only (ADR 0027). A failure opens the issue "Production monitoring
 failed", or comments on the open one, with the failed jobs and the run;
 logs hold check names, counts and booleans, never addresses or keys. The
 database checks are `backend/monitor.sql`, run through the Management

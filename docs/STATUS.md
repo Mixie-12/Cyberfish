@@ -212,7 +212,7 @@ but does nothing (tested 2026-11-07, Genesys 05e3:0749).
 - No edge firewall without a custom domain (ADR 0016): a flood from many
   accounts can hold back everyone's pushes for an hour or fill the 500 MB
   database within weeks. The checks in `docs/security.md`, "Monitoring",
-  run daily (`monitor.yml`, ADR 0026); not yet run against production.
+  run daily (`monitor.yml`, ADR 0027); not yet run against production.
 - Free Supabase plan: nightly dumps, no point-in-time recovery; sessions
   never expire; the project may pause after a week of low activity.
 - A phone's push language changes when the app next opens signed in;
