@@ -3,9 +3,9 @@ name: clients
 on:
   push:
     branches: [main]
-    paths: [clients/**, .github/workflows/clients.yml]
+    paths: [clients/**, device/image.json, device/cloud-init/**, device/host/**, .github/workflows/clients.yml]
   pull_request:
-    paths: [clients/**, .github/workflows/clients.yml]
+    paths: [clients/**, device/image.json, device/cloud-init/**, device/host/**, .github/workflows/clients.yml]
 
 permissions:
   contents: read
@@ -28,4 +28,11 @@ jobs:
         run: ./ktlint.sh
       # Release builds need the backend settings and run in the release workflow.
       - name: Build, test and lint
-        run: ./gradlew --no-daemon :shared:build :app:testDebugUnitTest :app:assembleDebug :app:lintDebug
+        run: ./gradlew --no-daemon :shared:build :app:testDebugUnitTest :app:assembleDebug :app:lintDebug :burner:build
+      # Debian trixie is the base of the pinned Raspberry Pi OS image.
+      - name: Validate rendered cloud-init files with cloud-init
+        working-directory: .
+        run: >-
+          docker run --rm -v "$PWD:/repo:ro"
+          debian:trixie@sha256:9c6e381421d0f48d1b8133e573f33c185ee16cbf505eda9c4a8a4791b25ea8a6
+          sh /repo/clients/burner/check-cloud-init.sh
