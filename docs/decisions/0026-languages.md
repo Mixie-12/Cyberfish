@@ -1,13 +1,14 @@
-# 0025: Languages
+# 0026: Languages
 
 Status: accepted, 2026-11-07
 
 ## Context
 
-The app gained a Bokmål translation (`values-nb`). DeKoi Setup was still
-English only, with its text in Kotlin, and `notify` writes push titles and
-texts in English because it does not know the phone's language. Each
-language added multiplies the text to write, review and keep in step.
+The app gained a Bokmål translation (`values-nb`) and push text in the
+phone's language (ADR 0025). DeKoi Setup was still English only, with its
+text in Kotlin. Each language added multiplies the text to write, review
+and keep in step, so the set of languages and the rules for them are fixed
+here once.
 
 ## Decision
 
@@ -19,11 +20,8 @@ language added multiplies the text to write, review and keep in step.
   `InconsistentArrays` are fatal in `clients/app/lint.xml`, so a string or
   a list item without its Bokmål text fails the build, release builds
   included.
-- Push text follows the language the app registers. The app sends the
-  language it shows with its push token (`register_push_token_v2`), and
-  `notify` renders its fixed templates in that language. A token registered
-  through v1 has no language and gets English; v1 stays until no released
-  app uses it.
+- Push text follows the language the app registers with its push token
+  (ADR 0025).
 - DeKoi Setup follows the Windows display language
   (`Locale.Category.DISPLAY`, which can differ from the regional format):
   `nb`, `no` or `nn` get Bokmål, everything else English. Its text is in
@@ -44,8 +42,6 @@ language added multiplies the text to write, review and keep in step.
 - DeKoi Setup gives Nynorsk and plain Norwegian (`no`) systems Bokmål.
   What the app shows on a phone set to Nynorsk is Android's choice and has
   not been tested.
-- Phones on an app that registers through v1 get English pushes until they
-  update.
 - `jdk.localedata` adds about 28 MB to DeKoi Setup's unpacked runtime;
   jlink could keep only `en` and `nb`, but the Compose plugin does not pass
   `--include-locales`.

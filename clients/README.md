@@ -35,7 +35,7 @@ Run DeKoi Setup (Windows), or build its installer into
 ```
 
 DeKoi Setup shows Bokmål when the Windows display language is Norwegian,
-English otherwise (ADR 0025). Its text is in
+English otherwise (ADR 0026). Its text is in
 `burner/src/main/resources/no/cyberfish/dekoi/burner/strings*.properties`.
 To see the Bokmål text on an English Windows, start it with
 `JAVA_TOOL_OPTIONS=-Duser.language=nb` in the environment.

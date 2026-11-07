@@ -67,7 +67,7 @@ compose.desktop {
             targetFormats(TargetFormat.Msi)
             // What :burner:suggestRuntimeModules reports beyond the defaults,
             // and the locale data for Bokmål country names, sorting and
-            // numbers, without which the runtime knows only English (ADR 0025).
+            // numbers, without which the runtime knows only English (ADR 0026).
             modules("java.instrument", "jdk.unsupported", "jdk.localedata")
             packageName = "DeKoi Setup"
             // MSI needs MAJOR.MINOR.BUILD; the release job passes the tag.
