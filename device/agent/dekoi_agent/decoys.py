@@ -1,4 +1,5 @@
-"""Decoy services: which ones are configured and which ones are listening.
+"""Decoy services: which ones are configured and which ones are listening,
+and the user names in the bait files.
 
 Used by the agent for its heartbeat, and run as a script by the canary
 container's health check. Standard library only, because it runs in both
@@ -30,6 +31,15 @@ def load_decoys(config_path: Path) -> dict[int, str]:
         if field == "enabled" and value is True and isinstance(port, int):
             decoys[port] = name
     return decoys
+
+
+def load_bait_users(persona_path: Path) -> frozenset[str]:
+    """The user names written into the file share's bait files, in lower case.
+
+    They are in nothing else, so a sign-in with one means someone read the bait.
+    """
+    persona = json.loads(Path(persona_path).read_text(encoding="utf-8"))
+    return frozenset(name.casefold() for name in persona["bait_users"].values())
 
 
 def listening_ports(proc_net: Path = Path("/proc/net")) -> set[int]:

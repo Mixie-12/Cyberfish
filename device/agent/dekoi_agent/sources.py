@@ -124,6 +124,18 @@ def parse_canary(line: str, decoys: dict[int, str], now: float) -> dict | None:
     return {key: value for key, value in event.items() if value is not None}
 
 
+def flag_bait(event: dict, bait_users: frozenset[str]) -> dict:
+    """Marks a sign-in with a user name from the bait files (bait_users, lower case).
+
+    The user name is reported anyway; the password typed with it is never
+    read, so the flag says only that someone tried what the bait offered.
+    """
+    username = event["detail"].get("username", "")
+    if event["kind"] == "login_attempt" and username.casefold() in bait_users:
+        event["detail"]["bait"] = True
+    return event
+
+
 def parse_samba(line: str, now: float) -> dict | None:
     """Turn one line of Samba's audit log into an event, or None to ignore it.
 

@@ -18,6 +18,8 @@
     <string name="event_login_action">Tried to sign in</string>
     <string name="event_login_consequence">Someone may be trying to get into the devices on your network.</string>
     <string name="event_login_why">Nothing on your network has a reason to sign in to your DeKoi. Someone, or a program, is trying passwords on the devices it finds.</string>
+    <!-- The user name came from the decoy's bait files (detail.bait, ADR 0024). -->
+    <string name="event_login_bait_consequence">They used a password from your decoy’s files. Someone has looked through the bait and is trying what they found.</string>
     <string name="event_connection_title">%1$s opened one of your decoys</string>
     <string name="event_connection_action">Opened a decoy</string>
     <string name="event_connection_why">Your DeKoi pretends to be a storage box. Ordinary devices leave it alone, so a visit means something on your network is looking around.</string>
@@ -67,11 +69,11 @@
     <string name="event_evil_twin_title">Someone copied your Wi-Fi name</string>
     <string name="event_evil_twin_action">Copied your Wi-Fi name</string>
     <string name="event_evil_twin_consequence">Your phones and computers could join the copy by mistake.</string>
-    <string name="event_evil_twin_why">A Wi-Fi network near your DeKoi uses the same name as yours, but with weaker protection or none. Whoever runs it can see and change what devices that join it send.</string>
+    <string name="event_evil_twin_why">Wi-Fi Guard found a Wi-Fi network near your DeKoi that uses the same name as yours, but with weaker protection or none. Whoever runs it can see and change what devices that join it send.</string>
     <string name="event_new_access_point_title">A new access point uses your Wi-Fi name</string>
     <string name="event_new_access_point_action">Started using your Wi-Fi name</string>
     <string name="event_new_access_point_consequence">Usually this is Wi-Fi equipment you added or replaced.</string>
-    <string name="event_new_access_point_why">Your DeKoi saw a new Wi-Fi access point with your network’s name and the same protection. That is normal when you add a mesh point or replace your router. It can also be someone copying your network who knows the password.</string>
+    <string name="event_new_access_point_why">Wi-Fi Guard saw a new Wi-Fi access point with your network’s name and the same protection. That is normal when you add a mesh point or replace your router. It can also be someone copying your network who knows the password.</string>
     <string name="event_offline_title">Your DeKoi went offline</string>
     <string name="event_offline_action">Went offline</string>
     <string name="event_offline_consequence">Your DeKoi can’t warn you until it is back.</string>
@@ -118,6 +120,14 @@
     <string name="alerts_empty">No alerts yet. When your DeKoi notices something on your network, it shows up here.</string>
     <string name="alerts_empty_filtered">No alerts match these filters.</string>
     <string name="alerts_show_all">Show all alerts</string>
+    <string name="alerts_mark_all_read">Mark all as read</string>
+    <!-- Asked only above 20 unread alerts. -->
+    <plurals name="alerts_mark_all_read_title">
+        <item quantity="one">Mark %1$d alert as read?</item>
+        <item quantity="other">Mark all %1$d alerts as read?</item>
+    </plurals>
+    <string name="alerts_mark_all_read_body">Your alerts stay in the list, and you can still open each one.</string>
+    <string name="alerts_mark_all_read_confirm">Mark as read</string>
 
     <string name="alert_missing">This alert is no longer available.</string>
     <string name="alert_do_now">Do this now</string>

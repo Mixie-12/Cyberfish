@@ -88,7 +88,7 @@ Kinds a device may report (`private.device_event_kinds()`):
 
 | Kind             | Source                                   | Typical detail                      |
 | ---------------- | ---------------------------------------- | ----------------------------------- |
-| `login_attempt`  | decoy                                    | `username`, `path`, `client_version` |
+| `login_attempt`  | decoy                                    | `username`, `path`, `client_version`, `bait` (a user name from the bait files, ADR 0024) |
 | `connection`     | decoy                                    | `path`, `user_agent`, `command`, `share` |
 | `port_scan`      | firewall log, closed ports on the box    | `ports`                             |
 | `host_scan`      | ARP watcher, one host asking for many    | `targets`                           |
@@ -113,7 +113,8 @@ learning period is per DeKoi; an address another DeKoi knows is still new.
 control characters; `targets`, `severity` and `signature_id` as non-negative
 integers; `ports` as up to 64 numbers; `security` and `home_security` as one of
 `open`, `wep`, `wpa`, `wpa2`, `wpa3`; `channel` as up to three digits;
-`signal_dbm` as 0 or a negative integer of up to three digits. Payload
+`signal_dbm` as 0 or a negative integer of up to three digits; `bait` as a
+boolean. Payload
 excerpts and network names are never accepted. For the Wi-Fi watch kinds,
 `src_mac` is the access point's BSSID.
 
@@ -198,7 +199,7 @@ store (migration `20261108000000_request_and_storage_limits.sql`).
 | Set the Wi-Fi name     | `update` of `wifi_name` on `devices` (RLS), null for none  |
 | Trust a host           | `update` of `trusted` on `network_hosts` (RLS)             |
 | Weekly summary on, off | `select`, and `insert` or `update` of `weekly_summary`, on `owner_settings` (RLS); `user_id` defaults to the caller; no row means on |
-| Push token             | `register_push_token_v1(token)`, `unregister_push_token_v1(token)` |
+| Push token             | `register_push_token_v2(token, language)` (`en` or `nb`, anything else stored as `en`; v1 stores `en`), `unregister_push_token_v1(token)` |
 | Delete account         | `delete_account_v1()`                                      |
 
 ## Wi-Fi watch
@@ -247,21 +248,21 @@ and `private.post_weekly_summaries()` on Sundays at 17:00 UTC.
 
 Every insert into `events` posts `{"event_id": <id>}` with the header
 `X-Notify-Secret` to the Edge Function `notify` (pg_net trigger; URL and
-secret in Vault). `notify` asks `notification_targets_v2(event_id)` which
-phones to notify, with which template, severity and source kind, and sends
-FCM HTTP v1 messages whose data payload is `event_id` only. The rules are in
-`notification_targets_v1` (ADR 0007); `new_host` events notify at most once
-per DeKoi per 10 minutes, so devices that join together give one push. The
-webhook fires only while the account and the project are under their
-hourly notify limits (ADR 0016).
+secret in Vault). `notify` asks `notification_targets_v3(event_id)` which
+phones to notify, with which template, severity, source kind and language
+(ADR 0025), and sends FCM HTTP v1 messages whose data payload is `event_id`
+only. The rules are in `notification_targets_v1` (ADR 0007); `new_host`
+events notify at most once per DeKoi per 10 minutes, so devices that join
+together give one push. The webhook fires only while the account and the
+project are under their hourly notify limits (ADR 0016).
 
 The weekly job posts `{"weekly_summary_for": "<user id>"}` the same way, once
-per owner with a registered DeKoi. `notify` asks `weekly_summary_v1(user_id)`,
-which returns the owner's phones with three numbers for the last 7 days
-(alerts as the app groups them into incidents, new devices, uptime in whole
-percent), or nothing when the owner turned the summary off or already had
-one in the last 6 days. The push uses a fixed template on the `updates`
-channel and carries no data.
+per owner with a registered DeKoi. `notify` asks `weekly_summary_v2(user_id)`,
+which returns the owner's phones and their languages with three numbers
+for the last 7 days (alerts as the app groups them into incidents, new
+devices, uptime in whole percent), or nothing when the owner turned the
+summary off or already had one in the last 6 days. The push uses a fixed
+template on the `updates` channel and carries no data.
 
 `notify` accepts the secret in `NOTIFY_SECRET` and, while it is rotated,
 the one in `NOTIFY_SECRET_PREVIOUS` (`docs/runbooks/rotate-keys.md`).

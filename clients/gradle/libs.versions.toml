@@ -23,6 +23,7 @@ lifecycle-viewmodel-compose = { module = "androidx.lifecycle:lifecycle-viewmodel
 lifecycle-runtime-compose = { module = "androidx.lifecycle:lifecycle-runtime-compose", version = "2.11.0" }
 navigation-compose = { module = "androidx.navigation:navigation-compose", version = "2.10.2" }
 glance-appwidget = { module = "androidx.glance:glance-appwidget", version = "1.2.0" }
+work-runtime = { module = "androidx.work:work-runtime", version = "2.12.0" }
 
 supabase-bom = { module = "io.github.jan-tennert.supabase:bom", version.ref = "supabase" }
 supabase-auth = { module = "io.github.jan-tennert.supabase:auth-kt" }

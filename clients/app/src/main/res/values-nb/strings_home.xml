@@ -9,7 +9,7 @@
     <string name="status_setting_up_title">Setter opp din DeKoi</string>
     <string name="status_setting_up_body">Første oppstart kan ta opptil 10 minutter. Du kan gå fra denne skjermen.</string>
     <string name="status_no_device_title">Legg til din DeKoi</string>
-    <string name="status_no_device_body">Gjør klar minnekortet med DeKoi Setup på en datamaskin. Skann så koden programmet viser.</string>
+    <string name="status_no_device_body">Når din DeKoi er satt opp, viser denne skjermen hvordan nettverket ditt har det.</string>
     <string name="home_status">Status</string>
     <string name="home_checks">Dette passer DeKoi på</string>
     <string name="home_checks_paused">Satt på pause mens den er frakoblet</string>
@@ -41,4 +41,14 @@
     <string name="home_latest_activity">Siste aktivitet</string>
     <string name="home_no_activity">Ingenting har rørt lokkeduene dine ennå. Slik skal det være.</string>
     <string name="home_see_all_alerts">Se alle varsler</string>
+
+    <string name="home_welcome_title">Velkommen til DeKoi</string>
+    <string name="home_welcome_close">Lukk velkomsten</string>
+    <string name="home_welcome_card_title">Gjør klar minnekortet</string>
+    <string name="home_welcome_card_body">Med denne telefonen og en USB-C-kortleser, eller med DeKoi Setup på en datamaskin.</string>
+    <string name="home_welcome_plug_title">Koble til din DeKoi</string>
+    <string name="home_welcome_plug_body">Først nettverkskabelen til ruteren, så strømmen.</string>
+    <string name="home_welcome_watch_title">Følg med her til den er tilkoblet</string>
+    <string name="home_welcome_watch_body">Første oppstart kan ta opptil 10 minutter.</string>
+    <string name="home_add_another">Legg til enda en DeKoi</string>
 </resources>

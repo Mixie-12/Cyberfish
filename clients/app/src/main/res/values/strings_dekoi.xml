@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Your DeKoi and its setup (DekoiScreens.kt), and the section label it shares with Home (ScreenParts.kt). -->
+<!-- Your DeKoi (DekoiScreens.kt), the setup timeline it shares with Add DeKoi (SetupTimeline), and the label it shares with Home. -->
 <resources>
     <string name="setup_linked">Linked to your account</string>
     <string name="setup_first_start">First start</string>

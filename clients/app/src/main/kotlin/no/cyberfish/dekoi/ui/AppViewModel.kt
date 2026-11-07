@@ -25,6 +25,7 @@ import no.cyberfish.dekoi.NetworkInsights
 import no.cyberfish.dekoi.OwnerSettings
 import no.cyberfish.dekoi.R
 import no.cyberfish.dekoi.shared.ClaimCode
+import no.cyberfish.dekoi.unseenBatches
 import java.io.IOException
 import java.time.Instant
 
@@ -237,10 +238,26 @@ class AppViewModel(
      * refuses, the next refresh brings them back as unseen.
      */
     fun acknowledge(ids: List<Long>) {
-        val seenAt = Instant.now()
-        owner.value =
-            owner.value.copy(events = owner.value.events.map { if (it.id in ids && it.seenAt == null) it.copy(seenAt = seenAt) else it })
+        markSeen(ids)
         run { backend.acknowledge(ids) }
+    }
+
+    /** The Alerts tab's "Mark all as read": every unseen event, in batches the backend takes, then a reload. */
+    fun acknowledgeAll() {
+        val batches = unseenBatches(owner.value.events)
+        if (batches.isEmpty()) return
+        markSeen(batches.flatten())
+        run {
+            batches.forEach { backend.acknowledge(it) }
+            owner.value = load()
+        }
+    }
+
+    private fun markSeen(ids: List<Long>) {
+        val seenAt = Instant.now()
+        val marked = ids.toSet()
+        owner.value =
+            owner.value.copy(events = owner.value.events.map { if (it.id in marked && it.seenAt == null) it.copy(seenAt = seenAt) else it })
     }
 
     fun setWifiName(

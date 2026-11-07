@@ -131,12 +131,15 @@ select results_eq(
       ('authenticated', 'claim_device_v1'),
       ('authenticated', 'delete_account_v1'),
       ('authenticated', 'register_push_token_v1'),
+      ('authenticated', 'register_push_token_v2'),
       ('authenticated', 'unregister_push_token_v1'),
       ('service_role', 'check_request'),
       ('service_role', 'forget_push_token_v1'),
       ('service_role', 'notification_targets_v1'),
       ('service_role', 'notification_targets_v2'),
-      ('service_role', 'weekly_summary_v1')
+      ('service_role', 'notification_targets_v3'),
+      ('service_role', 'weekly_summary_v1'),
+      ('service_role', 'weekly_summary_v2')
   $$,
   'API roles can execute exactly the published functions'
 );

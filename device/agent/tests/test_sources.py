@@ -6,6 +6,7 @@ from dekoi_agent.sources import (
     DatagramInbox,
     FileFollower,
     clean_text,
+    flag_bait,
     parse_canary,
     parse_samba,
     parse_scan,
@@ -147,6 +148,31 @@ def test_samba_fields_are_bounded_and_cleaned() -> None:
     event = parse_samba(ipv6, NOW)
     assert event is not None
     assert event["src_ip"] == "fe80::1"
+
+
+BAIT_USERS = frozenset({"familie.admin", "nas-backup"})
+
+
+def test_a_sign_in_with_a_bait_name_is_flagged_on_every_decoy() -> None:
+    samba = parse_samba(SAMBA_SIGN_IN.replace('"admin"', '"FAMILIE.ADMIN"'), NOW)
+    web = parse_canary(
+        canary_line(3001, {"USERNAME": "nas-backup", "PASSWORD": "Backup#2023"}, dst_port=80),
+        DECOYS,
+        NOW,
+    )
+    for event in (samba, web):
+        assert event is not None
+        assert flag_bait(event, BAIT_USERS)["detail"]["bait"] is True
+    assert "Backup#2023" not in json.dumps(web)
+
+
+def test_only_sign_ins_with_a_bait_name_are_flagged() -> None:
+    ordinary = parse_samba(SAMBA_SIGN_IN, NOW)
+    read = parse_samba(SAMBA_READ.replace("scans/passport.pdf", "nas-backup"), NOW)
+    connection = parse_canary(canary_line(3000, {"PATH": "/nas-backup"}, dst_port=80), DECOYS, NOW)
+    for event in (ordinary, read, connection):
+        assert event is not None
+        assert "bait" not in flag_bait(event, BAIT_USERS)["detail"]
 
 
 def test_clean_text_removes_control_and_formatting_characters() -> None:

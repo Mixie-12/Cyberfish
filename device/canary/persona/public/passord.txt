@@ -1,0 +1,24 @@
+Passord - IKKE SLETT
+(flyttet fra den gamle PC-en i mars 2025)
+
+NAS ($name)
+  bruker: $admin_user
+  passord: Sommer2019!
+  web: http://$name.local
+
+Backup fra Kari sin PC til NAS-en
+  bruker: $backup_user
+  passord: Backup#2023
+
+Wi-Fi hjemme
+  passord: kanelbolle42
+Wi-Fi gjest
+  passord: velkommen2024
+
+Ruteren
+  bruker: admin
+  passord: Ruter-hjemme-77
+
+Nettbank og BankID: se BankID-koder.txt
+VPN: se VPN-tilgang.txt
+Resten ligger i Passord og koder.xlsx

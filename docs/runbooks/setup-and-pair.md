@@ -22,23 +22,31 @@ old entry can be removed in the app.
 DeKoi updates itself. You never need to log in to it, and there is nothing to
 configure on the device.
 
-## See your decoy
+## Demo your DeKoi
 
 On your network, your DeKoi looks like a family storage server called
-family-nas. That is the bait, and you can look at it yourself:
+family-nas, with shared folders full of tempting files. All of it is bait:
+the passwords open nothing, and the card and personal numbers are test
+numbers. You can play the intruder yourself:
 
-- Windows: open File Explorer and choose Network. FAMILY-NAS is listed under
-  Computer. If Explorer asks to turn on network discovery, allow it for
-  private networks.
-- Mac: open Finder. family-nas is listed under Network in the sidebar.
-- Any computer or phone: open http://family-nas.local in a browser to see its
-  sign-in page.
+1. Find it.
+   - Windows: open File Explorer, then Network, then FAMILY-NAS. Or type
+     `\\family-nas` in the address bar. If Explorer asks to turn on network
+     discovery, allow it for private networks.
+   - Mac: choose family-nas under Network in Finder's sidebar. Or choose
+     Go, then Connect to Server, and enter `smb://family-nas.local`; connect
+     as a guest.
+2. Open the Public folder and open a file, for example `passord.txt` or
+   `kredittkort-kopi.pdf`.
+3. Try to open a locked folder, such as Finance. When it asks you to sign
+   in, use a user name and password from the files, for example
+   `familie.admin`. The alert then says the name came from the bait.
+4. Open http://family-nas.local in a browser and sign in there too.
+5. Watch the alerts arrive on your phone, within about a minute.
 
-Seeing it in the list does not alert you. Opening family-nas, signing in, or
-opening a file in its Public folder does, within about a minute, as it would
-for an intruder. That is a good way to check that alerts reach your phone. If
-it asks for a user name and password, make one up; never type a real one.
-Afterwards you can mark your computer as known in the alert.
+Seeing family-nas in the list does not alert you; opening it does, as it
+would for an intruder. Never type a real password. Afterwards you can mark
+your computer as known in the alert.
 
 Cards prepared before this version keep the name backup-nas and do not show
 up in Explorer or Finder. Prepare the card again with DeKoi Setup to get the

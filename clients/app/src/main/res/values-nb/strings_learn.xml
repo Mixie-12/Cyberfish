@@ -108,7 +108,7 @@
         <item>Kopier er ofte åpne eller dårligere beskyttet enn det ekte nettverket, så enheter kan koble seg til uten passordet ditt.</item>
         <item>Ikke alle nye nettverk med ditt navn er kopier. Mesh-systemer for Wi-Fi og ekstra tilgangspunkter bruker samme navn med vilje.</item>
     </string-array>
-    <string name="learn_wifi_copy_dekoi">Med noen minutters mellomrom sjekker din DeKoi Wi-Fi-nettene i nærheten med sin egen radio. Når den har lært tilgangspunktene dine det første døgnet, varsler den deg om alle nettverk med ditt navn og svakere beskyttelse. Den trenger navnet på Wi-Fi-nettet ditt for å gjøre dette.</string>
+    <string name="learn_wifi_copy_dekoi">Med Wi-Fi-vakt sjekker din DeKoi Wi-Fi-nettene i nærheten med noen minutters mellomrom, med sin egen radio. Når den har lært tilgangspunktene dine det første døgnet, varsler den deg om alle nettverk med ditt navn og svakere beskyttelse. Wi-Fi-vakt trenger navnet på Wi-Fi-nettet ditt, som du legger inn i Innstillinger.</string>
     <string-array name="learn_wifi_copy_steps">
         <item>Hvis du nylig har lagt til et mesh-punkt eller et nytt tilgangspunkt, er dette ventet, og du trenger ikke gjøre noe.</item>
         <item>Hvis ikke, ikke koble deg til et nettverk med ditt navn som plutselig ikke ber om passord.</item>

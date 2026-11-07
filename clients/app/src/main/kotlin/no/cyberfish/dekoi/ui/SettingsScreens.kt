@@ -14,7 +14,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.text.selection.SelectionContainer
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
@@ -31,7 +30,6 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalResources
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
@@ -54,6 +52,7 @@ import no.cyberfish.dekoi.ui.components.InsetRow
 import no.cyberfish.dekoi.ui.components.InsetSection
 import no.cyberfish.dekoi.ui.components.KeyValueRow
 import no.cyberfish.dekoi.ui.components.Screen
+import no.cyberfish.dekoi.ui.motion.rememberHaptics
 import java.time.Instant
 
 @Composable
@@ -69,6 +68,7 @@ fun SettingsScreen(
     onSetWifiName: (Device, String?) -> Unit,
 ) {
     var confirming by remember { mutableStateOf(false) }
+    val haptics = rememberHaptics()
     val now = Instant.now()
     Screen(stringResource(R.string.tab_settings), listState = listState) {
         item {
@@ -92,27 +92,17 @@ fun SettingsScreen(
                         onClick = { onNavigate(Route.Dekoi(device.id)) },
                     )
                 }
-                InsetRow(
-                    stringResource(R.string.action_add_dekoi),
-                    titleColor = MaterialTheme.colorScheme.primary,
-                    leading = {
-                        Icon(
-                            painterResource(R.drawable.ic_add),
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.primary,
-                        )
-                    },
-                    onClick = { onNavigate(Route.AddDekoi) },
-                )
+                AddDekoiRow(R.string.action_add_dekoi) { onNavigate(Route.AddDekoi) }
             }
         }
-        if (devices.isNotEmpty()) item { WifiNameSection(devices, onSetWifiName) }
+        if (devices.isNotEmpty()) item { WifiNameSection(devices, now, onSetWifiName) }
         item { Notifications() }
         item { WeeklySummary(weeklySummary, onWeeklySummary) }
         item { Privacy() }
         item {
             InsetSection(title = stringResource(R.string.settings_about)) {
                 KeyValueRow(stringResource(R.string.settings_version), BuildConfig.VERSION_NAME)
+                InsetRow(stringResource(R.string.features_title), onClick = { onNavigate(Route.Features()) })
                 InsetRow(stringResource(R.string.learn_title), onClick = { onNavigate(Route.Learn) })
                 InsetRow(stringResource(R.string.action_take_tour), onClick = { onNavigate(Route.Onboarding) })
                 InsetRow(stringResource(R.string.licences_title), onClick = { onNavigate(Route.Licences) })
@@ -135,6 +125,7 @@ fun SettingsScreen(
             body = R.string.settings_delete_confirm_body,
             confirm = R.string.action_delete,
             onConfirm = {
+                haptics.confirm()
                 confirming = false
                 onDeleteAccount()
             },
@@ -361,10 +352,15 @@ private fun WeeklySummary(
     on: Boolean?,
     onChange: (Boolean) -> Unit,
 ) {
+    val haptics = rememberHaptics()
     InsetSection(footer = stringResource(R.string.settings_weekly_summary_footer)) {
         InsetRow(
             stringResource(R.string.settings_weekly_summary),
-            modifier = Modifier.toggleable(on == true, enabled = on != null, role = Role.Switch, onValueChange = onChange),
+            modifier =
+                Modifier.toggleable(on == true, enabled = on != null, role = Role.Switch) {
+                    haptics.toggle(it)
+                    onChange(it)
+                },
             trailing = { Switch(checked = on == true, onCheckedChange = null, enabled = on != null) },
         )
     }

@@ -23,6 +23,10 @@
   }
   .device { display: flex; align-items: center; gap: 14px; margin-bottom: 24px; }
   .device svg { flex: none; }
+  .product {
+    margin: 0 0 2px; font-size: 11px; font-weight: 600; letter-spacing: .08em;
+    text-transform: uppercase; color: #2f6fb2;
+  }
   h1 { margin: 0; font-size: 20px; font-weight: 600; letter-spacing: .2px; }
   .model { margin: 2px 0 0; font-size: 12px; color: #6b7785; }
   .error {
@@ -74,6 +78,7 @@
       <circle cx="31" cy="33" r="1.2" fill="#6fe0a0"/>
     </svg>
     <div>
+      <p class="product">Storage Manager</p>
       <h1>$name</h1>
       <p class="model">$model &middot; Firmware $firmware</p>
     </div>
@@ -96,6 +101,7 @@
 <footer class="status">
   <span><i class="dot"></i>System status: Healthy</span>
   <span>Volume 1: 4 of 4 disks online</span>
+  <span>7.2 of 10.9 TB used</span>
   <span>Last backup: 02:14</span>
 </footer>
 </body>

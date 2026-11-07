@@ -10,7 +10,7 @@
     <string name="status_setting_up_title">Setting up your DeKoi</string>
     <string name="status_setting_up_body">The first start can take up to 10 minutes. You can leave this screen.</string>
     <string name="status_no_device_title">Add your DeKoi</string>
-    <string name="status_no_device_body">Prepare the memory card with DeKoi Setup on a computer, then scan the code it shows.</string>
+    <string name="status_no_device_body">Once your DeKoi is set up, this screen shows how your network is doing.</string>
     <string name="home_status">Status</string>
     <string name="home_checks">What DeKoi watches</string>
     <string name="home_checks_paused">Paused while offline</string>
@@ -42,4 +42,14 @@
     <string name="home_latest_activity">Latest activity</string>
     <string name="home_no_activity">Nothing has touched your decoys yet. That is how it should be.</string>
     <string name="home_see_all_alerts">See all alerts</string>
+
+    <string name="home_welcome_title">Welcome to DeKoi</string>
+    <string name="home_welcome_close">Close the welcome</string>
+    <string name="home_welcome_card_title">Prepare the memory card</string>
+    <string name="home_welcome_card_body">With this phone and a USB-C card reader, or with DeKoi Setup on a computer.</string>
+    <string name="home_welcome_plug_title">Plug in your DeKoi</string>
+    <string name="home_welcome_plug_body">First the network cable to your router, then the power.</string>
+    <string name="home_welcome_watch_title">Watch it come online here</string>
+    <string name="home_welcome_watch_body">The first start can take up to 10 minutes.</string>
+    <string name="home_add_another">Add another DeKoi</string>
 </resources>

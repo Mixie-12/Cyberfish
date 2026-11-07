@@ -58,6 +58,7 @@ import no.cyberfish.dekoi.alertBadgeCount
 import no.cyberfish.dekoi.isSetUp
 import no.cyberfish.dekoi.shared.DesignTokens
 import no.cyberfish.dekoi.ui.components.Screen
+import no.cyberfish.dekoi.ui.features.FeaturesScreen
 import no.cyberfish.dekoi.ui.learn.LearnScreen
 import no.cyberfish.dekoi.ui.learn.LearnTopicScreen
 import no.cyberfish.dekoi.ui.motion.Direction
@@ -68,8 +69,10 @@ import no.cyberfish.dekoi.ui.network.HostDetailScreen
 import no.cyberfish.dekoi.ui.network.InsightsScreen
 import no.cyberfish.dekoi.ui.network.NetworkScreen
 import no.cyberfish.dekoi.ui.network.NetworksScreen
+import no.cyberfish.dekoi.ui.network.PlaceDevicesScreen
 import no.cyberfish.dekoi.ui.onboarding.OnboardingOnce
 import no.cyberfish.dekoi.ui.onboarding.OnboardingScreen
+import no.cyberfish.dekoi.ui.onboarding.rememberWelcome
 import java.time.Instant
 
 /** Every place in the app. The four tab roots, then the screens pushed on a tab. */
@@ -112,7 +115,7 @@ sealed interface Route {
 
     @Serializable data object Licences : Route
 
-    /** The first-run tour, shown once after the first sign-in; without the tab bar. */
+    /** The tour, shown once per tour version after sign-in (ui/onboarding/FirstRun.kt); without the tab bar. */
     @Serializable data object Onboarding : Route
 
     @Serializable data object Learn : Route
@@ -125,6 +128,14 @@ sealed interface Route {
     /** Network health, DNS, open ports and speed of one DeKoi (ADR 0015). */
     @Serializable data class Insights(
         val deviceId: String,
+    ) : Route
+
+    /** Putting the devices without a room into rooms, one at a time. */
+    @Serializable data object PlaceDevices : Route
+
+    /** Everything DeKoi does and how each part is doing on one DeKoi; null means the one Home speaks for. */
+    @Serializable data class Features(
+        val deviceId: String? = null,
     ) : Route
 }
 
@@ -182,6 +193,8 @@ private fun SignedIn(
     val reduceMotion = LocalReduceMotion.current
     val tabSwitch = remember { TabSwitch() }
     val listStates = Tab.entries.associateWith { rememberLazyListState() }
+    // Here rather than on Home, so it is not read again on every return to Home.
+    val welcome = rememberWelcome()
     // A tab root names its tab; a pushed screen belongs to the tab it was pushed on.
     var lastTab by rememberSaveable { mutableStateOf(Tab.HOME) }
     val currentTab = entry?.rootTab() ?: lastTab
@@ -204,8 +217,14 @@ private fun SignedIn(
 
     fun selectTab(tab: Tab) {
         if (tab == currentTab) {
-            navController.popBackStack(tab.route, inclusive = false)
-            scope.launch { listStates.getValue(tab).scrollToTop(reduceMotion) }
+            val list = listStates.getValue(tab)
+            // A root that comes back from under a pushed screen is not laid out, so an
+            // animated scroll has nothing to move and stops where it is: it opens at the top instead.
+            if (navController.popBackStack(tab.route, inclusive = false)) {
+                list.requestScrollToItem(0)
+            } else {
+                scope.launch { list.scrollToTop(reduceMotion) }
+            }
             return
         }
         tabSwitch.active = true
@@ -258,7 +277,7 @@ private fun SignedIn(
             predictivePopExitTransition = { transitions.exit(this, Direction.BACK_GESTURE) },
         ) {
             screen<Route.Home> {
-                HomeScreen(data, now, refreshing, listStates.getValue(Tab.HOME), viewModel::refresh, navigate)
+                HomeScreen(data, now, refreshing, listStates.getValue(Tab.HOME), welcome, viewModel::refresh, navigate)
             }
             screen<Route.Alerts> {
                 AlertsScreen(
@@ -269,10 +288,20 @@ private fun SignedIn(
                     viewModel::refresh,
                     navigate,
                     onBack = null,
+                    onMarkAllRead = viewModel::acknowledgeAll,
                 )
             }
             screen<Route.FilteredAlerts> { entry ->
-                AlertsScreen(data, now, entry.toRoute(), rememberLazyListState(), viewModel::refresh, navigate, onBack = back)
+                AlertsScreen(
+                    data,
+                    now,
+                    entry.toRoute(),
+                    rememberLazyListState(),
+                    viewModel::refresh,
+                    navigate,
+                    onBack = back,
+                    onMarkAllRead = null,
+                )
             }
             screen<Route.AlertDetail> { entry ->
                 AlertDetailScreen(
@@ -305,6 +334,23 @@ private fun SignedIn(
                     onLoad = viewModel::loadInsights,
                     onSpeedTest = viewModel::setSpeedTest,
                     onNavigate = navigate,
+                    onBack = back,
+                )
+            }
+            screen<Route.Features> { entry ->
+                val settings by viewModel.settings.collectAsStateWithLifecycle()
+                LaunchedEffect(Unit) { viewModel.loadSettings() }
+                FeaturesScreen(
+                    data,
+                    now,
+                    entry.toRoute<Route.Features>().deviceId,
+                    settings?.weeklySummary,
+                    onNavigate = navigate,
+                    // Wi-Fi Guard and the weekly summary are near the top of Settings.
+                    onOpenSettings = {
+                        navigate(Route.Settings)
+                        listStates.getValue(Tab.SETTINGS).requestScrollToItem(0)
+                    },
                     onBack = back,
                 )
             }
@@ -358,6 +404,9 @@ private fun SignedIn(
                     onWeeklySummary = viewModel::setWeeklySummary,
                     onSetWifiName = viewModel::setWifiName,
                 )
+            }
+            screen<Route.PlaceDevices> {
+                PlaceDevicesScreen(data, now, viewModel::setNameAndRoom, back)
             }
         }
     }

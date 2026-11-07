@@ -17,6 +17,7 @@
     <string name="event_login_action">Prøvde å logge på</string>
     <string name="event_login_consequence">Noen prøver kanskje å komme seg inn på enhetene på nettverket ditt.</string>
     <string name="event_login_why">Ingenting på nettverket ditt har noen grunn til å logge på din DeKoi. Noen, eller et program, prøver ut passord på enhetene som finnes på nettverket.</string>
+    <string name="event_login_bait_consequence">Passordet kom fra filene på lokkeduen din. Noen har sett gjennom lokkefilene og prøver det de fant.</string>
     <string name="event_connection_title">%1$s åpnet en av lokkeduene dine</string>
     <string name="event_connection_action">Åpnet en lokkedue</string>
     <string name="event_connection_why">Din DeKoi later som den er en lagringsboks. Vanlige enheter lar den være i fred, så et besøk betyr at noe på nettverket ditt ser seg rundt.</string>
@@ -66,11 +67,11 @@
     <string name="event_evil_twin_title">Noen har kopiert navnet på Wi-Fi-nettet ditt</string>
     <string name="event_evil_twin_action">Kopierte navnet på Wi-Fi-nettet ditt</string>
     <string name="event_evil_twin_consequence">Telefonene og datamaskinene dine kan koble seg til kopien ved en feil.</string>
-    <string name="event_evil_twin_why">Et Wi-Fi-nett i nærheten av din DeKoi bruker samme navn som ditt, men med svakere beskyttelse eller ingen. Den som står bak, kan se og endre alt enhetene sender over det nettet.</string>
+    <string name="event_evil_twin_why">Wi-Fi-vakt fant et Wi-Fi-nett i nærheten av din DeKoi som bruker samme navn som ditt, men med svakere beskyttelse eller ingen. Den som står bak, kan se og endre alt enhetene sender over det nettet.</string>
     <string name="event_new_access_point_title">Et nytt tilgangspunkt bruker navnet på Wi-Fi-nettet ditt</string>
     <string name="event_new_access_point_action">Begynte å bruke navnet på Wi-Fi-nettet ditt</string>
     <string name="event_new_access_point_consequence">Som regel er dette Wi-Fi-utstyr du har lagt til eller byttet ut.</string>
-    <string name="event_new_access_point_why">Din DeKoi så et nytt Wi-Fi-tilgangspunkt med navnet på nettverket ditt og samme beskyttelse. Det er normalt når du legger til et mesh-punkt eller bytter ruter. Det kan også være noen som kjenner passordet og kopierer nettverket ditt.</string>
+    <string name="event_new_access_point_why">Wi-Fi-vakt så et nytt Wi-Fi-tilgangspunkt med navnet på nettverket ditt og samme beskyttelse. Det er normalt når du legger til et mesh-punkt eller bytter ruter. Det kan også være noen som kjenner passordet og kopierer nettverket ditt.</string>
     <string name="event_offline_title">Din DeKoi ble frakoblet</string>
     <string name="event_offline_action">Ble frakoblet</string>
     <string name="event_offline_consequence">Din DeKoi kan ikke varsle deg før den er tilbake.</string>
@@ -116,6 +117,13 @@
     <string name="alerts_empty">Ingen varsler ennå. Når din DeKoi legger merke til noe på nettverket ditt, dukker det opp her.</string>
     <string name="alerts_empty_filtered">Ingen varsler passer med disse filtrene.</string>
     <string name="alerts_show_all">Vis alle varsler</string>
+    <string name="alerts_mark_all_read">Merk alle som lest</string>
+    <plurals name="alerts_mark_all_read_title">
+        <item quantity="one">Merke %1$d varsel som lest?</item>
+        <item quantity="other">Merke alle %1$d varslene som lest?</item>
+    </plurals>
+    <string name="alerts_mark_all_read_body">Varslene blir liggende i listen, og du kan fortsatt åpne hvert av dem.</string>
+    <string name="alerts_mark_all_read_confirm">Merk som lest</string>
 
     <string name="alert_missing">Dette varselet finnes ikke lenger.</string>
     <string name="alert_do_now">Gjør dette nå</string>

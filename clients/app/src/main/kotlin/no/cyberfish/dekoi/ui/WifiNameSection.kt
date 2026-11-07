@@ -15,21 +15,25 @@ import no.cyberfish.dekoi.R
 import no.cyberfish.dekoi.WifiName
 import no.cyberfish.dekoi.ui.components.InsetRow
 import no.cyberfish.dekoi.ui.components.InsetSection
+import no.cyberfish.dekoi.ui.motion.rememberHaptics
 import no.cyberfish.dekoi.wifiWatchText
+import java.time.Instant
 
 /**
- * "Your Wi-Fi name" in Settings (ADR 0019): one row per DeKoi with the name
- * and what its Wi-Fi watch is doing; a tap edits the name.
+ * Wi-Fi Guard in Settings (ADR 0019): one row per DeKoi with the home
+ * Wi-Fi's name and what Wi-Fi Guard is doing; a tap edits the name.
  */
 @Composable
 fun WifiNameSection(
     devices: List<Device>,
+    now: Instant,
     onSave: (Device, String?) -> Unit,
 ) {
     var editing by rememberSaveable { mutableStateOf<String?>(null) }
-    InsetSection(title = stringResource(R.string.wifi_name_title), footer = stringResource(R.string.wifi_name_footer)) {
+    val haptics = rememberHaptics()
+    InsetSection(title = stringResource(R.string.wifi_guard), footer = stringResource(R.string.wifi_name_footer)) {
         devices.forEach { device ->
-            val status = stringResource(wifiWatchText(device))
+            val status = stringResource(wifiWatchText(device, now))
             InsetRow(
                 device.wifiName ?: stringResource(R.string.wifi_name_not_set),
                 subtitle = if (devices.size > 1) stringResource(R.string.wifi_name_for_device, device.name, status) else status,
@@ -41,6 +45,7 @@ fun WifiNameSection(
         WifiNameDialog(
             device,
             onSave = { name ->
+                haptics.confirm()
                 editing = null
                 onSave(device, name)
             },

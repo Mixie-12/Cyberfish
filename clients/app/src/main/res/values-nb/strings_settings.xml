@@ -37,14 +37,16 @@
     <string name="licences_show">Vis lisensteksten</string>
     <string name="licences_hide">Skjul lisensteksten</string>
 
+    <string name="wifi_guard">Wi-Fi-vakt</string>
     <string name="wifi_name_title">Navnet på Wi-Fi-nettet ditt</string>
-    <string name="wifi_name_footer">Din DeKoi varsler deg når et Wi-Fi-nett i nærheten kopierer dette navnet for å lure enhetene dine til å koble seg på. Den trenger bare navnet, aldri Wi-Fi-passordet ditt.</string>
-    <string name="wifi_name_not_set">Ikke angitt</string>
+    <string name="wifi_name_footer">Wi-Fi-vakt varsler deg når et Wi-Fi-nett i nærheten av din DeKoi kopierer dette navnet for å lure enhetene dine til å koble seg på. Den trenger bare navnet, aldri Wi-Fi-passordet ditt.</string>
+    <string name="wifi_name_not_set">Ikke noe Wi-Fi-navn ennå</string>
     <string name="wifi_name_for_device">%1$s: %2$s</string>
     <string name="wifi_name_label">Wi-Fi-navn</string>
-    <string name="wifi_name_hint">Nøyaktig slik telefonen din viser det. La feltet stå tomt hvis din DeKoi ikke skal se etter kopier.</string>
-    <string name="wifi_watch_add">Legg inn navnet på Wi-Fi-nettet ditt, så kan din DeKoi varsle deg hvis noen kopierer det.</string>
+    <string name="wifi_name_hint">Nøyaktig slik telefonen din viser det. La feltet stå tomt for å slå av Wi-Fi-vakt.</string>
+    <string name="wifi_watch_add">Legg inn navnet på Wi-Fi-nettet ditt, så kan Wi-Fi-vakt varsle deg hvis noen kopierer det.</string>
     <string name="wifi_watch_starting">Starter. Dette tar noen minutter.</string>
+    <string name="wifi_watch_update">Starter etter neste automatiske oppdatering av din DeKoi.</string>
     <string name="wifi_watch_learning">Blir kjent med Wi-Fi-nettet ditt i ett døgn før den begynner å varsle deg.</string>
     <string name="wifi_watch_watching">Ser etter kopier av Wi-Fi-nettet ditt.</string>
     <string name="wifi_watch_no_country">Av. Din DeKoi vet ikke hvilket land den er i, så den holder Wi-Fi-radioen sin slått av.</string>

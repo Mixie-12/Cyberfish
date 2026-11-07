@@ -15,7 +15,8 @@ the brand, ADR 0020. Data behind it: ADR 0010. Wording rules: CLAUDE.md,
    shows what DeKoi sees, not cabling. DeKoi cannot block devices; the app
    explains how to block them in the router.
 5. Calm motion. Motion explains a change. At most one idle loop on screen,
-   only on a hero, none when the system animation scale is 0. One exception:
+   only on a hero or the Features card in focus, none when the system
+   animation scale is 0. One exception:
    a very likely attack opens with an alarm that pulses for 3 s, then holds
    still.
 6. Attacker text is inert: host names, models, user names and service
@@ -29,10 +30,11 @@ Four tabs, M3 `NavigationBar`, Material Symbols, filled when selected: Home
 incidents not from known devices), Network (`lan`), Settings (`settings`).
 
 Pushed screens: Alert detail, Device detail (a host), Networks, Insights,
-Your DeKoi, Add DeKoi. Type-safe Navigation Compose routes (`@Serializable`
-objects). Each tab keeps its back stack; back at a non-Home tab root goes Home;
-reselecting a tab pops to its root and scrolls to top. Predictive back from
-Navigation. A notification opens Alert detail over the Alerts tab.
+Your DeKoi, Features, Add DeKoi, Place your devices. Type-safe Navigation
+Compose routes (`@Serializable` objects). Each tab keeps its back stack;
+back at a non-Home tab root goes Home; reselecting a tab pops to its root
+and scrolls to top. Predictive back from Navigation. A notification opens
+Alert detail over the Alerts tab.
 
 Cross-links: Alert to Device; Device to Alerts filtered to it; decoy tile to
 Alerts filtered to that service; Home tiles to their tabs.
@@ -43,17 +45,23 @@ Alerts filtered to that service; Home tiles to their tabs.
 hairline. (1) Status hero: 120 dp ring around a shield, coloured by
 `Protection`, with a soft glow of that colour behind it; existing `status_*`
 strings, polite live region, ring draws in once (700 ms), not on every
-return. (2) "Needs attention": up to three critical or warning alerts of the
+return; the words fade through when the status changes. Then, until a DeKoi
+is fully set up or the owner closes it (remembered on the phone), the
+welcome in a HUD frame: "Welcome to DeKoi", three numbered steps with
+symbols (prepare the memory card, with this phone or DeKoi Setup; plug in
+the network cable, then the power; watch it come online here), "Add a
+DeKoi" and "Take the tour". Once closed, without a DeKoi, an "Add a DeKoi"
+row. (2) "Needs attention": up to three critical or warning alerts of the
 last 24 h, one per source device, on quiet hairline-edged cards (severity
 chip, title, device, "See what to do"), each opening its alert; hidden when
 none. (3) 2x2 tiles: devices on your network (count, "3 new this week"),
 alerts in 7 days (count and sparkline), Your DeKoi (status, last check-in),
 checks ("All 8 checks on", amber when one fails, grey while
-offline; opens Your DeKoi); tabular figures roll on change (300 ms); one
-column above font scale 1.5. (4) Seven-day bar chart stacked by severity;
+offline; opens Features); tabular figures roll on change (300 ms); one
+column above font scale 1.5; under them an "Add another DeKoi" row unless
+the welcome shows. (4) Seven-day bar chart stacked by severity;
 tapping a bar opens Alerts for that day. (5) Latest five events.
-`PullToRefreshBox` replaces the Refresh button. Without a DeKoi: "Add DeKoi"
-above the horizon.
+`PullToRefreshBox` replaces the Refresh button.
 
 **Alerts.** A calm timeline of incidents (ADR 0013), grouped by
 `incidents()` in `Incidents.kt`: events from one DeKoi and one source, each
@@ -68,7 +76,9 @@ entry is the severity glyph and word, the lead event's title and "14 times
 bright: the dot glows, and the dot, glyph and word carry the severity
 colour, nothing else does. Seen incidents are grey and quiet: a hollow grey
 dot, grey glyph and word, a lighter title. Known devices are dimmed with
-"Known device". Entries use `animateItem()`.
+"Known device". Entries use `animateItem()`. While any alert is unread,
+the tab's header has a text action, "Mark all as read", which asks first
+above 20 unread alerts; a cross-linked list does not offer it.
 
 **Alert detail.** One incident; opening it marks its events seen
 (`acknowledge_events_v1`) and clears their notifications. (1) A critical
@@ -97,8 +107,9 @@ address, network, online status; opens Device detail). (6) Technical
 details collapsed (`animateContentSize`, monospace, copyable).
 
 **Network.** Header "38 devices · 3 new this week · 1 needs attention", a
-"Networks" row and an "Insights" row per DeKoi. Map | List segmented
-control, choice saved; List is the default with TalkBack on.
+"Networks" row, an "Insights" row per DeKoi and an "Add DeKoi" row (also
+before any device shows). Map | Rooms | List segmented control, choice
+saved; List is the default with TalkBack on.
 - Map: a radar in the HUD frame (ADR 0020). Gateway at the centre; ring 1
   infrastructure (switches, access points, DeKoi with the brand mark); ring
   2 everything else clustered by kind, or by room once any device has one
@@ -111,6 +122,26 @@ control, choice saved; List is the default with TalkBack on.
   fits. Footer: "Shows the devices your DeKoi can see, not how they are
   connected." For TalkBack the map is one node with a summary and a "Show
   as list" action.
+- Rooms: a plan of the home from the rooms the owner sets (ADR 0023), from
+  `roomAreas()` and `floorPlan()` in `Rooms.kt`. One HUD-framed area per
+  room in use: the suggested rooms in their order (Living room, Kitchen,
+  Bedroom, Office, Hallway, Garage, Other), then the owner's own
+  alphabetically, matched whatever their case. Two areas to a row, a row
+  sharing the height of the tallest; a room with more than four devices
+  takes a whole row, and one column above font scale 1.5. Each area: its
+  name as a label, the count in blue, the devices as 40 dp kind tiles in
+  kind order with status dot and alert halo, the name under each. Then
+  "Not placed yet" under a hairline, with "Place your devices". Before
+  any room is set, one sentence says what the view becomes. Footer: "You
+  choose the rooms. Your DeKoi does not know where a device is." Nothing
+  moves. TalkBack reads each area as a heading ("Living room, 3 devices")
+  and each device with its status and any alert.
+- Place your devices: the devices without a room when it opens, one at a
+  time: the hero in the HUD frame (kind tile, name, maker, "Looks like a
+  TV"), "Which room is it in?" with the rooms as chips in the plan's order,
+  and Skip. A pick saves the room at once and keeps the name. "3 of 7"
+  under the title; a polite live region reads the progress and each
+  device. Ends with how many devices now have a room and "See your rooms".
 - List: search, sort (name, last seen, kind); sections Needs attention, New
   this week, Online, Not seen recently, or By room once any device has one.
   Row: tile with status dot, name, "Looks like a TV · LG · 192.168.1.23",
@@ -120,9 +151,10 @@ control, choice saved; List is the default with TalkBack on.
   use `network_private`.
 
 **Device detail.** (1) Hero in the HUD frame: 96 dp kind tile with its idle
-animation, shared element from list or map; name, "Looks like a TV", room,
-status ("Online now" or "Last seen 2 h ago"), Known device or New tag. (2)
-Attention card if it caused an alert in 24 h, linking to that alert. (3)
+animation, shared element from the list, map or rooms; name, "Looks like a
+TV", room, status ("Online now" or "Last seen 2 h ago"), Known device or New
+tag. (2) Attention card if it caused an alert in 24 h, linking to that
+alert. (3)
 14-day sparkline and "See all alerts from this device". (4) About: maker,
 model, system (`os`), announced name, service labels as plain tags. (5)
 Connection: address, network, hardware address (copyable), private-address
@@ -159,7 +191,8 @@ the DeKoi reports ("Checking traffic against 48,213 known attack patterns",
 and while offline; the software version and when it last updated; the
 reported names collapsed under Technical details. Software from before
 ADR 0013 lists only its decoys and says more detail follows the next
-automatic update; no row is made up. 7-day uptime strip, one segment per
+automatic update; no row is made up. "See all features" opens Features.
+7-day uptime strip, one segment per
 hour from `device_online` and `device_offline` events. Decoy grid, one tile
 per `Device.services` entry (plain name, "Touched 3 times this week",
 sparkline; opens Alerts for that service). "Try your decoy" while online
@@ -170,19 +203,67 @@ alert. Details (name with inline rename, address, linked since); Remove
 with confirmation. No CPU, temperature, disk or bandwidth: the heartbeat
 does not report them.
 
+**Features.** Everything DeKoi does, for the owner and for demos; from
+Home's checks tile, "See all features" on Your DeKoi, and Settings, About.
+It speaks for the DeKoi it was opened for, else the one Home speaks for.
+The answer first ("All 12 features are on", "9 of 12 features are on", why
+none run while the DeKoi is offline or setting up, "Add a DeKoi to turn
+these on" without one), then "Show me around". One HUD-framed card per
+`Feature` (`Features.kt`), in this order: decoy file server, intrusion
+detection, scan detection, ARP Guard, Router Guard, name trap, Wi-Fi
+Guard, network map, new device alerts, internet check, open to the
+internet, weekly summary. A card holds a 56 dp Canvas drawing of the
+feature at work, its name, a one-line promise, the status, "Last found 2
+hours ago" with the newest related event's action (opens that alert), and
+links: "Learn more" (`learnTopicFor` of its first event kind) and its own
+place (Settings for the Wi-Fi name and the weekly summary, the map,
+Insights). The decoy card names the decoy as Windows shows it
+("FAMILY-NAS", from `device/canary/persona/persona.json` at build time)
+and, while the DeKoi is online, "Try it" with its addresses.
+- Status in glyph, colour and word, from data only (`featureState`):
+  monitors from the heartbeat (ADR 0013), the more concerning of two for
+  scan detection and Router Guard; Wi-Fi Guard's reported state, after
+  "Needs your Wi-Fi name" (a link to Settings) while the owner has given
+  none; `public_ip`, which every hourly report sets (ADR 0015); the
+  owner's weekly summary setting. On; "On, learning what is normal" (new
+  devices in the first day of the inventory, Wi-Fi Guard learning);
+  Starting; Needs your Wi-Fi name; "After the next automatic update" for
+  software that does not report the feature, unless the DeKoi started or
+  updated within 2 hours (Starting); Paused while offline; Turned off; Not
+  working right now; Status not known. Software from before ADR 0013 counts
+  its decoys and its device list as on, nothing else. Under the word, while
+  it holds, what the DeKoi reports: rule count and ruleset date, decoys,
+  devices, new this week, the DNS check, when the router's port list was
+  read, what Wi-Fi Guard is doing.
+- Motion: only the drawing of the card nearest the middle of the screen
+  loops, slowly; every drawing has a still frame that tells the story on
+  its own, shown for the rest and without animations.
+- Tour: "Show me around" scrolls each card in turn to the top, lights its
+  frame and dims the others, with a caption on navy over the bottom of the
+  screen (number, name, one or two sentences, polite live region), Skip and
+  Next. It moves on after 5 s, or the longer time the accessibility
+  settings ask for, with a blue line along the caption's top edge showing
+  when; without animations or with TalkBack it waits for Next and cards
+  jump instead of scrolling. Back ends it.
+
 **Settings.** Inset grouped list: Account (email, Sign out); Your DeKoi
-devices; Add DeKoi; Notifications (channel state, opens system channel
-settings); Privacy; About (version, open-source licences); Delete account
-last, in red, with confirmation.
+devices; Add DeKoi; Wi-Fi Guard (each DeKoi's home Wi-Fi name and what
+Wi-Fi Guard is doing, ADR 0019); Notifications (channel state, opens system
+channel settings); the weekly summary; Privacy; About (version, Features,
+Learn, the tour, open-source licences); Delete account last, in red, with
+confirmation.
 
 **Sign-in and onboarding.** Brand hero with a slowly floating koi mark (6 s,
 static without animations), tagline, "Continue with Google", inline errors.
-Add DeKoi: three-step card (prepare the card, scan, plug in); "Scan the code"
-primary, "Type the code" secondary with a 26-character input in groups of
-four. After a claim, a vertical timeline (linked, first start, online,
-watching) ticks off as data arrives, polling every 15 s while visible; help
-after 20 min; on success the ring completes, then the notification
-permission request.
+The tour (four pages over the horizon) opens once per tour version after
+sign-in, so a changed tour reaches existing owners once; its last page
+offers "Add a DeKoi" without one, "Done" otherwise; Settings keeps "Take the
+tour". Add DeKoi: three-step card (prepare the card, scan, plug in); "Scan
+the code" primary, "Type the code" secondary with a 26-character input in
+groups of four. After a claim, a vertical timeline (linked, first start,
+online, watching; `SetupTimeline`, the same as on Your DeKoi) ticks off as
+data arrives, polling every 15 s while visible; help after 20 min; on
+success the ring completes, then the notification permission request.
 
 **States.** Loading: skeletons shaped like the content (no shimmer without
 animations). Empty: glyph, one sentence, next step. Error: inline banner
@@ -344,8 +425,10 @@ spoofing it would hand the router password to the attacker.
 
 ## Notifications
 
-FCM notification messages, as today (ADR 0011). `notify` picks the channel
-by severity and names the source device's kind from fixed templates:
+FCM notification messages, as today (ADR 0011), in the phone's language:
+Bokmål for a Norwegian phone, else English (ADR 0025). `notify` picks the
+channel by severity and names the source device's kind from fixed
+templates:
 
 | Channel | Name | Importance | Carries |
 | ------- | ---- | ---------- | ------- |
@@ -358,6 +441,13 @@ Severity colour as the notification colour, a monochrome DeKoi small icon,
 network", tag per source so repeats replace each other. No action buttons:
 trusting or blocking needs the full context. Opening the alert in the app
 cancels its notification.
+
+The severity colour is the one exception to defining a colour once
+(`DesignTokens.kt`): `notify.ts` sends a copy as
+`android.notification.color`. While the app is in the background, the
+phone draws the notification from FCM's payload alone and no app code runs.
+`PushService` colours the notifications that arrive while the app is open
+from `DesignTokens`; `PushTest` fails when the copy differs.
 
 ## Motion
 

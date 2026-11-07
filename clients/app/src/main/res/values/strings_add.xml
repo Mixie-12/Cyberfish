@@ -29,7 +29,5 @@
     <string name="add_help_cable">The network cable runs from your DeKoi to your router.</string>
     <string name="add_help_wifi">If you chose Wi-Fi, its name and password are right.</string>
     <string name="add_help_again">If it still does not appear, prepare the card again.</string>
-    <string name="add_step_done">Done</string>
-    <string name="add_step_pending">Not yet</string>
     <string name="add_done">Done</string>
 </resources>

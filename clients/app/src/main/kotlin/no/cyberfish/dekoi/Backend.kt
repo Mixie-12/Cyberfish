@@ -7,6 +7,7 @@ import io.github.jan.supabase.auth.providers.Google
 import io.github.jan.supabase.auth.providers.builtin.IDToken
 import io.github.jan.supabase.auth.status.SessionStatus
 import io.github.jan.supabase.createSupabaseClient
+import io.github.jan.supabase.exceptions.RestException
 import io.github.jan.supabase.postgrest.Postgrest
 import io.github.jan.supabase.postgrest.from
 import io.github.jan.supabase.postgrest.postgrest
@@ -18,8 +19,10 @@ import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
 import kotlinx.serialization.json.putJsonArray
 import no.cyberfish.dekoi.shared.ClaimCode
+import java.net.HttpURLConnection
 import java.time.Duration
 import java.time.Instant
+import java.util.Locale
 
 /**
  * Everything the app asks of the backend (docs/architecture.md, "App API").
@@ -99,8 +102,24 @@ class Backend(
         }
     }
 
+    /**
+     * Registers this phone for pushes in its language. A backend that
+     * answers 404 predates register_push_token_v2 (PostgREST's "function
+     * not found"); v1 then registers the phone, in English.
+     */
     suspend fun registerPushToken(token: String) {
-        client.postgrest.rpc("register_push_token_v1", buildJsonObject { put("token", token) })
+        try {
+            client.postgrest.rpc(
+                "register_push_token_v2",
+                buildJsonObject {
+                    put("token", token)
+                    put("language", pushLanguage(Locale.getDefault()))
+                },
+            )
+        } catch (error: RestException) {
+            if (error.statusCode != HttpURLConnection.HTTP_NOT_FOUND) throw error
+            client.postgrest.rpc("register_push_token_v1", buildJsonObject { put("token", token) })
+        }
     }
 
     suspend fun unregisterPushToken(token: String) {

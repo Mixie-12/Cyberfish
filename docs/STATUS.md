@@ -115,6 +115,12 @@ records why.
   expiry issues; nightly encrypted backups; repository settings as code.
 - First-run tour, Learn topics for every event kind, home-screen widget,
   motion and haptics (`docs/design.md`, "Motion").
+- Pushes in the phone's language, English or Bokmål, through
+  `register_push_token_v2` and `notification_targets_v3` (ADR 0025); the
+  severity colour on every notification; "Mark all as read" on Alerts.
+- Features screen with live status from the DeKoi's reports and a feature
+  tour; the Wi-Fi watch is called Wi-Fi Guard in the app (`docs/design.md`,
+  "Features").
 
 Verified by CI on `main` (`9dc0efd`, `b69caca`): pgTAP 19 files, 417 tests,
 advisors clean; `notify` 18 tests; agent 212 tests, ruff clean; app 158,
@@ -124,10 +130,25 @@ signature policy tests; the end-to-end test with the production units
 `device_hosts_v2`, `device_wifi_v1`, no typed password in the backend).
 Locally: HTTP 429 and the notify gate; backup dump and restore.
 
+v0.2.0 app (2026-11-07): the released APK crashes at every start
+(WorkManager 2.7.1 from Glance under R8 full mode; debug builds are not
+shrunk, so CI stayed green). Fixed by "app: run WorkManager 2.12 so
+release builds start"; the widget showed only its header, fixed by "app:
+keep the widget header to its own height". Both verified on the API 37
+emulator with a release build signed by the debug key; a fixed release
+is not cut yet. CI does not start a release build, so a crash like this
+passes it. Google sign-in with debug builds works only on the machine
+whose debug key is in `infra/google/main.tf` (`6def...`).
+
 Needs hardware, not verified: the card writer with a real USB card reader;
 the decoy in Windows Explorer and Finder on the owner's LAN; the Wi-Fi
 watch against a real evil twin; the Pi running the new images after its
 nightly update (after v0.2.0); the ARP sweep from a wired PC.
+The card writer needs a phone: on macOS the emulator (37.2.13) cannot take
+a USB card reader from the system driver. `-qemu -device usb-host,...`
+fails with "Service authorization failed", because the emulator lacks the
+`com.apple.vm.device-access` entitlement; `-usb-passthrough` is accepted
+but does nothing (tested 2026-11-07, Genesys 05e3:0749).
 
 ## Owner actions, in order
 
@@ -197,7 +218,8 @@ nightly update (after v0.2.0); the ARP sweep from a wired PC.
   are specified but not built; only the weekly advisors run.
 - Free Supabase plan: nightly dumps, no point-in-time recovery; sessions
   never expire; the project may pause after a week of low activity.
-- Push titles are in English; `notify` does not know the phone's language.
+- A phone's push language changes when the app next opens signed in;
+  Nynorsk phones get Bokmål pushes (ADR 0025).
 - libaums builds its native helpers for 4 KB pages, so 16 KB-page phones
   run the app in compatibility mode; without it, the card writer can crash
   mid-write (ADR 0014).

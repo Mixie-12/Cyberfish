@@ -4,33 +4,25 @@ import androidx.annotation.StringRes
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.LinearOutSlowInEasing
 import androidx.compose.animation.core.animateFloat
-import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.snap
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -43,20 +35,13 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Path
-import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
-import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
@@ -68,10 +53,8 @@ import no.cyberfish.dekoi.DecoyEntrance
 import no.cyberfish.dekoi.DekoiStatus
 import no.cyberfish.dekoi.Device
 import no.cyberfish.dekoi.R
-import no.cyberfish.dekoi.SetupStep
 import no.cyberfish.dekoi.cleanName
 import no.cyberfish.dekoi.decoyEntrances
-import no.cyberfish.dekoi.hasDone
 import no.cyberfish.dekoi.nameToSave
 import no.cyberfish.dekoi.needsSetupHelp
 import no.cyberfish.dekoi.status
@@ -92,11 +75,6 @@ private const val PULSE_MS = 2000
 private const val PULSE_ALPHA = 0.3f
 private val STATUS_DOT = 8.dp
 private val PULSE_REACH = 6.dp
-private val STEP_MARK = 24.dp
-private val STEP_TICK = 16.dp
-private val STEP_DOT = 8.dp
-private val STEP_BORDER = 2.dp
-private val STEP_LINE = 2.dp
 private val HERO_MARK = 48.dp
 
 /** Online, offline or setting up, in words. */
@@ -176,6 +154,15 @@ fun DekoiScreen(
         } else {
             val number = ++section
             item(key = "watching") { Watching(number, device, status, now, Modifier.itemMotion(this, still)) }
+        }
+        item(key = "features") {
+            InsetSection(Modifier.itemMotion(this, still)) {
+                InsetRow(
+                    stringResource(R.string.features_see_all),
+                    titleColor = MaterialTheme.colorScheme.primary,
+                    onClick = { onNavigate(Route.Features(device.id)) },
+                )
+            }
         }
         val uptime = ++section
         item(key = "uptime") { UptimeCard(uptime, device, data.events, now, Modifier.itemMotion(this, still)) }
@@ -257,81 +244,9 @@ private fun SetupChecklist(
     now: Instant,
     modifier: Modifier = Modifier,
 ) {
-    val current = SetupStep.entries.firstOrNull { !device.hasDone(it) }
     Section(number, stringResource(R.string.dekoi_setup), modifier) {
-        Column {
-            SetupStep.entries.forEach { step ->
-                SetupStepRow(step, device.hasDone(step), current = step == current, last = step == SetupStep.entries.last())
-            }
-        }
+        SetupTimeline(device)
         if (device.needsSetupHelp(now)) SetupHelp()
-    }
-}
-
-/** One step of the checklist: its mark, a line down to the next step, and its name. */
-@Composable
-private fun SetupStepRow(
-    step: SetupStep,
-    done: Boolean,
-    current: Boolean,
-    last: Boolean,
-) {
-    val state =
-        stringResource(
-            when {
-                done -> R.string.dekoi_step_done
-                current -> R.string.dekoi_step_current
-                else -> R.string.dekoi_step_pending
-            },
-        )
-    val line = if (done) LocalSeverityColors.current.safe.color else MaterialTheme.colorScheme.outlineVariant
-    Row(
-        Modifier.height(IntrinsicSize.Min).semantics(mergeDescendants = true) { stateDescription = state },
-        horizontalArrangement = Arrangement.spacedBy(Dimens.spaceM),
-    ) {
-        Column(Modifier.fillMaxHeight(), horizontalAlignment = Alignment.CenterHorizontally) {
-            StepMark(done, current)
-            if (!last) Box(Modifier.width(STEP_LINE).weight(1f).background(line))
-        }
-        Text(
-            stringResource(step.label),
-            style = MaterialTheme.typography.bodyLarge,
-            color = if (done || current) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.padding(bottom = if (last) 0.dp else Dimens.section),
-        )
-    }
-}
-
-/** A hollow circle; the current step has a dot in it, and a finished one turns green with a tick that grows in as it happens. */
-@Composable
-private fun StepMark(
-    done: Boolean,
-    current: Boolean,
-) {
-    val safe = LocalSeverityColors.current.safe.color
-    val tint = MaterialTheme.colorScheme.primary
-    val tick by animateFloatAsState(if (done) 1f else 0f, if (LocalReduceMotion.current) snap() else expandSpring(), label = "tick")
-    Box(Modifier.size(STEP_MARK), contentAlignment = Alignment.Center) {
-        val ring =
-            if (done) {
-                safe
-            } else if (current) {
-                tint
-            } else {
-                MaterialTheme.colorScheme.outlineVariant
-            }
-        Box(Modifier.matchParentSize().border(STEP_BORDER, ring, CircleShape))
-        if (current) Box(Modifier.size(STEP_DOT).background(tint, CircleShape))
-        Icon(
-            painterResource(R.drawable.ic_check),
-            contentDescription = null,
-            Modifier.size(STEP_TICK).graphicsLayer {
-                scaleX = tick
-                scaleY = tick
-                alpha = tick
-            },
-            tint = safe,
-        )
     }
 }
 
@@ -358,8 +273,9 @@ private fun TryDecoy(
     }
 }
 
+/** One way into the decoy: what it is, where to type it, and the address, selectable. */
 @Composable
-private fun EntranceRow(
+fun EntranceRow(
     entrance: DecoyEntrance,
     address: String,
 ) {
