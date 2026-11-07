@@ -38,7 +38,7 @@ The data flow and every contract are in `docs/architecture.md`.
 | 6  | Code execution inside the canary                                 | own user namespace, no capabilities, read-only root, no secrets, write-only log volume | tested (lockdown starts under real Podman): `device/e2e/run.py`; config review: `dekoi-canary.container` |
 | 7  | Unsigned or foreign image pushed to the registry                 | Podman `policy.json`: only cosign-signed images from `ghcr.io/mixie-12` | tested: `signatures` job in `.github/workflows/device.yml` |
 | 8  | Attacker-controlled strings in notifications                     | fixed templates by event kind; payload carries the event id only | tested with Phase 5 (`notify` function tests) |
-| 9  | Anything beyond the intended surface on the project URL          | public schema only, GraphQL dropped, no buckets, no publications | pending: surface checks in `docs/runbooks/deploy-backend.md` after bootstrap |
+| 9  | Anything beyond the intended surface on the project URL          | public schema only, GraphQL dropped, no buckets, no publications | verified 2026-11-07 against production: anonymous reads 401, private schema and GraphQL not exposed, no buckets, notify refuses requests without the secret |
 | 10 | Secrets in git history                                           | secrets only in GitHub secrets and 1Password                | tested: `gitleaks` on every push |
 
 Further: typed passwords never leave the device (tested: agent `test_sources`,

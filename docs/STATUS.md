@@ -79,24 +79,20 @@ needs elevation, and reports only an exit code on Windows.
 
 ## Owner actions open
 
-1. Replace the Supabase token `github-ci-dekoi` with one that also has
-   "Add-ons: Read" (`docs/runbooks/deploy-backend.md`, step 4), and store it with
-   `gh secret set SUPABASE_ACCESS_TOKEN --repo Mixie-12/Cyberfish`. The first
-   deploy already applied all migrations and the notify function; only the
-   configuration push (Google sign-in, exposed schemas) waits for this.
-2. Google sign-in clients in the console (`docs/runbooks/google-firebase.md`,
-   "Sign-in clients"): consent screen, publish, one web and two Android
-   clients, then `GOOGLE_WEB_CLIENT_ID` and `GOOGLE_WEB_CLIENT_SECRET`.
-3. Make the GHCR packages `dekoi-canary`, `dekoi-agent` and `dekoi-ids` public
-   (github.com/Mixie-12?tab=packages, each package, Package settings, Change
-   visibility, Public). All three are published and signed.
-4. Phase 7 session: a Raspberry Pi 4 or 5, a memory card, a card reader, a
+1. Phase 7 session: a Raspberry Pi 4 or 5, a memory card, a card reader, a
    network cable, an Android phone; about one hour.
 
-Done 2026-11-07: Supabase project `rmllpietnopviodbdkky` deployed by CI;
-Google Cloud project `dekoi-cyberfish` with Firebase, the Android app and the
-FCM sender created with OpenTofu (ADR 0009); Firebase variables and
-`FCM_SERVICE_ACCOUNT` set in GitHub; images published to GHCR as `:edge`.
+Done 2026-11-07:
+- Supabase project `rmllpietnopviodbdkky` deployed entirely by CI (migrations,
+  notify function and secrets, configuration with Google sign-in). Surface
+  checks from outside pass: anonymous reads 401, malformed device input 400,
+  only the `public` schema exposed, GraphQL and storage closed, notify refuses
+  requests without its secret.
+- Google Cloud project `dekoi-cyberfish` with Firebase, the Android app and the
+  FCM sender, created with OpenTofu (ADR 0009); sign-in clients created in the
+  console; all values in GitHub.
+- Images `dekoi-canary`, `dekoi-agent`, `dekoi-ids` published, signed and
+  public on GHCR.
 
 ## Known limitations (MVP)
 
