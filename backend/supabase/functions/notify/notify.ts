@@ -45,11 +45,27 @@ export interface Summary {
 }
 
 // Channel ids must match the channels the app creates (Push.kt); each one
-// carries one severity (ADR 0011).
-const CHANNELS: Record<string, { channel: string; priority: string; prefix: string }> = {
-  critical: { channel: "alerts_urgent", priority: "PRIORITY_HIGH", prefix: "Act now. " },
-  warning: { channel: "alerts", priority: "PRIORITY_DEFAULT", prefix: "Check soon. " },
-  info: { channel: "updates", priority: "PRIORITY_LOW", prefix: "" },
+// carries one severity (ADR 0011). The colours are copies of the severity
+// colours in clients/shared DesignTokens.kt: while the app is in the
+// background, the phone draws the notification from this payload alone
+// (docs/design.md, "Notifications"). PushTest checks that they match.
+const CHANNELS: Record<
+  string,
+  { channel: string; priority: string; color: string; prefix: string }
+> = {
+  critical: {
+    channel: "alerts_urgent",
+    priority: "PRIORITY_HIGH",
+    color: "#ff6b66",
+    prefix: "Act now. ",
+  },
+  warning: {
+    channel: "alerts",
+    priority: "PRIORITY_DEFAULT",
+    color: "#ffb547",
+    prefix: "Check soon. ",
+  },
+  info: { channel: "updates", priority: "PRIORITY_LOW", color: "#a9b8d4", prefix: "" },
 };
 
 const FCM_SCOPE = "https://www.googleapis.com/auth/firebase.messaging";
@@ -163,6 +179,7 @@ function message(
         notification: {
           channel_id: level.channel,
           notification_priority: level.priority,
+          color: level.color,
           visibility: "PRIVATE",
           tag,
         },

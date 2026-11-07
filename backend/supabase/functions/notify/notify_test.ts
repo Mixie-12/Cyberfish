@@ -167,6 +167,15 @@ Deno.test("severity picks the channel; anything unexpected is an ordinary alert"
   equal(channel("constructor"), "alerts");
 });
 
+Deno.test("severity picks the colour the app uses for it; anything unexpected is a warning", () => {
+  const color = (severity: string) =>
+    fcmMessage(1, target("t", "port_scan", severity)).message.android.notification.color;
+  equal(color("critical"), "#ff6b66");
+  equal(color("warning"), "#ffb547");
+  equal(color("info"), "#a9b8d4");
+  equal(color("__proto__"), "#ffb547");
+});
+
 Deno.test("a wrong or missing secret is refused before anything else happens", async () => {
   const { calls, fetchFn } = fakeFetch([target("phone", "login_attempt")]);
   const handle = await handler(fetchFn);
@@ -282,6 +291,7 @@ Deno.test("the weekly summary goes to the owner's phones on the updates channel"
         notification: {
           channel_id: "updates",
           notification_priority: "PRIORITY_LOW",
+          color: "#a9b8d4",
           visibility: "PRIVATE",
           tag: "weekly-summary",
         },
@@ -335,6 +345,7 @@ Deno.test("only the event id and the fixed template reach the message", async ()
         notification: {
           channel_id: "alerts_urgent",
           notification_priority: "PRIORITY_HIGH",
+          color: "#ff6b66",
           visibility: "PRIVATE",
           tag: "event-42",
         },

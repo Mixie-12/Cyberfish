@@ -391,6 +391,13 @@ network", tag per source so repeats replace each other. No action buttons:
 trusting or blocking needs the full context. Opening the alert in the app
 cancels its notification.
 
+The severity colour is the one exception to defining a colour once
+(`DesignTokens.kt`): `notify.ts` sends a copy as
+`android.notification.color`. While the app is in the background, the
+phone draws the notification from FCM's payload alone and no app code runs.
+`PushService` colours the notifications that arrive while the app is open
+from `DesignTokens`; `PushTest` fails when the copy differs.
+
 ## Motion
 
 Code: `clients/app/.../ui/motion`. Push and pop use shared axis X with
