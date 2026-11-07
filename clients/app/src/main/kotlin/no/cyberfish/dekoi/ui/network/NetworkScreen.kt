@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -50,22 +49,25 @@ import no.cyberfish.dekoi.ui.Route
 import no.cyberfish.dekoi.ui.components.EmptyState
 import no.cyberfish.dekoi.ui.components.InsetRow
 import no.cyberfish.dekoi.ui.components.InsetSection
-import no.cyberfish.dekoi.ui.components.KindTile
 import no.cyberfish.dekoi.ui.components.Screen
 import no.cyberfish.dekoi.ui.components.SegmentedControl
 import no.cyberfish.dekoi.ui.components.SeverityChip
 import no.cyberfish.dekoi.ui.components.Skeleton
 import no.cyberfish.dekoi.ui.components.StaleLabel
-import no.cyberfish.dekoi.ui.relativeTime
 import java.time.Instant
 
 private const val PREFERENCES = "network"
 private const val VIEW = "view"
 private val SKELETON = 240.dp
-private val DOT_SHIFT = 3.dp
 
 /** How the Network tab shows the devices, in the order of the switch. */
-private enum class NetworkView { MAP, LIST }
+private enum class NetworkView(
+    @param:StringRes val label: Int,
+) {
+    MAP(R.string.network_view_map),
+    ROOMS(R.string.network_view_rooms),
+    LIST(R.string.network_view_list),
+}
 
 @Composable
 fun NetworkScreen(
@@ -94,7 +96,8 @@ fun NetworkScreen(
             { resources.getString(kindName(it)) },
         )
     val summary = summary(entries)
-    val open = { entry: HostEntry -> onNavigate(Route.HostDetail(entry.host.deviceId, entry.host.mac)) }
+    val labels = NetworkView.entries.map { stringResource(it.label) }
+    val open = { entry: HostEntry -> onNavigate(entry.host.detail) }
     Screen(stringResource(R.string.tab_network), listState = listState, subtitle = { StaleLabel(data.updatedAt, now) }) {
         if (!data.loaded) {
             item { Skeleton(Modifier.fillMaxWidth().height(SKELETON), MaterialTheme.shapes.large) }
@@ -108,16 +111,14 @@ fun NetworkScreen(
             item { EmptyState(R.drawable.ic_lan, stringResource(R.string.network_empty)) }
             return@Screen
         }
-        item {
-            SegmentedControl(
-                listOf(stringResource(R.string.network_view_map), stringResource(R.string.network_view_list)),
-                view.ordinal,
-                { choose(NetworkView.entries[it]) },
-            )
-        }
+        item { SegmentedControl(labels, view.ordinal, { choose(NetworkView.entries[it]) }) }
         when (view) {
             NetworkView.MAP -> {
                 item { NetworkMap(entries, data.devices, data.networks, now, summary, onNavigate) { choose(NetworkView.LIST) } }
+            }
+
+            NetworkView.ROOMS -> {
+                item { RoomsView(entries, now, open) { onNavigate(Route.PlaceDevices) } }
             }
 
             NetworkView.LIST -> {
@@ -160,7 +161,10 @@ private fun summary(entries: List<HostEntry>): String {
     ).joinToString(" · ")
 }
 
-/** The Networks screen, and the Insights of each DeKoi (ADR 0015). */
+/**
+ * The Networks screen, the Insights of each DeKoi (ADR 0015), and Add DeKoi,
+ * where an owner looking at devices finds it; all show before any device does.
+ */
 @Composable
 private fun Links(
     networks: Int,
@@ -191,6 +195,12 @@ private fun Links(
                 onClick = { onNavigate(Route.Insights(device.id)) },
             )
         }
+        InsetRow(
+            stringResource(R.string.action_add_dekoi),
+            titleColor = MaterialTheme.colorScheme.primary,
+            leading = { Icon(painterResource(R.drawable.ic_add), contentDescription = null, tint = MaterialTheme.colorScheme.primary) },
+            onClick = { onNavigate(Route.AddDekoi) },
+        )
     }
 }
 
@@ -303,22 +313,12 @@ private fun HostRow(
     onClick: () -> Unit,
 ) {
     val host = entry.host
-    val status =
-        if (entry.online) {
-            stringResource(R.string.host_online_now)
-        } else {
-            stringResource(R.string.host_last_seen_ago, relativeTime(host.lastSeenAt, now))
-        }
+    val status = seenText(entry.online, host.lastSeenAt, now)
     InsetRow(
         entry.name,
         modifier = Modifier.semantics { stateDescription = status },
         subtitle = listOfNotNull(stringResource(looksLike(host.kind)), host.vendor, host.ip).joinToString(" · "),
-        leading = {
-            Box {
-                KindTile(host.kind)
-                StatusDot(entry.online, Modifier.align(Alignment.BottomEnd).offset(DOT_SHIFT, DOT_SHIFT))
-            }
-        },
+        leading = { HostTile(host, entry.online, attention = null) },
         trailing = {
             when {
                 entry.attention != null -> SeverityChip(entry.attention)

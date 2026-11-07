@@ -28,6 +28,10 @@ import no.cyberfish.dekoi.R
 /** Above this font scale tiles stack in one column, so their text keeps its size (docs/design.md, "Home"). */
 private const val ONE_COLUMN_FONT_SCALE = 1.5f
 
+/** Two tiles to a row, one at large font sizes. */
+@Composable
+fun tileColumns(): Int = if (LocalDensity.current.fontScale > ONE_COLUMN_FONT_SCALE) 1 else 2
+
 /**
  * Tiles two to a row, one to a row at large font sizes. Tiles in a row
  * take the height of the tallest, so their edges line up. Each tile is
@@ -38,7 +42,7 @@ fun TileGrid(
     tiles: List<@Composable (Modifier) -> Unit>,
     modifier: Modifier = Modifier,
 ) {
-    val columns = if (LocalDensity.current.fontScale > ONE_COLUMN_FONT_SCALE) 1 else 2
+    val columns = tileColumns()
     Column(modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(Dimens.spaceM)) {
         tiles.chunked(columns).forEach { row ->
             Row(Modifier.fillMaxWidth().height(IntrinsicSize.Min), horizontalArrangement = Arrangement.spacedBy(Dimens.spaceM)) {

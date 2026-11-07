@@ -28,7 +28,5 @@
     <string name="add_help_cable">Nettverkskabelen går fra din DeKoi til ruteren din.</string>
     <string name="add_help_wifi">Hvis du valgte Wi-Fi, er navnet og passordet riktige.</string>
     <string name="add_help_again">Hvis den fortsatt ikke dukker opp, gjør klar minnekortet på nytt.</string>
-    <string name="add_step_done">Ferdig</string>
-    <string name="add_step_pending">Ikke ennå</string>
     <string name="add_done">Ferdig</string>
 </resources>
