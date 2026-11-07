@@ -9,17 +9,24 @@ on:
   pull_request:
     paths: [clients/**, device/image.json, device/cloud-init/**, device/host/**, .github/workflows/clients.yml]
 
-permissions:
-  contents: read
+permissions: {}
+
+concurrency:
+  group: clients-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   build:
     runs-on: ubuntu-24.04
+    permissions:
+      contents: read
     defaults:
       run:
         working-directory: clients
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
       - uses: actions/setup-java@77dd5b2ce225ea11469928ac317850245a74ae78 # v6.2.0
         with:
           distribution: temurin
@@ -53,6 +60,8 @@ jobs:
         shell: bash
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
       - uses: actions/setup-java@77dd5b2ce225ea11469928ac317850245a74ae78 # v6.2.0
         with:
           distribution: temurin
@@ -62,7 +71,7 @@ jobs:
         run: ./gradlew --no-daemon :burner:packageMsi -Pdekoi.version="${GITHUB_REF_NAME#v}"
       - name: Attach to the release
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ github.token }}
         run: |
           msi="dekoi-setup-$GITHUB_REF_NAME.msi"
           cp burner/build/compose/binaries/main/msi/*.msi "$msi"

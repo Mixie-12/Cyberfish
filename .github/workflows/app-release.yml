@@ -2,19 +2,26 @@ name: app release
 
 # On a v* tag: build the release APK with the production settings, sign it
 # with the DeKoi release key, check the signer against the pinned
-# certificate, and attach it with its checksum to the GitHub Release.
+# certificate, and attach it with its checksum to the GitHub Release. The key
+# is a secret of the release environment, which waits for the owner.
 
 on:
   push:
     tags: ["v*"]
 
-permissions:
-  contents: write
+permissions: {}
+
+concurrency:
+  group: app-release-${{ github.ref }}
+  cancel-in-progress: false
 
 jobs:
   apk:
     if: vars.SUPABASE_PROJECT_REF != '' && vars.GOOGLE_WEB_CLIENT_ID != ''
     runs-on: ubuntu-24.04
+    environment: release
+    permissions:
+      contents: write
     defaults:
       run:
         working-directory: clients
@@ -23,6 +30,8 @@ jobs:
       RELEASE_CERT_SHA256: 7f5759c5015bfc7a347a72353554079196e621585a9fee69447586a7e8436741
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
       - uses: actions/setup-java@77dd5b2ce225ea11469928ac317850245a74ae78 # v6.2.0
         with:
           distribution: temurin
@@ -53,7 +62,7 @@ jobs:
           KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
           KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
         run: |
-          tools="$ANDROID_HOME/build-tools/$(ls "$ANDROID_HOME/build-tools" | sort -V | tail -1)"
+          tools="$(find "$ANDROID_HOME/build-tools" -mindepth 1 -maxdepth 1 | sort -V | tail -1)"
           keystore="$RUNNER_TEMP/release.p12"
           apk="dekoi-$GITHUB_REF_NAME.apk"
           echo "$KEYSTORE_BASE64" | base64 -d > "$keystore"
@@ -65,7 +74,7 @@ jobs:
           sha256sum "$apk" > "$apk.sha256"
       - name: Attach to the release
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ github.token }}
         run: |
           gh release view "$GITHUB_REF_NAME" > /dev/null 2>&1 || gh release create "$GITHUB_REF_NAME" --verify-tag --title "DeKoi $GITHUB_REF_NAME" --notes ""
           gh release upload "$GITHUB_REF_NAME" --clobber "dekoi-$GITHUB_REF_NAME.apk" "dekoi-$GITHUB_REF_NAME.apk.sha256"

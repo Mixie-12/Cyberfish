@@ -1,0 +1,51 @@
+name: expiry
+
+# Credentials that cannot rotate themselves have their expiry or retirement
+# date in a repository variable named EXPIRES_<secret>, as YYYY-MM-DD. From
+# REMIND_DAYS before that date, this opens one issue per credential that
+# points at docs/runbooks/rotate-keys.md.
+
+on:
+  schedule:
+    - cron: "7 6 * * *"
+  workflow_dispatch:
+
+permissions: {}
+
+# Two runs at once could both find no issue and open two.
+concurrency:
+  group: expiry
+  cancel-in-progress: false
+
+jobs:
+  remind:
+    runs-on: ubuntu-24.04
+    permissions:
+      issues: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      VARS: ${{ toJSON(vars) }}
+      REMIND_DAYS: 30
+    steps:
+      - name: Open an issue for each credential close to its date
+        run: |
+          now="$(date -u +%s)"
+          jq -r 'to_entries[] | select(.key | startswith("EXPIRES_")) | "\(.key) \(.value)"' <<< "$VARS" |
+            while read -r key date; do
+              name="${key#EXPIRES_}"
+              if ! [[ "$date" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}$ ]]; then
+                echo "::error::$key is not a date (YYYY-MM-DD)"
+                exit 1
+              fi
+              days=$(( ($(date -u -d "$date" +%s) - now) / 86400 ))
+              echo "$name: $date, in $days days"
+              if [ "$days" -gt "$REMIND_DAYS" ]; then continue; fi
+              title="Rotate $name before $date"
+              open="$(gh issue list --state open --search "\"$title\" in:title" --json title |
+                jq --arg title "$title" 'map(select(.title == $title)) | length')"
+              if [ "$open" = 0 ]; then
+                gh issue create --title "$title" \
+                  --body "$name expires or retires on $date. Steps: docs/runbooks/rotate-keys.md. Then set the repository variable $key to the new date."
+              fi
+            done

@@ -21,12 +21,16 @@ below. Next: device identification and the app redesign the owner asked for
 
 | Secret                               | Where                                                     |
 | ------------------------------------ | --------------------------------------------------------- |
-| cosign image signing key, password   | GitHub secrets `COSIGN_PRIVATE_KEY`, `COSIGN_PASSWORD`; 1Password vault "Encryption", item "DeKoi cosign image signing key" |
-| cosign public key                    | `device/host/etc/dekoi/cosign.pub` (on every card)        |
-| Android release keystore, password   | GitHub secrets `ANDROID_KEYSTORE_BASE64`, `ANDROID_KEYSTORE_PASSWORD`; 1Password item "DeKoi Android release signing key". Alias `dekoi`. Certificate SHA-256 `7F:57:59:C5:01:5B:FC:7A:34:7A:72:35:35:54:07:91:96:E6:21:58:5A:9F:EE:69:44:75:86:A7:E8:43:67:41` |
-| Notification webhook secret          | GitHub secret `NOTIFY_SECRET` (generated 2026-11-07; written to Vault and the function by the deploy job) |
-| Supabase access token, DB password   | GitHub secrets `SUPABASE_ACCESS_TOKEN`, `SUPABASE_DB_PASSWORD` (docs/runbooks/deploy-backend.md) |
-| Google web client secret, Firebase service account | GitHub secrets `GOOGLE_WEB_CLIENT_SECRET`, `FCM_SERVICE_ACCOUNT` (docs/runbooks/google-firebase.md) |
+| First cosign image signing key, password | GitHub secrets `COSIGN_PRIVATE_KEY`, `COSIGN_PASSWORD` (move to the `release` environment); 1Password vault "Encryption", item "DeKoi cosign image signing key". Retires 2026-12-31 (ADR 0022) |
+| cosign public key                    | `device/host/etc/dekoi/cosign.pub` (on every card so far) |
+| Cloud KMS image signing key          | not created yet: needs a billing account (`infra/google/signing.tf`) |
+| Image signing backup key             | not created yet (`docs/runbooks/rotate-keys.md`)          |
+| Android release keystore, password   | GitHub secrets `ANDROID_KEYSTORE_BASE64`, `ANDROID_KEYSTORE_PASSWORD` (move to the `release` environment); 1Password item "DeKoi Android release signing key". Alias `dekoi`. Certificate SHA-256 `7F:57:59:C5:01:5B:FC:7A:34:7A:72:35:35:54:07:91:96:E6:21:58:5A:9F:EE:69:44:75:86:A7:E8:43:67:41` |
+| Notification webhook secret, FCM key | function secrets and Vault, replaced monthly by `rotate-keys.yml`; the GitHub secrets `NOTIFY_SECRET` and `FCM_SERVICE_ACCOUNT` are to be deleted after the first rotation |
+| Supabase access token                | GitHub secret `SUPABASE_ACCESS_TOKEN` (move to the `production` environment; needs Database read-write and Advisors read, docs/runbooks/deploy-backend.md) |
+| Supabase database password           | 1Password only; GitHub secret `SUPABASE_DB_PASSWORD` is unused and to be deleted |
+| Google web client secret             | GitHub secret `GOOGLE_WEB_CLIENT_SECRET` (move to the `production` environment) |
+| Backup decryption key                | not created yet (`docs/runbooks/restore-backup.md`)       |
 
 ## Phase log
 
@@ -137,6 +141,18 @@ radio off (`docs/security.md`, "Monitoring").
 6. Decide before real customers: Supabase Pro (daily backups, PITR as an
    add-on, no pausing, session time-outs, higher quotas) and a custom
    domain with a firewall in front of the API.
+2. CI keys and signing (ADR 0022), in this order: make the repository
+   public and run `infra/github/apply.sh`; move the secrets into the
+   environments; create the backup age key; replace the Supabase access
+   token; apply `infra/google` and, once notify reads
+   `NOTIFY_SECRET_PREVIOUS`, run `rotate-keys.yml`; decide on Cloud KMS
+   billing; switch new cards to the KMS and backup keys; rewrite the
+   existing card; retire the first key. Exact steps in the runbooks
+   `rotate-keys.md`, `restore-backup.md`, `deploy-backend.md`,
+   `google-firebase.md`.
+3. Update the canary's Python dependencies: OSV-Scanner reports known
+   vulnerabilities in twisted 26.4.0, urllib3 2.7.0 and pyasn1 0.6.4
+   (`device/canary/requirements.txt`).
 
 Done 2026-11-07:
 - Supabase project `rmllpietnopviodbdkky` deployed entirely by CI (migrations,
@@ -156,8 +172,9 @@ Done 2026-11-07:
 - DeKoi sees traffic to itself and broadcast traffic, not traffic between
   other devices (ADR 0003); a mirror-port option is on the roadmap.
 - HTTPS decoy is off until each device has its own certificate.
-- IDS rules are at most a week old. On hardware the nftables and ulogd2 scan
-  path is verified; a live IDS alert, DHCP and name-poisoning probes are not.
+- IDS rules are as old as the last approved image rebuild (weekly). On
+  hardware the nftables and ulogd2 scan path is verified; a live IDS alert,
+  DHCP and name-poisoning probes are not.
 - An ARP sweep from a Wi-Fi client was not detected by a wired DeKoi; many
   access points answer or filter broadcast ARP for Wi-Fi clients. Retest from
   a wired host before relying on sweep detection across Wi-Fi.
@@ -168,6 +185,12 @@ Done 2026-11-07:
 - Free Supabase plan: no downloadable backups (CI job specified, not yet
   built), sessions never expire, and Supabase may pause a project after a
   week of low activity.
+- No edge rate limiting without a Supabase custom domain.
+- Free Supabase plan: backups are nightly CLI dumps (`backup.yml`), not
+  point-in-time recovery.
+- Releases and weekly image rebuilds wait for the owner's approval.
+- The card written before ADR 0022 trusts every repository under
+  `ghcr.io/mixie-12` and only the first cosign key until it is rewritten.
 
 ## Roadmap (out of MVP scope)
 

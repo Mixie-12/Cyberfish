@@ -4,7 +4,9 @@
 # them), and a service account that may only send FCM messages.
 #
 # Apply from this directory with `tofu apply`, then run ./publish.sh to copy
-# the public values into GitHub. No secret ever enters the state.
+# the public values into GitHub. No secret ever enters the state. GitHub
+# Actions reaches Google without keys (github.tf); the image signing key lives
+# in Cloud KMS (signing.tf).
 
 terraform {
   required_version = ">= 1.8"
@@ -76,6 +78,9 @@ resource "google_project_service" "apis" {
     "cloudresourcemanager.googleapis.com",
     "serviceusage.googleapis.com",
     "iam.googleapis.com",
+    # Workload identity federation for GitHub Actions (github.tf).
+    "iamcredentials.googleapis.com",
+    "sts.googleapis.com",
     "firebase.googleapis.com",
     "fcm.googleapis.com",
     "firebaseinstallations.googleapis.com",

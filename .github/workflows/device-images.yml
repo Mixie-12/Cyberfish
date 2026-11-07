@@ -1,29 +1,111 @@
 name: device images
 
 # Devices follow :stable through podman auto-update and accept only images
-# signed with the DeKoi key. Pushes to main publish :edge; v* tags publish
-# :stable; the weekly run rebuilds the latest release on fresh Debian packages.
+# from the three release repositories, signed with a key on their card (ADR
+# 0004, 0022). A v* tag builds, scans and signs a release in the release
+# environment, which waits for the owner's approval and is the only place
+# that can sign. The weekly run asks for a rebuild of the latest release on
+# fresh Debian packages and IDS rules. Pushes to main publish unsigned :edge
+# images to separate repositories that no device trusts.
 
 on:
   push:
     branches: [main]
-    paths: [device/agent/**, device/canary/**, device/ids/**, .github/workflows/device-images.yml]
+    paths:
+      - device/agent/**
+      - device/canary/**
+      - device/ids/**
+      - .github/workflows/device-images.yml
+      - .github/actions/scan-image/**
     tags: ["v*"]
   schedule:
     - cron: "23 4 * * 1"
   workflow_dispatch:
 
-permissions:
-  contents: read
-  packages: write
+permissions: {}
 
 concurrency:
   group: device-images-${{ github.ref }}
   cancel-in-progress: false
 
 jobs:
-  publish:
+  # Signing is bound to a v* tag (infra/google/github.tf), and a scheduled run
+  # is on main, so it starts this workflow on the latest release's tag. A tag
+  # from before ADR 0022 carries a workflow that would publish and sign :edge
+  # in the release repositories when started by hand; it is skipped.
+  weekly:
+    if: github.event_name == 'schedule'
     runs-on: ubuntu-24.04
+    permissions:
+      actions: write
+      contents: read
+    steps:
+      - name: Rebuild the latest release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          tag="$(gh release view --repo "$GITHUB_REPOSITORY" --json tagName --jq .tagName)"
+          if ! gh api "repos/$GITHUB_REPOSITORY/contents/.github/workflows/device-images.yml?ref=$tag" \
+            -H "Accept: application/vnd.github.raw" | grep -q "^    environment: release$"; then
+            echo "::warning::$tag predates the release environment; tag a new release to resume weekly rebuilds"
+            exit 0
+          fi
+          gh workflow run device-images.yml --repo "$GITHUB_REPOSITORY" --ref "$tag"
+
+  edge:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      matrix:
+        image: [canary, agent, ids]
+    env:
+      IMAGE: ghcr.io/mixie-12/dekoi-${{ matrix.image }}-edge
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      # agent_version allows 32 characters (core schema).
+      - name: Version
+        id: version
+        run: echo "version=edge-${GITHUB_SHA::12}" >> "$GITHUB_OUTPUT"
+      - uses: docker/setup-qemu-action@99012661954931238ded8c8b007157a8430204e1 # v4.4.0
+      - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+      - uses: docker/login-action@8aa5831fb8d48d8f76594c7ddde61ae58019f550 # v4.8.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ github.token }}
+      - name: Build and push, unsigned
+        id: build
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: device
+          file: device/${{ matrix.image }}/Containerfile
+          platforms: linux/arm64,linux/amd64
+          push: true
+          provenance: false
+          tags: ${{ env.IMAGE }}:${{ github.sha }},${{ env.IMAGE }}:edge
+          build-args: |
+            DEKOI_API_URL=https://${{ vars.SUPABASE_PROJECT_REF }}.supabase.co
+            DEKOI_API_KEY=${{ vars.SUPABASE_PUBLISHABLE_KEY }}
+            DEKOI_AGENT_VERSION=${{ steps.version.outputs.version }}
+          cache-from: type=gha,scope=${{ matrix.image }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.image }}
+      - uses: ./.github/actions/scan-image
+        with:
+          image: ${{ env.IMAGE }}@${{ steps.build.outputs.digest }}
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-24.04
+    environment: release
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
     strategy:
       matrix:
         image: [canary, agent, ids]
@@ -32,43 +114,21 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          fetch-depth: 0
-      - name: Choose code, channel and version
-        id: release
-        env:
-          PROJECT_REF: ${{ vars.SUPABASE_PROJECT_REF }}
-          IMAGE_NAME: ${{ matrix.image }}
-        run: |
-          if [ "$IMAGE_NAME" = agent ] && [ -z "$PROJECT_REF" ]; then
-            echo "The agent needs SUPABASE_PROJECT_REF; skipping until the backend is bootstrapped."
-            exit 0
-          fi
-          case "$GITHUB_EVENT_NAME/$GITHUB_REF" in
-            push/refs/tags/v*)
-              channel=stable version="${GITHUB_REF_NAME#v}" ;;
-            schedule/*)
-              tag=$(git describe --tags --abbrev=0 --match 'v*' 2>/dev/null) || { echo "No release yet."; exit 0; }
-              git checkout -q "$tag"
-              channel=stable version="${tag#v}" ;;
-            *)
-              channel=edge version="edge-${GITHUB_SHA::12}" ;;
-          esac
-          echo "channel=$channel" >> "$GITHUB_OUTPUT"
-          echo "version=$version" >> "$GITHUB_OUTPUT"
-          echo "revision=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+          persist-credentials: false
+      - name: Version
+        id: version
+        run: echo "version=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
       - uses: docker/setup-qemu-action@99012661954931238ded8c8b007157a8430204e1 # v4.4.0
-        if: steps.release.outputs.channel
       - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
-        if: steps.release.outputs.channel
       - uses: docker/login-action@8aa5831fb8d48d8f76594c7ddde61ae58019f550 # v4.8.0
-        if: steps.release.outputs.channel
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          password: ${{ github.token }}
+      # No build cache: the weekly rebuild exists to fetch fresh packages, and
+      # a release is built from its pinned inputs only.
       - name: Build and push by revision
         id: build
-        if: steps.release.outputs.channel
         uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
         with:
           context: device
@@ -76,28 +136,50 @@ jobs:
           platforms: linux/arm64,linux/amd64
           push: true
           provenance: false
-          tags: ${{ env.IMAGE }}:${{ steps.release.outputs.revision }}
+          no-cache: true
+          tags: ${{ env.IMAGE }}:${{ github.sha }}
           build-args: |
             DEKOI_API_URL=https://${{ vars.SUPABASE_PROJECT_REF }}.supabase.co
             DEKOI_API_KEY=${{ vars.SUPABASE_PUBLISHABLE_KEY }}
-            DEKOI_AGENT_VERSION=${{ steps.release.outputs.version }}
-          cache-from: type=gha,scope=${{ matrix.image }}
-          cache-to: type=gha,mode=max,scope=${{ matrix.image }}
+            DEKOI_AGENT_VERSION=${{ steps.version.outputs.version }}
+      - uses: ./.github/actions/scan-image
+        with:
+          image: ${{ env.IMAGE }}@${{ steps.build.outputs.digest }}
       - uses: sigstore/cosign-installer@756fe2d284c7292c4e9b62c8a28f1e5629c59532 # v4.1.3
-        if: steps.release.outputs.channel
         with:
           cosign-release: v3.1.4
-      - name: Sign, check against the key on the devices, then move the channel tag
-        if: steps.release.outputs.channel
+      # The cards written before the switch to the Cloud KMS key trust only
+      # this key (docs/runbooks/rotate-keys.md, "Image signing keys").
+      - name: Sign with the first key and check it against cosign.pub
         env:
           COSIGN_PRIVATE_KEY: ${{ secrets.COSIGN_PRIVATE_KEY }}
           COSIGN_PASSWORD: ${{ secrets.COSIGN_PASSWORD }}
           DIGEST: ${{ steps.build.outputs.digest }}
-          CHANNEL: ${{ steps.release.outputs.channel }}
         run: |
           cosign sign --yes --recursive --key env://COSIGN_PRIVATE_KEY \
             --use-signing-config=false --new-bundle-format=false --tlog-upload=false \
             "$IMAGE@$DIGEST"
           cosign verify --key device/host/etc/dekoi/cosign.pub --insecure-ignore-tlog=true \
             "$IMAGE@$DIGEST" > /dev/null
-          docker buildx imagetools create --tag "$IMAGE:$CHANNEL" "$IMAGE@$DIGEST"
+      - uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3.0.0
+        if: vars.COSIGN_KMS_KEY != ''
+        with:
+          workload_identity_provider: ${{ vars.GOOGLE_WIF_RELEASE_PROVIDER }}
+          service_account: ${{ vars.GOOGLE_IMAGE_SIGNER }}
+      # Checked against the public key that new cards carry, not the one KMS
+      # reports, so that a wrong key in git fails here and not on a device.
+      - name: Sign with the Cloud KMS key and check it against image-signing.pub
+        if: vars.COSIGN_KMS_KEY != ''
+        env:
+          COSIGN_KMS_KEY: ${{ vars.COSIGN_KMS_KEY }}
+          DIGEST: ${{ steps.build.outputs.digest }}
+        run: |
+          cosign sign --yes --recursive --key "$COSIGN_KMS_KEY" \
+            --use-signing-config=false --new-bundle-format=false --tlog-upload=false \
+            "$IMAGE@$DIGEST"
+          cosign verify --key device/host/etc/dekoi/image-signing.pub --insecure-ignore-tlog=true \
+            "$IMAGE@$DIGEST" > /dev/null
+      - name: Move the channel tag
+        env:
+          DIGEST: ${{ steps.build.outputs.digest }}
+        run: docker buildx imagetools create --tag "$IMAGE:stable" "$IMAGE@$DIGEST"
