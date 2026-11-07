@@ -19,6 +19,17 @@ ARP_COMPLETE = 0x2
 ROUTE_PROBE = ("192.0.2.1", 9)
 _MAC = re.compile(r"^[0-9a-f]{2}(:[0-9a-f]{2}){5}$")
 
+MAX_NETWORKS = 64
+MAX_SEEN_NETWORKS = 32
+# Sources of a network (networks.source), the most direct evidence first.
+NETWORK_SOURCES = ("interface", "router_advertisement", "dhcp_route", "observed")
+PRIVATE_IPV4 = tuple(
+    ipaddress.IPv4Network(network) for network in ("10.0.0.0/8", "172.16.0.0/12", "192.168.0.0/16")
+)
+
+Network = ipaddress.IPv4Network | ipaddress.IPv6Network
+Route = tuple[str, Network, str | None]
+
 
 def _valid_mac(value: str) -> str | None:
     value = value.lower()
@@ -91,6 +102,115 @@ def scan_hosts() -> list[dict]:
         check=True,
     )
     return parse_arp_scan(result.stdout)
+
+
+def routed_networks(
+    route_table: Path = Path("/proc/net/route"),
+    ipv6_route_table: Path = Path("/proc/net/ipv6_route"),
+) -> list[dict]:
+    """Networks in the routing table of the interfaces that carry a default
+    route: their subnets, IPv4 and IPv6, and IPv4 routes through a gateway,
+    which on DeKoi can only come from DHCP (classless static routes)."""
+    routes = _ipv4_routes(route_table.read_text()) + _ipv6_routes(ipv6_route_table.read_text())
+    defaults = {
+        (interface, network.version): gateway
+        for interface, network, gateway in routes
+        if network.prefixlen == 0 and gateway
+    }
+    networks = []
+    for interface, network, gateway in routes:
+        default = defaults.get((interface, network.version))
+        if default is None or not _is_subnet(network):
+            continue
+        if gateway is None:
+            networks.append({"cidr": str(network), "source": "interface", "gateway": default})
+        elif network.version == 4:
+            networks.append({"cidr": str(network), "source": "dhcp_route", "gateway": gateway})
+    return networks
+
+
+def _ipv4_routes(table: str) -> list[Route]:
+    """/proc/net/route prints addresses in host byte order (little-endian)."""
+    routes = []
+    for line in table.splitlines()[1:]:
+        fields = line.split()
+        destination = ipaddress.IPv4Address(bytes.fromhex(fields[1])[::-1])
+        gateway = ipaddress.IPv4Address(bytes.fromhex(fields[2])[::-1])
+        prefix = int(fields[7], 16).bit_count()
+        network = ipaddress.IPv4Network((destination, prefix), strict=False)
+        routes.append((fields[0], network, str(gateway) if int(gateway) else None))
+    return routes
+
+
+def _ipv6_routes(table: str) -> list[Route]:
+    """/proc/net/ipv6_route: destination, prefix length, source, source
+    prefix length, next hop, metric, use and reference counts, flags, device."""
+    routes = []
+    for line in table.splitlines():
+        fields = line.split()
+        destination = ipaddress.IPv6Address(bytes.fromhex(fields[0]))
+        gateway = ipaddress.IPv6Address(bytes.fromhex(fields[4]))
+        network = ipaddress.IPv6Network((destination, int(fields[1], 16)), strict=False)
+        routes.append((fields[9], network, str(gateway) if int(gateway) else None))
+    return routes
+
+
+def _is_subnet(network: Network) -> bool:
+    """A network devices live in: not a default route, a single host, a
+    link-local range or multicast."""
+    return (
+        0 < network.prefixlen < network.max_prefixlen
+        and not network.is_link_local
+        and not network.is_multicast
+    )
+
+
+class SeenNetworks:
+    """Networks known only from what passes by: prefixes in IPv6 router
+    advertisements, and the /24 of every private IPv4 source address. The
+    least recently seen are forgotten first."""
+
+    def __init__(self) -> None:
+        self._seen: dict[str, dict] = {}
+
+    def advertised(self, prefix: str, router: str) -> None:
+        self._add({"cidr": prefix, "source": "router_advertisement", "gateway": router})
+
+    def source_address(self, address: str | None) -> None:
+        text = valid_ip(address)
+        ip = ipaddress.ip_address(text) if text else None
+        if ip is None or ip.version != 4 or not any(ip in private for private in PRIVATE_IPV4):
+            return
+        network = ipaddress.IPv4Network((ip, 24), strict=False)
+        self._add({"cidr": str(network), "source": "observed", "gateway": None})
+
+    def _add(self, network: dict) -> None:
+        self._seen.pop(network["cidr"], None)
+        self._seen[network["cidr"]] = network
+        if len(self._seen) > MAX_SEEN_NETWORKS:
+            del self._seen[next(iter(self._seen))]
+
+    def report(self, routed: list[dict]) -> list[dict]:
+        """Every network once, under its most direct source. An observed /24
+        inside a network known otherwise is that network, not a new one."""
+        candidates = sorted(
+            routed + list(self._seen.values()),
+            key=lambda network: NETWORK_SOURCES.index(network["source"]),
+        )
+        known = [
+            ipaddress.ip_network(network["cidr"])
+            for network in candidates
+            if network["source"] != "observed"
+        ]
+        merged: dict[str, dict] = {}
+        for network in candidates:
+            cidr = ipaddress.ip_network(network["cidr"])
+            if network["source"] == "observed" and any(
+                cidr.version == other.version and cidr.subnet_of(other) for other in known
+            ):
+                continue
+            merged.setdefault(network["cidr"], network)
+        return list(merged.values())[:MAX_NETWORKS]
 
 
 def mac_for(ip: str, arp_table: Path = Path("/proc/net/arp")) -> str | None:
