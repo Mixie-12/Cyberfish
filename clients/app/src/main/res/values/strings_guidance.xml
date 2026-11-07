@@ -10,7 +10,10 @@
     <string name="threat_possible">Possibly an attack</string>
     <string name="threat_unlikely">Probably harmless</string>
     <string name="threat_sign_in">Something tried passwords on your DeKoi. No ordinary device in a home does that.</string>
+    <string name="threat_file">Someone opened one of the bait files on your DeKoi. Ordinary devices never do that by themselves.</string>
     <string name="threat_impersonation">Ordinary devices never pretend to be another device. This is how someone gets between your devices and the internet.</string>
+    <string name="threat_dns">Your network gave wrong addresses for well-known websites. This is how someone sends your devices to fake copies of them.</string>
+    <string name="threat_wifi_copy">A Wi-Fi network nearby uses your network’s name with weaker security. This is how someone lures your devices onto their network.</string>
     <string name="threat_probing">Some apps and network tools do this too. If you don’t recognise the device, treat it as an attack.</string>
     <string name="threat_known">It comes from a device you marked as known, so it is most likely you or one of your own tools.</string>
     <string name="threat_status">This is about your DeKoi itself, not an attack.</string>

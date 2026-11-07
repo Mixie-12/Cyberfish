@@ -86,9 +86,19 @@ class GuidanceTest {
     }
 
     @Test
-    fun `sign-in attempts and impersonation are very likely attacks`() {
-        for (kind in listOf("login_attempt", "arp_spoof", "rogue_dhcp", "name_poisoning")) {
-            assertEquals(ThreatLevel.LIKELY, threat(setOf(kind), knownSource = false).level, kind)
+    fun `sign-in attempts, opened bait files and impersonation are very likely attacks`() {
+        val reasons =
+            mapOf(
+                "login_attempt" to R.string.threat_sign_in,
+                "file_access" to R.string.threat_file,
+                "arp_spoof" to R.string.threat_impersonation,
+                "rogue_dhcp" to R.string.threat_impersonation,
+                "name_poisoning" to R.string.threat_impersonation,
+                "dns_hijack" to R.string.threat_dns,
+                "evil_twin" to R.string.threat_wifi_copy,
+            )
+        for ((kind, reason) in reasons) {
+            assertEquals(Threat(ThreatLevel.LIKELY, reason), threat(setOf(kind), knownSource = false), kind)
         }
         assertEquals(R.string.threat_sign_in, threat(setOf("connection", "login_attempt"), knownSource = false).reason)
     }

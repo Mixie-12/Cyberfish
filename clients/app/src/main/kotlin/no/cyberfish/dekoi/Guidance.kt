@@ -123,9 +123,12 @@ private val IMPERSONATION_KINDS = setOf("arp_spoof", "rogue_dhcp", "name_poisoni
 
 /**
  * How likely an incident with events of these [kinds] is a real attack. A
- * sign-in attempt or an impersonation is one; a scan or a decoy connection
- * may be an app or a network tool; anything from a device the owner marked
- * as known, and DeKoi's own status, is probably harmless.
+ * sign-in attempt, an opened bait file, an impersonation, wrong answers for
+ * websites or a copy of the home Wi-Fi is one (file_access, dns_hijack and
+ * evil_twin: ADRs 0018, 0015, 0019); a scan, a decoy connection or a kind
+ * this app does not know yet may be an app or a network tool; anything
+ * from a device the owner marked as known, and DeKoi's own status, is
+ * probably harmless.
  */
 fun threat(
     kinds: Set<String>,
@@ -134,7 +137,10 @@ fun threat(
     when {
         knownSource -> Threat(ThreatLevel.UNLIKELY, R.string.threat_known)
         "login_attempt" in kinds -> Threat(ThreatLevel.LIKELY, R.string.threat_sign_in)
+        "file_access" in kinds -> Threat(ThreatLevel.LIKELY, R.string.threat_file)
         kinds.any { it in IMPERSONATION_KINDS } -> Threat(ThreatLevel.LIKELY, R.string.threat_impersonation)
+        "dns_hijack" in kinds -> Threat(ThreatLevel.LIKELY, R.string.threat_dns)
+        "evil_twin" in kinds -> Threat(ThreatLevel.LIKELY, R.string.threat_wifi_copy)
         DEKOI_STATUS_KINDS.containsAll(kinds) -> Threat(ThreatLevel.UNLIKELY, R.string.threat_status)
         else -> Threat(ThreatLevel.POSSIBLE, R.string.threat_probing)
     }
