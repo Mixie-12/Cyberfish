@@ -1,11 +1,12 @@
 // Sends the push notifications for one event, or one owner's weekly summary.
 // Whether something notifies, and whom, is decided in SQL
-// (notification_targets_v2, weekly_summary_v1); this file only sends.
-// Notification text comes from fixed templates chosen by event kind, severity
-// and the source device's kind, all three fixed vocabularies checked by the
-// database (ADR 0010, 0011). The only other values that reach a message are
-// the event id and the summary's three whole numbers, so nothing an attacker
-// typed or sent can ever appear on a phone.
+// (notification_targets_v3, weekly_summary_v2); this file only sends.
+// Notification text comes from fixed templates chosen by the phone's
+// language, event kind, severity and the source device's kind, all fixed
+// vocabularies checked by the database (ADR 0010, 0011, 0025); each is only
+// ever a key into the tables below. The only other values that reach a
+// message are the event id and the summary's three whole numbers, so
+// nothing an attacker typed or sent can ever appear on a phone.
 
 export interface ServiceAccount {
   project_id: string;
@@ -35,6 +36,7 @@ export interface Target {
   template: string;
   severity: string;
   host_kind: string | null;
+  language: string;
 }
 
 export interface Summary {
@@ -42,92 +44,239 @@ export interface Summary {
   incidents: number;
   new_devices: number;
   uptime_percent: number;
+  language: string;
 }
 
 // Channel ids must match the channels the app creates (Push.kt); each one
-// carries one severity (ADR 0011).
-const CHANNELS: Record<string, { channel: string; priority: string; prefix: string }> = {
-  critical: { channel: "alerts_urgent", priority: "PRIORITY_HIGH", prefix: "Act now. " },
-  warning: { channel: "alerts", priority: "PRIORITY_DEFAULT", prefix: "Check soon. " },
-  info: { channel: "updates", priority: "PRIORITY_LOW", prefix: "" },
+// carries one severity (ADR 0011). The colours are copies of the severity
+// colours in clients/shared DesignTokens.kt: while the app is in the
+// background, the phone draws the notification from this payload alone
+// (docs/design.md, "Notifications"). PushTest checks that they match.
+const CHANNELS = {
+  critical: { channel: "alerts_urgent", priority: "PRIORITY_HIGH", color: "#ff6b66" },
+  warning: { channel: "alerts", priority: "PRIORITY_DEFAULT", color: "#ffb547" },
+  info: { channel: "updates", priority: "PRIORITY_LOW", color: "#a9b8d4" },
 };
+
+type Severity = keyof typeof CHANNELS;
 
 const FCM_SCOPE = "https://www.googleapis.com/auth/firebase.messaging";
 // The deploy generates 64 hex characters; anything much shorter is a mistake.
 const MIN_SECRET_LENGTH = 32;
-const ALERT_BODY = "Tap to see what happened and what to do.";
 
-// The source device as the noun of a title. Keys are the host kinds of ADR
-// 0010; anything else reads "device". Every noun starts with a consonant
-// sound, so titles say "A".
-const NOUNS: Record<string, string> = {
-  router: "router",
-  switch: "network switch",
-  access_point: "Wi-Fi access point",
-  computer: "computer",
-  phone: "phone",
-  tablet: "tablet",
-  tv: "TV",
-  media_player: "streaming box",
-  speaker: "speaker",
-  game_console: "games console",
-  printer: "printer",
-  camera: "camera",
-  storage: "storage box",
-  smart_home: "smart home device",
-  wearable: "watch",
-  server: "server",
+// The event kinds with a template of their own; any other kind gets `other`.
+type Kind =
+  | "login_attempt"
+  | "connection"
+  | "port_scan"
+  | "host_scan"
+  | "arp_spoof"
+  | "rogue_dhcp"
+  | "rogue_router"
+  | "name_poisoning"
+  | "ids_alert"
+  | "new_host"
+  | "dns_hijack"
+  | "port_forward"
+  | "evil_twin"
+  | "new_access_point"
+  | "file_access"
+  | "device_offline";
+
+// The host kinds of ADR 0010 a title names; any other kind is `device`.
+type HostKind =
+  | "router"
+  | "switch"
+  | "access_point"
+  | "computer"
+  | "phone"
+  | "tablet"
+  | "tv"
+  | "media_player"
+  | "speaker"
+  | "game_console"
+  | "printer"
+  | "camera"
+  | "storage"
+  | "smart_home"
+  | "wearable"
+  | "server";
+
+// A count in words: for none, for one, and the noun after any other number.
+type Counted = { none: string; one: string; many: string };
+
+// Everything a message says, in one language. A source device is a whole
+// phrase with its article ("A phone", "Et nettbrett"), so no title puts an
+// article or adjective next to a placeholder: Norwegian ones agree with the
+// noun's gender. Wording follows the app's string resources (subject_*,
+// event_*_title), so an alert reads like the notification that led to it.
+interface Language {
+  subjects: Record<HostKind, string>;
+  device: string;
+  prefixes: Record<Severity, string>;
+  templates: Record<Kind, (subject: string) => Template>;
+  other: Template;
+  week: {
+    title: string;
+    alerts: Counted;
+    newDevices: Counted;
+    online: (percent: number) => string;
+  };
+}
+
+const EN_BODY = "Tap to see what happened and what to do.";
+
+const EN: Language = {
+  subjects: {
+    router: "A router",
+    switch: "A network switch",
+    access_point: "A Wi-Fi access point",
+    computer: "A computer",
+    phone: "A phone",
+    tablet: "A tablet",
+    tv: "A TV",
+    media_player: "A streaming box",
+    speaker: "A speaker",
+    game_console: "A games console",
+    printer: "A printer",
+    camera: "A camera",
+    storage: "A storage box",
+    smart_home: "A smart home device",
+    wearable: "A watch",
+    server: "A server",
+  },
+  device: "A device",
+  prefixes: { critical: "Act now. ", warning: "Check soon. ", info: "" },
+  templates: {
+    login_attempt: (s) => ({ title: `${s} tried to sign in to your DeKoi`, body: EN_BODY }),
+    connection: (s) => ({ title: `${s} opened one of your decoys`, body: EN_BODY }),
+    port_scan: (s) => ({ title: `${s} searched your network for openings`, body: EN_BODY }),
+    host_scan: (s) => ({ title: `${s} searched your whole network`, body: EN_BODY }),
+    arp_spoof: (s) => ({ title: `${s} is pretending to be another device`, body: EN_BODY }),
+    rogue_dhcp: (s) => ({ title: `${s} is handing out network settings`, body: EN_BODY }),
+    rogue_router: (s) => ({ title: `${s} announces itself as your router`, body: EN_BODY }),
+    name_poisoning: (s) => ({ title: `${s} answers questions it should not`, body: EN_BODY }),
+    ids_alert: (s) => ({ title: `${s} sent suspicious traffic to your DeKoi`, body: EN_BODY }),
+    new_host: (s) => ({
+      title: `${s} joined your network for the first time`,
+      body: "Tap to see what it looks like. If you know it, mark it as known.",
+    }),
+    // The source of a dns_hijack event is the resolver, not a device the
+    // inventory names.
+    dns_hijack: () => ({ title: "Some web addresses lead to the wrong place", body: EN_BODY }),
+    port_forward: (s) => ({ title: `${s} can now be reached from the internet`, body: EN_BODY }),
+    // The source of a Wi-Fi event is an access point that is not on the
+    // network, so these name no device; the network name never appears.
+    evil_twin: () => ({ title: "Someone copied your Wi-Fi name", body: EN_BODY }),
+    new_access_point: () => ({ title: "A new access point uses your Wi-Fi name", body: EN_BODY }),
+    file_access: (s) => ({ title: `${s} opened a file on your decoy file share`, body: EN_BODY }),
+    device_offline: () => ({
+      title: "Your DeKoi went offline",
+      body:
+        "It can’t warn you until it’s back. Check that it has power and that its cable is plugged in.",
+    }),
+  },
+  other: { title: "Activity on your DeKoi", body: EN_BODY },
+  week: {
+    title: "Your week with DeKoi",
+    alerts: { none: "no alerts", one: "alert", many: "alerts" },
+    newDevices: { none: "no new devices", one: "new device", many: "new devices" },
+    online: (percent) => `DeKoi was online ${percent}% of the time.`,
+  },
 };
 
-// Wording follows the event titles in the app's string resources.
-const TEMPLATES: Record<string, (noun: string) => Template> = {
-  login_attempt: (n) => ({ title: `A ${n} tried to sign in to your DeKoi`, body: ALERT_BODY }),
-  connection: (n) => ({ title: `A ${n} opened one of your decoys`, body: ALERT_BODY }),
-  port_scan: (n) => ({ title: `A ${n} searched your network for openings`, body: ALERT_BODY }),
-  host_scan: (n) => ({ title: `A ${n} searched your whole network`, body: ALERT_BODY }),
-  arp_spoof: (n) => ({ title: `A ${n} is pretending to be another device`, body: ALERT_BODY }),
-  rogue_dhcp: (n) => ({ title: `A ${n} is handing out network settings`, body: ALERT_BODY }),
-  rogue_router: (n) => ({ title: `A ${n} announces itself as your router`, body: ALERT_BODY }),
-  name_poisoning: (n) => ({ title: `A ${n} answers questions it should not`, body: ALERT_BODY }),
-  ids_alert: (n) => ({ title: `A ${n} sent suspicious traffic to your DeKoi`, body: ALERT_BODY }),
-  new_host: (n) => ({
-    title: `A new ${n} joined your network`,
-    body: "Tap to see what it looks like. If you know it, mark it as known.",
-  }),
-  // The source of a dns_hijack event is the resolver, not a device the
-  // inventory names.
-  dns_hijack: () => ({ title: "Some web addresses lead to the wrong place", body: ALERT_BODY }),
-  port_forward: (n) => ({ title: `A ${n} can now be reached from the internet`, body: ALERT_BODY }),
-  // The source of a Wi-Fi event is an access point that is not on the
-  // network, so these name no device; the network name never appears.
-  evil_twin: () => ({ title: "Someone copied your Wi-Fi name", body: ALERT_BODY }),
-  new_access_point: () => ({
-    title: "A new access point uses your Wi-Fi name",
-    body: ALERT_BODY,
-  }),
-  file_access: (n) => ({
-    title: `A ${n} opened a file on your decoy file share`,
-    body: ALERT_BODY,
-  }),
-  device_offline: () => ({
-    title: "Your DeKoi went offline",
-    body:
-      "It can’t warn you until it’s back. Check that it has power and that its cable is plugged in.",
-  }),
+const NB_BODY = "Trykk for å se hva som skjedde og hva du bør gjøre.";
+
+const NB: Language = {
+  subjects: {
+    router: "En ruter",
+    switch: "En nettverkssvitsj",
+    access_point: "Et Wi-Fi-tilgangspunkt",
+    computer: "En datamaskin",
+    phone: "En telefon",
+    tablet: "Et nettbrett",
+    tv: "En TV",
+    media_player: "En strømmeboks",
+    speaker: "En høyttaler",
+    game_console: "En spillkonsoll",
+    printer: "En skriver",
+    camera: "Et kamera",
+    storage: "En lagringsboks",
+    smart_home: "En smarthusenhet",
+    wearable: "En klokke",
+    server: "En server",
+  },
+  device: "En enhet",
+  prefixes: { critical: "Haster. ", warning: "Se på snart. ", info: "" },
+  templates: {
+    login_attempt: (s) => ({ title: `${s} prøvde å logge på din DeKoi`, body: NB_BODY }),
+    connection: (s) => ({ title: `${s} åpnet en av lokkeduene dine`, body: NB_BODY }),
+    port_scan: (s) => ({ title: `${s} lette etter åpninger på nettverket ditt`, body: NB_BODY }),
+    host_scan: (s) => ({ title: `${s} søkte gjennom hele nettverket ditt`, body: NB_BODY }),
+    arp_spoof: (s) => ({ title: `${s} utgir seg for å være en annen enhet`, body: NB_BODY }),
+    rogue_dhcp: (s) => ({ title: `${s} deler ut nettverksinnstillinger`, body: NB_BODY }),
+    rogue_router: (s) => ({ title: `${s} melder seg som ruteren din`, body: NB_BODY }),
+    name_poisoning: (s) => ({
+      title: `${s} svarer på spørsmål som er ment for andre`,
+      body: NB_BODY,
+    }),
+    ids_alert: (s) => ({ title: `${s} sendte mistenkelig trafikk til din DeKoi`, body: NB_BODY }),
+    // The subject can be neuter (et nettbrett), so the body says "enheten"
+    // before it refers back with "den".
+    new_host: (s) => ({
+      title: `${s} koblet seg til nettverket ditt for første gang`,
+      body: "Trykk for å se hvordan enheten ser ut. Hvis du kjenner den, merk den som kjent.",
+    }),
+    dns_hijack: () => ({ title: "Noen nettadresser fører til feil sted", body: NB_BODY }),
+    port_forward: (s) => ({ title: `${s} kan nå nås fra internett`, body: NB_BODY }),
+    evil_twin: () => ({ title: "Noen har kopiert navnet på Wi-Fi-nettet ditt", body: NB_BODY }),
+    new_access_point: () => ({
+      title: "Et nytt tilgangspunkt bruker navnet på Wi-Fi-nettet ditt",
+      body: NB_BODY,
+    }),
+    file_access: (s) => ({ title: `${s} åpnet en lokkefil på din DeKoi`, body: NB_BODY }),
+    device_offline: () => ({
+      title: "Din DeKoi ble frakoblet",
+      body:
+        "Den kan ikke varsle deg før den er tilbake. Se etter at den har strøm og at nettverkskabelen står i.",
+    }),
+  },
+  other: { title: "Aktivitet på din DeKoi", body: NB_BODY },
+  week: {
+    title: "Din uke med DeKoi",
+    alerts: { none: "ingen varsler", one: "varsel", many: "varsler" },
+    newDevices: { none: "ingen nye enheter", one: "ny enhet", many: "nye enheter" },
+    // Norwegian puts a space between a number and the percent sign; a
+    // no-break space keeps them on one line.
+    online: (percent) => `DeKoi var tilkoblet ${percent} % av tiden.`,
+  },
 };
 
-const OTHER = (): Template => ({ title: "Activity on your DeKoi", body: ALERT_BODY });
+// The languages the database accepts (private.push_languages); any other
+// reads English.
+const LANGUAGES: Record<string, Language> = { en: EN, nb: NB };
 
-export function templateFor(key: string, hostKind: string | null = null): Template {
-  const noun = hostKind !== null && Object.hasOwn(NOUNS, hostKind) ? NOUNS[hostKind] : "device";
-  return (Object.hasOwn(TEMPLATES, key) ? TEMPLATES[key] : OTHER)(noun);
+function languageOf(code: string): Language {
+  return Object.hasOwn(LANGUAGES, code) ? LANGUAGES[code] : EN;
+}
+
+export function templateFor(
+  key: string,
+  hostKind: string | null = null,
+  language = "en",
+): Template {
+  const words = languageOf(language);
+  const subject = hostKind !== null && Object.hasOwn(words.subjects, hostKind)
+    ? words.subjects[hostKind as HostKind]
+    : words.device;
+  return Object.hasOwn(words.templates, key) ? words.templates[key as Kind](subject) : words.other;
 }
 
 // "no alerts", "1 alert", "3 alerts".
-function counted(n: number, noun: string): string {
+function counted(n: number, { none, one, many }: Counted): string {
   if (!Number.isSafeInteger(n) || n < 0) throw new Error("summary counts must be whole numbers");
-  if (n === 0) return `no ${noun}s`;
-  return `${n} ${noun}${n === 1 ? "" : "s"}`;
+  if (n === 0) return none;
+  return `${n} ${n === 1 ? one : many}`;
 }
 
 // Alerts are incidents as the app's Alerts tab groups them (ADR 0013).
@@ -136,33 +285,37 @@ export function summaryTemplate(summary: Summary): Template {
   if (!Number.isSafeInteger(uptime) || uptime < 0 || uptime > 100) {
     throw new Error("uptime must be a whole percentage");
   }
-  const counts = `${counted(summary.incidents, "alert")}, ${
-    counted(summary.new_devices, "new device")
+  const { week } = languageOf(summary.language);
+  const counts = `${counted(summary.incidents, week.alerts)}, ${
+    counted(summary.new_devices, week.newDevices)
   }.`;
   return {
-    title: "Your week with DeKoi",
-    body: `${counts[0].toUpperCase()}${counts.slice(1)} DeKoi was online ${uptime}% of the time.`,
+    title: week.title,
+    body: `${counts[0].toUpperCase()}${counts.slice(1)} ${week.online(uptime)}`,
   };
 }
 
 function message(
   token: string,
   severity: string,
+  language: string,
   { title, body }: Template,
   tag: string,
   data: Record<string, string>,
 ) {
-  const level = Object.hasOwn(CHANNELS, severity) ? CHANNELS[severity] : CHANNELS.warning;
+  const level: Severity = Object.hasOwn(CHANNELS, severity) ? severity as Severity : "warning";
+  const { channel, priority, color } = CHANNELS[level];
   return {
     message: {
       token,
-      notification: { title, body: level.prefix + body },
+      notification: { title, body: languageOf(language).prefixes[level] + body },
       data,
       android: {
-        priority: level.channel === "updates" ? "NORMAL" : "HIGH",
+        priority: channel === "updates" ? "NORMAL" : "HIGH",
         notification: {
-          channel_id: level.channel,
-          notification_priority: level.priority,
+          channel_id: channel,
+          notification_priority: priority,
+          color,
           visibility: "PRIVATE",
           tag,
         },
@@ -176,7 +329,8 @@ export function fcmMessage(eventId: number, target: Target) {
   return message(
     target.token,
     target.severity,
-    templateFor(target.template, target.host_kind),
+    target.language,
+    templateFor(target.template, target.host_kind, target.language),
     `event-${eventId}`,
     { event_id: String(eventId) },
   );
@@ -184,7 +338,14 @@ export function fcmMessage(eventId: number, target: Target) {
 
 export function summaryMessage(summary: Summary) {
   // One tag for every summary, so this week's replaces last week's.
-  return message(summary.token, "info", summaryTemplate(summary), "weekly-summary", {});
+  return message(
+    summary.token,
+    "info",
+    summary.language,
+    summaryTemplate(summary),
+    "weekly-summary",
+    {},
+  );
 }
 
 export function parseServiceAccount(json: string): ServiceAccount {
@@ -326,9 +487,9 @@ export function createHandler(config: Config, fetchFn: typeof fetch = fetch) {
     if (job === null) return new Response(null, { status: 400 });
 
     const messages = "eventId" in job
-      ? (await rows<Target>("notification_targets_v2", { event_id: job.eventId }))
+      ? (await rows<Target>("notification_targets_v3", { event_id: job.eventId }))
         .map((target) => fcmMessage(job.eventId, target))
-      : (await rows<Summary>("weekly_summary_v1", { user_id: job.userId })).map(summaryMessage);
+      : (await rows<Summary>("weekly_summary_v2", { user_id: job.userId })).map(summaryMessage);
     if (messages.length === 0) return new Response(null, { status: 204 });
 
     const token = await accessToken(config.serviceAccount, fetchFn);

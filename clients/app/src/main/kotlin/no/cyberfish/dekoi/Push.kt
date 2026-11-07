@@ -6,6 +6,8 @@ import android.os.Build
 import com.google.android.gms.tasks.Task
 import com.google.firebase.FirebaseOptions
 import kotlinx.coroutines.suspendCancellableCoroutine
+import no.cyberfish.dekoi.shared.DesignTokens
+import java.util.Locale
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 
@@ -20,6 +22,23 @@ const val UPDATES_CHANNEL = "updates"
 fun channelFor(requested: String?): String = requested?.takeIf { it in CHANNELS } ?: ALERT_CHANNEL
 
 private val CHANNELS = setOf(URGENT_CHANNEL, ALERT_CHANNEL, UPDATES_CHANNEL)
+
+/** The colour of a channel's severity; notify.ts sends a copy for the notifications the phone draws itself. */
+fun notificationColor(channel: String): Int =
+    when (channel) {
+        URGENT_CHANNEL -> DesignTokens.CRITICAL.color
+        UPDATES_CHANNEL -> DesignTokens.INFO.color
+        else -> DesignTokens.WARNING.color
+    }.toInt()
+
+/**
+ * The language notify words this phone's pushes in, one of
+ * private.push_languages (ADR 0025): Bokmål for any Norwegian locale, the
+ * macrolanguage and Nynorsk included, else English.
+ */
+fun pushLanguage(locale: Locale): String = if (locale.language in NORWEGIAN) "nb" else "en"
+
+private val NORWEGIAN = setOf("nb", "no", "nn")
 
 /** Must match the tag notify.ts sets, so opening an alert in the app can clear its notification. */
 fun notificationTag(eventId: Long): String = "event-$eventId"

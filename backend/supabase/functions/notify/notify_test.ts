@@ -55,8 +55,8 @@ function fakeFetch(rows: unknown[], fcmStatus = 200, fcmBody: unknown = {}) {
     const url = String(input);
     calls.push({ url, body: String(init?.body ?? "") });
     if (
-      url === `${SUPABASE}/rest/v1/rpc/notification_targets_v2` ||
-      url === `${SUPABASE}/rest/v1/rpc/weekly_summary_v1`
+      url === `${SUPABASE}/rest/v1/rpc/notification_targets_v3` ||
+      url === `${SUPABASE}/rest/v1/rpc/weekly_summary_v2`
     ) {
       return Promise.resolve(Response.json(rows));
     }
@@ -92,9 +92,29 @@ function target(
   template: string,
   severity = "warning",
   hostKind: string | null = null,
+  language = "en",
 ): Target {
-  return { token, template, severity, host_kind: hostKind };
+  return { token, template, severity, host_kind: hostKind, language };
 }
+
+const KINDS = [
+  "login_attempt",
+  "connection",
+  "port_scan",
+  "host_scan",
+  "arp_spoof",
+  "rogue_dhcp",
+  "rogue_router",
+  "name_poisoning",
+  "ids_alert",
+  "new_host",
+  "dns_hijack",
+  "port_forward",
+  "evil_twin",
+  "new_access_point",
+  "file_access",
+  "device_offline",
+];
 
 function webhook(body: unknown, secret = SECRET): Request {
   return new Request("http://notify.test/", {
@@ -105,31 +125,86 @@ function webhook(body: unknown, secret = SECRET): Request {
 }
 
 Deno.test("every event kind has its own template; anything else gets the generic one", () => {
-  const kinds = [
-    "login_attempt",
-    "connection",
-    "port_scan",
-    "host_scan",
-    "arp_spoof",
-    "rogue_dhcp",
-    "rogue_router",
-    "name_poisoning",
-    "ids_alert",
-    "new_host",
-    "dns_hijack",
-    "port_forward",
-    "evil_twin",
-    "new_access_point",
-    "file_access",
-    "device_offline",
-  ];
-  const generic = templateFor("something_new");
-  const titles = new Set(kinds.map((k) => templateFor(k).title));
-  equal(titles.size, kinds.length);
-  ok(!titles.has(generic.title));
-  deepStrictEqual(templateFor("constructor"), generic);
-  deepStrictEqual(templateFor("__proto__"), generic);
+  for (const language of ["en", "nb"]) {
+    const generic = templateFor("something_new", null, language);
+    const titles = new Set(KINDS.map((k) => templateFor(k, null, language).title));
+    equal(titles.size, KINDS.length);
+    ok(!titles.has(generic.title));
+    deepStrictEqual(templateFor("constructor", null, language), generic);
+    deepStrictEqual(templateFor("__proto__", null, language), generic);
+  }
   equal(templateFor("device_offline").title, "Your DeKoi went offline");
+  equal(templateFor("something_new", null, "nb").title, "Aktivitet på din DeKoi");
+});
+
+Deno.test("every Norwegian template is translated, including the Wi-Fi kinds", () => {
+  for (const kind of [...KINDS, "something_new"]) {
+    const en = templateFor(kind, "phone");
+    const nb = templateFor(kind, "phone", "nb");
+    notEqual(nb.title, en.title, kind);
+    notEqual(nb.body, en.body, kind);
+  }
+  deepStrictEqual(templateFor("evil_twin", "router", "nb"), {
+    title: "Noen har kopiert navnet på Wi-Fi-nettet ditt",
+    body: "Trykk for å se hva som skjedde og hva du bør gjøre.",
+  });
+  equal(
+    templateFor("new_access_point", "router", "nb").title,
+    "Et nytt tilgangspunkt bruker navnet på Wi-Fi-nettet ditt",
+  );
+  deepStrictEqual(templateFor("device_offline", null, "nb"), {
+    title: "Din DeKoi ble frakoblet",
+    body:
+      "Den kan ikke varsle deg før den er tilbake. Se etter at den har strøm og at nettverkskabelen står i.",
+  });
+});
+
+Deno.test("a Norwegian title names the device as a whole phrase that agrees with its gender", () => {
+  equal(
+    templateFor("port_scan", "phone", "nb").title,
+    "En telefon lette etter åpninger på nettverket ditt",
+  );
+  equal(
+    templateFor("login_attempt", "tablet", "nb").title,
+    "Et nettbrett prøvde å logge på din DeKoi",
+  );
+  equal(templateFor("connection", "camera", "nb").title, "Et kamera åpnet en av lokkeduene dine");
+  equal(
+    templateFor("new_host", "tablet", "nb").title,
+    "Et nettbrett koblet seg til nettverket ditt for første gang",
+  );
+  equal(
+    templateFor("new_host", null, "nb").title,
+    "En enhet koblet seg til nettverket ditt for første gang",
+  );
+  equal(
+    templateFor("port_scan", "<b>evil</b>", "nb").title,
+    templateFor("port_scan", null, "nb").title,
+  );
+  // Every title about a neuter device opens with the whole phrase, so no
+  // adjective or article elsewhere in the title can disagree with it.
+  for (const kind of KINDS) {
+    const title = templateFor(kind, "tablet", "nb").title;
+    const fixed = templateFor(kind, "phone", "nb").title === title;
+    ok(fixed || title.startsWith("Et nettbrett "), title);
+  }
+});
+
+Deno.test("the language is only a key: anything but nb reads English", () => {
+  for (const language of ["en", "de", "NB", "", "__proto__", "constructor", "<b>nb</b>"]) {
+    deepStrictEqual(templateFor("port_scan", "tv", language), templateFor("port_scan", "tv"));
+  }
+  const { message } = fcmMessage(5, target("t", "port_scan", "critical", "tv", "<b>nb</b>"));
+  ok(!JSON.stringify(message).includes("<b>"));
+  equal(message.notification.body, "Act now. Tap to see what happened and what to do.");
+});
+
+Deno.test("a Norwegian phone gets the severity words in Norwegian", () => {
+  const body = (severity: string) =>
+    fcmMessage(1, target("t", "port_scan", severity, null, "nb")).message.notification.body;
+  equal(body("critical"), "Haster. Trykk for å se hva som skjedde og hva du bør gjøre.");
+  equal(body("warning"), "Se på snart. Trykk for å se hva som skjedde og hva du bør gjøre.");
+  equal(body("info"), "Trykk for å se hva som skjedde og hva du bør gjøre.");
 });
 
 Deno.test("titles name the device kind from the fixed list, nothing else", () => {
@@ -145,11 +220,14 @@ Deno.test("titles name the device kind from the fixed list, nothing else", () =>
 });
 
 Deno.test("a new device is named by its kind and goes to the updates channel", () => {
-  equal(templateFor("new_host").title, "A new device joined your network");
-  equal(templateFor("new_host", "phone").title, "A new phone joined your network");
-  equal(templateFor("new_host", "<b>evil</b>").title, "A new device joined your network");
+  equal(templateFor("new_host").title, "A device joined your network for the first time");
+  equal(templateFor("new_host", "phone").title, "A phone joined your network for the first time");
+  equal(
+    templateFor("new_host", "<b>evil</b>").title,
+    "A device joined your network for the first time",
+  );
   const { message } = fcmMessage(9, target("t", "new_host", "info", "tv"));
-  equal(message.notification.title, "A new TV joined your network");
+  equal(message.notification.title, "A TV joined your network for the first time");
   equal(
     message.notification.body,
     "Tap to see what it looks like. If you know it, mark it as known.",
@@ -165,6 +243,15 @@ Deno.test("severity picks the channel; anything unexpected is an ordinary alert"
   equal(channel("warning"), "alerts");
   equal(channel("info"), "updates");
   equal(channel("constructor"), "alerts");
+});
+
+Deno.test("severity picks the colour the app uses for it; anything unexpected is a warning", () => {
+  const color = (severity: string) =>
+    fcmMessage(1, target("t", "port_scan", severity)).message.android.notification.color;
+  equal(color("critical"), "#ff6b66");
+  equal(color("warning"), "#ffb547");
+  equal(color("info"), "#a9b8d4");
+  equal(color("__proto__"), "#ffb547");
 });
 
 Deno.test("a wrong or missing secret is refused before anything else happens", async () => {
@@ -230,12 +317,13 @@ Deno.test("a body without a positive integer event id or an owner id is rejected
 });
 
 Deno.test("the weekly summary counts in words, from no alerts to many", () => {
-  const summary = (incidents: number, newDevices: number, uptime: number) =>
+  const summary = (incidents: number, newDevices: number, uptime: number, language = "en") =>
     summaryTemplate({
       token: "t",
       incidents,
       new_devices: newDevices,
       uptime_percent: uptime,
+      language,
     });
   deepStrictEqual(summary(0, 0, 100), {
     title: "Your week with DeKoi",
@@ -243,6 +331,19 @@ Deno.test("the weekly summary counts in words, from no alerts to many", () => {
   });
   equal(summary(1, 1, 99).body, "1 alert, 1 new device. DeKoi was online 99% of the time.");
   equal(summary(12, 3, 0).body, "12 alerts, 3 new devices. DeKoi was online 0% of the time.");
+  deepStrictEqual(summary(0, 0, 100, "nb"), {
+    title: "Din uke med DeKoi",
+    body: "Ingen varsler, ingen nye enheter. DeKoi var tilkoblet 100 % av tiden.",
+  });
+  equal(
+    summary(1, 1, 99, "nb").body,
+    "1 varsel, 1 ny enhet. DeKoi var tilkoblet 99 % av tiden.",
+  );
+  equal(
+    summary(12, 3, 0, "nb").body,
+    "12 varsler, 3 nye enheter. DeKoi var tilkoblet 0 % av tiden.",
+  );
+  deepStrictEqual(summary(2, 0, 50, "de"), summary(2, 0, 50));
 });
 
 Deno.test("a summary with anything but whole numbers is not sent", () => {
@@ -254,18 +355,18 @@ Deno.test("a summary with anything but whole numbers is not sent", () => {
     { incidents: 0, new_devices: 0, uptime_percent: null as unknown as number },
   ];
   for (const counts of bad) {
-    throws(() => summaryTemplate({ token: "t", ...counts }));
+    throws(() => summaryTemplate({ token: "t", language: "en", ...counts }));
   }
 });
 
 Deno.test("the weekly summary goes to the owner's phones on the updates channel", async () => {
   const { calls, fetchFn } = fakeFetch([
-    { token: "phone-1", incidents: 2, new_devices: 1, uptime_percent: 97 },
+    { token: "phone-1", incidents: 2, new_devices: 1, uptime_percent: 97, language: "en" },
   ]);
   const handle = await handler(fetchFn);
   equal((await handle(webhook({ weekly_summary_for: OWNER }))).status, 204);
 
-  const ask = calls.find((c) => c.url === `${SUPABASE}/rest/v1/rpc/weekly_summary_v1`);
+  const ask = calls.find((c) => c.url === `${SUPABASE}/rest/v1/rpc/weekly_summary_v2`);
   deepStrictEqual(JSON.parse(ask?.body ?? "null"), { user_id: OWNER });
   const sends = calls.filter((c) => c.url.startsWith(FCM));
   equal(sends.length, 1);
@@ -282,6 +383,7 @@ Deno.test("the weekly summary goes to the owner's phones on the updates channel"
         notification: {
           channel_id: "updates",
           notification_priority: "PRIORITY_LOW",
+          color: "#a9b8d4",
           visibility: "PRIVATE",
           tag: "weekly-summary",
         },
@@ -290,18 +392,53 @@ Deno.test("the weekly summary goes to the owner's phones on the updates channel"
   });
 });
 
+Deno.test("each phone gets its alerts and summaries in its own language", async () => {
+  const { calls, fetchFn } = fakeFetch([
+    target("norsk", "port_scan", "warning", "tablet", "nb"),
+    target("english", "port_scan", "warning", "tablet", "en"),
+  ]);
+  const handle = await handler(fetchFn);
+  equal((await handle(webhook({ event_id: 8 }))).status, 204);
+  const sent = calls.filter((c) => c.url.startsWith(FCM)).map((c) => JSON.parse(c.body).message);
+  deepStrictEqual(sent.map((m) => [m.token, m.notification.title, m.notification.body]), [
+    [
+      "norsk",
+      "Et nettbrett lette etter åpninger på nettverket ditt",
+      "Se på snart. Trykk for å se hva som skjedde og hva du bør gjøre.",
+    ],
+    [
+      "english",
+      "A tablet searched your network for openings",
+      "Check soon. Tap to see what happened and what to do.",
+    ],
+  ]);
+
+  const summaries = fakeFetch([
+    { token: "norsk", incidents: 1, new_devices: 3, uptime_percent: 100, language: "nb" },
+  ]);
+  equal(
+    (await (await handler(summaries.fetchFn))(webhook({ weekly_summary_for: OWNER }))).status,
+    204,
+  );
+  const summary = JSON.parse(summaries.calls.filter((c) => c.url.startsWith(FCM))[0].body).message;
+  deepStrictEqual(summary.notification, {
+    title: "Din uke med DeKoi",
+    body: "1 varsel, 3 nye enheter. DeKoi var tilkoblet 100 % av tiden.",
+  });
+});
+
 Deno.test("no summary due means no token request and no message", async () => {
   const { calls, fetchFn } = fakeFetch([]);
   const handle = await handler(fetchFn);
   equal((await handle(webhook({ weekly_summary_for: OWNER }))).status, 204);
-  deepStrictEqual(calls.map((c) => c.url), [`${SUPABASE}/rest/v1/rpc/weekly_summary_v1`]);
+  deepStrictEqual(calls.map((c) => c.url), [`${SUPABASE}/rest/v1/rpc/weekly_summary_v2`]);
 });
 
 Deno.test("no targets means no token request and no message", async () => {
   const { calls, fetchFn } = fakeFetch([]);
   const handle = await handler(fetchFn);
   equal((await handle(webhook({ event_id: 7 }))).status, 204);
-  deepStrictEqual(calls.map((c) => c.url), [`${SUPABASE}/rest/v1/rpc/notification_targets_v2`]);
+  deepStrictEqual(calls.map((c) => c.url), [`${SUPABASE}/rest/v1/rpc/notification_targets_v3`]);
   deepStrictEqual(JSON.parse(calls[0].body), { event_id: 7 });
 });
 
@@ -335,6 +472,7 @@ Deno.test("only the event id and the fixed template reach the message", async ()
         notification: {
           channel_id: "alerts_urgent",
           notification_priority: "PRIORITY_HIGH",
+          color: "#ff6b66",
           visibility: "PRIVATE",
           tag: "event-42",
         },

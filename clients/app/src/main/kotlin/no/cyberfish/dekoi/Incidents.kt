@@ -39,6 +39,12 @@ data class Incident(
     val unseenIds: List<Long> get() = events.filter { it.seenAt == null }.map { it.id }
 }
 
+/** The most ids acknowledge_events_v1 takes in one call (ADR 0013). */
+const val ACKNOWLEDGE_BATCH = 500
+
+/** The ids of every unseen event, in batches acknowledge_events_v1 takes: what "Mark all as read" sends. */
+fun unseenBatches(events: List<Event>): List<List<Long>> = events.filter { it.seenAt == null }.map { it.id }.chunked(ACKNOWLEDGE_BATCH)
+
 /** Who an event came from: DeKoi itself, or a device by hardware address, else by address. */
 private data class Source(
     val deviceId: String,

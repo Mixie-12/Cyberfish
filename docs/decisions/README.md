@@ -30,4 +30,5 @@ them.
 | 0022 | [Keys in CI, image signing in Cloud KMS, automatic rotation](0022-ci-keys-and-signing.md) | accepted |
 | 0023 | [A home plan from the rooms the owner sets](0023-home-plan-from-rooms.md) | accepted |
 | 0024 | [Fake credentials in the bait files](0024-bait-credentials.md) | accepted |
+| 0025 | [Push text in the phone's language](0025-push-language.md) | accepted |
 | 0025 | [Languages: Bokmål and English](0025-languages.md) | accepted |

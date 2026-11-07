@@ -175,4 +175,19 @@ class IncidentsTest {
             ).sortedByDescending { it.occurredAt }
         assertEquals(2, alertBadgeCount(events, setOf(laptop)))
     }
+
+    @Test
+    fun `mark all as read sends every unseen event once, at most 500 ids a call`() {
+        val events = List(1201) { event(it.toLong()) } + List(3) { event(it.toLong(), seen = true) }
+        val batches = unseenBatches(events)
+        assertEquals(listOf(500, 500, 201), batches.map { it.size })
+        assertEquals(events.filter { it.seenAt == null }.map { it.id }, batches.flatten())
+        assertEquals(listOf(500), unseenBatches(events.take(500)).map { it.size })
+    }
+
+    @Test
+    fun `with nothing unseen there is nothing to send`() {
+        assertEquals(emptyList(), unseenBatches(listOf(event(0, seen = true))))
+        assertEquals(emptyList(), unseenBatches(emptyList()))
+    }
 }

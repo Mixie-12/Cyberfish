@@ -117,6 +117,13 @@
     <string name="alerts_empty">Ingen varsler ennå. Når din DeKoi legger merke til noe på nettverket ditt, dukker det opp her.</string>
     <string name="alerts_empty_filtered">Ingen varsler passer med disse filtrene.</string>
     <string name="alerts_show_all">Vis alle varsler</string>
+    <string name="alerts_mark_all_read">Merk alle som lest</string>
+    <plurals name="alerts_mark_all_read_title">
+        <item quantity="one">Merke %1$d varsel som lest?</item>
+        <item quantity="other">Merke alle %1$d varslene som lest?</item>
+    </plurals>
+    <string name="alerts_mark_all_read_body">Varslene blir liggende i listen, og du kan fortsatt åpne hvert av dem.</string>
+    <string name="alerts_mark_all_read_confirm">Merk som lest</string>
 
     <string name="alert_missing">Dette varselet finnes ikke lenger.</string>
     <string name="alert_do_now">Gjør dette nå</string>

@@ -282,10 +282,20 @@ private fun SignedIn(
                     viewModel::refresh,
                     navigate,
                     onBack = null,
+                    onMarkAllRead = viewModel::acknowledgeAll,
                 )
             }
             screen<Route.FilteredAlerts> { entry ->
-                AlertsScreen(data, now, entry.toRoute(), rememberLazyListState(), viewModel::refresh, navigate, onBack = back)
+                AlertsScreen(
+                    data,
+                    now,
+                    entry.toRoute(),
+                    rememberLazyListState(),
+                    viewModel::refresh,
+                    navigate,
+                    onBack = back,
+                    onMarkAllRead = null,
+                )
             }
             screen<Route.AlertDetail> { entry ->
                 AlertDetailScreen(
