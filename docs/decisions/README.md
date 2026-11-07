@@ -22,3 +22,5 @@ them.
 | 0014 | [Writing the card from the phone](0014-phone-writes-card.md) | accepted |
 | 0015 | [Network health, exposure checks and new-device alerts](0015-network-health-and-insights.md) | accepted |
 | 0017 | [Link by a secret the phone writes onto the card](0017-link-by-card-secret.md) | accepted |
+| 0018 | [A decoy that is easy to find](0018-visible-decoy.md) | accepted |
+| 0019 | [Watching the Wi-Fi for copies of the home network](0019-wifi-watch.md) | accepted |
