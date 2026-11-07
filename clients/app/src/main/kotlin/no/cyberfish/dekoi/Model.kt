@@ -8,7 +8,9 @@ import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
 import java.time.Instant
+import java.time.LocalDate
 import java.time.OffsetDateTime
+import java.time.format.DateTimeParseException
 
 // Rows as the backend returns them (backend/supabase/migrations). Values in
 // Event and NetworkHost come from the honeypot and are attacker-controlled:
@@ -25,7 +27,88 @@ data class Device(
     @SerialName("registered_at") @Serializable(TimestampSerializer::class) val registeredAt: Instant? = null,
     @SerialName("last_seen_at") @Serializable(TimestampSerializer::class) val lastSeenAt: Instant? = null,
     @SerialName("created_at") @Serializable(TimestampSerializer::class) val createdAt: Instant,
+    /** Empty until the DeKoi runs software that reports them (ADR 0013). */
+    val monitors: List<Monitor> = emptyList(),
+    val images: List<ImageVersion> = emptyList(),
 )
+
+/** One check a DeKoi runs and how it is doing, from its heartbeat (ADR 0013). */
+@Serializable
+data class Monitor(
+    @SerialName("name") val kindName: String,
+    @SerialName("state") val stateName: String? = null,
+    val detail: MonitorDetail = MonitorDetail(),
+) {
+    val kind: MonitorKind get() = MonitorKind.of(kindName)
+    val state: MonitorState get() = MonitorState.of(stateName)
+}
+
+/** The small numbers and dates a monitor reports. */
+@Serializable
+data class MonitorDetail(
+    val rules: Int? = null,
+    @SerialName("ruleset_date") val rulesetDateText: String? = null,
+    val hosts: Int? = null,
+) {
+    /** When the attack patterns were published; null when not reported or not a date. */
+    val rulesetDate: LocalDate? get() = rulesetDateText?.let { parseOrNull { LocalDate.parse(it.take(ISO_DATE_LENGTH)) } }
+}
+
+/** A container image on a DeKoi and when it last changed (ADR 0013). */
+@Serializable
+data class ImageVersion(
+    val name: String,
+    val version: String,
+    @SerialName("updated_at") val updatedAtText: String? = null,
+) {
+    val updatedAt: Instant? get() = updatedAtText?.let { parseOrNull { OffsetDateTime.parse(it).toInstant() } }
+}
+
+private const val ISO_DATE_LENGTH = 10
+
+// The device writes these values into JSON itself. One it wrote in another
+// format counts as not reported instead of failing the whole device list.
+private fun <T> parseOrNull(parse: () -> T): T? =
+    try {
+        parse()
+    } catch (_: DateTimeParseException) {
+        null
+    }
+
+/** What a monitor watches for (ADR 0013 vocabulary). */
+enum class MonitorKind {
+    DECOYS,
+    PORT_SCAN,
+    ARP_WATCH,
+    DHCP_WATCH,
+    ROUTER_WATCH,
+    NAME_POISONING,
+    IDS,
+    INVENTORY,
+    OTHER,
+    ;
+
+    companion object {
+        fun of(name: String?): MonitorKind = entries.firstOrNull { it.name.equals(name, ignoreCase = true) } ?: OTHER
+    }
+}
+
+/**
+ * How a monitor is doing (ADR 0013 vocabulary), from fine to the most
+ * concerning. A value from newer software is not known rather than fine.
+ */
+enum class MonitorState {
+    OK,
+    STARTING,
+    OFF,
+    UNKNOWN,
+    FAILED,
+    ;
+
+    companion object {
+        fun of(name: String?): MonitorState = entries.firstOrNull { it.name.equals(name, ignoreCase = true) } ?: UNKNOWN
+    }
+}
 
 @Serializable
 data class Event(
