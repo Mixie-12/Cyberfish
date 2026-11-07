@@ -89,6 +89,21 @@ jobs:
           if [ -z "$FCM_SERVICE_ACCOUNT" ]; then
             echo "::warning::FCM_SERVICE_ACCOUNT is not set; push notifications stay off until it is"
           fi
+      # Google answers a made-up code with invalid_grant only when the client
+      # ID and secret belong to the same web client; an Android client ID or a
+      # wrong secret gets invalid_client. Fails here instead of on the phone.
+      - name: Check the Google sign-in client
+        if: vars.GOOGLE_WEB_CLIENT_ID != ''
+        run: |
+          error="$(printf %s "$SUPABASE_AUTH_EXTERNAL_GOOGLE_SECRET" | curl -sS https://oauth2.googleapis.com/token \
+            --data-urlencode "client_id=$SUPABASE_AUTH_EXTERNAL_GOOGLE_CLIENT_ID" \
+            --data-urlencode "client_secret@-" \
+            --data-urlencode "redirect_uri=https://$PROJECT_REF.supabase.co/auth/v1/callback" \
+            -d grant_type=authorization_code -d code=dekoi-ci-check | jq -r .error)"
+          if [ "$error" != invalid_grant ]; then
+            echo "::error::Google refused GOOGLE_WEB_CLIENT_ID with GOOGLE_WEB_CLIENT_SECRET ($error); see docs/runbooks/google-firebase.md"
+            exit 1
+          fi
       - name: Set function secrets
         run: |
           secrets=("NOTIFY_SECRET=$NOTIFY_SECRET")
