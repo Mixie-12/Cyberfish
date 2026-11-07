@@ -19,6 +19,6 @@
     <string name="onboarding_steps_body">Hvert varsel forteller med enkle ord hva som skjedde og hvor viktig det er, og gir deg så nummererte steg, som å finne enheten. Tekniske detaljer ligger skjult lenger ned.</string>
 
     <string name="onboarding_watch_label">Rundt den</string>
-    <string name="onboarding_watch_title">Den passer på hele nettverket</string>
-    <string name="onboarding_watch_body">Din DeKoi ser også etter en enhet som utgir seg for å være ruteren din, en kopi av Wi-Fi-nettet ditt og enheter den ikke har sett før. Når din DeKoi legger merke til noe, sier den fra.</string>
+    <string name="onboarding_watch_title">Den holder øye med nettverket ditt</string>
+    <string name="onboarding_watch_body">Din DeKoi ser også etter en enhet som utgir seg for å være ruteren din, en kopi av Wi-Fi-nettet ditt og enheter den ikke har sett før. Den ser det som sendes til den eller til alle enheter, ikke det andre enheter sender til hverandre.</string>
 </resources>
