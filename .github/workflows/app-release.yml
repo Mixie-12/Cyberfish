@@ -1,0 +1,63 @@
+name: app release
+
+# On a v* tag: build the release APK with the production settings, sign it
+# with the DeKoi release key, check the signer against the pinned
+# certificate, and attach it with its checksum to the GitHub Release.
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  apk:
+    if: vars.SUPABASE_PROJECT_REF != '' && vars.GOOGLE_WEB_CLIENT_ID != ''
+    runs-on: ubuntu-24.04
+    defaults:
+      run:
+        working-directory: clients
+    env:
+      # SHA-256 of the release certificate (docs/STATUS.md, "Secrets").
+      RELEASE_CERT_SHA256: 7f5759c5015bfc7a347a72353554079196e621585a9fee69447586a7e8436741
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-java@77dd5b2ce225ea11469928ac317850245a74ae78 # v6.2.0
+        with:
+          distribution: temurin
+          java-version: 21
+      - uses: gradle/actions/setup-gradle@8da46b539cd8fe6ab27ca75128919a18d757604c # v6.4.1
+      - name: Build the release APK
+        env:
+          PROJECT_REF: ${{ vars.SUPABASE_PROJECT_REF }}
+          PUBLISHABLE_KEY: ${{ vars.SUPABASE_PUBLISHABLE_KEY }}
+          GOOGLE_WEB_CLIENT_ID: ${{ vars.GOOGLE_WEB_CLIENT_ID }}
+        run: >-
+          ./gradlew --no-daemon :app:assembleRelease
+          -Pdekoi.supabaseUrl="https://$PROJECT_REF.supabase.co"
+          -Pdekoi.supabaseKey="$PUBLISHABLE_KEY"
+          -Pdekoi.googleWebClientId="$GOOGLE_WEB_CLIENT_ID"
+          -Pdekoi.version="${GITHUB_REF_NAME#v}"
+          -Pdekoi.versionCode="$GITHUB_RUN_NUMBER"
+      - name: Sign and check the signer
+        env:
+          KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+        run: |
+          tools="$ANDROID_HOME/build-tools/$(ls "$ANDROID_HOME/build-tools" | sort -V | tail -1)"
+          keystore="$RUNNER_TEMP/release.p12"
+          apk="dekoi-$GITHUB_REF_NAME.apk"
+          echo "$KEYSTORE_BASE64" | base64 -d > "$keystore"
+          "$tools/zipalign" -p -f 4 app/build/outputs/apk/release/app-release-unsigned.apk "$RUNNER_TEMP/aligned.apk"
+          "$tools/apksigner" sign --ks "$keystore" --ks-pass env:KEYSTORE_PASSWORD --ks-key-alias dekoi \
+            --out "$apk" "$RUNNER_TEMP/aligned.apk"
+          rm "$keystore"
+          "$tools/apksigner" verify --print-certs "$apk" | grep -q "certificate SHA-256 digest: $RELEASE_CERT_SHA256"
+          sha256sum "$apk" > "$apk.sha256"
+      - name: Attach to the release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release view "$GITHUB_REF_NAME" > /dev/null 2>&1 || gh release create "$GITHUB_REF_NAME" --verify-tag --title "DeKoi $GITHUB_REF_NAME" --notes ""
+          gh release upload "$GITHUB_REF_NAME" --clobber "dekoi-$GITHUB_REF_NAME.apk" "dekoi-$GITHUB_REF_NAME.apk.sha256"
