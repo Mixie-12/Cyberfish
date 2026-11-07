@@ -6,7 +6,7 @@ import subprocess
 import time
 from collections.abc import Callable
 
-from . import api, identify, inventory, lan
+from . import api, identify, inventory, lan, monitors
 from .config import Config
 from .decoys import listening_ports, load_decoys, running_services
 from .detect import Collapser, ScanDetector
@@ -70,6 +70,7 @@ class Agent:
         self.heartbeat_schedule = Schedule(HEARTBEAT_SECONDS)
         self.inventory_schedule = Schedule(INVENTORY_SECONDS)
         self.probe_schedule = Schedule(PROBE_SECONDS)
+        self.monitors = monitors.Monitors(clock())
 
     def tick(self) -> None:
         at = self.clock()
@@ -110,12 +111,20 @@ class Agent:
                 found.append(event)
         self.detector.expire(at)
         own_ips = {address for address in [inventory.local_ip()] if address}
-        found += [e for line in self.ids.read_lines() if (e := parse_suricata(line, own_ips))]
-        for frame in self.listeners.arp_frames():
+        ids_lines = self.ids.read_lines()
+        self.monitors.ids(at, ids_lines)
+        found += [e for line in ids_lines if (e := parse_suricata(line, own_ips))]
+        frames = self.listeners.arp_frames()
+        if frames:
+            # Every inventory scan puts ARP frames on the wire.
+            self.monitors.alive("arp_watch", at + 2 * INVENTORY_SECONDS)
+        for frame in frames:
             arp = lan.parse_arp(frame)
             if arp:
                 found += self.arp.observe(at, arp)
         advertisements = self.listeners.router_advertisements()
+        # Silence is normal here: many networks have no IPv6 router.
+        self.monitors.alive("router_watch", at + HEARTBEAT_SECONDS)
         for router, _, prefixes in advertisements:
             for prefix in prefixes:
                 self.networks.advertised(prefix, router)
@@ -182,10 +191,12 @@ class Agent:
                 }
                 for ip, protocol in lan.probe_name_poisoning()
             ]
+            self.monitors.alive("name_poisoning", at + 2 * PROBE_SECONDS)
             address = inventory.local_ip()
             target = inventory.scan_target(address) if address else None
             if target:
                 servers = lan.probe_dhcp_servers(lan.interface_mac(target[0]))
+                self.monitors.alive("dhcp_watch", at + 2 * PROBE_SECONDS)
                 known, new = lan.newcomers(self.state.dhcp_servers, servers, lan.default_gateway())
                 self.state.dhcp_servers = known
                 found += [
@@ -230,6 +241,8 @@ class Agent:
             return
         self.state.device_id = str(device_id)
         self.save()
+        # The probes and the inventory start only now.
+        self.monitors.started_at = at
         log.info("registered as device %s", self.state.device_id)
 
     def send(self, at: float) -> None:
@@ -246,17 +259,38 @@ class Agent:
         self.send_schedule.succeeded(at)
 
     def heartbeat(self, at: float) -> None:
+        services = running_services(self.decoys, listening_ports())
+        self.monitors.decoys(at, len(services), len(self.decoys))
+        if self.config.scan_log.exists():
+            self.monitors.alive("port_scan", at)
         arguments = self._auth() | {
             "agent_version": self.config.agent_version,
-            "services": running_services(self.decoys, listening_ports()),
+            "services": services,
             "local_ip": inventory.local_ip(),
         }
+        report = {
+            "monitors": self.monitors.report(at),
+            "images": self.monitors.images(self.config.canary_log.parent / "image"),
+        }
         try:
-            api.call(self.config, "device_heartbeat_v1", arguments)
+            self._send_heartbeat(arguments, report)
         except api.ApiError as error:
             self._failed(self.heartbeat_schedule, at, error)
             return
         self.heartbeat_schedule.succeeded(at)
+
+    def _send_heartbeat(self, arguments: dict, report: dict) -> None:
+        """Version 2 with the monitoring report. Version 1 when the backend
+        is older (404) or refuses the report (400), so the device stays
+        online either way."""
+        try:
+            api.call(self.config, "device_heartbeat_v2", arguments | report)
+        except api.ApiError as error:
+            if not (error.missing or error.malformed):
+                raise
+            if error.malformed:
+                log.error("backend rejected the monitoring report as malformed: %s", error)
+            api.call(self.config, "device_heartbeat_v1", arguments)
 
     def inventory(self, at: float) -> None:
         """Hosts with what they say about themselves, and networks (ADR 0010).
@@ -269,6 +303,7 @@ class Agent:
             log.warning("service discovery search failed: %s", error)
         try:
             hosts = inventory.scan_hosts()
+            self.monitors.alive("inventory", at + 2 * INVENTORY_SECONDS, hosts=len(hosts))
             self._identify()
             arguments = self._auth() | {
                 "hosts": [self.identities.describe(host) for host in hosts],

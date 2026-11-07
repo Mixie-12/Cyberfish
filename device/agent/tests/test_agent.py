@@ -5,7 +5,7 @@ from pathlib import Path
 import pytest
 
 from dekoi_agent import agent as agent_module
-from dekoi_agent import api
+from dekoi_agent import api, monitors
 from dekoi_agent.agent import Agent
 from dekoi_agent.config import Config
 from dekoi_agent.state import State
@@ -173,17 +173,96 @@ def test_backend_outage_keeps_events_and_malformed_batches_are_dropped(
     assert len(backend.called("device_events_v1")) == 2
 
 
-def test_heartbeat_reports_running_decoys(config: Config, backend: FakeBackend) -> None:
+HEARTBEAT_V1 = {
+    "device_id": "device-1",
+    "secret": "a" * 64,
+    "agent_version": "0.1.0",
+    "services": ["http", "ssh"],
+    "local_ip": "192.168.1.20",
+}
+
+
+def test_heartbeat_reports_running_decoys_and_monitors(
+    config: Config, backend: FakeBackend
+) -> None:
+    (config.canary_log.parent / "image").write_text("0.1.0 2026-11-02T04:30:00Z\n")
     agent = Agent(config, State(device_id="device-1", secret="a" * 64), Clock(), FakeListeners())
     agent.tick()
-    (heartbeat,) = backend.called("device_heartbeat_v1")
-    assert heartbeat == {
-        "device_id": "device-1",
-        "secret": "a" * 64,
-        "agent_version": "0.1.0",
-        "services": ["http", "ssh"],
-        "local_ip": "192.168.1.20",
+    (heartbeat,) = backend.called("device_heartbeat_v2")
+    assert heartbeat == HEARTBEAT_V1 | {
+        "monitors": [
+            {"name": "decoys", "state": "starting", "detail": {"decoys": 2}},
+            {"name": "port_scan", "state": "starting"},
+            {"name": "arp_watch", "state": "starting"},
+            {"name": "dhcp_watch", "state": "starting"},
+            {"name": "router_watch", "state": "ok"},
+            {"name": "name_poisoning", "state": "starting"},
+            {"name": "ids", "state": "starting"},
+            {"name": "inventory", "state": "starting"},
+        ],
+        "images": [{"name": "canary", "version": "0.1.0", "updated_at": "2026-11-02T04:30:00Z"}],
     }
+    assert backend.called("device_heartbeat_v1") == []
+
+
+def test_monitors_follow_their_sources(config: Config, backend: FakeBackend) -> None:
+    listeners = FakeListeners()
+    clock = Clock()
+    agent = Agent(config, State(device_id="device-1", secret="a" * 64), clock, listeners)
+    agent.tick()
+    config.scan_log.write_text("")
+    listeners.frames = [b"\x00" * 42]
+    clock.now += 60
+    agent.tick()
+
+    states = {m["name"]: m["state"] for m in backend.called("device_heartbeat_v2")[-1]["monitors"]}
+    assert states == {
+        "decoys": "starting",
+        "port_scan": "ok",
+        "arp_watch": "ok",
+        "dhcp_watch": "ok",
+        "router_watch": "ok",
+        "name_poisoning": "ok",
+        "ids": "starting",
+        "inventory": "ok",
+    }
+
+
+@pytest.mark.parametrize("status", [404, 400])
+def test_heartbeat_falls_back_to_v1(config: Config, backend: FakeBackend, status: int) -> None:
+    """An older backend (404) or a refused report (400) still keeps the
+    device online."""
+    backend.outcomes["device_heartbeat_v2"] = [api.ApiError(status, "no")]
+    agent = Agent(config, State(device_id="device-1", secret="a" * 64), Clock(), FakeListeners())
+    agent.tick()
+    assert backend.called("device_heartbeat_v1") == [HEARTBEAT_V1]
+    assert agent.heartbeat_schedule.delay == agent_module.HEARTBEAT_SECONDS
+
+
+def test_heartbeat_outage_is_retried_later(config: Config, backend: FakeBackend) -> None:
+    backend.outcomes["device_heartbeat_v2"] = [api.ApiError(503, "down")]
+    agent = Agent(config, State(device_id="device-1", secret="a" * 64), Clock(), FakeListeners())
+    agent.tick()
+    assert backend.called("device_heartbeat_v1") == []
+    assert agent.heartbeat_schedule.delay > agent_module.HEARTBEAT_SECONDS
+
+
+def test_monitors_start_again_when_the_device_registers(
+    config: Config, backend: FakeBackend
+) -> None:
+    """A card claimed long after it first started does not report its
+    probes and inventory as failed before they have run."""
+    clock = Clock()
+    backend.outcomes["device_register_v1"] = [api.ApiError(403, "refused"), "device-1"]
+    agent = Agent(config, State(), clock, FakeListeners())
+    agent.tick()
+    clock.now += monitors.STARTUP_SECONDS + 60
+    agent.tick()
+    agent.tick()
+
+    (heartbeat,) = backend.called("device_heartbeat_v2")
+    states = {m["name"]: m["state"] for m in heartbeat["monitors"]}
+    assert states["inventory"] == states["dhcp_watch"] == states["name_poisoning"] == "starting"
 
 
 def test_network_findings_are_delivered(config: Config, backend: FakeBackend) -> None:

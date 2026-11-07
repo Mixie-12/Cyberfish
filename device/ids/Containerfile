@@ -6,16 +6,24 @@ RUN apt-get update \
  && apt-get install -y --no-install-recommends suricata suricata-update ca-certificates \
  && rm -rf /var/lib/apt/lists/*
 COPY ids/suricata.yaml ids/disable.conf /etc/dekoi/
+# The fetch date is written in the same step as the rules, so it stays true
+# when a later build takes this step from the cache.
 RUN suricata-update --no-reload --suricata-conf /etc/dekoi/suricata.yaml --disable-conf /etc/dekoi/disable.conf \
- && suricata -T -c /etc/dekoi/suricata.yaml -S /var/lib/suricata/rules/suricata.rules
+ && suricata -T -c /etc/dekoi/suricata.yaml -S /var/lib/suricata/rules/suricata.rules \
+ && date -u +%Y-%m-%d > /var/lib/suricata/rules/ruleset-date
 
 FROM docker.io/library/debian@sha256:a72b4433de1cf7d6bae0c4cee74d0547f58601a643b3375f070c51600d63b6b2
 RUN apt-get update \
  && apt-get install -y --no-install-recommends suricata \
  && rm -rf /var/lib/apt/lists/* \
  && useradd --system --uid 10003 --no-create-home --shell /usr/sbin/nologin ids
-COPY --from=rules /var/lib/suricata/rules/suricata.rules /var/lib/suricata/rules/suricata.rules
+COPY --from=rules /var/lib/suricata/rules/suricata.rules /var/lib/suricata/rules/ruleset-date /var/lib/suricata/rules/
 COPY ids/suricata.yaml /etc/dekoi/suricata.yaml
 COPY --chmod=0755 ids/start.sh /usr/local/bin/dekoi-ids
+# Release version (the same build argument for every image) and build time,
+# reported in the heartbeat (ADR 0013).
+ARG DEKOI_AGENT_VERSION=dev
+RUN install -d /usr/share/dekoi \
+ && printf '%s %s\n' "$DEKOI_AGENT_VERSION" "$(date -u +%Y-%m-%dT%H:%M:%SZ)" > /usr/share/dekoi/image
 USER 10003
 ENTRYPOINT ["/usr/local/bin/dekoi-ids"]

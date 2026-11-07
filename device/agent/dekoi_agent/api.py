@@ -25,6 +25,11 @@ class ApiError(Exception):
     def refused(self) -> bool:
         return self.status in (401, 403)
 
+    @property
+    def missing(self) -> bool:
+        """The backend has no such function: it is older than this agent."""
+        return self.status == 404
+
 
 def call(config: Config, function: str, arguments: dict) -> object:
     request = urllib.request.Request(  # noqa: S310 - URL scheme is checked in Config
