@@ -114,7 +114,8 @@ records why.
   repositories; Grype, OSV-Scanner and advisors; monthly key rotation;
   expiry issues; nightly encrypted backups; repository settings as code.
 - First-run tour, Learn topics for every event kind, home-screen widget,
-  motion and haptics (`docs/design.md`, "Motion").
+  motion and haptics (`docs/design.md`, "Motion"); the alarm sound of a
+  very likely attack (ADR 0025).
 
 Verified by CI on `main` (`9dc0efd`, `b69caca`): pgTAP 19 files, 417 tests,
 advisors clean; `notify` 18 tests; agent 212 tests, ruff clean; app 158,

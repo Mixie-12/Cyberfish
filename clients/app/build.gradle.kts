@@ -67,6 +67,32 @@ kotlin {
     }
 }
 
+// The alarm sound (ADR 0025) is the owner's file in SFX/, copied at build
+// time so that there is one copy of it. The Variant API registers the copy
+// as a generated resource directory of each variant and runs the task before
+// resources merge; a plain source directory would not carry that dependency.
+abstract class AlarmSound : DefaultTask() {
+    @get:InputFile
+    @get:PathSensitive(PathSensitivity.NONE)
+    abstract val sound: RegularFileProperty
+
+    @get:OutputDirectory
+    abstract val res: DirectoryProperty
+
+    @TaskAction
+    fun copy() {
+        sound.get().asFile.copyTo(res.file("raw/alarm_critical.mp3").get().asFile, overwrite = true)
+    }
+}
+
+androidComponents.onVariants { variant ->
+    val alarmSound =
+        tasks.register<AlarmSound>("${variant.name}AlarmSound") {
+            sound = rootDir.resolve("../SFX/CyberFish Error Sound.mp3")
+        }
+    variant.sources.res?.addGeneratedSourceDirectory(alarmSound, AlarmSound::res)
+}
+
 tasks.matching { it.name == "preReleaseBuild" }.configureEach {
     val missing = settings.filterValues { it.isBlank() }.keys
     doFirst {

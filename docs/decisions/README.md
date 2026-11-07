@@ -30,3 +30,4 @@ them.
 | 0022 | [Keys in CI, image signing in Cloud KMS, automatic rotation](0022-ci-keys-and-signing.md) | accepted |
 | 0023 | [A home plan from the rooms the owner sets](0023-home-plan-from-rooms.md) | accepted |
 | 0024 | [Fake credentials in the bait files](0024-bait-credentials.md) | accepted |
+| 0025 | [A sound with the alarm of a very likely attack](0025-alarm-sound.md) | accepted |

@@ -82,7 +82,9 @@ dot, grey glyph and word, a lighter title. Known devices are dimmed with
 incident that is very likely an attack opens with the alarm hero inside a
 HUD frame (ADR 0020): the source's kind tile at the centre of rings that
 pulse outwards in the critical colour for 3 s, then a steady glow (static
-without animations). Everything else opens with a still, unboxed header:
+without animations), and the alarm sound once per opening (ADR 0025): not
+on silent or vibrate, not when the owner turned it off in Settings.
+Everything else opens with a still, unboxed header:
 warnings never move, info stays grey. Both carry glyph and severity word
 in the severity colour, title, one consequence sentence, day, count and
 time span. (2) "Is this a real threat?" from `threat()` in `Guidance.kt`:
@@ -201,7 +203,8 @@ does not report them.
 
 **Settings.** Inset grouped list: Account (email, Sign out); Your DeKoi
 devices; Add DeKoi; Notifications (channel state, opens system channel
-settings); Privacy; About (version, open-source licences); Delete account
+settings); the alarm sound switch (on by default, kept on the phone);
+Privacy; About (version, open-source licences); Delete account
 last, in red, with confirmation.
 
 **Sign-in and onboarding.** Brand hero with a slowly floating koi mark (6 s,

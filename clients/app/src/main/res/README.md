@@ -64,3 +64,16 @@ Both are under the SIL Open Font License 1.1. Their licence texts are
 `raw/licence_ofl_michroma.txt` and `raw/licence_ofl_jetbrains_mono.txt`
 (the downloads' `OFL.txt`), for the licences screen; `raw/keep.xml` keeps
 them in release builds. ExtraBold is for the `><>` mark only.
+
+## Sound
+
+`raw/alarm_critical.mp3`, the alarm of a very likely attack (ADR 0025), is
+not in this directory: the `<variant>AlarmSound` task in
+`clients/app/build.gradle.kts` copies it unchanged from
+`SFX/CyberFish Error Sound.mp3` into a generated resource directory, so the
+repository holds one copy.
+
+- Source: the owner's own sound, added to `SFX/` by the owner (MP3,
+  48 kHz, 192 kbit/s, 2.0 s)
+- Licence: CyberFish's own, proprietary like the rest of the repository; no
+  notice on the licences screen
