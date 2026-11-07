@@ -51,34 +51,44 @@ replaces the Refresh button.
 
 **Alerts.** A calm timeline of incidents (ADR 0013), grouped by
 `incidents()` in `Incidents.kt`: events from one DeKoi and one source, each
-within 30 minutes of the one before. Filter chips: All, Unread, and one
-Severity chip with a menu; a removable "From this device", decoy or day chip
-from a cross-link. Sticky day headers. A vertical line with one node per
-incident (severity glyph on its container colour, grey once seen) and one
-card: the lead event's title (the most serious event), "14 events ·
-15:13–15:20", chevron. Seen incidents are grey and lighter; known devices
-are dimmed with "Known device". Entries use `animateItem()`.
+within 30 minutes of the one before; the most serious event leads and sets
+the severity. In the app an incident is an "alert" and its events are
+"times"; "event" appears only in Technical details. Filter chips: All,
+Unread, and one "How urgent" chip with a menu; a removable "From this
+device", decoy or day chip from a cross-link. Sticky day headers. No
+cards: a hairline runs down the side with one dot per incident, and each
+entry is the severity glyph and word, the lead event's title and "14 times
+· 15:13–15:20", with a chevron. Unseen incidents are
+bright: the dot glows, and the dot, glyph and word carry the severity
+colour, nothing else does. Seen incidents are grey and quiet: a hollow grey
+dot, grey glyph and word, a lighter title. Known devices are dimmed with
+"Known device". Entries use `animateItem()`.
 
-**Alert detail.** One incident; opening it marks its events seen and clears
-their notifications. (1) A very likely attack of critical severity opens
-with the alarm hero: the source's kind tile at the centre of rings that
+**Alert detail.** One incident; opening it marks its events seen
+(`acknowledge_events_v1`) and clears their notifications. (1) A critical
+incident that is very likely an attack opens with the alarm hero inside a
+HUD frame (ADR 0020): the source's kind tile at the centre of rings that
 pulse outwards in the critical colour for 3 s, then a steady glow (static
-without animations). Everything else opens with a still band in the
-severity's container colour. Both carry glyph, severity word, title, one
-consequence sentence, day, count and time span. (2) "Is this a real
-threat?" from `threat()` in `Guidance.kt`: "Very likely an attack" (a
-sign-in attempt; `arp_spoof`, `rogue_dhcp`, `name_poisoning`), "Possibly an
-attack" (scans, decoy connections, `rogue_router`, IDS alerts), "Probably
-harmless" (a known device, DeKoi's own status), each with one plain
-sentence. (3) "Do this now" for a very likely attack, else "What to do":
-the numbered steps as a checklist the owner can tick (on the phone only),
-inline "Copy hardware address"; then "I know this device", outlined, with a
-confirmation for `arp_spoof`, `rogue_dhcp`, `rogue_router`,
-`name_poisoning`. (4) What happened: explanation, specifics in plain words
-(decoys, well-known openings, a claimed router address) and the events on a
-small timeline. (5) Which device (kind tile, name, "looks like", maker and
-model, address, network, online status; opens Device detail). (6)
-Technical details collapsed (`animateContentSize`, monospace, copyable).
+without animations). Everything else opens with a still, unboxed header:
+warnings never move, info stays grey. Both carry glyph and severity word
+in the severity colour, title, one consequence sentence, day, count and
+time span. (2) "Is this a real threat?" from `threat()` in `Guidance.kt`:
+"Very likely an attack" (a sign-in attempt, an opened bait file;
+`arp_spoof`, `rogue_dhcp`, `name_poisoning`, `dns_hijack`, `evil_twin`),
+"Possibly an attack" (scans, decoy connections, `rogue_router`, IDS alerts,
+kinds the app does not know yet), "Probably harmless" (a known device,
+DeKoi's own status), each with one plain sentence. (3) "Do this now" for
+the alarm, else "What to do": the numbered steps as a checklist the owner
+can tick (on the phone only, not stored), one action per step; a step that
+names the hardware address has it below, copyable. Then "Mark as known",
+outlined (undone with "Remove from known devices"), with a confirmation
+when the incident includes `arp_spoof`, `rogue_dhcp`,
+`rogue_router` or `name_poisoning`. (4) What happened: explanation,
+specifics in plain words (decoys, well-known openings, a claimed router
+address) and the events on a small timeline, the first eight, then "Show
+each time (14)". Technical details give "First time" and "Last time". (5) Which device (kind tile, name, "looks like", maker and model,
+address, network, online status; opens Device detail). (6) Technical
+details collapsed (`animateContentSize`, monospace, copyable).
 
 **Network.** Header "38 devices · 3 new this week · 1 needs attention" and a
 "Networks" row. Map | List segmented control, choice saved; List is the
@@ -215,16 +225,17 @@ animation scale is 0):
 
 Template: title naming the device kind; severity and one consequence
 sentence; whether it is a real threat; numbered steps (find, disconnect by
-kind, secure); "I know this device"; what happened (counts and times); which
-device; technical details collapsed. Disconnect step by kind:
+kind, secure); "Mark as known"; what happened (counts and times); which
+device; technical details collapsed. Disconnect steps by kind, one action
+per step (a slash separates steps):
 
-| Kinds | Step |
-| ----- | ---- |
-| phone, tablet, wearable | Ask who in your home owns it. On it, turn off Wi-Fi. |
+| Kinds | Steps |
+| ----- | ----- |
+| phone, tablet, wearable | Ask who in your home owns it. / On it, turn off Wi-Fi. |
 | computer | Unplug its network cable or turn off its Wi-Fi. Leave it switched on. |
 | tv, media_player, speaker, game_console, printer | Unplug it from power. |
-| camera, smart_home | Unplug it or take out its batteries. Reset it and update its software before using it again. |
-| storage, server | Shut it down from its app or power button, then unplug its network cable, so no files are lost. |
+| camera, smart_home | Unplug it or take out its batteries. / Reset it and update its software before using it again. |
+| storage, server | Shut it down from its app or power button, so no files are lost. / Then unplug its network cable. |
 | router, access_point, switch | If you have more than one, unplug the extra ones one at a time. If this is the box from your internet provider, restart it instead. |
 | unknown | If no one recognises it, block it in your router's app or settings page by its hardware address [Copy]. |
 
