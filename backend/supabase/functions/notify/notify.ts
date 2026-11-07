@@ -14,7 +14,10 @@ export interface ServiceAccount {
 }
 
 export interface Config {
+  // The secret the events webhook sends and, while it is being rotated, the
+  // one it sent before (docs/runbooks/rotate-keys.md); empty otherwise.
   notifySecret: string;
+  previousNotifySecret: string;
   supabaseUrl: string;
   serviceRoleKey: string;
   serviceAccount: ServiceAccount;
@@ -42,6 +45,8 @@ const CHANNELS: Record<string, { channel: string; priority: string; prefix: stri
 };
 
 const FCM_SCOPE = "https://www.googleapis.com/auth/firebase.messaging";
+// The deploy generates 64 hex characters; anything much shorter is a mistake.
+const MIN_SECRET_LENGTH = 32;
 const ALERT_BODY = "Tap to see what happened and what to do.";
 
 // The source device as the subject of a title. Keys are the host kinds of
@@ -213,6 +218,11 @@ function isUnregistered(error: unknown): boolean {
 }
 
 export function createHandler(config: Config, fetchFn: typeof fetch = fetch) {
+  const secrets = [config.notifySecret, config.previousNotifySecret].filter((s) => s !== "");
+  if (config.notifySecret === "" || secrets.some((s) => s.length < MIN_SECRET_LENGTH)) {
+    throw new Error(`notify secrets must be at least ${MIN_SECRET_LENGTH} characters`);
+  }
+
   const rpc = async (name: string, args: object): Promise<Response> => {
     const response = await fetchFn(`${config.supabaseUrl}/rest/v1/rpc/${name}`, {
       method: "POST",
@@ -230,9 +240,9 @@ export function createHandler(config: Config, fetchFn: typeof fetch = fetch) {
   return async (request: Request): Promise<Response> => {
     if (request.method !== "POST") return new Response(null, { status: 405 });
     const given = request.headers.get("x-notify-secret") ?? "";
-    if (!(await sameSecret(given, config.notifySecret))) {
-      return new Response(null, { status: 401 });
-    }
+    // Every secret is compared, so the time taken does not tell which matched.
+    const matches = await Promise.all(secrets.map((s) => sameSecret(given, s)));
+    if (!matches.includes(true)) return new Response(null, { status: 401 });
     const eventId = await readEventId(request);
     if (eventId === null) return new Response(null, { status: 400 });
 

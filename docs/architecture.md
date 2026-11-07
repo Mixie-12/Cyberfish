@@ -134,3 +134,5 @@ secret in Vault). `notify` asks `notification_targets_v1(event_id)` which
 phones to notify and with which template, and sends FCM HTTP v1 messages
 whose data payload is `event_id` only. The rules are in that function
 (ADR 0007).
+`notify` accepts the secret in `NOTIFY_SECRET` and, while it is rotated,
+the one in `NOTIFY_SECRET_PREVIOUS` (`docs/runbooks/rotate-keys.md`).

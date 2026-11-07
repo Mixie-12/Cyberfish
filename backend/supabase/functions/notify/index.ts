@@ -10,6 +10,8 @@ function required(name: string): string {
 
 Deno.serve(createHandler({
   notifySecret: required("NOTIFY_SECRET"),
+  // Set only while the secret is rotated (docs/runbooks/rotate-keys.md).
+  previousNotifySecret: Deno.env.get("NOTIFY_SECRET_PREVIOUS") ?? "",
   supabaseUrl: required("SUPABASE_URL"),
   serviceRoleKey: required("SUPABASE_SERVICE_ROLE_KEY"),
   serviceAccount: parseServiceAccount(required("FCM_SERVICE_ACCOUNT")),
