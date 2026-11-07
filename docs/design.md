@@ -186,12 +186,12 @@ static without animations), tagline, "Continue with Google", inline errors.
 The tour (four pages over the horizon) opens once per tour version after
 sign-in, so a changed tour reaches existing owners once; its last page
 offers "Add a DeKoi" without one, "Done" otherwise; Settings keeps "Take the
-tour". Add DeKoi: three-step card (prepare the card, scan, plug in); "Scan the code"
-primary, "Type the code" secondary with a 26-character input in groups of
-four. After a claim, a vertical timeline (linked, first start, online,
-watching; the same `SetupTimeline` as on Your DeKoi) ticks off as data arrives, polling every 15 s while visible; help
-after 20 min; on success the ring completes, then the notification
-permission request.
+tour". Add DeKoi: three-step card (prepare the card, scan, plug in); "Scan
+the code" primary, "Type the code" secondary with a 26-character input in
+groups of four. After a claim, a vertical timeline (linked, first start,
+online, watching; `SetupTimeline`, the same as on Your DeKoi) ticks off as
+data arrives, polling every 15 s while visible; help after 20 min; on
+success the ring completes, then the notification permission request.
 
 **States.** Loading: skeletons shaped like the content (no shimmer without
 animations). Empty: glyph, one sentence, next step. Error: inline banner
