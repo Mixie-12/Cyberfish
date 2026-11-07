@@ -17,6 +17,7 @@ import androidx.compose.material3.darkColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -26,14 +27,20 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontSynthesis
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import no.cyberfish.dekoi.Protection
+import no.cyberfish.dekoi.R
 import no.cyberfish.dekoi.Severity
 import no.cyberfish.dekoi.shared.DesignTokens
+import java.util.Locale
 
 /** A colour, a quiet background for it, and the text colour on that background. */
 @Immutable
@@ -87,26 +94,90 @@ fun protectionColor(
 fun <T> expandSpring(visibilityThreshold: T? = null): SpringSpec<T> =
     spring(Spring.DampingRatioNoBouncy, Spring.StiffnessMediumLow, visibilityThreshold)
 
-/** Digits of equal width, so counts and times do not jitter when they change. */
+/**
+ * Digits of equal width, so counts and times do not jitter when they
+ * change. JetBrains Mono's digits are equal by design; Michroma has no
+ * tabular figures, and its digits differ by at most 5 %.
+ */
 fun TextStyle.tabular(): TextStyle = copy(fontFeatureSettings = "tnum")
 
-private val addressStyle = TextStyle(fontFamily = FontFamily.Monospace, fontSize = 15.sp, lineHeight = 21.sp)
+/** Headings: wordmarks, titles and section numbers. One weight, wide. */
+internal val michroma = FontFamily(Font(R.font.michroma_regular))
 
-/** Addresses, hardware addresses and other technical values. */
-val Typography.address: TextStyle get() = addressStyle
+/** Everything else. Only these two weights, so no text falls back to the logo's ExtraBold. */
+private val jetBrainsMono = FontFamily(Font(R.font.jetbrains_mono_regular), Font(R.font.jetbrains_mono_medium, FontWeight.Medium))
+
+/** The `><>` mark's face, and nothing else (UX/UI/CyberFish-aesthetic.md, "Logo"). */
+internal val markFont = FontFamily(Font(R.font.jetbrains_mono_extrabold, FontWeight.ExtraBold))
+
+// Michroma is wide: at 20 sp the longest screen title, NETWORKS, takes 309
+// of the 320 dp a 360 dp phone has at 200 % font scale. Headings are white
+// (the guide); callers upper-case them with headingCase(). No synthesised
+// bold or italic: the bundled weights are the only ones.
+private fun headingStyle(
+    size: Int,
+    lineHeight: Int,
+) = TextStyle(
+    fontFamily = michroma,
+    fontSize = size.sp,
+    lineHeight = lineHeight.sp,
+    letterSpacing = HEADING_TRACKING.em,
+    color = Color(DesignTokens.WHITE),
+    fontSynthesis = FontSynthesis.None,
+)
+
+private fun bodyStyle(
+    size: Int,
+    lineHeight: Int,
+    weight: FontWeight = FontWeight.Normal,
+) = TextStyle(
+    fontFamily = jetBrainsMono,
+    fontWeight = weight,
+    fontSize = size.sp,
+    lineHeight = lineHeight.sp,
+    fontSynthesis = FontSynthesis.None,
+)
+
+private const val HEADING_TRACKING = 0.02f
+private const val LABEL_TRACKING = 0.13f
 
 private val typography =
     Typography(
-        displayMedium = TextStyle(fontSize = 44.sp, lineHeight = 48.sp, fontWeight = FontWeight.SemiBold).tabular(),
-        displaySmall = TextStyle(fontSize = 34.sp, lineHeight = 40.sp, fontWeight = FontWeight.Bold),
-        headlineMedium = TextStyle(fontSize = 28.sp, lineHeight = 34.sp, fontWeight = FontWeight.SemiBold),
-        headlineSmall = TextStyle(fontSize = 22.sp, lineHeight = 28.sp, fontWeight = FontWeight.SemiBold),
-        titleMedium = TextStyle(fontSize = 17.sp, lineHeight = 22.sp, fontWeight = FontWeight.SemiBold),
-        bodyLarge = TextStyle(fontSize = 17.sp, lineHeight = 24.sp),
-        bodyMedium = TextStyle(fontSize = 15.sp, lineHeight = 21.sp),
-        labelLarge = TextStyle(fontSize = 15.sp, lineHeight = 20.sp, fontWeight = FontWeight.SemiBold),
-        labelMedium = TextStyle(fontSize = 13.sp, lineHeight = 18.sp, fontWeight = FontWeight.Medium),
+        displayLarge = headingStyle(40, 48).tabular(),
+        displayMedium = headingStyle(32, 40).tabular(),
+        displaySmall = headingStyle(20, 28),
+        headlineLarge = headingStyle(22, 30),
+        headlineMedium = headingStyle(18, 26),
+        headlineSmall = headingStyle(16, 24),
+        titleLarge = headingStyle(18, 26),
+        titleMedium = headingStyle(15, 22),
+        titleSmall = headingStyle(13, 20),
+        bodyLarge = bodyStyle(16, 24),
+        bodyMedium = bodyStyle(14, 20),
+        bodySmall = bodyStyle(12, 18),
+        labelLarge = bodyStyle(14, 20, FontWeight.Medium),
+        labelMedium = bodyStyle(12, 16, FontWeight.Medium),
+        labelSmall = bodyStyle(11, 16, FontWeight.Medium),
     )
+
+private val labelStyle = bodyStyle(12, 16, FontWeight.Medium).copy(letterSpacing = LABEL_TRACKING.em)
+
+/** Labels and HUD text such as "01 / NETWORK": small and widely tracked; upper-case them with [headingCase]. */
+val Typography.label: TextStyle get() = labelStyle
+
+/** Addresses, hardware addresses and other technical values: body text, which is monospace. */
+val Typography.address: TextStyle get() = bodyLarge
+
+/**
+ * Upper case for headings and labels, keeping the product name as it is
+ * always written: "YOUR DeKoi".
+ */
+@Composable
+@ReadOnlyComposable
+fun String.headingCase(): String {
+    val name = stringResource(R.string.app_name)
+    return split(name).joinToString(name) { it.uppercase(Locale.getDefault()) }
+}
 
 private val shapes =
     Shapes(
