@@ -5,9 +5,9 @@ on:
     branches: [main]
     # Path filters do not apply to tags: every v* tag builds the installer.
     tags: ["v*"]
-    paths: [clients/**, device/image.json, device/cloud-init/**, device/host/**, .github/workflows/clients.yml]
+    paths: [clients/**, device/image.json, device/installer.json, device/cloud-init/**, device/host/**, .github/workflows/clients.yml]
   pull_request:
-    paths: [clients/**, device/image.json, device/cloud-init/**, device/host/**, .github/workflows/clients.yml]
+    paths: [clients/**, device/image.json, device/installer.json, device/cloud-init/**, device/host/**, .github/workflows/clients.yml]
 
 permissions: {}
 
