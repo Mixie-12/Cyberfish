@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Steps and labels for alert guidance (Guidance.kt). Plain words, calm, one action per step. -->
+<resources>
+    <string name="severity_critical">Needs your attention now</string>
+    <string name="severity_warning">Worth a look</string>
+    <string name="severity_info">For your information</string>
+
+    <string name="step_find_personal">Find the device. It looks like a phone, tablet or watch, so check the ones people in your home and your guests carry.</string>
+    <string name="step_find_computer">Find the device. It looks like a computer, so check the laptops and desktops in your home.</string>
+    <string name="step_find_entertainment">Find the device. It looks like a TV, streaming box, speaker or games console, so check your living room and bedrooms.</string>
+    <string name="step_find_office">Find the device. It looks like a printer or storage box, so check where you keep office equipment.</string>
+    <string name="step_find_smart_home">Find the device. It looks like a camera or a smart home device, such as a plug, bulb, thermostat or doorbell.</string>
+    <string name="step_find_network_gear">Find the device. It looks like network equipment, such as a router, Wi-Fi extender or network switch.</string>
+    <string name="step_find_unknown">Find the device. Your router’s app or web page lists connected devices with their hardware address, shown under Technical details.</string>
+
+    <string name="step_disconnect_wifi">If you don’t recognise it, turn off its Wi-Fi, or remove and block it in your router’s app.</string>
+    <string name="step_disconnect_power">If you don’t recognise it, unplug its power. If it has a network cable, unplug that too.</string>
+    <string name="step_disconnect_network_gear">If you don’t recognise it, unplug its network cable from your router. If it is your own router, restart it instead.</string>
+    <string name="step_disconnect_unknown">If you don’t recognise it, block its hardware address in your router’s app, or unplug it once you have found it.</string>
+
+    <string name="step_change_wifi_password">Change your Wi-Fi password. Devices that don’t get the new password can no longer join.</string>
+    <string name="step_change_account_passwords">Change the passwords of your important accounts, such as email and banking, from a device you trust.</string>
+    <string name="step_mark_known">If it is your own device running network tools, mark it as known so it no longer alerts you.</string>
+    <string name="step_restart_router">Restart your router, so every device gets its network settings from the router again.</string>
+    <string name="step_check_power">Check that your DeKoi has power. Its light should be on.</string>
+    <string name="step_check_cable">Check that its network cable is plugged in at both ends.</string>
+    <string name="step_wait_reconnect">Wait a few minutes. It reconnects by itself and tells you when it is back.</string>
+
+    <string name="kind_router">Router</string>
+    <string name="kind_switch">Network switch</string>
+    <string name="kind_access_point">Wi-Fi access point</string>
+    <string name="kind_computer">Computer</string>
+    <string name="kind_phone">Phone</string>
+    <string name="kind_tablet">Tablet</string>
+    <string name="kind_tv">TV</string>
+    <string name="kind_media_player">Streaming box</string>
+    <string name="kind_speaker">Speaker</string>
+    <string name="kind_game_console">Games console</string>
+    <string name="kind_printer">Printer</string>
+    <string name="kind_camera">Camera</string>
+    <string name="kind_storage">Storage box</string>
+    <string name="kind_smart_home">Smart home device</string>
+    <string name="kind_wearable">Watch or wearable</string>
+    <string name="kind_server">Server</string>
+    <string name="kind_unknown">Unknown device</string>
+</resources>
