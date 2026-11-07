@@ -98,6 +98,7 @@ import no.cyberfish.dekoi.ui.components.Screen
 import no.cyberfish.dekoi.ui.components.severityGlyph
 import no.cyberfish.dekoi.ui.learn.learnTopicFor
 import no.cyberfish.dekoi.ui.motion.CriticalAlertHaptic
+import no.cyberfish.dekoi.ui.motion.sharedSeverity
 import java.time.Duration
 import java.time.Instant
 import java.time.ZoneId
@@ -157,8 +158,9 @@ fun AlertDetailScreen(
     val clock = rememberClock(zone)
     val gateways = data.networks.filter { it.deviceId == incident.lead.deviceId }.mapNotNullTo(mutableSetOf()) { it.gateway }
     CriticalAlertHaptic(alarm)
+    val detail = Route.AlertDetail(eventId)
     Screen(title = null, onBack = onBack) {
-        item { if (alarm) AlarmHero(incident, host, now, clock) else Band(incident, host, now, clock) }
+        item { if (alarm) AlarmHero(incident, host, now, clock, detail) else Band(incident, host, now, clock, detail) }
         item { ThreatCard(threat) }
         item { Steps(incident, host, urgent = alarm) }
         // Every incident from a device on the network, a new one included, offers to mark it as known.
@@ -195,9 +197,10 @@ private fun Band(
     host: NetworkHost?,
     now: Instant,
     clock: DateTimeFormatter,
+    detail: Route,
 ) {
     Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(Dimens.spaceS)) {
-        SeverityLine(incident.severity)
+        SeverityLine(incident.severity, detail)
         Headline(incident, host, summary(incident, now, clock), TextAlign.Start)
     }
 }
@@ -214,6 +217,7 @@ private fun AlarmHero(
     host: NetworkHost?,
     now: Instant,
     clock: DateTimeFormatter,
+    detail: Route,
 ) {
     val critical = LocalSeverityColors.current.critical.color
     // Once per visit: scrolling the hero away and back does not sound it again.
@@ -233,7 +237,7 @@ private fun AlarmHero(
             Box(Modifier.size(ALARM_AREA).drawBehind { drawAlarm(progress.value, critical) }, contentAlignment = Alignment.Center) {
                 KindTile(host?.kind ?: HostKind.UNKNOWN, hero = true, contentColor = critical)
             }
-            SeverityLine(Severity.CRITICAL)
+            SeverityLine(Severity.CRITICAL, detail)
             Headline(incident, host, summary(incident, now, clock), TextAlign.Center)
         }
     }
@@ -264,11 +268,21 @@ private fun DrawScope.drawAlarm(
     drawCircle(Brush.radialGradient(listOf(color.copy(alpha = glow), Color.Transparent), center, outer), outer)
 }
 
-/** The severity glyph and its word in capitals, in the severity's colour. */
+/**
+ * The severity glyph and its word in capitals, in the severity's colour.
+ * The severity of the row or card that opened [detail] moves into it.
+ */
 @Composable
-private fun SeverityLine(severity: Severity) {
+private fun SeverityLine(
+    severity: Severity,
+    detail: Route,
+) {
     val color = LocalSeverityColors.current.of(severity).color
-    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Dimens.spaceS)) {
+    Row(
+        Modifier.sharedSeverity(detail),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(Dimens.spaceS),
+    ) {
         Icon(painterResource(severityGlyph(severity)), contentDescription = null, tint = color)
         Text(
             stringResource(severityLabel(severity)).headingCase(),

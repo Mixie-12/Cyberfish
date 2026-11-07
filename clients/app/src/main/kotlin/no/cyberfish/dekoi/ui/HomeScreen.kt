@@ -2,10 +2,8 @@ package no.cyberfish.dekoi.ui
 
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
-import androidx.compose.animation.Crossfade
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.animateContentSize
-import androidx.compose.animation.core.FiniteAnimationSpec
 import androidx.compose.animation.core.snap
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.border
@@ -91,7 +89,9 @@ import no.cyberfish.dekoi.ui.components.StatTile
 import no.cyberfish.dekoi.ui.components.StatusRing
 import no.cyberfish.dekoi.ui.components.kindIcon
 import no.cyberfish.dekoi.ui.components.severityGlyph
+import no.cyberfish.dekoi.ui.motion.AnimatedStatus
 import no.cyberfish.dekoi.ui.motion.rememberHaptics
+import no.cyberfish.dekoi.ui.motion.sharedSeverity
 import no.cyberfish.dekoi.ui.onboarding.Welcome
 import no.cyberfish.dekoi.watchList
 import java.time.Instant
@@ -186,7 +186,6 @@ private fun StatusHero(
 ) {
     val color = protectionColor(state, highest)
     val still = LocalReduceMotion.current
-    val change: FiniteAnimationSpec<Float> = if (still) snap() else tween(CHANGE_MS)
     val glow by animateColorAsState(color.copy(alpha = GLOW_ALPHA), if (still) snap() else tween(CHANGE_MS), label = "glow")
     Column(
         Modifier.fillMaxWidth().padding(vertical = Dimens.spaceL),
@@ -201,11 +200,10 @@ private fun StatusHero(
             },
             drawIn = drawIn,
         )
-        Crossfade(
+        AnimatedStatus(
             state,
             Modifier.semantics(mergeDescendants = true) { liveRegion = LiveRegionMode.Polite },
-            animationSpec = change,
-            label = "status",
+            contentAlignment = Alignment.TopCenter,
         ) { shown ->
             val (title, body) = statusText(shown)
             Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(Dimens.spaceS)) {
@@ -322,17 +320,24 @@ private fun NeedsAttention(
     val resize = if (LocalReduceMotion.current) snap() else expandSpring<IntSize>()
     Section(number, stringResource(R.string.home_needs_attention), modifier.animateContentSize(resize)) {
         events.forEach { event ->
-            AttentionCard(event, data.hostFor(event.srcMac), now) { onNavigate(Route.AlertDetail(event.id)) }
+            val detail = Route.AlertDetail(event.id)
+            AttentionCard(event, data.hostFor(event.srcMac), now, detail) { onNavigate(detail) }
         }
     }
 }
 
-/** A quiet card with a hairline edge, the one kind of box on Home: each is something to act on. */
+/**
+ * A quiet card with a hairline edge, the one kind of box on Home: each is
+ * something to act on. Its severity chip moves into the hero of [detail].
+ * Only here: Latest activity may show the same alert, and a screen has one
+ * shared element per route.
+ */
 @Composable
 private fun AttentionCard(
     event: Event,
     host: NetworkHost?,
     now: Instant,
+    detail: Route,
     onClick: () -> Unit,
 ) {
     val shape = MaterialTheme.shapes.large
@@ -351,7 +356,7 @@ private fun AttentionCard(
         verticalArrangement = Arrangement.spacedBy(Dimens.spaceS),
     ) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Dimens.spaceS)) {
-            SeverityChip(event.severity)
+            SeverityChip(event.severity, Modifier.sharedSeverity(detail))
             Text(
                 occurrence,
                 style = MaterialTheme.typography.labelMedium.tabular(),
