@@ -196,6 +196,7 @@ def test_ssdp_announcements_and_search_answers() -> None:
     assert parse_frame(frame)[2] == [
         ("upnp", "urn:schemas-upnp-org:device:MediaRenderer:1"),
         ("upnp", "Linux/4.4 UPnP/1.0 Sonos/77.4 (ZPS9)"),
+        ("location", "http://192.168.1.50:1400/xml/device_description.xml"),
     ]
     answer = (
         b"HTTP/1.1 200 OK\r\nST: urn:dial-multiscreen-org:service:dial:1\r\nUSN: uuid:1\r\n\r\n"

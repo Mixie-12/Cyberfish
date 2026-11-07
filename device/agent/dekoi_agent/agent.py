@@ -6,7 +6,7 @@ import subprocess
 import time
 from collections.abc import Callable
 
-from . import api, identify, inventory, lan
+from . import api, dns_check, health, identify, inventory, lan, upnp
 from .config import Config
 from .decoys import listening_ports, load_decoys, running_services
 from .detect import Collapser, ScanDetector
@@ -19,6 +19,8 @@ BATCH_SIZE = 200
 HEARTBEAT_SECONDS = 60
 INVENTORY_SECONDS = 15 * 60
 PROBE_SECONDS = 15 * 60
+MEASURE_SECONDS = 60
+HEALTH_SECONDS = 60 * 60
 REGISTER_SECONDS = 30
 MAX_BACKOFF_SECONDS = 5 * 60
 REMOVED_BACKOFF_SECONDS = 60 * 60
@@ -70,6 +72,12 @@ class Agent:
         self.heartbeat_schedule = Schedule(HEARTBEAT_SECONDS)
         self.inventory_schedule = Schedule(INVENTORY_SECONDS)
         self.probe_schedule = Schedule(PROBE_SECONDS)
+        self.health = health.Health(*api.backend_address(config))
+        self.integrity = dns_check.Integrity()
+        self.gateway_description: str | None = None
+        self.speed_test_wanted = False
+        self.measure_schedule = Schedule(MEASURE_SECONDS)
+        self.health_schedule = Schedule(HEALTH_SECONDS)
 
     def tick(self) -> None:
         at = self.clock()
@@ -86,6 +94,10 @@ class Agent:
             self.inventory(at)
         if self.probe_schedule.ready(at):
             self.probe(at)
+        if self.measure_schedule.ready(at):
+            self.measure(at)
+        if self.health_schedule.ready(at):
+            self.report_health(at)
 
     def collect(self, at: float) -> None:
         self._identify()
@@ -130,6 +142,10 @@ class Agent:
             if found is None or found[0] in self.arp.own_macs:
                 continue
             mac, address, facts = found
+            if address and address == self.arp.gateway_ip:
+                self.gateway_description = (
+                    upnp.description_url(facts, address) or self.gateway_description
+                )
             self.identities.observe(mac, facts)
             self.networks.source_address(address)
 
@@ -283,6 +299,38 @@ class Agent:
             self.inventory_schedule.failed(at, ceiling=INVENTORY_SECONDS)
             return
         self.inventory_schedule.succeeded(at)
+
+    def measure(self, at: float) -> None:
+        """The minute's probes of the gateway, the resolver and the internet."""
+        self.health.measure(at, lan.default_gateway(), dns_check.lan_resolver())
+        self.measure_schedule.succeeded(at)
+
+    def report_health(self, at: float) -> None:
+        """The hourly network report (ADR 0015): probe aggregates, the DNS
+        check, the gateway's port mappings and, at night while the owner wants
+        one, a speed test. A failed report is retried with the next hour's."""
+        resolver = dns_check.lan_resolver()
+        arguments = self._auth() | {
+            "samples": self.health.samples(at),
+            "dns": self.integrity.check(resolver) if resolver else None,
+            "resolver": resolver,
+            "forwards": upnp.port_mappings(self.gateway_description, lan.default_gateway()),
+            "download_mbps": (
+                health.speed_test() if self.speed_test_wanted and health.night(at) else None
+            ),
+        }
+        try:
+            reply = api.call(self.config, "device_health_v1", arguments)
+        except api.ApiError as error:
+            if not error.malformed:
+                log.warning("health report failed: %s", error)
+                self.health_schedule.failed(at, ceiling=HEALTH_SECONDS)
+                return
+            log.error("backend rejected the health report as malformed, dropping it")
+            reply = None
+        self.health.reported()
+        self.speed_test_wanted = isinstance(reply, dict) and reply.get("speed_test") is True
+        self.health_schedule.succeeded(at)
 
     def save(self) -> None:
         self.state.save(self.config.state_path)
