@@ -17,12 +17,14 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.material3.Badge
 import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -36,6 +38,10 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.platform.LocalResources
@@ -46,6 +52,7 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavBackStackEntry
@@ -61,6 +68,7 @@ import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
 import no.cyberfish.dekoi.R
 import no.cyberfish.dekoi.alertBadgeCount
+import no.cyberfish.dekoi.shared.DesignTokens
 import java.time.Instant
 
 /** Every place in the app. The four tab roots, then the screens pushed on a tab. */
@@ -119,6 +127,9 @@ private const val TAB_MS = 200
 private const val TAB_OUT_MS = TAB_MS * 35 / 100
 private const val TAB_SCALE = 0.92f
 private val PUSH_DISTANCE = 30.dp
+private val TAB_INDICATOR = 2.dp
+private val TAB_INDICATOR_WIDTH = 32.dp
+private val TAB_LABEL_MIN = 6.sp
 
 @Composable
 fun DekoiApp(viewModel: AppViewModel) {
@@ -327,18 +338,44 @@ private class Transitions(
         }
 }
 
+// A hairline along the top and a blue line over the chosen tab; no pill.
 @Composable
 private fun TabBar(
     current: Tab,
     alertBadge: Int,
     onSelect: (Tab) -> Unit,
 ) {
-    NavigationBar(containerColor = MaterialTheme.colorScheme.surface) {
+    val hairline = MaterialTheme.colorScheme.outlineVariant
+    val blue = MaterialTheme.colorScheme.primary
+    val white = Color(DesignTokens.WHITE)
+    val muted = MaterialTheme.colorScheme.onSurfaceVariant
+    val colors =
+        NavigationBarItemDefaults.colors(
+            selectedIconColor = white,
+            selectedTextColor = white,
+            indicatorColor = Color.Transparent,
+            unselectedIconColor = muted,
+            unselectedTextColor = muted,
+        )
+    val labelStyle = MaterialTheme.typography.label
+    NavigationBar(
+        Modifier.drawWithContent {
+            drawContent()
+            drawTopLine(hairline, Dimens.hairline.toPx(), size.width)
+        },
+        containerColor = MaterialTheme.colorScheme.background,
+    ) {
         Tab.entries.forEach { tab ->
             val selected = tab == current
             NavigationBarItem(
                 selected = selected,
                 onClick = { onSelect(tab) },
+                modifier =
+                    Modifier.drawWithContent {
+                        drawContent()
+                        if (selected) drawTopLine(blue, TAB_INDICATOR.toPx(), TAB_INDICATOR_WIDTH.toPx())
+                    },
+                colors = colors,
                 icon = {
                     BadgedBox(badge = {
                         if (tab == Tab.ALERTS && alertBadge > 0) {
@@ -349,8 +386,26 @@ private fun TabBar(
                         Icon(painterResource(if (selected) tab.selectedIcon else tab.icon), contentDescription = null)
                     }
                 },
-                label = { Text(stringResource(tab.label)) },
+                // Monospace is wide: at large font scales a label shrinks to fit its tab instead of breaking mid-word.
+                label = {
+                    Text(
+                        stringResource(tab.label).headingCase(),
+                        style = labelStyle,
+                        maxLines = 1,
+                        autoSize = TextAutoSize.StepBased(minFontSize = TAB_LABEL_MIN, maxFontSize = labelStyle.fontSize),
+                    )
+                },
             )
         }
     }
+}
+
+/** A line of [length] centred along the top edge. */
+private fun DrawScope.drawTopLine(
+    color: Color,
+    width: Float,
+    length: Float,
+) {
+    val start = (size.width - length) / 2
+    drawLine(color, Offset(start, width / 2), Offset(start + length, width / 2), width)
 }

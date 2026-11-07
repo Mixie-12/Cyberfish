@@ -1,7 +1,8 @@
 # App design
 
-The DeKoi Android app's design. Decisions behind it: ADR 0011. Data behind
-it: ADR 0010. Wording rules: CLAUDE.md, "Writing".
+The DeKoi Android app's design. Decisions behind it: ADR 0011 and, for
+the brand, ADR 0020. Data behind it: ADR 0010. Wording rules: CLAUDE.md,
+"Writing".
 
 ## Principles
 
@@ -123,49 +124,108 @@ snackbar. Stale (over 5 min): "Updated 10 min ago" under the title.
 
 ## Tokens
 
-Every colour is defined once in `clients/shared/.../DesignTokens.kt`; the app
-maps them to the M3 `ColorScheme` and `LocalSeverityColors`. No dynamic
-colour.
+The brand is the CyberFish guide (`UX/UI/CyberFish-aesthetic.md`); ADR 0020
+says how the apps adopt it, and the guide wins where this file differs.
+Dark only, no dynamic colour. Every colour is defined once in
+`clients/shared/.../DesignTokens.kt`; the app maps them to the M3
+`ColorScheme` and `LocalSeverityColors` in `ui/Theme.kt`, DeKoi Setup to its
+own small scheme.
 
-| Token | Light | Dark |
-| ----- | ----- | ---- |
-| background | #F2F3F5 | #0E1013 |
-| surface | #FFFFFF | #181A1F |
-| raised | #FFFFFF, 3 dp shadow | #22252B, 1 dp #2E323A border |
-| text | #15171C | #F3F4F6 |
-| textSecondary | #5B616D | #A3A9B4 |
-| textTertiary (decoration only) | #8A909B | #737A86 |
-| separator | #DADDE2 | #2E323A |
-| tint, on tint | #0A63D1, #FFFFFF | #5AA2FF, #0E1013 |
-| tint container, on | #E5EFFC, #0A4FA8 | #16273F, #B8D6FF |
-| critical | #C4282B | #FF6B66 |
-| critical container, on | #FDECEC, #8E1B1E | #3A1A1B, #FFB4B0 |
-| warning | #A85A00 | #FFB34D |
-| warning container, on | #FFF2DD, #7A4100 | #3A2A12, #FFD49A |
-| info | #4E5D73 | #9EACC0 |
-| info container, on | #EBEFF5, #36445A | #232A35, #C9D3E1 |
-| safe | #1B7F47 | #4ED18B |
-| safe container, on | #E6F4EC, #145C34 | #15301F, #A6EBC2 |
-| offline | #6B7280 | #9AA1AD |
-| brand (logo, onboarding art) | #E8743B | #E8743B |
+| Token | Value | M3 roles | Use |
+| ----- | ----- | -------- | --- |
+| background | #060A14 | background, surface | pages |
+| navy | #0B1636 | primaryContainer, surfaceContainer* | glows, fog, what floats (menus, dialogs, snackbars), tracks |
+| blue | #2EA8FF | primary, secondary, tertiary | lines, glows, labels; never a large fill, under a tenth of a screen |
+| white | #F2F4FA | heading colour, onPrimaryContainer | headings, the wordmark, primary button labels |
+| text | #C9D1E3 | onBackground, onSurface | body text |
+| mid grey | #8A94AB | onSurfaceVariant, outline | secondary text, labels, control borders |
+| dim grey | #4A5368 | none | decoration only: 2.6:1 is too faint for text |
+| hairline | #1B2234 | outlineVariant | dividers, list lines, chart grids, tracks |
+| offline | mid grey | | a DeKoi or device not seen recently |
+
+Severity is the only other colour. Each container is its colour at 14 %
+over the background; all text pairs reach 4.5:1 (`DesignTokensTest`):
+
+| Severity | Colour | Container, on | On background, navy, container |
+| -------- | ------ | ------------- | ------------------------------ |
+| critical | #FF6B66 | #29181F, #FFB4B0 | 7.1, 6.4, 6.1 |
+| warning | #FFB547 | #29221B, #FFD99E | 11.3, 10.1, 8.9 |
+| info | #A9B8D4 | #1D222F, #D5DDEC | 9.9, 8.9, 7.9 |
+| safe | #4ED18B | #102625, #A6EBC2 | 10.2, 9.2, 8.2 |
 
 Severity words and glyphs: critical "Act now" `error`; warning "Check soon"
 `warning`; info "For your information" `info`; safe "All clear"
 `check_circle`. `Protection`: protected uses safe, attention the highest
-recent severity, offline uses offline, setting up uses tint.
+recent severity, offline uses offline, setting up uses blue.
 
-Type (system sans, `tnum` for numbers): displayMedium 44/48 SemiBold
-(counts); displaySmall 34/40 Bold (screen titles); headlineMedium 28/34
-SemiBold (status hero); headlineSmall 22/28 SemiBold (alert title);
-titleMedium 17/22 SemiBold; bodyLarge 17/24; bodyMedium 15/21; labelLarge
-15/20 SemiBold; labelMedium 13/18 Medium; addresses monospace 15. Layouts
-survive 200 % font scale.
+Type: two bundled OFL fonts (`res/README.md`), no synthesised bold or
+italic. Michroma for display, headline and title styles: white, tracking
+0.02 em, upper case through `headingCase()`, which keeps `DeKoi` as written.
+JetBrains Mono 400 and 500 for body and label styles; its digits are
+tabular by design (Michroma has no tabular figures; its digits differ by at
+most 5 %). ExtraBold is for the mark only.
 
-Spacing 4, 8, 12, 16, 20 (gutter), 24 (sections), 32. Touch targets 48 dp;
-rows 56 dp, 64 dp with a tile. Radii: chips 8, pills full, 40 dp tiles 12,
-cards 16, hero tile and sheets 28. Flat tonal elevation; shadows only on
-floating elements. Motion: push is shared axis X (30 dp, fade, 300 ms); tab
-switch fade-through 200 ms; expand spring (damping 1, stiffness 400).
+| Style | Font, sp | Use |
+| ----- | -------- | --- |
+| displayMedium | Michroma 32/40 | counts |
+| displaySmall | Michroma 20/28 | screen titles |
+| headlineMedium | Michroma 18/26 | status hero |
+| headlineSmall | Michroma 16/24 | alert title, dialog title |
+| titleMedium | Michroma 15/22 | |
+| bodyLarge, `address` | Mono 16/24 | body, addresses |
+| bodyMedium | Mono 14/20 | secondary lines |
+| labelLarge | Mono 500 14/20 | buttons |
+| labelMedium | Mono 500 12/16 | chips, chart labels |
+| `label` | Mono 500 12/16, tracking 0.13 em, upper case | section labels, tab labels, HUD text |
+
+Michroma is wide, so headings are smaller than system-font headings: at
+200 % font scale on a 360 dp phone the longest tab title, NETWORKS, takes
+309 of 320 dp and "PROTECTED" at 18 sp 287 dp. Tab labels shrink to fit
+their tab rather than break mid-word. Layouts survive 200 % font scale.
+
+Spacing 4, 8, 12, 16, 20 (gutter), 24 (sections), 32.
+Touch targets 48 dp; rows 56 dp, 64 dp with a tile. Structure is hairlines
+and space, not cards. Radii: chips 8, 40 dp tiles 12, hero tile and sheets
+28; HUD frame and primary button 8 dp 45-degree cuts. No shadows; glows are
+coloured blurs behind lines. Motion: push is shared axis X (30 dp, fade,
+300 ms); tab switch fade-through 200 ms; expand spring (damping 1,
+stiffness 400).
+
+## Components
+
+`ui/components/` holds the shared pieces; screens build on them.
+
+- `InsetSection` and `InsetRow`: a hairline list; a `label` above, a line
+  above every row and one closing the list. `KeyValueRow`, `CopyableRow`
+  build on the row.
+- `StatTile`: an open tile, a hairline along the top with a 24 dp blue lead,
+  a `label`, the value.
+- `SeverityChip`, `SeverityTile`: outline and glow in the severity colour
+  over its container, never a solid fill.
+- `PrimaryButton(onClick, modifier, enabled, content)`: the one primary
+  action, an outlined, lit control (blue hairline, blue glow, navy inside,
+  white label, cut corners). Secondary actions are M3 `TextButton`. M3
+  `Button` is not used: its fill is primary, which is blue.
+- Tab bar: background, a hairline along the top, a blue line over the
+  chosen tab, white for the chosen icon and label, mid grey for the rest.
+- `SegmentedControl`: segments over a hairline, a blue line under the
+  chosen one.
+- `StatusRing`: a 4 dp ring with a soft glow on a hairline track.
+- Charts: blue lines and severity colours on a hairline grid.
+- `HudFrame(modifier, content)`: one hairline of blue at 15 % with 8 dp
+  45-degree cut corners and 16 dp inside; marks a hero area.
+- `Horizon(modifier)`: a glowing blue line near the top with faint lines
+  below that spread out towards the bottom, like a dark sea. A shimmer
+  drifts along the line every 16 s; still when animations are off. For
+  sign-in, onboarding and empty states.
+- `FishMark(height, modifier)`: the `><>` mark in JetBrains Mono ExtraBold,
+  white with a blue stroke; [height] is the ink's height. Glows from 48 dp,
+  flat below. `BrandTile` is the mark on navy.
+- `Wordmark(height, modifier)`: the mark at the cap height of Michroma
+  "DeKoi", 0.6 em apart; [height] is the cap height.
+- `SectionLabel(number, text, modifier)`: "01 / NETWORK", number in blue,
+  text in mid grey, `label` style; a heading that TalkBack reads without
+  the number.
 
 ## Device kinds
 
@@ -236,8 +296,9 @@ Charts are Compose Canvas (bars, bar list, sparkline, uptime strip); no chart
 library. Icons are Material Symbols Rounded vector drawables (weight 400,
 grade 0, 24 dp; filled variants for selected tabs), Apache-2.0, copied from
 google/material-design-icons at a pinned commit recorded in
-`clients/app/src/main/res/README.md`. No Lottie, no Accompanist, no
-bundled fonts.
+`clients/app/src/main/res/README.md`. Fonts are Michroma and JetBrains Mono
+(OFL-1.1), bundled, with their sources, hashes and licence texts recorded
+in the same file. No Lottie, no Accompanist.
 
 ## Avoid
 

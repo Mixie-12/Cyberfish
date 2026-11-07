@@ -7,10 +7,8 @@ import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
@@ -35,7 +33,6 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import no.cyberfish.dekoi.HostKind
 import no.cyberfish.dekoi.R
-import no.cyberfish.dekoi.shared.DesignTokens
 import no.cyberfish.dekoi.ui.Dimens
 import no.cyberfish.dekoi.ui.LocalReduceMotion
 import kotlin.math.PI
@@ -75,18 +72,23 @@ fun KindTile(
     }
 }
 
-/** The koi mark on brand orange: DeKoi itself, wherever it appears among devices. */
+/** The `><>` mark on navy: DeKoi itself, wherever it appears among devices. */
 @Composable
 fun BrandTile(
     modifier: Modifier = Modifier,
     hero: Boolean = false,
 ) {
-    Box(modifier.size(if (hero) Dimens.heroTile else Dimens.tile).clip(tileShape(hero)).background(Color(DesignTokens.BRAND))) {
-        Image(painterResource(R.drawable.ic_launcher_foreground), contentDescription = null, modifier = Modifier.fillMaxSize())
+    val size = if (hero) Dimens.heroTile else Dimens.tile
+    Box(
+        modifier.size(size).clip(tileShape(hero)).background(MaterialTheme.colorScheme.surfaceContainerHighest),
+        contentAlignment = Alignment.Center,
+    ) {
+        FishMark(size * MARK_SHARE)
     }
 }
 
 private val ICON = 24.dp
+private const val MARK_SHARE = 0.25f
 private val HERO_ICON = 48.dp
 
 private fun tileShape(hero: Boolean) = RoundedCornerShape(if (hero) Dimens.heroRadius else Dimens.tileRadius)

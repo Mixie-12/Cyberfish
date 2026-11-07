@@ -6,9 +6,7 @@ import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.SpringSpec
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.LocalTonalElevationEnabled
 import androidx.compose.material3.MaterialTheme
@@ -16,10 +14,10 @@ import androidx.compose.material3.Shapes
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Typography
 import androidx.compose.material3.darkColorScheme
-import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -29,15 +27,20 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontSynthesis
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import no.cyberfish.dekoi.Protection
+import no.cyberfish.dekoi.R
 import no.cyberfish.dekoi.Severity
 import no.cyberfish.dekoi.shared.DesignTokens
+import java.util.Locale
 
 /** A colour, a quiet background for it, and the text colour on that background. */
 @Immutable
@@ -69,8 +72,6 @@ val LocalSeverityColors = staticCompositionLocalOf<SeverityColors> { error("Seve
 /** True when the owner turned animations off (animation scale 0): no idle loops, draw-ins or rolling numbers. */
 val LocalReduceMotion = staticCompositionLocalOf { false }
 
-private val LocalRaisedBorder = staticCompositionLocalOf<Color?> { null }
-
 /**
  * The status hero's colour. [highest] is the most serious recent alert; it
  * only matters while the state is attention.
@@ -93,26 +94,90 @@ fun protectionColor(
 fun <T> expandSpring(visibilityThreshold: T? = null): SpringSpec<T> =
     spring(Spring.DampingRatioNoBouncy, Spring.StiffnessMediumLow, visibilityThreshold)
 
-/** Digits of equal width, so counts and times do not jitter when they change. */
+/**
+ * Digits of equal width, so counts and times do not jitter when they
+ * change. JetBrains Mono's digits are equal by design; Michroma has no
+ * tabular figures, and its digits differ by at most 5 %.
+ */
 fun TextStyle.tabular(): TextStyle = copy(fontFeatureSettings = "tnum")
 
-private val addressStyle = TextStyle(fontFamily = FontFamily.Monospace, fontSize = 15.sp, lineHeight = 21.sp)
+/** Headings: wordmarks, titles and section numbers. One weight, wide. */
+internal val michroma = FontFamily(Font(R.font.michroma_regular))
 
-/** Addresses, hardware addresses and other technical values. */
-val Typography.address: TextStyle get() = addressStyle
+/** Everything else. Only these two weights, so no text falls back to the logo's ExtraBold. */
+private val jetBrainsMono = FontFamily(Font(R.font.jetbrains_mono_regular), Font(R.font.jetbrains_mono_medium, FontWeight.Medium))
+
+/** The `><>` mark's face, and nothing else (UX/UI/CyberFish-aesthetic.md, "Logo"). */
+internal val markFont = FontFamily(Font(R.font.jetbrains_mono_extrabold, FontWeight.ExtraBold))
+
+// Michroma is wide: at 20 sp the longest screen title, NETWORKS, takes 309
+// of the 320 dp a 360 dp phone has at 200 % font scale. Headings are white
+// (the guide); callers upper-case them with headingCase(). No synthesised
+// bold or italic: the bundled weights are the only ones.
+private fun headingStyle(
+    size: Int,
+    lineHeight: Int,
+) = TextStyle(
+    fontFamily = michroma,
+    fontSize = size.sp,
+    lineHeight = lineHeight.sp,
+    letterSpacing = HEADING_TRACKING.em,
+    color = Color(DesignTokens.WHITE),
+    fontSynthesis = FontSynthesis.None,
+)
+
+private fun bodyStyle(
+    size: Int,
+    lineHeight: Int,
+    weight: FontWeight = FontWeight.Normal,
+) = TextStyle(
+    fontFamily = jetBrainsMono,
+    fontWeight = weight,
+    fontSize = size.sp,
+    lineHeight = lineHeight.sp,
+    fontSynthesis = FontSynthesis.None,
+)
+
+private const val HEADING_TRACKING = 0.02f
+private const val LABEL_TRACKING = 0.13f
 
 private val typography =
     Typography(
-        displayMedium = TextStyle(fontSize = 44.sp, lineHeight = 48.sp, fontWeight = FontWeight.SemiBold).tabular(),
-        displaySmall = TextStyle(fontSize = 34.sp, lineHeight = 40.sp, fontWeight = FontWeight.Bold),
-        headlineMedium = TextStyle(fontSize = 28.sp, lineHeight = 34.sp, fontWeight = FontWeight.SemiBold),
-        headlineSmall = TextStyle(fontSize = 22.sp, lineHeight = 28.sp, fontWeight = FontWeight.SemiBold),
-        titleMedium = TextStyle(fontSize = 17.sp, lineHeight = 22.sp, fontWeight = FontWeight.SemiBold),
-        bodyLarge = TextStyle(fontSize = 17.sp, lineHeight = 24.sp),
-        bodyMedium = TextStyle(fontSize = 15.sp, lineHeight = 21.sp),
-        labelLarge = TextStyle(fontSize = 15.sp, lineHeight = 20.sp, fontWeight = FontWeight.SemiBold),
-        labelMedium = TextStyle(fontSize = 13.sp, lineHeight = 18.sp, fontWeight = FontWeight.Medium),
+        displayLarge = headingStyle(40, 48).tabular(),
+        displayMedium = headingStyle(32, 40).tabular(),
+        displaySmall = headingStyle(20, 28),
+        headlineLarge = headingStyle(22, 30),
+        headlineMedium = headingStyle(18, 26),
+        headlineSmall = headingStyle(16, 24),
+        titleLarge = headingStyle(18, 26),
+        titleMedium = headingStyle(15, 22),
+        titleSmall = headingStyle(13, 20),
+        bodyLarge = bodyStyle(16, 24),
+        bodyMedium = bodyStyle(14, 20),
+        bodySmall = bodyStyle(12, 18),
+        labelLarge = bodyStyle(14, 20, FontWeight.Medium),
+        labelMedium = bodyStyle(12, 16, FontWeight.Medium),
+        labelSmall = bodyStyle(11, 16, FontWeight.Medium),
     )
+
+private val labelStyle = bodyStyle(12, 16, FontWeight.Medium).copy(letterSpacing = LABEL_TRACKING.em)
+
+/** Labels and HUD text such as "01 / NETWORK": small and widely tracked; upper-case them with [headingCase]. */
+val Typography.label: TextStyle get() = labelStyle
+
+/** Addresses, hardware addresses and other technical values: body text, which is monospace. */
+val Typography.address: TextStyle get() = bodyLarge
+
+/**
+ * Upper case for headings and labels, keeping the product name as it is
+ * always written: "YOUR DeKoi".
+ */
+@Composable
+@ReadOnlyComposable
+fun String.headingCase(): String {
+    val name = stringResource(R.string.app_name)
+    return split(name).joinToString(name) { it.uppercase(Locale.getDefault()) }
+}
 
 private val shapes =
     Shapes(
@@ -122,86 +187,76 @@ private val shapes =
         extraLarge = RoundedCornerShape(Dimens.heroRadius),
     )
 
+private fun tone(tone: DesignTokens.Tone) = Tone(Color(tone.color), Color(tone.container), Color(tone.onContainer))
+
+private val severityColors =
+    SeverityColors(
+        critical = tone(DesignTokens.CRITICAL),
+        warning = tone(DesignTokens.WARNING),
+        info = tone(DesignTokens.INFO),
+        safe = tone(DesignTokens.SAFE),
+        offline = Color(DesignTokens.OFFLINE),
+    )
+
+private val background = Color(DesignTokens.BACKGROUND)
+private val navy = Color(DesignTokens.NAVY)
+private val blue = Color(DesignTokens.BLUE)
+private val white = Color(DesignTokens.WHITE)
+
 // Every M3 role that components read is set, so no baseline purple shows
-// through. Secondary and tertiary are the tint: the app has one accent.
-private fun colorScheme(
-    palette: DesignTokens.Palette,
-    inverse: DesignTokens.Palette,
-    dark: Boolean,
-): ColorScheme {
-    val tint = Color(palette.tint.color)
-    val onTint = Color(palette.onTint)
-    val tintContainer = Color(palette.tint.container)
-    val onTintContainer = Color(palette.tint.onContainer)
-    val surface = Color(palette.surface)
-    val background = Color(palette.background)
-    val raised = Color(palette.raised)
-    return (if (dark) darkColorScheme() else lightColorScheme()).copy(
-        primary = tint,
-        onPrimary = onTint,
-        primaryContainer = tintContainer,
-        onPrimaryContainer = onTintContainer,
-        inversePrimary = Color(inverse.tint.color),
-        secondary = tint,
-        onSecondary = onTint,
-        secondaryContainer = tintContainer,
-        onSecondaryContainer = onTintContainer,
-        tertiary = tint,
-        onTertiary = onTint,
-        tertiaryContainer = tintContainer,
-        onTertiaryContainer = onTintContainer,
+// through. Blue is the one accent; secondary and tertiary repeat it. Pages
+// are the background with hairlines; only what floats (menus, dialogs,
+// snackbars) and tracks take navy.
+private val colorScheme =
+    darkColorScheme(
+        primary = blue,
+        onPrimary = background,
+        primaryContainer = navy,
+        onPrimaryContainer = white,
+        inversePrimary = blue,
+        secondary = blue,
+        onSecondary = background,
+        secondaryContainer = navy,
+        onSecondaryContainer = white,
+        tertiary = blue,
+        onTertiary = background,
+        tertiaryContainer = navy,
+        onTertiaryContainer = white,
         background = background,
-        onBackground = Color(palette.text),
-        surface = surface,
-        onSurface = Color(palette.text),
-        surfaceVariant = background,
-        onSurfaceVariant = Color(palette.textSecondary),
-        surfaceTint = tint,
-        inverseSurface = Color(inverse.raised),
-        inverseOnSurface = Color(inverse.text),
-        // Critical and tint are both saturated mid-tones; on tint reads on either.
-        error = Color(palette.critical.color),
-        onError = onTint,
-        errorContainer = Color(palette.critical.container),
-        onErrorContainer = Color(palette.critical.onContainer),
-        outline = Color(palette.textTertiary),
-        outlineVariant = Color(palette.separator),
-        surfaceBright = surface,
+        onBackground = Color(DesignTokens.TEXT),
+        surface = background,
+        onSurface = Color(DesignTokens.TEXT),
+        surfaceVariant = navy,
+        onSurfaceVariant = Color(DesignTokens.MID_GREY),
+        surfaceTint = blue,
+        // Snackbars and tooltips stay dark instead of inverting to a light fill.
+        inverseSurface = navy,
+        inverseOnSurface = white,
+        error = severityColors.critical.color,
+        onError = background,
+        errorContainer = severityColors.critical.container,
+        onErrorContainer = severityColors.critical.onContainer,
+        // Text field and control borders need 3:1, which dim grey does not reach.
+        outline = Color(DesignTokens.MID_GREY),
+        outlineVariant = Color(DesignTokens.HAIRLINE),
+        surfaceBright = navy,
         surfaceDim = background,
-        surfaceContainerLowest = surface,
-        surfaceContainerLow = surface,
-        // Menus and dialogs float, so they take the raised colour.
-        surfaceContainer = raised,
-        surfaceContainerHigh = raised,
-        // Tracks and filled fields: a step away from the surface they sit on.
-        surfaceContainerHighest = background,
+        surfaceContainerLowest = background,
+        surfaceContainerLow = background,
+        surfaceContainer = navy,
+        surfaceContainerHigh = navy,
+        surfaceContainerHighest = navy,
     )
-}
 
-private fun severityColors(palette: DesignTokens.Palette): SeverityColors {
-    fun tone(tone: DesignTokens.Tone) = Tone(Color(tone.color), Color(tone.container), Color(tone.onContainer))
-    return SeverityColors(
-        critical = tone(palette.critical),
-        warning = tone(palette.warning),
-        info = tone(palette.info),
-        safe = tone(palette.safe),
-        offline = Color(palette.offline),
-    )
-}
-
-/** No dynamic colour: the palette carries meaning (ADR 0011). */
+/** Dark only, no dynamic colour: the palette carries the brand and the meaning (ADR 0020). */
 @Composable
 fun DekoiTheme(content: @Composable () -> Unit) {
-    val dark = isSystemInDarkTheme()
-    val palette = if (dark) DesignTokens.Dark else DesignTokens.Light
-    val inverse = if (dark) DesignTokens.Light else DesignTokens.Dark
     CompositionLocalProvider(
-        LocalSeverityColors provides severityColors(palette),
-        LocalRaisedBorder provides palette.raisedBorder?.let { Color(it) },
+        LocalSeverityColors provides severityColors,
         LocalReduceMotion provides rememberReduceMotion(),
         LocalTonalElevationEnabled provides false,
     ) {
-        MaterialTheme(colorScheme = colorScheme(palette, inverse, dark), typography = typography, shapes = shapes) {
+        MaterialTheme(colorScheme = colorScheme, typography = typography, shapes = shapes) {
             // Text outside a Material surface would otherwise default to
             // black, which is unreadable on the dark background.
             CompositionLocalProvider(LocalContentColor provides MaterialTheme.colorScheme.onBackground, content = content)
@@ -209,20 +264,18 @@ fun DekoiTheme(content: @Composable () -> Unit) {
     }
 }
 
-/** A floating element: a shadow in light mode, a hairline border in dark mode, where shadows do not show. */
+/** A floating element: navy with a hairline border, since shadows do not show on a dark background. */
 @Composable
 fun RaisedSurface(
     shape: Shape,
     modifier: Modifier = Modifier,
     content: @Composable () -> Unit,
 ) {
-    val border = LocalRaisedBorder.current
     Surface(
         modifier = modifier,
         shape = shape,
         color = MaterialTheme.colorScheme.surfaceContainerHigh,
-        shadowElevation = if (border == null) Dimens.raisedShadow else 0.dp,
-        border = border?.let { BorderStroke(Dimens.hairline, it) },
+        border = BorderStroke(Dimens.hairline, MaterialTheme.colorScheme.outlineVariant),
         content = content,
     )
 }

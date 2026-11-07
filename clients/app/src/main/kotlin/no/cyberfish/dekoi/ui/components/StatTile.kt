@@ -7,22 +7,34 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.unit.LayoutDirection
+import androidx.compose.ui.unit.dp
 import no.cyberfish.dekoi.ui.Dimens
 import no.cyberfish.dekoi.ui.LocalReduceMotion
+import no.cyberfish.dekoi.ui.headingCase
+import no.cyberfish.dekoi.ui.label
 import java.text.NumberFormat
 
 private const val ROLL_MS = 300
+private val ACCENT = 24.dp
 
-/** A tappable summary tile: a label, a [value] such as a [RollingNumber], an optional detail line and chart. */
+/**
+ * A tappable summary tile, open rather than boxed: a hairline along the
+ * top with a short blue lead, a section label, a [value] such as a
+ * [RollingNumber], an optional detail line and chart.
+ */
 @Composable
 fun StatTile(
     label: String,
@@ -32,13 +44,25 @@ fun StatTile(
     chart: (@Composable () -> Unit)? = null,
     value: @Composable () -> Unit,
 ) {
-    Surface(onClick = onClick, modifier = modifier, shape = MaterialTheme.shapes.large, color = MaterialTheme.colorScheme.surface) {
-        Column(Modifier.padding(Dimens.spaceL), verticalArrangement = Arrangement.spacedBy(Dimens.spaceXs)) {
-            Text(label, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            value()
-            detail?.let { Text(it, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant) }
-            chart?.invoke()
-        }
+    val hairline = MaterialTheme.colorScheme.outlineVariant
+    val blue = MaterialTheme.colorScheme.primary
+    Column(
+        modifier
+            .clickable(role = Role.Button, onClick = onClick)
+            .drawBehind {
+                val width = Dimens.hairline.toPx()
+                val y = width / 2
+                val accent = ACCENT.toPx().coerceAtMost(size.width)
+                val start = if (layoutDirection == LayoutDirection.Ltr) 0f else size.width - accent
+                drawLine(hairline, Offset(0f, y), Offset(size.width, y), width)
+                drawLine(blue, Offset(start, y), Offset(start + accent, y), width)
+            }.padding(top = Dimens.spaceM, bottom = Dimens.spaceS),
+        verticalArrangement = Arrangement.spacedBy(Dimens.spaceXs),
+    ) {
+        Text(label.headingCase(), style = MaterialTheme.typography.label, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        value()
+        detail?.let { Text(it, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant) }
+        chart?.invoke()
     }
 }
 

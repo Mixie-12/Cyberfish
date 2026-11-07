@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The SIL Open Font License requires its text in every copy of the fonts,
+     so release builds keep it even where no code reads it. -->
+<resources xmlns:tools="http://schemas.android.com/tools" tools:keep="@raw/ofl_*" />

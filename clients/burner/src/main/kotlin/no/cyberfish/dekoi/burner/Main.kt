@@ -2,7 +2,6 @@ package no.cyberfish.dekoi.burner
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
@@ -17,7 +16,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -29,7 +27,6 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.darkColorScheme
-import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -76,25 +73,26 @@ fun main() =
         }
     }
 
+// Dark only (ADR 0020). Blue is an accent and never fills a button, so
+// actions are outlined buttons and text buttons.
+private val colorScheme =
+    darkColorScheme(
+        primary = Color(DesignTokens.BLUE),
+        onPrimary = Color(DesignTokens.BACKGROUND),
+        background = Color(DesignTokens.BACKGROUND),
+        onBackground = Color(DesignTokens.TEXT),
+        surface = Color(DesignTokens.BACKGROUND),
+        onSurface = Color(DesignTokens.TEXT),
+        onSurfaceVariant = Color(DesignTokens.MID_GREY),
+        surfaceContainer = Color(DesignTokens.NAVY),
+        outline = Color(DesignTokens.MID_GREY),
+        outlineVariant = Color(DesignTokens.HAIRLINE),
+        error = Color(DesignTokens.CRITICAL.color),
+    )
+
 @Composable
 private fun DekoiTheme(content: @Composable () -> Unit) {
-    val dark = isSystemInDarkTheme()
-    val palette = if (dark) DesignTokens.Dark else DesignTokens.Light
-    val base = if (dark) darkColorScheme() else lightColorScheme()
-    val scheme =
-        base.copy(
-            primary = Color(palette.tint.color),
-            onPrimary = Color(palette.onTint),
-            background = Color(palette.background),
-            onBackground = Color(palette.text),
-            surface = Color(palette.surface),
-            onSurface = Color(palette.text),
-            onSurfaceVariant = Color(palette.textSecondary),
-            outline = Color(palette.textTertiary),
-            outlineVariant = Color(palette.separator),
-            error = Color(palette.critical.color),
-        )
-    MaterialTheme(colorScheme = scheme, content = content)
+    MaterialTheme(colorScheme = colorScheme, content = content)
 }
 
 @Composable
@@ -159,7 +157,7 @@ private fun NoImager(
     if (installFailed) {
         Body("It was not installed. You can also download it from ${Imager.DOWNLOAD_PAGE} and then choose Look again.")
     }
-    Button(onClick = setup::installImager) { Text("Install Raspberry Pi Imager") }
+    OutlinedButton(onClick = setup::installImager) { Text("Install Raspberry Pi Imager") }
     TextButton(onClick = setup::lookForCards) { Text("Look again") }
 }
 
@@ -215,7 +213,7 @@ private fun ChooseNetwork(
     }
     problem?.let { Text(it, color = MaterialTheme.colorScheme.error) }
     Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-        Button(onClick = {
+        OutlinedButton(onClick = {
             try {
                 setup.confirm(drive, if (wifi) Network.WiFi(name, password, country) else Network.Cable)
             } catch (e: IllegalArgumentException) {
@@ -260,7 +258,7 @@ private fun Confirm(
     )
     Body("Windows will ask whether Raspberry Pi Imager may make changes. Choose Yes.")
     Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-        Button(onClick = { setup.write(drive, network) }) { Text("Erase and write") }
+        OutlinedButton(onClick = { setup.write(drive, network) }) { Text("Erase and write") }
         TextButton(onClick = { setup.choose(drive) }) { Text("Back") }
     }
 }
@@ -273,7 +271,7 @@ private fun Failed(
     var open by remember { mutableStateOf(false) }
     Title("The card was not written")
     Body("Check that the card is still in the reader, then try again. If Windows asked for permission, choose Yes next time.")
-    Button(onClick = setup::lookForCards) { Text("Try again") }
+    OutlinedButton(onClick = setup::lookForCards) { Text("Try again") }
     TextButton(onClick = { open = !open }) { Text(if (open) "Hide technical details" else "Show technical details") }
     if (open) {
         SelectionContainer {
