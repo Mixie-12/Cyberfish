@@ -17,9 +17,10 @@ date recorded in `docs/STATUS.md`), **pending** (not yet shown).
 
 | Actor                         | Can reach                                  | Must never reach                         |
 | ----------------------------- | ------------------------------------------ | ---------------------------------------- |
-| Anyone on the customer LAN    | decoys, the firewall, broadcast traffic    | the agent, its secret, the host          |
+| Anyone on the customer LAN    | decoys and their announcements, the firewall, broadcast traffic | the agent, its secret, the host, any real file |
 | A compromised router          | answers to the agent's own requests        | the agent's secret, any change on the router made by DeKoi |
 | A compromised decoy process   | its own container, write-only log volume   | secrets, the backend, the host           |
+| A compromised announcer       | its own container, nothing else            | any volume, events, secrets, the host    |
 | Any internet client           | the Data API with the publishable key      | any row, any function except device RPCs |
 | A signed-in owner             | their own rows through RLS                 | other owners' rows, device credentials   |
 | A stolen or cloned device     | its own device's rows through device RPCs  | other devices' rows, owners' data        |
@@ -36,20 +37,28 @@ The data flow and every contract are in `docs/architecture.md`.
 | 3  | Claim code guessing, reuse, probing, flooding                    | 128-bit codes, hashed, single use per side, generic errors, 5 pending per user | tested: `01_claim_register` |
 | 4  | Device impersonation, writing another device's rows              | 256-bit secret per device, hashed, rows scoped to the secret's device | tested: `02_device_api`, `08_device_identification` |
 | 5  | Oversized or malformed input, control characters, HTML           | size and shape checks in RPCs, field allowlist, bounded strings without control characters, fixed vocabularies; on the device, a kernel filter and bounded parsers for discovery traffic | tested: `02_device_api`, `06_network_detection`, `08_device_identification`, agent `test_sources`, `test_identify` (including a seeded fuzz test) |
-| 6  | Code execution inside the canary                                 | own user namespace, no capabilities, read-only root, no secrets, write-only log volume | tested (lockdown starts under real Podman): `device/e2e/run.py`; config review: `dekoi-canary.container` |
+| 6  | Code execution inside the canary or the announcer (OpenCanary, Samba, avahi, wsdd2) | own user namespace, no capabilities, read-only root, no secrets; the canary writes only its log volume, the announcer mounts nothing | tested (lockdown starts under real Podman): `device/e2e/run.py`; config review: `dekoi-canary.container`, `dekoi-announce.container` |
 | 7  | Unsigned or foreign image pushed to the registry                 | Podman `policy.json`: only cosign-signed images from `ghcr.io/mixie-12` | tested: `signatures` job in `.github/workflows/device.yml` |
 | 8  | Attacker-controlled strings in notifications                     | fixed templates by event kind; payload carries the event id only; the weekly summary is a fixed template with three whole numbers and no payload | tested with Phase 5 (`notify` function tests) |
 | 9  | Anything beyond the intended surface on the project URL          | public schema only, GraphQL dropped, no buckets, no publications | verified 2026-11-07 against production: anonymous reads 401, private schema and GraphQL not exposed, no buckets, notify refuses requests without the secret |
 | 10 | Secrets in git history                                           | secrets only in GitHub secrets and 1Password                | tested: `gitleaks` on every push |
 | 11 | A hostile router or resolver feeds the agent crafted UPnP or DNS answers | requests to the gateway's own address only, read-only UPnP action, bodies bounded in size and time, XML parsed as UTF-8 and refused with a document type (no entity expansion), every value validated; DNS replies matched to the query and parsed by the bounded discovery parser | tested: agent `test_upnp`, `test_dns_check`, `test_health` |
 | 12 | A device reports forged network health                           | secret-checked RPC, bounded arrays, repeated keys refused, table constraints; the public address is taken from the request, never from the device | tested: `10_network_health` |
+| 13 | The decoy file share becomes a way in: a sign-in or guest access that works, a writable share, real data | no account exists, failed sign-ins never become guest sessions, only Public opens without a password and it is read-only, its files are dull text written for the decoy and baked into the image | tested: `device/e2e/run.py` (sign-in refused, bait file read); verified 2026-11-07 with Docker on the built image: sign-in and writes refused |
+| 14 | Hostile user, share or file names from the file share            | only the user name, share and file are kept, bounded and stripped; Samba logs no password or hash; fixed detail keys `share` and `file` | tested: agent `test_sources` (real Samba records), `18_file_access` |
+| 15 | Discovery traffic floods the owner with alerts                   | NetBIOS, mDNS and WS-Discovery are answered but never parsed; listing the shares (`IPC$`) and clients probing without a password are not events | tested: agent `test_sources`; `device/e2e/run.py` (anonymous listing yields no sign-in event) |
+| 16 | Exhausting the device through the file share                     | at most 20 smbd processes, state in a small tmpfs, logs rotated at 1 MB | config review: `canary/persona/smb.conf` |
 
 Further: typed passwords never leave the device (tested: agent `test_sources`,
-end-to-end assertion that the attacker's password is absent from the backend).
+end-to-end assertion that the attacker's password, typed into the web page
+and the file share, is absent from the backend).
 
 Hardware (verified 2026-11-07, `docs/STATUS.md` Phase 7): from the LAN only
 the eight decoy ports answer and port 22 is the decoy, not the host's SSH;
 the login alert arrived about 1 s after the attempt with the fixed template.
+The file share and its announcements (ADR 0018) are pending on hardware:
+the new ports from the LAN, the decoy in Windows Explorer and Finder, and
+port 5000.
 
 ## Outbound traffic from the device
 
