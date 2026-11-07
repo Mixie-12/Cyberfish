@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Only what the window and launcher icon need before Compose draws.
+<!-- Only what the window needs before Compose draws.
      The palette itself lives in shared/DesignTokens.kt. -->
 <resources>
     <color name="window_background">#FFF2F3F5</color>
-    <color name="launcher_background">#FFE8743B</color>
 </resources>
