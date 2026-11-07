@@ -69,19 +69,31 @@ jobs:
       NOTIFY_URL: https://${{ vars.SUPABASE_PROJECT_REF }}.supabase.co/functions/v1/notify
       NOTIFY_SECRET: ${{ secrets.NOTIFY_SECRET }}
       FCM_SERVICE_ACCOUNT: ${{ secrets.FCM_SERVICE_ACCOUNT }}
+      # Sign in with Google ([auth.external.google] in config.toml).
+      SUPABASE_AUTH_EXTERNAL_GOOGLE_ENABLED: ${{ vars.GOOGLE_WEB_CLIENT_ID != '' }}
+      SUPABASE_AUTH_EXTERNAL_GOOGLE_CLIENT_ID: ${{ vars.GOOGLE_WEB_CLIENT_ID }}
+      SUPABASE_AUTH_EXTERNAL_GOOGLE_SECRET: ${{ secrets.GOOGLE_WEB_CLIENT_SECRET }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: supabase/setup-cli@689adcfb80d947100a1eab127289b97d1fb07b13 # v3.2.0
         with:
           version: 3.0.0
+      # The backend deploys without Firebase; pushes start once
+      # FCM_SERVICE_ACCOUNT exists (docs/runbooks/deploy-backend.md).
       - name: Check the notification secrets
         run: |
-          if [ -z "$NOTIFY_SECRET" ] || [ -z "$FCM_SERVICE_ACCOUNT" ]; then
-            echo "::error::NOTIFY_SECRET and FCM_SERVICE_ACCOUNT must be set (docs/runbooks/deploy-backend.md)"
+          if [ -z "$NOTIFY_SECRET" ]; then
+            echo "::error::NOTIFY_SECRET must be set (docs/runbooks/deploy-backend.md)"
             exit 1
           fi
+          if [ -z "$FCM_SERVICE_ACCOUNT" ]; then
+            echo "::warning::FCM_SERVICE_ACCOUNT is not set; push notifications stay off until it is"
+          fi
       - name: Set function secrets
-        run: supabase secrets set --remote="$PROJECT_REF" --yes "NOTIFY_SECRET=$NOTIFY_SECRET" "FCM_SERVICE_ACCOUNT=$FCM_SERVICE_ACCOUNT"
+        run: |
+          secrets=("NOTIFY_SECRET=$NOTIFY_SECRET")
+          if [ -n "$FCM_SERVICE_ACCOUNT" ]; then secrets+=("FCM_SERVICE_ACCOUNT=$FCM_SERVICE_ACCOUNT"); fi
+          supabase secrets set --remote="$PROJECT_REF" --yes "${secrets[@]}"
       - name: Deploy functions
         run: supabase functions deploy notify --remote="$PROJECT_REF" --use-api --yes
       - name: Apply migrations

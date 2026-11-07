@@ -47,7 +47,9 @@ one-time bootstrap, routine deploys, checks and backups.
    gh run watch --repo Mixie-12/Cyberfish
    ```
 
-8. Run the surface checks below.
+8. Run the surface checks below. In the deploy log, "Show configuration
+   changes" must list the Google provider as enabled with the web client
+   ID; if it does not, sign-in will fail.
 
 ## Routine deploys
 
