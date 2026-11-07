@@ -8,11 +8,12 @@ from collections.abc import Callable
 
 from . import api, dns_check, health, identify, inventory, lan, monitors, upnp, wifi
 from .config import Config
-from .decoys import listening_ports, load_decoys, running_services
+from .decoys import listening_ports, load_bait_users, load_decoys, running_services
 from .detect import Collapser, ScanDetector
 from .sources import (
     DatagramInbox,
     FileFollower,
+    flag_bait,
     iso_time,
     parse_canary,
     parse_samba,
@@ -66,6 +67,7 @@ class Agent:
         self.state = state
         self.clock = clock
         self.decoys = load_decoys(config.decoy_config)
+        self.bait_users = load_bait_users(config.persona)
         self.canary = FileFollower(config.canary_log, _position(state, "canary"))
         self.samba = FileFollower(config.samba_log, _position(state, "samba"))
         self.scans = FileFollower(config.scan_log, _position(state, "scan"))
@@ -127,10 +129,11 @@ class Agent:
 
     def _observe(self, at: float) -> list[dict]:
         """Everything the passive sources noticed since the last tick."""
-        found = [
+        decoys = [
             e for line in self.canary.read_lines() if (e := parse_canary(line, self.decoys, at))
         ]
-        found += [e for line in self.samba.read_lines() if (e := parse_samba(line, at))]
+        decoys += [e for line in self.samba.read_lines() if (e := parse_samba(line, at))]
+        found = [flag_bait(e, self.bait_users) for e in decoys]
         for line in self.scans.read_lines():
             probe = parse_scan(line)
             if probe and (event := self.detector.observe(*probe)):

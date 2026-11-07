@@ -12,6 +12,7 @@ from dekoi_agent.config import Config
 from dekoi_agent.state import State
 
 CANARY_CONFIG = Path(__file__).parents[2] / "canary" / "opencanary.conf"
+PERSONA = Path(__file__).parents[2] / "canary" / "persona" / "persona.json"
 CLAIM_CODE = "C" + "0" * 24 + "1"
 HOME_NETWORK = {"cidr": "192.168.1.0/24", "source": "interface", "gateway": "192.168.1.1"}
 PHONE_MAC = "62:1f:9a:00:00:01"
@@ -86,6 +87,7 @@ def config(tmp_path: Path) -> Config:
         scan_log=tmp_path / "scan.json",
         ids_socket=tmp_path / "eve.sock",
         decoy_config=CANARY_CONFIG,
+        persona=PERSONA,
     )
 
 
@@ -190,6 +192,24 @@ def test_file_share_events_are_delivered(config: Config, backend: FakeBackend) -
     ]
     position = State.load(config.state_path).positions["samba"]
     assert position == [config.samba_log.stat().st_ino, config.samba_log.stat().st_size]
+
+
+def test_a_sign_in_with_a_bait_name_is_flagged_and_never_counted_as_a_repeat(
+    config: Config, backend: FakeBackend
+) -> None:
+    agent = Agent(config, State(device_id="device-1", secret="a" * 64), Clock(), FakeListeners())
+    agent.tick()
+    bait = json.loads(ssh_attempt())
+    bait["logdata"] = {"USERNAME": "Familie.Admin", "PASSWORD": "Sommer2019!"}
+    config.canary_log.write_text(ssh_attempt() + "\n" + json.dumps(bait) + "\n")
+    agent.tick()
+
+    (call,) = backend.called("device_events_v1")
+    assert [e["detail"] for e in call["events"]] == [
+        {"username": "root"},
+        {"username": "Familie.Admin", "bait": True},
+    ]
+    assert "Sommer2019!" not in json.dumps(call)
 
 
 def test_backend_outage_keeps_events_and_malformed_batches_are_dropped(

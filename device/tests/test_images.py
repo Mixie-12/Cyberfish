@@ -23,6 +23,12 @@ def test_the_canary_copies_its_version_file_next_to_the_log_the_agent_reads() ->
     assert f'IMAGE_COPY = Path("{config.canary_log.parent / "image"}")' in supervise
 
 
+def test_the_agent_image_carries_the_persona_it_reads() -> None:
+    config = Config.from_env({"DEKOI_API_URL": "https://x.invalid", "DEKOI_API_KEY": "k"})
+    containerfile = (DEVICE / "agent" / "Containerfile").read_text()
+    assert f"COPY canary/persona/persona.json {config.persona}\n" in containerfile
+
+
 def test_the_ids_sends_statistics_often_enough() -> None:
     suricata = (DEVICE / "ids" / "suricata.yaml").read_text()
     stats = re.search(r"^stats:\n  enabled: yes\n  interval: (\d+)$", suricata, re.MULTILINE)
