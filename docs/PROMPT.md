@@ -79,11 +79,11 @@ Deviate only if a decision proves unworkable in practice. Then write an ADR in
 `docs/decisions/` explaining why, and tell the owner.
 
 ```
-Customer LAN                                    Owner homelab (or Supabase Cloud)
+Customer LAN                                    Supabase Cloud, EU region
 +------------------------------------+         +--------------------------------------+
-| Raspberry Pi, Raspberry Pi OS Lite |  HTTPS  | Cloudflare Tunnel, no inbound ports  |
-|                                    | ------> | exposes only /auth/v1 /rest/v1       |
-|  dekoi-canary  OpenCanary decoys   |  out-   |              /functions/v1           |
+| Raspberry Pi, Raspberry Pi OS Lite |  HTTPS  | surface in use: /auth/v1 /rest/v1    |
+|                                    | ------> |                 /functions/v1        |
+|  dekoi-canary  OpenCanary decoys   |  out-   |                                      |
 |      | log file, shared, read-only |  bound  |                                      |
 |  dekoi-agent   Python stdlib       |  only   | Supabase: Postgres + RLS, Auth,      |
 |  nftables + ulogd2  scan detection |         | PostgREST, pg_cron, Edge Function    |
@@ -101,19 +101,17 @@ Supabase provides Postgres, Row Level Security, Auth, PostgREST, Edge Functions
 and pg_cron as one maintained package. Our backend code is SQL migrations,
 pgTAP tests, and one Edge Function. There is no custom API server.
 
-Hosting:
-- Default: self-hosted Supabase using the official Docker Compose setup on the
-  owner's homelab, published through Cloudflare Tunnel at `https://api.<DOMAIN>`
-  (the owner's l0ki domain). No inbound ports are opened on the owner's router.
-- The tunnel routes only `/auth/v1/`, `/rest/v1/` and `/functions/v1/`.
-  Everything else (Studio, `/pg/`, realtime, storage, analytics) returns 404 from
-  outside and is reachable only from the homelab LAN.
-- The code is identical on Supabase Cloud; switching is a URL and keys. Confirm
-  the hosting choice with the owner in Phase 0.
+Hosting (decided by the owner in Phase 0, see ADR 0001):
+- Supabase Cloud, one project in an EU region, API at
+  `https://<project-ref>.supabase.co`. No servers of our own.
+- The dashboard is protected by the owner's Supabase account with 2FA.
+- The Data API exposes only the `public` schema. GraphQL is disabled, there are
+  no Storage buckets and no Realtime publications, so the surface in use is
+  `/auth/v1`, `/rest/v1` and `/functions/v1`.
+- Self-hosting later (for example on the owner's homelab) is the same code;
+  switching is a URL and keys.
 - Local development and CI use the Supabase CLI (`supabase start`,
   `supabase db reset`, `supabase test db`).
-- Disable every Supabase feature that is not used (GraphQL, Realtime, Storage)
-  wherever configuration allows, locally and in deployment.
 
 Data model (minimum shape; refine names during implementation):
 - `devices`: id, owner_id, name, claim_code_hash (unique, kept forever so codes
@@ -171,8 +169,8 @@ Pairing protocol:
 - Result: each code can be claimed once and registered once. A claimed device
   can never move to another account. The owner can remove it; to pair again the
   card must be rewritten with a new code.
-- Rate-limit claim and register calls (Cloudflare rule plus a per-user limit in
-  SQL for claims).
+- Claims are rate-limited per user in SQL. Registration and device calls are
+  protected by the 128-bit code and the 256-bit secret.
 
 Notifications:
 - Database webhook on `events` insert, Edge Function `notify`, FCM HTTP v1.
@@ -330,9 +328,15 @@ signed .deb is a roadmap item.
 - Weekly scheduled rebuild of device images to pick up Debian security fixes.
   Dependabot for Gradle, pip, Docker and GitHub Actions.
 - Actions pinned by commit SHA. Minimal `permissions:` per job. Secrets only in
-  release jobs. CodeQL for Kotlin, Python and TypeScript. gitleaks on every push.
-- CI never holds credentials to the owner's homelab. Backend deployment is a
-  documented step run by the owner, or by you with the owner present.
+  release jobs. gitleaks on every push. No CodeQL: the repository is private
+  and CodeQL needs paid GitHub Advanced Security there.
+- arm64 images are built under QEMU, only on `main` and tags, to stay within
+  the free Actions minutes of a private repository. GHCR packages are set to
+  public so devices pull without credentials.
+- CI never holds the database password, a Supabase access token or a
+  service-role key. Backend deployment (`supabase db push`,
+  `supabase functions deploy`) is a documented step run from the owner's
+  machine.
 
 
 ## 4. Security requirements
@@ -361,8 +365,10 @@ Abuse cases that must be covered by automated tests or recorded evidence:
    (recorded test)
 8. Attacker-controlled strings reach notification text. (impossible by design;
    unit test on `notify`)
-9. Anything other than the three public path prefixes answers on
-   `api.<DOMAIN>`. (checks in the deploy runbook, run from outside)
+9. Anything beyond the intended surface is reachable on the project URL:
+   tables or functions without grants, GraphQL, Storage buckets, Realtime
+   publications, schemas other than `public`. (checks in the deploy runbook,
+   run from outside)
 10. Secrets anywhere in git history. (gitleaks)
 
 At the end of every phase that touches a trust boundary, run a focused security
@@ -388,8 +394,6 @@ docs/
 backend/
   supabase/               Supabase CLI project: config, migrations, functions,
                           pgTAP tests
-  deploy/                 homelab: compose overrides, .env.example,
-                          cloudflared config, backup
 device/
   image.json              pinned Raspberry Pi OS image URL and SHA-256
   cloud-init/             user-data and network-config templates
@@ -437,10 +441,14 @@ it.
   image.
 
 ### Phase 3: Backend deployment (needs owner input)
-- Self-hosted Supabase on the homelab: every default secret replaced, unused
-  services disabled, Cloudflare Tunnel with the path allowlist, a Cloudflare
-  rate-limit rule, nightly backups with one tested restore, migrations applied.
-- Verify the exposed surface from outside the network. Write the runbook.
+- Supabase Cloud project created by the owner (EU region, 2FA on the account),
+  linked with the CLI, migrations pushed, Auth set to Google only, unused
+  features off.
+- Backups: the Free plan has no downloadable backups. Document a
+  `supabase db dump` procedure and test one restore into a local stack. Before
+  real customers, the owner decides on a paid plan with daily backups.
+- Verify the exposed surface from outside (section 4, case 9). Write the
+  runbook.
 
 ### Phase 4: Android app
 - Sign in, claim, setup progress, home, activity, event detail, network, device,
@@ -467,6 +475,7 @@ it.
 ## 7. Inputs needed from the owner
 
 Ask for all of these once, in Phase 0. Offer the default where one exists.
+Record the answers in `docs/STATUS.md`.
 
 1. Backend hosting: self-hosted Supabase on the homelab (default) or Supabase
    Cloud.
@@ -499,9 +508,9 @@ Everything below verified, with the evidence recorded in `docs/STATUS.md`.
 
 1. CI green on `main` for all workflows. Release `v0.1.0` published with signed
    artifacts and checksums.
-2. Backend live at `https://api.<DOMAIN>`. From outside, only `/auth/v1`,
-   `/rest/v1` and `/functions/v1` respond. Studio is unreachable from the
-   internet. One backup restore tested.
+2. Backend live on Supabase Cloud. The surface checks of section 4, case 9
+   pass from outside. The Supabase account uses 2FA. One dump-and-restore
+   tested.
 3. The pgTAP suite, including every abuse case, passes in CI and against a fresh
    copy of the deployed schema.
 4. The device end-to-end harness passes in CI.
