@@ -272,6 +272,7 @@ private fun SignedIn(
                     onNavigate = navigate,
                     weeklySummary = settings?.weeklySummary,
                     onWeeklySummary = viewModel::setWeeklySummary,
+                    onSetWifiName = viewModel::setWifiName,
                 )
             }
         }

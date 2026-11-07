@@ -93,6 +93,13 @@ const TEMPLATES: Record<string, (noun: string) => Template> = {
   // inventory names.
   dns_hijack: () => ({ title: "Some web addresses lead to the wrong place", body: ALERT_BODY }),
   port_forward: (n) => ({ title: `A ${n} can now be reached from the internet`, body: ALERT_BODY }),
+  // The source of a Wi-Fi event is an access point that is not on the
+  // network, so these name no device; the network name never appears.
+  evil_twin: () => ({ title: "Someone copied your Wi-Fi name", body: ALERT_BODY }),
+  new_access_point: () => ({
+    title: "A new access point uses your Wi-Fi name",
+    body: ALERT_BODY,
+  }),
   device_offline: () => ({
     title: "Your DeKoi went offline",
     body:

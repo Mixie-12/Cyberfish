@@ -1,11 +1,12 @@
 import json
+import os
 import struct
 from pathlib import Path
 
 import pytest
 
 from dekoi_agent import agent as agent_module
-from dekoi_agent import api, monitors
+from dekoi_agent import api, monitors, wifi
 from dekoi_agent.agent import Agent
 from dekoi_agent.config import Config
 from dekoi_agent.state import State
@@ -414,3 +415,36 @@ def test_network_health_is_reported_every_hour(config: Config, backend: FakeBack
     agent.tick()
     assert len(backend.called("device_health_v1")) == 3, "not retried before the next hour"
     assert len(agent.health.samples(clock.now)) == 3, "kept for the next report"
+
+
+def test_wifi_watch_reports_its_state_and_queues_what_it_finds(
+    config: Config, backend: FakeBackend, tmp_path: Path
+) -> None:
+    clock = Clock()
+    agent = Agent(config, State(device_id="device-1", secret="a" * 64), clock, FakeListeners())
+    scan = tmp_path / "wifi" / "scan"
+    country = tmp_path / "wifi-country" / "country"
+    scan.parent.mkdir()
+    country.parent.mkdir()
+    agent.wifi = wifi.Watch(tmp_path / "wifi.json", scan, country)
+    # Asked for scans a moment ago; the host has not scanned yet.
+    country.write_text("NO\n")
+    os.utime(country, (clock.now, clock.now))
+    settings = {"name": "Home", "country": "NO"}
+    backend.outcomes["device_wifi_v1"] = [settings]
+    agent.tick()
+    (call,) = backend.called("device_wifi_v1")
+    assert call == {"device_id": "device-1", "secret": "a" * 64, "watch": "no_name"}
+    assert country.read_text() == "NO\n", "the host is still asked to scan"
+
+    clock.now += wifi.CHECK_SECONDS
+    agent.wifi.learned.since = clock.now - wifi.LEARNING_SECONDS
+    scan.write_text(
+        "scan\nBSS 02:00:00:00:00:66(on wlan0)\n\tfreq: 2437\n"
+        "\tcapability: ESS ShortSlotTime (0x0401)\n\tsignal: -40.00 dBm\n\tSSID: Home\n"
+    )
+    os.utime(scan, (clock.now, clock.now))
+    backend.outcomes["device_wifi_v1"] = [settings]
+    agent.tick()
+    assert backend.called("device_wifi_v1")[-1]["watch"] == "learning"
+    assert [event["kind"] for event in agent.state.queue] == ["evil_twin"]

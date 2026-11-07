@@ -40,6 +40,7 @@ fun SettingsScreen(
     onNavigate: (Route) -> Unit,
     weeklySummary: Boolean?,
     onWeeklySummary: (Boolean) -> Unit,
+    onSetWifiName: (Device, String?) -> Unit,
 ) {
     var confirming by remember { mutableStateOf(false) }
     Screen(stringResource(R.string.tab_settings), listState = listState) {
@@ -73,6 +74,7 @@ fun SettingsScreen(
                 )
             }
         }
+        if (devices.isNotEmpty()) item { WifiNameSection(devices, onSetWifiName) }
         item { Notifications() }
         item { WeeklySummary(weeklySummary, onWeeklySummary) }
         item {

@@ -19,6 +19,7 @@ date recorded in `docs/STATUS.md`), **pending** (not yet shown).
 | ----------------------------- | ------------------------------------------ | ---------------------------------------- |
 | Anyone on the customer LAN    | decoys, the firewall, broadcast traffic    | the agent, its secret, the host          |
 | A compromised router          | answers to the agent's own requests        | the agent's secret, any change on the router made by DeKoi |
+| Anyone within Wi-Fi range     | the scan results (what their beacons say)  | the agent's privileges, the host, notification text |
 | A compromised decoy process   | its own container, write-only log volume   | secrets, the backend, the host           |
 | Any internet client           | the Data API with the publishable key      | any row, any function except device RPCs |
 | A signed-in owner             | their own rows through RLS                 | other owners' rows, device credentials   |
@@ -43,6 +44,9 @@ The data flow and every contract are in `docs/architecture.md`.
 | 10 | Secrets in git history                                           | secrets only in GitHub secrets and 1Password                | tested: `gitleaks` on every push |
 | 11 | A hostile router or resolver feeds the agent crafted UPnP or DNS answers | requests to the gateway's own address only, read-only UPnP action, bodies bounded in size and time, XML parsed as UTF-8 and refused with a document type (no entity expansion), every value validated; DNS replies matched to the query and parsed by the bounded discovery parser | tested: agent `test_upnp`, `test_dns_check`, `test_health` |
 | 12 | A device reports forged network health                           | secret-checked RPC, bounded arrays, repeated keys refused, table constraints; the public address is taken from the request, never from the device | tested: `10_network_health` |
+| 13 | Forged access points: crafted names and elements, beacon floods  | the host only scans; iw's text parsed by the unprivileged agent, split on newline only, first kernel field per block, privacy bit decides open, names decoded, bounded to 32 bytes and cleaned; at most 16 reports a day | tested: agent `test_wifi` with real iw output |
+| 14 | The owner's Wi-Fi name as an injection vector                    | column grant, 32 bytes, no control characters, never in a notification or on the host | tested: `13_wifi_watch`, `00_hardening`, `notify` tests |
+| 15 | A compromised agent misusing the radio                           | the host reads three bytes of one file and accepts two capital letters; raspi-config checks the ISO list; the scan unit keeps only CAP_NET_ADMIN on a read-only system; the agent can make the host scan or stop, nothing else | config review; shellcheck and `systemd-analyze verify` in CI; pending on hardware |
 
 Further: typed passwords never leave the device (tested: agent `test_sources`,
 end-to-end assertion that the attacker's password is absent from the backend).
@@ -59,17 +63,44 @@ firewall needs no new rule.
 
 | To                                   | What                                               | When                         | Protection |
 | ------------------------------------ | -------------------------------------------------- | ---------------------------- | ---------- |
-| The backend (Supabase), port 443     | device RPCs; a TCP connection with no data as the internet probe | events as they occur, heartbeat and probe every minute, inventory every 15 min, health report hourly | TLS, system CAs |
+| The backend (Supabase), port 443     | device RPCs; a TCP connection with no data as the internet probe | events as they occur, heartbeat and probe every minute, inventory every 15 min, Wi-Fi watch every 5 min, health report hourly | TLS, system CAs |
 | The default gateway                  | ICMP echo                                          | every minute                 | none needed: carries nothing |
 | The default gateway, its UPnP port   | HTTP: the IGD description and `GetGenericPortMappingEntry` | hourly, if it announced an IGD | read-only; cleartext because UPnP has no TLS, carries no secret, answers treated as hostile |
 | The LAN name server, UDP 53          | one A lookup of the backend's name; 6 lookups of fixed public names | every minute; hourly | cleartext as DNS on a LAN is; answers matched by random ID on a connected socket |
 | 1.1.1.1, port 443 (Cloudflare)       | DNS over HTTPS: 6 lookups of fixed public names    | hourly                       | TLS, certificate checked against the address |
 | speed.cloudflare.com, port 443       | one download of at most 25 MB and 30 s             | at night, only while the owner has the speed test on | TLS, system CAs |
 | LAN multicast and broadcast          | discovery searches and name poisoning and DHCP probes (ADR 0003, 0010) | every 15 min | send only |
+| Wi-Fi probe requests (the host's scan) | an active scan, no association (ADR 0019)    | every 5 min, only with a Wi-Fi name and a known country | joins no network; see "Radio use" |
 
 No request carries owner data. The DNS over HTTPS and speed test endpoints
 are fixed in `device/agent/dekoi_agent/`; the backend stores the device's
 public address and country (from request headers) for its owner only.
+
+## Radio use (Wi-Fi watch, ADR 0019)
+
+- The Pi's Wi-Fi radio stays rfkill-blocked, as Raspberry Pi OS ships it,
+  until the owner has given a Wi-Fi name and the backend knows the device's
+  country. Then `dekoi-wifi-scan` sets the country (`raspi-config`) and runs
+  `iw dev wlan0 scan` every five minutes. Active scanning sends probe
+  requests; once the radio is on, NetworkManager may scan too. Nothing ever
+  joins a network: a wired DeKoi has no Wi-Fi profile, and the scan never
+  runs while wlan0 is connected or carries the default route.
+- The scan unit (`dekoi-wifi-scan.service`) runs as root with only
+  CAP_NET_ADMIN, a read-only file system except the scan directory, the
+  kernel command line and the saved rfkill state, a private /tmp and no raw
+  sockets. It reads nothing from the agent but the country.
+- The country comes from the `cf-ipcountry` header of the device's own
+  request. A wrong country only affects that device's radio; unknown means
+  off. Whether the header reaches PostgREST on the hosted project is
+  pending verification.
+- Residual risk: iw prints WPS strings as raw bytes, so a crafted beacon can
+  add lines to the scan text. It cannot make an open access point look
+  protected (the privacy bit is printed from the kernel before any
+  element), but a beacon that puts its WPS element before its name could
+  start a forged block and hide a copy from the parser. Reading scan
+  results from nl80211 directly in the agent would close this; not done.
+- Scan output and the country live in `/run` (memory), so the card sees no
+  writes; what the watch learned is in `wifi.json` next to the agent state.
 
 ## OWASP Top 10 (2025)
 
@@ -90,9 +121,9 @@ public address and country (from request headers) for its owner only.
 
 Object-level and function-level authorization (API1, API5): RLS and exact
 function grants, tested. Authentication (API2): Supabase Auth, device secrets.
-Property-level authorization (API3): column grants (only `name`, `trusted`
-and `weekly_summary` are writable), tested. Resource consumption (API4): batch limits, pending-claim
-and `speed_test` are writable), tested. Resource consumption (API4): batch limits, pending-claim
+Property-level authorization (API3): column grants (only `name`,
+`speed_test`, `wifi_name`, `trusted`, `label`, `room` and `weekly_summary`
+are writable), tested. Resource consumption (API4): batch limits, pending-claim
 limit, bounded fields; no edge rate limit without a custom domain (ADR 0001).
 Business flows (API6): single-use pairing. SSRF (API7): the only outbound call
 from the backend goes to a fixed FCM URL. Misconfiguration (API8): see A02.

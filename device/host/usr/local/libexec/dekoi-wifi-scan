@@ -1,0 +1,69 @@
+#!/bin/bash
+# The Wi-Fi watch's scan (ADR 0019), started by dekoi-wifi-scan.timer. Leaves
+# /run/dekoi/wifi/scan for the agent: a status word on the first line
+# ("scan", "uplink" or "no_radio"), then the output of iw after a scan. The
+# agent parses it: it is unprivileged and updates with its image, while this
+# file is frozen on the card.
+#
+# The radio is used only while the agent asks for it by writing the country,
+# and never when it may carry the DeKoi's own connection. It scans; it never
+# joins a network.
+set -euo pipefail
+
+readonly country_file=/run/dekoi/wifi-country/country
+readonly out=/run/dekoi/wifi/scan
+readonly max_bytes=1048576
+
+# Replaces $out atomically with the status word $1 and standard input.
+publish() {
+	local tmp
+	tmp=$(mktemp "$out.XXXXXX")
+	{
+		printf '%s\n' "$1"
+		head -c "$max_bytes"
+	} >"$tmp"
+	chmod 0644 "$tmp"
+	mv -f "$tmp" "$out"
+}
+
+# The agent is less trusted than this script: read three bytes at most and
+# accept two capital letters only.
+country=""
+if [[ -f $country_file && ! -L $country_file ]]; then
+	country=$(head -c 3 "$country_file")
+fi
+if [[ ! $country =~ ^[A-Z]{2}$ ]]; then
+	rm -f "$out"
+	exit 0
+fi
+
+if [[ ! -e /sys/class/net/wlan0 ]]; then
+	publish no_radio </dev/null
+	exit 0
+fi
+
+# Scan only while another interface carries the default route and wlan0 is
+# not connected: a DeKoi that uses Wi-Fi keeps its radio to itself.
+routes=$(ip route show default && { ip -6 route show default 2>/dev/null || true; })
+link=$(iw dev wlan0 link)
+if [[ $routes != *" dev "* || $routes =~ dev\ wlan0([[:space:]]|$) || $link == Connected* ]]; then
+	publish uplink </dev/null
+	exit 0
+fi
+
+# The way Raspberry Pi OS sets the Wi-Fi country, also used by its own first
+# boot: the regulatory domain now and on the kernel command line, and the
+# radio unblocked (rfkill), which Raspberry Pi OS keeps blocked until a
+# country is set. Only on a change, since it rewrites cmdline.txt.
+current=$(iw reg get | awk '/^country / && !seen { print substr($2, 1, 2); seen = 1 }')
+if [[ $current != "$country" ]]; then
+	raspi-config nonint do_wifi_country "$country"
+fi
+ip link set wlan0 up
+
+raw=$(mktemp)
+trap 'rm -f "$raw"' EXIT
+# NetworkManager may be scanning at the same moment, which makes iw fail as
+# busy; the results the kernel keeps from that scan are as fresh.
+iw dev wlan0 scan >"$raw" 2>/dev/null || iw dev wlan0 scan dump >"$raw"
+publish scan <"$raw"

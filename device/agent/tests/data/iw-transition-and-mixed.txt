@@ -1,0 +1,58 @@
+BSS 06:ec:da:fd:81:02(on espsta0) -- associated
+ TSF: 3031531006879 usec (35d, 02:05:31)
+ freq: 2437
+ beacon interval: 100 TUs
+ capability: ESS Privacy ShortPreamble ShortSlotTime RadioMeasure (0x1431 )
+ signal: -52.00 dBm
+ last seen: 1670 ms ago
+ SSID: SSID1
+ Supported rates: 1.0* 2.0* 5.5* 11.0* 6.0 9.0 12.0 18.0
+ DS Parameter set: channel 6
+ Country: IT Environment: Indoor/Outdoor
+ Channels [1 - 13] @ 20 dBm
+ ERP:
+ RSN: * Version: 1
+ * Group cipher: CCMP
+ * Pairwise ciphers: CCMP
+ * Authentication suites: PSK SAE
+ * Capabilities: 1-PTKSA-RC 1-GTKSA-RC MFP-capable (0x0080)
+ Extended supported rates: 24.0 36.0 48.0 54.0
+ BSS Load:
+ * station count: 5
+ * channel utilisation: 42/255
+ * available admission capacity: 31250 [*32us]
+ WMM: * Parameter version 1
+ * BE: CW 15-1023, AIFSN 3
+ * BK: CW 15-1023, AIFSN 7
+ * VI: CW 7-15, AIFSN 2, TXOP 3008 usec
+ * VO: CW 3-7, AIFSN 2, TXOP 1504 usec
+BSS 78:2c:29:8a:a5:be(on wlan0)
+    TSF: 4843250819525 usec (56d, 01:20:50)
+    freq: 2412
+    beacon interval: 100 TUs
+    capability: ESS Privacy ShortPreamble ShortSlotTime (0x0431)
+    signal: -63.00 dBm
+    last seen: 4016 ms ago
+    Information elements from Probe Response frame:
+    SSID: yangyangyang
+    Supported rates: 1.0* 2.0* 5.5* 11.0* 6.0 9.0 12.0 18.0
+    DS Parameter set: channel 1
+    Country: CN    Environment: Indoor/Outdoor
+        Channels [1 - 13] @ 30 dBm
+    ERP: <no flags>
+    Extended supported rates: 24.0 36.0 48.0 54.0
+    WMM:     * Parameter version 1
+         * u-APSD
+         * BE: CW 15-1023, AIFSN 3
+         * BK: CW 15-1023, AIFSN 7
+         * VI: CW 7-15, AIFSN 2, TXOP 3008 usec
+         * VO: CW 3-7, AIFSN 2, TXOP 1504 usec
+    WPA:     * Version: 1
+         * Group cipher: CCMP
+         * Pairwise ciphers: CCMP
+         * Authentication suites: PSK
+    RSN:     * Version: 1
+         * Group cipher: CCMP
+         * Pairwise ciphers: CCMP
+         * Authentication suites: PSK
+         * Capabilities: 1-PTKSA-RC 1-GTKSA-RC (0x0000)
