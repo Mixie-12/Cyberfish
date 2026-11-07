@@ -20,6 +20,6 @@
     <string name="onboarding_steps_body">Each alert says in plain words what happened and how much it matters, then gives numbered steps, such as finding the device. Technical details are folded away below.</string>
 
     <string name="onboarding_watch_label">Around it</string>
-    <string name="onboarding_watch_title">It watches the whole network</string>
-    <string name="onboarding_watch_body">Your DeKoi also looks out for a device pretending to be your router, a copy of your Wi-Fi, and devices it has not seen before. When your DeKoi notices something, it tells you.</string>
+    <string name="onboarding_watch_title">It keeps an eye on your network</string>
+    <string name="onboarding_watch_body">Your DeKoi also looks out for a device pretending to be your router, a copy of your Wi-Fi, and devices it has not seen before. It sees what is sent to it or to every device, not what other devices send each other.</string>
 </resources>

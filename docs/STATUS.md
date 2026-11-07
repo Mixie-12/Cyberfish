@@ -2,8 +2,9 @@
 
 Updated 2026-11-07. Everything below is on `main` and deployed by CI (the
 production backend deploy is green at `b69caca`). The last release is
-v0.1.2; v0.2.0, which takes Phase 8 to the app, DeKoi Setup and devices,
-comes next (`docs/runbooks/release.md`).
+v0.2.0 (Phase 8: signed images, app, DeKoi Setup); v0.2.1, with Insights,
+Norwegian and the work since v0.2.0, comes next
+(`docs/runbooks/release.md`).
 
 ## Owner answers
 
@@ -84,7 +85,7 @@ phone (Android 16) and the owner's Windows 11 PC on Wi-Fi:
 | ARP sweep | Not reported when sent from the Wi-Fi PC; not verified from a wired host |
 | Typed passwords | Not shown in the app (stored rows covered by the CI end-to-end test) |
 
-### Phase 8: Identification, redesign, linking, hardening (built, release pending)
+### Phase 8: Identification, redesign, linking, hardening (released in v0.2.0)
 Asked for by the owner after Phase 7, beyond `docs/PROMPT.md`; each ADR
 records why.
 

@@ -67,7 +67,7 @@ class SetupTest {
         val wireless = nextSteps(code, cable = false)
 
         for (steps in listOf(cable, wireless)) {
-            assertTrue(steps.first().contains("Add DeKoi"))
+            assertTrue(steps.first().contains("Add a DeKoi"))
             assertTrue(steps.any { code.shortName in it })
         }
         assertTrue(cable.last().contains("network cable"))
