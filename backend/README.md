@@ -13,3 +13,10 @@ supabase db advisors --type all --fail-on warn
 supabase db reset     # reapply all migrations after editing one
 supabase stop
 ```
+
+Edge Function `notify` (Deno version pinned in the same workflow), from
+`supabase/functions/notify`:
+
+```
+deno fmt --check && deno lint && deno check *.ts && deno test --no-prompt
+```
