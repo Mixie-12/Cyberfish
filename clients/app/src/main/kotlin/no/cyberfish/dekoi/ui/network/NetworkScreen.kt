@@ -60,7 +60,13 @@ private const val VIEW = "view"
 private val SKELETON = 240.dp
 
 /** How the Network tab shows the devices, in the order of the switch. */
-private enum class NetworkView { MAP, LIST }
+private enum class NetworkView(
+    @param:StringRes val label: Int,
+) {
+    MAP(R.string.network_view_map),
+    ROOMS(R.string.network_view_rooms),
+    LIST(R.string.network_view_list),
+}
 
 @Composable
 fun NetworkScreen(
@@ -89,6 +95,7 @@ fun NetworkScreen(
             { resources.getString(kindName(it)) },
         )
     val summary = summary(entries)
+    val labels = NetworkView.entries.map { stringResource(it.label) }
     val open = { entry: HostEntry -> onNavigate(entry.host.detail) }
     Screen(stringResource(R.string.tab_network), listState = listState, subtitle = { StaleLabel(data.updatedAt, now) }) {
         if (!data.loaded) {
@@ -103,16 +110,14 @@ fun NetworkScreen(
             item { EmptyState(R.drawable.ic_lan, stringResource(R.string.network_empty)) }
             return@Screen
         }
-        item {
-            SegmentedControl(
-                listOf(stringResource(R.string.network_view_map), stringResource(R.string.network_view_list)),
-                view.ordinal,
-                { choose(NetworkView.entries[it]) },
-            )
-        }
+        item { SegmentedControl(labels, view.ordinal, { choose(NetworkView.entries[it]) }) }
         when (view) {
             NetworkView.MAP -> {
                 item { NetworkMap(entries, data.devices, data.networks, now, summary, onNavigate) { choose(NetworkView.LIST) } }
+            }
+
+            NetworkView.ROOMS -> {
+                item { RoomsView(entries, now, open) { onNavigate(Route.PlaceDevices) } }
             }
 
             NetworkView.LIST -> {

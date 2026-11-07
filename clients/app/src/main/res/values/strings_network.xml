@@ -14,6 +14,7 @@
     <string name="network_unknown_maker">Unknown maker</string>
     <string name="network_empty">Your DeKoi lists the devices on your network here within 15 minutes of starting.</string>
     <string name="network_view_map">Map</string>
+    <string name="network_view_rooms">Rooms</string>
     <string name="network_view_list">List</string>
     <string name="network_attention">Needs attention</string>
     <string name="network_new_this_week">New this week</string>
@@ -32,6 +33,9 @@
     <string name="network_map_description">Map of the devices your DeKoi can see. %1$s</string>
     <string name="network_show_list">Show as list</string>
     <string name="network_show_all">Show all</string>
+    <string name="rooms_intro">Say which room each device is in, and this becomes a plan of your home.</string>
+    <string name="rooms_not_placed">Not placed yet</string>
+    <string name="rooms_footer">You choose the rooms. Your DeKoi does not know where a device is.</string>
 
     <string name="networks_title">Networks</string>
     <plurals name="networks_count">
