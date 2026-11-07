@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="onboarding_skip">Hopp over</string>
+    <string name="onboarding_next">Neste</string>
+    <string name="onboarding_done">Ferdig</string>
+    <string name="onboarding_add">Legg til din DeKoi</string>
+    <string name="onboarding_later">Senere</string>
+    <string name="onboarding_page">Side %1$d av %2$d</string>
+
+    <string name="onboarding_decoy_label">Hva den er</string>
+    <string name="onboarding_decoy_title">En lagringsboks som ikke er det</string>
+    <string name="onboarding_decoy_body">Din DeKoi ser ut som en lagringsboks for bilder og sikkerhetskopier, men inneholder ingenting av verdi. Dine egne enheter har ingen grunn til å bruke den, så ingenting skal noen gang røre den.</string>
+
+    <string name="onboarding_touch_label">Slik virker den</string>
+    <string name="onboarding_touch_title">Når noe rører den, får du vite det</string>
+    <string name="onboarding_touch_body">Hvis en enhet på nettverket ditt prøver å åpne din DeKoi eller logge på den, får telefonen din et varsel, som regel i løpet av sekunder. Varselet sier hvilken enhet det var.</string>
+
+    <string name="onboarding_steps_label">Dette gjør du</string>
+    <string name="onboarding_steps_title">Tydelige steg, ikke fagspråk</string>
+    <string name="onboarding_steps_body">Hvert varsel forteller med enkle ord hva som skjedde og hvor viktig det er, og gir deg så nummererte steg, som å finne enheten. Tekniske detaljer ligger skjult lenger ned.</string>
+
+    <string name="onboarding_watch_label">Rundt den</string>
+    <string name="onboarding_watch_title">Den passer på hele nettverket</string>
+    <string name="onboarding_watch_body">Din DeKoi ser også etter en enhet som utgir seg for å være ruteren din, en kopi av Wi-Fi-nettet ditt og enheter den ikke har sett før. Når din DeKoi legger merke til noe, sier den fra.</string>
+</resources>

@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="widget_description">Viser hvordan det står til med nettverket ditt, og hvor mange varsler det er å se på.</string>
+    <string name="widget_label">Nettverket ditt</string>
+    <string name="widget_protected">Alt i orden</string>
+    <string name="widget_attention">Bør ses på</string>
+    <string name="widget_offline">DeKoi er frakoblet</string>
+    <string name="widget_setting_up">Setter opp</string>
+    <string name="widget_no_device">Legg til din DeKoi</string>
+    <string name="widget_no_alerts">Ingen nye varsler</string>
+    <string name="widget_signed_out">Åpne DeKoi for å se hvordan det står til med nettverket ditt.</string>
+</resources>

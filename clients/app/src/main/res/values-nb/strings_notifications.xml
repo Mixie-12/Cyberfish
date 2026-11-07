@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="notification_channel_urgent">Varsler som haster</string>
+    <string name="notification_channel_updates">Til orientering</string>
+    <string name="notification_public_text">Nytt varsel om nettverket ditt</string>
+</resources>

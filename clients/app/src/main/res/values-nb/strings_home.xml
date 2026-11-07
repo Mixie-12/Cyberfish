@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="status_protected_title">Alt i orden</string>
+    <string name="status_protected_body">Ingenting uvanlig det siste døgnet.</string>
+    <string name="status_attention_title">Din DeKoi la merke til noe</string>
+    <string name="status_attention_body">Noe på nettverket ditt rørte din DeKoi det siste døgnet. Ta en titt nedenfor.</string>
+    <string name="status_offline_title">Din DeKoi er frakoblet</string>
+    <string name="status_offline_body">Den kan ikke varsle deg før den er tilbake. Se etter at den har strøm og at nettverkskabelen står i.</string>
+    <string name="status_setting_up_title">Setter opp din DeKoi</string>
+    <string name="status_setting_up_body">Første oppstart kan ta opptil 10 minutter. Du kan gå fra denne skjermen.</string>
+    <string name="status_no_device_title">Legg til din DeKoi</string>
+    <string name="status_no_device_body">Gjør klar minnekortet med DeKoi Setup på en datamaskin. Skann så koden programmet viser.</string>
+    <string name="home_status">Status</string>
+    <string name="home_checks">Dette passer DeKoi på</string>
+    <string name="home_checks_paused">Satt på pause mens den er frakoblet</string>
+    <plurals name="home_checks_all">
+        <item quantity="one">%1$d kontroll er på</item>
+        <item quantity="other">Alle %1$d kontroller er på</item>
+    </plurals>
+    <plurals name="home_checks_some">
+        <item quantity="one">%1$d av %2$d kontroll er på</item>
+        <item quantity="other">%1$d av %2$d kontroller er på</item>
+    </plurals>
+    <string name="home_needs_attention">Bør ses på</string>
+    <string name="home_see_what_to_do">Se hva du bør gjøre</string>
+    <string name="home_overview">Oversikt</string>
+    <string name="stat_devices_seen">Enheter på nettverket ditt</string>
+    <plurals name="stat_new_this_week">
+        <item quantity="one">%1$d ny denne uken</item>
+        <item quantity="other">%1$d nye denne uken</item>
+    </plurals>
+    <string name="stat_alerts">Varsler siste 7 dager</string>
+    <string name="home_your_dekoi">Din DeKoi</string>
+    <plurals name="home_alerts_count">
+        <item quantity="one">%1$d varsel</item>
+        <item quantity="other">%1$d varsler</item>
+    </plurals>
+    <string name="home_chart_bar">%1$s: %2$s</string>
+    <string name="home_chart_severity">%1$s: %2$d</string>
+    <string name="home_chart_hint">Trykk på en dag for å se varslene fra den dagen.</string>
+    <string name="home_latest_activity">Siste aktivitet</string>
+    <string name="home_no_activity">Ingenting har rørt lokkeduene dine ennå. Slik skal det være.</string>
+    <string name="home_see_all_alerts">Se alle varsler</string>
+</resources>
