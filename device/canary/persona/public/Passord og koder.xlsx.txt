@@ -1,0 +1,9 @@
+Tjeneste	Brukernavn	Passord	Notat
+NAS ($name)	$admin_user	Sommer2019!	Admin, ikke del
+Backup til NAS	$backup_user	Backup#2023	Brukes av Kari sin PC
+Nettbank	$bank_user	Fjelltur!2024	BankID i tillegg
+VPN hjem	$vpn_user	Hytta-2024!	Se VPN-tilgang.txt
+Strømmetjenester	Kari sin e-post	Kanelbolle42	Felles for familien
+Ruteren	admin	Ruter-hjemme-77
+Kodelås bodene		7316
+Alarm hjemme		0517#	Ikke skriv ned flere steder

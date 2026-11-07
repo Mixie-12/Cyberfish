@@ -15,6 +15,7 @@ import no.cyberfish.dekoi.R
 import no.cyberfish.dekoi.WifiName
 import no.cyberfish.dekoi.ui.components.InsetRow
 import no.cyberfish.dekoi.ui.components.InsetSection
+import no.cyberfish.dekoi.ui.motion.rememberHaptics
 import no.cyberfish.dekoi.wifiWatchText
 import java.time.Instant
 
@@ -29,6 +30,7 @@ fun WifiNameSection(
     onSave: (Device, String?) -> Unit,
 ) {
     var editing by rememberSaveable { mutableStateOf<String?>(null) }
+    val haptics = rememberHaptics()
     InsetSection(title = stringResource(R.string.wifi_guard), footer = stringResource(R.string.wifi_name_footer)) {
         devices.forEach { device ->
             val status = stringResource(wifiWatchText(device, now))
@@ -43,6 +45,7 @@ fun WifiNameSection(
         WifiNameDialog(
             device,
             onSave = { name ->
+                haptics.confirm()
                 editing = null
                 onSave(device, name)
             },

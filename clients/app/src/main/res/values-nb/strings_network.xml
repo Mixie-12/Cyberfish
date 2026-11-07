@@ -13,6 +13,7 @@
     <string name="network_unknown_maker">Ukjent produsent</string>
     <string name="network_empty">Din DeKoi viser enhetene på nettverket ditt her innen 15 minutter etter at den har startet.</string>
     <string name="network_view_map">Kart</string>
+    <string name="network_view_rooms">Rom</string>
     <string name="network_view_list">Liste</string>
     <string name="network_attention">Bør ses på</string>
     <string name="network_new_this_week">Nye denne uken</string>
@@ -31,6 +32,9 @@
     <string name="network_map_description">Kart over enhetene din DeKoi kan se. %1$s</string>
     <string name="network_show_list">Vis som liste</string>
     <string name="network_show_all">Vis alle</string>
+    <string name="rooms_intro">Si hvilket rom hver enhet er i, så blir dette en plan over hjemmet ditt.</string>
+    <string name="rooms_not_placed">Ikke plassert ennå</string>
+    <string name="rooms_footer">Du velger rommene. Din DeKoi vet ikke hvor en enhet er.</string>
 
     <string name="networks_title">Nettverk</string>
     <plurals name="networks_count">
@@ -88,8 +92,21 @@
         <item>Soverom</item>
         <item>Kontor</item>
         <item>Entré</item>
+        <item>Garasje</item>
+        <item>Annet</item>
     </string-array>
     <string name="host_missing">Din DeKoi viser ikke lenger denne enheten.</string>
+
+    <string name="place_title">Plasser enhetene dine</string>
+    <string name="place_progress">%1$d av %2$d</string>
+    <string name="place_question">Hvilket rom er den i?</string>
+    <string name="place_skip">Hopp over</string>
+    <plurals name="place_done">
+        <item quantity="one">%1$d enhet har nå et rom. Du kan endre rommet når som helst i detaljene for enheten.</item>
+        <item quantity="other">%1$d enheter har nå et rom. Du kan endre rommet til en enhet når som helst i detaljene for den.</item>
+    </plurals>
+    <string name="place_done_none">Ingen rom ble valgt denne gangen. Du kan plassere enhetene dine når som helst fra Rom.</string>
+    <string name="place_done_action">Se rommene dine</string>
 
     <string name="os_other">Et annet system</string>
 </resources>

@@ -37,6 +37,7 @@ import androidx.glance.layout.fillMaxSize
 import androidx.glance.layout.fillMaxWidth
 import androidx.glance.layout.height
 import androidx.glance.layout.padding
+import androidx.glance.layout.wrapContentHeight
 import androidx.glance.text.FontFamily
 import androidx.glance.text.FontWeight
 import androidx.glance.text.Text
@@ -113,7 +114,8 @@ private fun Content(
             .padding(14.dp)
             .clickable(actionStartActivity(openIntent(context, snapshot?.latestEventId))),
     ) {
-        AndroidRemoteViews(header(context))
+        // Without a size the frame Glance puts around RemoteViews fills the column.
+        AndroidRemoteViews(header(context), GlanceModifier.fillMaxWidth().wrapContentHeight())
         Spacer(GlanceModifier.height(8.dp))
         Box(GlanceModifier.fillMaxWidth().height(1.dp).background(BLUE.copy(alpha = HAIRLINE_ALPHA))) {}
         Spacer(GlanceModifier.height(10.dp))

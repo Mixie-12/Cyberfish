@@ -66,7 +66,7 @@ import no.cyberfish.dekoi.ui.components.PrimaryButton
 import no.cyberfish.dekoi.ui.components.Screen
 import no.cyberfish.dekoi.ui.components.SeverityChip
 import no.cyberfish.dekoi.ui.components.Sparkline
-import no.cyberfish.dekoi.ui.relativeTime
+import no.cyberfish.dekoi.ui.motion.sharedKindTile
 import java.time.Instant
 import java.time.ZoneId
 
@@ -139,7 +139,7 @@ private fun Hero(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(Dimens.spaceS),
         ) {
-            KindTile(host.kind, hero = true)
+            KindTile(host.kind, Modifier.sharedKindTile(host.detail), hero = true)
             Text(name, style = MaterialTheme.typography.headlineSmall, textAlign = TextAlign.Center)
             Text(
                 stringResource(looksLike(host.kind)),
@@ -152,14 +152,7 @@ private fun Hero(
             }
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Dimens.spaceS)) {
                 StatusDot(online)
-                Text(
-                    if (online) {
-                        stringResource(R.string.host_online_now)
-                    } else {
-                        stringResource(R.string.host_last_seen_ago, relativeTime(host.lastSeenAt, now))
-                    },
-                    style = MaterialTheme.typography.bodyMedium,
-                )
+                Text(seenText(online, host.lastSeenAt, now), style = MaterialTheme.typography.bodyMedium)
                 when {
                     host.trusted -> Tag(stringResource(R.string.known_device))
                     host.isNew(now) -> Tag(stringResource(R.string.network_new), color = MaterialTheme.colorScheme.primary)

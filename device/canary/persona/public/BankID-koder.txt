@@ -1,0 +1,17 @@
+BankID - til meg selv
+
+Fødselsnummer: 148381 24632
+Personlig passord BankID: Fjelltur!2024
+BankID-appen, PIN: 2580
+
+Nettbank
+  brukernavn: $bank_user
+  passord: Fjelltur!2024 (samme som BankID)
+
+Reservekoder fra banken, brukes én gang:
+  1) 482913
+  2) 105277
+  3) 390114
+  4) 771205
+  5) 640938
+  6) 218806

@@ -81,6 +81,7 @@ import no.cyberfish.dekoi.ui.components.SeverityTile
 import no.cyberfish.dekoi.ui.components.Skeleton
 import no.cyberfish.dekoi.ui.components.StaleLabel
 import no.cyberfish.dekoi.ui.components.severityGlyph
+import no.cyberfish.dekoi.ui.motion.sharedSeverity
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
@@ -230,14 +231,16 @@ fun AlertsScreen(
                 key = { _, incident -> incident.events.last().id },
                 contentType = { _, _ -> "incident" },
             ) { index, incident ->
+                val detail = Route.AlertDetail(incident.lead.id)
                 TimelineEntry(
                     incident,
                     data.hostFor(incident.mac),
                     clock,
+                    detail,
                     first = index == 0,
                     last = index == incidents.lastIndex,
                     modifier = if (motion) Modifier.animateItem() else Modifier,
-                ) { onNavigate(Route.AlertDetail(incident.lead.id)) }
+                ) { onNavigate(detail) }
             }
         }
     }
@@ -354,12 +357,14 @@ private fun DayHeader(label: String) {
  * glows in the severity's colour until the incident is seen, the severity
  * glyph and word, the title and "14 times · 15:13–15:20". Seen incidents
  * are grey and quieter; incidents from a device the owner knows are dimmed.
+ * The glyph and word move into the hero of [detail], the screen it opens.
  */
 @Composable
 private fun TimelineEntry(
     incident: Incident,
     host: NetworkHost?,
     clock: DateTimeFormatter,
+    detail: Route,
     first: Boolean,
     last: Boolean,
     modifier: Modifier,
@@ -397,7 +402,7 @@ private fun TimelineEntry(
         Spacer(Modifier.width(RAIL))
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(Dimens.spaceXs)) {
             Row(
-                Modifier.onPlaced { dotY = it.positionInParent().y + it.size.height / 2f },
+                Modifier.sharedSeverity(detail).onPlaced { dotY = it.positionInParent().y + it.size.height / 2f },
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(Dimens.spaceXs),
             ) {

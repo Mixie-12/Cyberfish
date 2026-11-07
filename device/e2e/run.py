@@ -29,9 +29,10 @@ ATTACKER_IMAGE = (
     "3f4d6b32e26703c6082839234f43769d5046b3ac7c910033911d1e71d8cd630a"
 )
 CROCKFORD = "0123456789ABCDEFGHJKMNPQRSTVWXYZ"
-BAIT_FILE = "wallet-seed-backup.txt"
+BAIT_FILE = "passord.txt"
 DECOYS = ["ftp", "http", "mysql", "rdp", "redis", "smb", "ssh", "telnet", "vnc"]
 PERSONA = json.loads((Path(__file__).parents[1] / "canary/persona/persona.json").read_text())
+BAIT_USER = PERSONA["bait_users"]["admin_user"]
 SCANNER_IP = "192.0.2.10"
 SCAN_LOG = Path("/var/log/ulog/dekoi-scan.json")
 TIMEOUT_SECONDS = 240
@@ -114,6 +115,9 @@ def attack(password: str) -> None:
         # Browsing the shares is not an event; signing in and opening a file are.
         " && (smbclient -L //host.containers.internal -N >/dev/null || true)"
         f" && (smbclient //host.containers.internal/Finance -U 'admin%{password}' -c ls"
+        " >/dev/null || true)"
+        # A user name from the bait files: flagged, and never counted as a repeat.
+        f" && (smbclient //host.containers.internal/Finance -U '{BAIT_USER}%{password}' -c ls"
         " >/dev/null || true)"
         f" && smbclient //host.containers.internal/Public -N -c 'get {BAIT_FILE} /dev/null'"
         " && curl -sf --max-time 10 http://host.containers.internal/index.html"
@@ -209,6 +213,10 @@ def main() -> None:
     wait_for("HTTP login attempt", lambda: seen("login_attempt", "http"))
     wait_for("web page fetched", lambda: seen("connection", "http"))
     wait_for("file share sign-in attempt", lambda: seen("login_attempt", "smb"))
+    wait_for(
+        "sign-in with a user name from the bait files",
+        lambda: any(e["detail"].get("bait") for e in events()),
+    )
     wait_for("file share opened", lambda: seen("connection", "smb"))
     wait_for("bait file opened", lambda: seen("file_access", "smb"))
     wait_for("port scan", lambda: seen("port_scan"))
@@ -216,7 +224,8 @@ def main() -> None:
 
     rows = events()
     logins = [e for e in rows if e["kind"] == "login_attempt"]
-    assert all(e["detail"].get("username") == "admin" for e in logins), logins
+    names = {(e["detail"].get("username"), e["detail"].get("bait", False)) for e in logins}
+    assert names == {("admin", False), (BAIT_USER, True)}, logins
     assert password not in json.dumps(rows), "a typed password reached the backend"
     opened = [e for e in rows if e["kind"] == "file_access"]
     expected = {"share": "Public", "file": BAIT_FILE}

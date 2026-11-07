@@ -1,0 +1,14 @@
+Kopi av kredittkort (i tilfelle kortene blir borte)
+Kortinnehaver: KARI NORDMANN
+
+Visa
+    Kortnummer: 4111 1111 1111 1111
+    Gyldig til: 12/28    CVC: 123
+    PIN: 7316
+
+Mastercard (felles)
+    Kortnummer: 5555 5555 5555 4444
+    Gyldig til: 09/27    CVC: 737
+    PIN: 0517
+
+Sperring: ring banken, nummeret står på baksiden av kortet.

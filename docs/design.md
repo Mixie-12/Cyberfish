@@ -30,10 +30,11 @@ Four tabs, M3 `NavigationBar`, Material Symbols, filled when selected: Home
 incidents not from known devices), Network (`lan`), Settings (`settings`).
 
 Pushed screens: Alert detail, Device detail (a host), Networks, Insights,
-Your DeKoi, Features, Add DeKoi. Type-safe Navigation Compose routes (`@Serializable`
-objects). Each tab keeps its back stack; back at a non-Home tab root goes Home;
-reselecting a tab pops to its root and scrolls to top. Predictive back from
-Navigation. A notification opens Alert detail over the Alerts tab.
+Your DeKoi, Features, Add DeKoi, Place your devices. Type-safe Navigation
+Compose routes (`@Serializable` objects). Each tab keeps its back stack;
+back at a non-Home tab root goes Home; reselecting a tab pops to its root
+and scrolls to top. Predictive back from Navigation. A notification opens
+Alert detail over the Alerts tab.
 
 Cross-links: Alert to Device; Device to Alerts filtered to it; decoy tile to
 Alerts filtered to that service; Home tiles to their tabs.
@@ -44,17 +45,23 @@ Alerts filtered to that service; Home tiles to their tabs.
 hairline. (1) Status hero: 120 dp ring around a shield, coloured by
 `Protection`, with a soft glow of that colour behind it; existing `status_*`
 strings, polite live region, ring draws in once (700 ms), not on every
-return. (2) "Needs attention": up to three critical or warning alerts of the
+return; the words fade through when the status changes. Then, until a DeKoi
+is fully set up or the owner closes it (remembered on the phone), the
+welcome in a HUD frame: "Welcome to DeKoi", three numbered steps with
+symbols (prepare the memory card, with this phone or DeKoi Setup; plug in
+the network cable, then the power; watch it come online here), "Add a
+DeKoi" and "Take the tour". Once closed, without a DeKoi, an "Add a DeKoi"
+row. (2) "Needs attention": up to three critical or warning alerts of the
 last 24 h, one per source device, on quiet hairline-edged cards (severity
 chip, title, device, "See what to do"), each opening its alert; hidden when
 none. (3) 2x2 tiles: devices on your network (count, "3 new this week"),
 alerts in 7 days (count and sparkline), Your DeKoi (status, last check-in),
 checks ("All 8 checks on", amber when one fails, grey while
 offline; opens Features); tabular figures roll on change (300 ms); one
-column above font scale 1.5. (4) Seven-day bar chart stacked by severity;
+column above font scale 1.5; under them an "Add another DeKoi" row unless
+the welcome shows. (4) Seven-day bar chart stacked by severity;
 tapping a bar opens Alerts for that day. (5) Latest five events.
-`PullToRefreshBox` replaces the Refresh button. Without a DeKoi: "Add DeKoi"
-above the horizon.
+`PullToRefreshBox` replaces the Refresh button.
 
 **Alerts.** A calm timeline of incidents (ADR 0013), grouped by
 `incidents()` in `Incidents.kt`: events from one DeKoi and one source, each
@@ -98,8 +105,9 @@ address, network, online status; opens Device detail). (6) Technical
 details collapsed (`animateContentSize`, monospace, copyable).
 
 **Network.** Header "38 devices · 3 new this week · 1 needs attention", a
-"Networks" row and an "Insights" row per DeKoi. Map | List segmented
-control, choice saved; List is the default with TalkBack on.
+"Networks" row, an "Insights" row per DeKoi and an "Add DeKoi" row (also
+before any device shows). Map | Rooms | List segmented control, choice
+saved; List is the default with TalkBack on.
 - Map: a radar in the HUD frame (ADR 0020). Gateway at the centre; ring 1
   infrastructure (switches, access points, DeKoi with the brand mark); ring
   2 everything else clustered by kind, or by room once any device has one
@@ -112,6 +120,26 @@ control, choice saved; List is the default with TalkBack on.
   fits. Footer: "Shows the devices your DeKoi can see, not how they are
   connected." For TalkBack the map is one node with a summary and a "Show
   as list" action.
+- Rooms: a plan of the home from the rooms the owner sets (ADR 0023), from
+  `roomAreas()` and `floorPlan()` in `Rooms.kt`. One HUD-framed area per
+  room in use: the suggested rooms in their order (Living room, Kitchen,
+  Bedroom, Office, Hallway, Garage, Other), then the owner's own
+  alphabetically, matched whatever their case. Two areas to a row, a row
+  sharing the height of the tallest; a room with more than four devices
+  takes a whole row, and one column above font scale 1.5. Each area: its
+  name as a label, the count in blue, the devices as 40 dp kind tiles in
+  kind order with status dot and alert halo, the name under each. Then
+  "Not placed yet" under a hairline, with "Place your devices". Before
+  any room is set, one sentence says what the view becomes. Footer: "You
+  choose the rooms. Your DeKoi does not know where a device is." Nothing
+  moves. TalkBack reads each area as a heading ("Living room, 3 devices")
+  and each device with its status and any alert.
+- Place your devices: the devices without a room when it opens, one at a
+  time: the hero in the HUD frame (kind tile, name, maker, "Looks like a
+  TV"), "Which room is it in?" with the rooms as chips in the plan's order,
+  and Skip. A pick saves the room at once and keeps the name. "3 of 7"
+  under the title; a polite live region reads the progress and each
+  device. Ends with how many devices now have a room and "See your rooms".
 - List: search, sort (name, last seen, kind); sections Needs attention, New
   this week, Online, Not seen recently, or By room once any device has one.
   Row: tile with status dot, name, "Looks like a TV · LG · 192.168.1.23",
@@ -121,9 +149,10 @@ control, choice saved; List is the default with TalkBack on.
   use `network_private`.
 
 **Device detail.** (1) Hero in the HUD frame: 96 dp kind tile with its idle
-animation, shared element from list or map; name, "Looks like a TV", room,
-status ("Online now" or "Last seen 2 h ago"), Known device or New tag. (2)
-Attention card if it caused an alert in 24 h, linking to that alert. (3)
+animation, shared element from the list, map or rooms; name, "Looks like a
+TV", room, status ("Online now" or "Last seen 2 h ago"), Known device or New
+tag. (2) Attention card if it caused an alert in 24 h, linking to that
+alert. (3)
 14-day sparkline and "See all alerts from this device". (4) About: maker,
 model, system (`os`), announced name, service labels as plain tags. (5)
 Connection: address, network, hardware address (copyable), private-address
@@ -224,12 +253,15 @@ confirmation.
 
 **Sign-in and onboarding.** Brand hero with a slowly floating koi mark (6 s,
 static without animations), tagline, "Continue with Google", inline errors.
-Add DeKoi: three-step card (prepare the card, scan, plug in); "Scan the code"
-primary, "Type the code" secondary with a 26-character input in groups of
-four. After a claim, a vertical timeline (linked, first start, online,
-watching) ticks off as data arrives, polling every 15 s while visible; help
-after 20 min; on success the ring completes, then the notification
-permission request.
+The tour (four pages over the horizon) opens once per tour version after
+sign-in, so a changed tour reaches existing owners once; its last page
+offers "Add a DeKoi" without one, "Done" otherwise; Settings keeps "Take the
+tour". Add DeKoi: three-step card (prepare the card, scan, plug in); "Scan
+the code" primary, "Type the code" secondary with a 26-character input in
+groups of four. After a claim, a vertical timeline (linked, first start,
+online, watching; `SetupTimeline`, the same as on Your DeKoi) ticks off as
+data arrives, polling every 15 s while visible; help after 20 min; on
+success the ring completes, then the notification permission request.
 
 **States.** Loading: skeletons shaped like the content (no shimmer without
 animations). Empty: glyph, one sentence, next step. Error: inline banner

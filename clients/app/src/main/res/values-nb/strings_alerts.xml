@@ -17,6 +17,7 @@
     <string name="event_login_action">Prøvde å logge på</string>
     <string name="event_login_consequence">Noen prøver kanskje å komme seg inn på enhetene på nettverket ditt.</string>
     <string name="event_login_why">Ingenting på nettverket ditt har noen grunn til å logge på din DeKoi. Noen, eller et program, prøver ut passord på enhetene som finnes på nettverket.</string>
+    <string name="event_login_bait_consequence">Passordet kom fra filene på lokkeduen din. Noen har sett gjennom lokkefilene og prøver det de fant.</string>
     <string name="event_connection_title">%1$s åpnet en av lokkeduene dine</string>
     <string name="event_connection_action">Åpnet en lokkedue</string>
     <string name="event_connection_why">Din DeKoi later som den er en lagringsboks. Vanlige enheter lar den være i fred, så et besøk betyr at noe på nettverket ditt ser seg rundt.</string>
