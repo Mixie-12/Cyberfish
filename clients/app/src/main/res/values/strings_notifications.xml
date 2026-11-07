@@ -3,6 +3,6 @@
 <resources>
     <string name="notification_channel_urgent">Alerts to act on now</string>
     <string name="notification_channel_updates">For your information</string>
-    <string name="notification_public_title">DeKoi</string>
+    <string name="notification_public_title" translatable="false">DeKoi</string>
     <string name="notification_public_text">New alert about your network</string>
 </resources>

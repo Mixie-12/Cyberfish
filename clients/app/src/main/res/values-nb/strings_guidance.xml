@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="severity_critical">Haster</string>
+    <string name="severity_warning">Se på snart</string>
+    <string name="severity_info">Til orientering</string>
+
+    <string name="threat_title">Er dette en ekte trussel?</string>
+    <string name="threat_likely">Svært sannsynlig et angrep</string>
+    <string name="threat_possible">Kanskje et angrep</string>
+    <string name="threat_unlikely">Sannsynligvis ufarlig</string>
+    <string name="threat_sign_in">Noe prøvde passord på din DeKoi. Ingen vanlig enhet i et hjem gjør det.</string>
+    <string name="threat_file">Noen åpnet en av lokkefilene på din DeKoi. Vanlige enheter gjør aldri det av seg selv.</string>
+    <string name="threat_impersonation">Vanlige enheter utgir seg aldri for å være en annen enhet eller svarer i stedet for den.</string>
+    <string name="threat_dns">Nettverket ditt ga andre adresser for kjente nettsteder enn en uavhengig kontroll gjorde. Hjemmerutere gjør ikke det av seg selv.</string>
+    <string name="threat_wifi_copy">Et Wi-Fi-nett i nærheten bruker navnet på nettverket ditt med svakere sikkerhet. Ditt eget Wi-Fi-nett senker ikke sikkerheten av seg selv.</string>
+    <string name="threat_probing">Noen apper og nettverksverktøy gjør også dette. Hvis du ikke kjenner igjen enheten, behandle det som et angrep.</string>
+    <string name="threat_known">Det kommer fra en enhet du har merket som kjent, så det er mest sannsynlig deg eller et av dine egne verktøy.</string>
+    <string name="threat_new_device">De fleste nye enheter tilhører noen i husstanden eller en gjest.</string>
+    <string name="threat_new_access_point">Mesh-punkter for Wi-Fi og nye rutere gjør dette. Det gjør også noen som kjenner Wi-Fi-passordet ditt og kopierer nettverket ditt.</string>
+    <string name="threat_port_forward">Spillkonsoller, kameraer og apper for fjerntilgang gjør dette av seg selv. Et skadelig program kan også gjøre det.</string>
+    <string name="threat_status">Dette gjelder din DeKoi selv, ikke et angrep.</string>
+
+    <string name="step_find_personal">Finn enheten. Den ser ut som en telefon, et nettbrett eller en klokke. Se gjennom dem familien og gjestene har med seg.</string>
+    <string name="step_find_computer">Finn enheten. Den ser ut som en datamaskin, så se gjennom de bærbare og stasjonære datamaskinene hjemme hos deg.</string>
+    <string name="step_find_entertainment">Finn enheten. Den ser ut som en TV, en strømmeboks, en høyttaler eller en spillkonsoll, så se i stuen og på soverommene.</string>
+    <string name="step_find_office">Finn enheten. Den ser ut som en skriver eller en lagringsboks, så se der du har kontorutstyret.</string>
+    <string name="step_find_smart_home">Finn enheten. Den ser ut som et kamera eller en smarthusenhet, for eksempel en smartplugg, en lyspære, en termostat eller en dørklokke.</string>
+    <string name="step_find_network_gear">Finn enheten. Den ser ut som nettverksutstyr, for eksempel en ruter, en Wi-Fi-forsterker eller en nettverkssvitsj.</string>
+    <string name="step_find_unknown">Finn enheten. Appen eller innstillingssiden til ruteren viser de tilkoblede enhetene med maskinvareadressen deres.</string>
+
+    <string name="step_ask_owner">Spør hvem hjemme hos deg som eier den.</string>
+    <string name="step_disconnect_personal">Slå av Wi-Fi på den.</string>
+    <string name="step_disconnect_computer">Trekk ut nettverkskabelen eller slå av Wi-Fi på den. La den stå på.</string>
+    <string name="step_disconnect_power">Trekk den ut av strømmen.</string>
+    <string name="step_disconnect_smart_home">Trekk den ut av strømmen eller ta ut batteriene.</string>
+    <string name="step_reset_smart_home">Tilbakestill den og oppdater programvaren før du bruker den igjen.</string>
+    <string name="step_shut_down_storage">Slå den av i appen eller med av/på-knappen, så ingen filer går tapt.</string>
+    <string name="step_disconnect_storage">Trekk så ut nettverkskabelen.</string>
+    <string name="step_disconnect_network_gear">Har du flere enn én, trekk ut de ekstra én om gangen. Er dette boksen fra internettleverandøren din, start den på nytt i stedet.</string>
+    <string name="step_disconnect_unknown">Hvis ingen kjenner den igjen, blokker maskinvareadressen i ruterens app eller innstillinger.</string>
+
+    <string name="step_change_wifi_password">Bytt Wi-Fi-passordet. Enheter uten det nye passordet kommer ikke lenger inn.</string>
+    <string name="step_change_account_passwords">Bytt passordene til de viktige kontoene dine, som e-post og nettbank, på en telefon eller datamaskin du vet er trygg.</string>
+    <string name="step_mark_known_newcomer">Hvis den tilhører deg eller en gjest, merk den som kjent nedenfor og stopp her.</string>
+    <string name="step_change_wifi_password_newcomer">Bytt deretter Wi-Fi-passordet, så den ikke kommer inn igjen.</string>
+    <string name="step_turn_off_remote_access">Hvis du ikke bruker den når du er borte fra hjemmet, slå av fjerntilgang i appen til enheten.</string>
+    <string name="step_turn_off_upnp">Hvis ingen enhet trenger å nås utenfra, slå av UPnP i appen til ruteren.</string>
+    <string name="step_use_mobile_data">Til dette er ordnet, logg på nettsteder med mobildata, ikke med Wi-Fi-nettet hjemme.</string>
+    <string name="step_ask_provider">Hvis varselet kommer tilbake, be internettleverandøren din om hjelp.</string>
+    <string name="step_avoid_copy">Ikke koble deg til et nettverk med navnet på Wi-Fi-nettet ditt hvis det ikke ber om passord, eller ber om et nytt.</string>
+    <string name="step_check_devices_network">Sjekk i Wi-Fi-innstillingene på telefonene og datamaskinene dine at nettverket ditt ber om det vanlige passordet.</string>
+    <string name="step_rejoin_network">Hvis en enhet har koblet seg til kopien, velg «Glem» for det nettverket på enheten, og koble den til ditt eget igjen.</string>
+    <string name="step_new_access_point_yours">Hvis du har lagt til eller byttet ut Wi-Fi-utstyr, trenger du ikke gjøre noe mer.</string>
+    <string name="step_restart_router">Start ruteren på nytt, så alle enheter får nettverksinnstillingene sine fra ruteren igjen.</string>
+    <string name="step_check_power">Sjekk at din DeKoi har strøm. Lampen skal lyse.</string>
+    <string name="step_check_cable">Sjekk at nettverkskabelen er koblet til i begge ender.</string>
+    <string name="step_wait_reconnect">Vent noen minutter. Den kobler seg til igjen av seg selv og sier fra når den er tilbake.</string>
+
+    <string name="kind_router">Ruter</string>
+    <string name="kind_switch">Nettverkssvitsj</string>
+    <string name="kind_access_point">Wi-Fi-tilgangspunkt</string>
+    <string name="kind_computer">Datamaskin</string>
+    <string name="kind_phone">Telefon</string>
+    <string name="kind_tablet">Nettbrett</string>
+    <string name="kind_tv">TV</string>
+    <string name="kind_media_player">Strømmeboks</string>
+    <string name="kind_speaker">Høyttaler</string>
+    <string name="kind_game_console">Spillkonsoll</string>
+    <string name="kind_printer">Skriver</string>
+    <string name="kind_camera">Kamera</string>
+    <string name="kind_storage">Lagringsboks</string>
+    <string name="kind_smart_home">Smarthusenhet</string>
+    <string name="kind_wearable">Klokke eller treningsarmbånd</string>
+    <string name="kind_server">Server</string>
+    <string name="kind_unknown">Ukjent enhet</string>
+
+    <string name="looks_like_router">Ser ut som en ruter</string>
+    <string name="looks_like_switch">Ser ut som en nettverkssvitsj</string>
+    <string name="looks_like_access_point">Ser ut som et Wi-Fi-tilgangspunkt</string>
+    <string name="looks_like_computer">Ser ut som en datamaskin</string>
+    <string name="looks_like_phone">Ser ut som en telefon</string>
+    <string name="looks_like_tablet">Ser ut som et nettbrett</string>
+    <string name="looks_like_tv">Ser ut som en TV</string>
+    <string name="looks_like_media_player">Ser ut som en strømmeboks</string>
+    <string name="looks_like_speaker">Ser ut som en høyttaler</string>
+    <string name="looks_like_game_console">Ser ut som en spillkonsoll</string>
+    <string name="looks_like_printer">Ser ut som en skriver</string>
+    <string name="looks_like_camera">Ser ut som et kamera</string>
+    <string name="looks_like_storage">Ser ut som en lagringsboks</string>
+    <string name="looks_like_smart_home">Ser ut som en smarthusenhet</string>
+    <string name="looks_like_wearable">Ser ut som en klokke eller et treningsarmbånd</string>
+    <string name="looks_like_server">Ser ut som en server</string>
+    <string name="looks_like_unknown">DeKoi vet ikke ennå hva dette er</string>
+
+    <!-- Whole subject phrases, so each carries its own gender: en ruter, et nettbrett. -->
+    <string name="subject_router">En ruter</string>
+    <string name="subject_switch">En nettverkssvitsj</string>
+    <string name="subject_access_point">Et Wi-Fi-tilgangspunkt</string>
+    <string name="subject_computer">En datamaskin</string>
+    <string name="subject_phone">En telefon</string>
+    <string name="subject_tablet">Et nettbrett</string>
+    <string name="subject_tv">En TV</string>
+    <string name="subject_media_player">En strømmeboks</string>
+    <string name="subject_speaker">En høyttaler</string>
+    <string name="subject_game_console">En spillkonsoll</string>
+    <string name="subject_printer">En skriver</string>
+    <string name="subject_camera">Et kamera</string>
+    <string name="subject_storage">En lagringsboks</string>
+    <string name="subject_smart_home">En smarthusenhet</string>
+    <string name="subject_wearable">En klokke</string>
+    <string name="subject_server">En server</string>
+    <string name="subject_unknown">En enhet</string>
+
+    <!-- Maker after the kind, as in "TV fra LG": a Norwegian compound would need a hyphen and a lower-case kind. -->
+    <string name="host_maker_kind">%2$s fra %1$s</string>
+</resources>

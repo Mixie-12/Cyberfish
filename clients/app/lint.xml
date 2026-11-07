@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<lint>
+    <!-- Every English string needs its Norwegian translation (values-nb).
+         Fatal, so release builds (lintVital) check it too, not only
+         lintDebug. A translated array with fewer items drops a paragraph
+         or a step. -->
+    <issue id="MissingTranslation" severity="fatal" />
+    <issue id="InconsistentArrays" severity="fatal" />
+    <!-- Bokmålsordboka gives "internett" in lower case as the main form;
+         lint's Norwegian word list still asks for "Internett". -->
+    <issue id="Typos">
+        <ignore regexp="&quot;internett&quot; is usually capitalized" />
+    </issue>
+</lint>

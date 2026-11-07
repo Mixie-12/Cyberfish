@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="settings_account_title">Konto</string>
+    <string name="settings_account">Logget på med Google</string>
+    <string name="settings_sign_out">Logg av</string>
+    <string name="settings_devices">Dine DeKoi</string>
+
+    <string name="settings_notifications">Varslinger</string>
+    <string name="settings_channel_alerts">Også når en DeKoi blir frakoblet</string>
+    <string name="settings_notifications_on">På</string>
+    <string name="settings_notifications_off">Av</string>
+    <string name="settings_notifications_footer">Trykk på en type varsling for å endre den i innstillingene på telefonen.</string>
+
+    <string name="settings_weekly_summary">Ukesoppsummering</string>
+    <string name="settings_weekly_summary_footer">En kort melding én gang i uken: hvor mange varsler og nye enheter din DeKoi så, og hvor mye av tiden den var tilkoblet.</string>
+
+    <string name="settings_privacy_title">Personvern</string>
+    <string name="settings_privacy_intro">Dette lagrer DeKoi:</string>
+    <string name="settings_privacy_email">E-postadressen til Google-kontoen din.</string>
+    <string name="settings_privacy_hosts">Navn, nettverksadresser og maskinvareadresser til enhetene på nettverket ditt. Navnene kan inneholde navn på personer.</string>
+    <string name="settings_privacy_makers">Hvem som har laget enhetene, og hvilke modeller de er.</string>
+    <string name="settings_privacy_user_names">Brukernavn som er skrevet inn i lokkeduene, aldri passordene.</string>
+    <string name="settings_privacy_public_address">Den offentlige internettadressen til hjemmet ditt.</string>
+    <string name="settings_privacy_push">En kode som lar den sende varslinger til denne telefonen.</string>
+    <string name="settings_privacy_kept">DeKoi beholder varsler i 90 dager, og enheter og nettverk i 90 dager etter at den sist så dem. Sletter du kontoen, fjerner du alt sammen.</string>
+
+    <string name="settings_about">Om</string>
+    <string name="settings_version">Versjon</string>
+
+    <string name="settings_delete">Slett kontoen</string>
+    <string name="settings_delete_footer">Fjerner kontoen din, alle DeKoi som er koblet til den, og alt de har rapportert.</string>
+    <string name="settings_delete_confirm_title">Slette kontoen din?</string>
+    <string name="settings_delete_confirm_body">Dette fjerner kontoen din, alle DeKoi som er koblet til den, og all historikken deres. Det kan ikke angres.</string>
+
+    <string name="licences_title">Lisenser for åpen kildekode</string>
+    <string name="licences_body">DeKoi er laget med disse bibliotekene og skriftene. Hver av dem brukes under lisensen som står over den.</string>
+    <string name="licences_show">Vis lisensteksten</string>
+    <string name="licences_hide">Skjul lisensteksten</string>
+
+    <string name="wifi_name_title">Navnet på Wi-Fi-nettet ditt</string>
+    <string name="wifi_name_footer">Din DeKoi varsler deg når et Wi-Fi-nett i nærheten kopierer dette navnet for å lure enhetene dine til å koble seg på. Den trenger bare navnet, aldri Wi-Fi-passordet ditt.</string>
+    <string name="wifi_name_not_set">Ikke angitt</string>
+    <string name="wifi_name_for_device">%1$s: %2$s</string>
+    <string name="wifi_name_label">Wi-Fi-navn</string>
+    <string name="wifi_name_hint">Nøyaktig slik telefonen din viser det. La feltet stå tomt hvis din DeKoi ikke skal se etter kopier.</string>
+    <string name="wifi_watch_add">Legg inn navnet på Wi-Fi-nettet ditt, så kan din DeKoi varsle deg hvis noen kopierer det.</string>
+    <string name="wifi_watch_starting">Starter. Dette tar noen minutter.</string>
+    <string name="wifi_watch_learning">Blir kjent med Wi-Fi-nettet ditt i ett døgn før den begynner å varsle deg.</string>
+    <string name="wifi_watch_watching">Ser etter kopier av Wi-Fi-nettet ditt.</string>
+    <string name="wifi_watch_no_country">Av. Din DeKoi vet ikke hvilket land den er i, så den holder Wi-Fi-radioen sin slått av.</string>
+    <string name="wifi_watch_no_radio">Av. Denne DeKoi kan ikke bruke Wi-Fi-radioen sin. En DeKoi som ble satt opp før denne funksjonen kom, trenger at minnekortet blir gjort klart på nytt.</string>
+    <string name="wifi_watch_uplink">Av. Denne DeKoi bruker Wi-Fi-radioen til sin egen tilkobling.</string>
+</resources>

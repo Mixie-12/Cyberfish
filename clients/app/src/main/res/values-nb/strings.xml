@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="tab_home">Hjem</string>
+    <string name="tab_alerts">Varsler</string>
+    <string name="tab_network">Nettverk</string>
+    <string name="tab_settings">Innstillinger</string>
+    <plurals name="tab_alerts_badge">
+        <item quantity="one">%1$d varsel å se på</item>
+        <item quantity="other">%1$d varsler å se på</item>
+    </plurals>
+
+    <string name="action_add_dekoi">Legg til DeKoi</string>
+    <string name="action_back">Tilbake</string>
+    <string name="action_cancel">Avbryt</string>
+    <string name="action_remove">Fjern</string>
+    <string name="action_delete">Slett</string>
+    <string name="action_save">Lagre</string>
+    <string name="action_try_again">Prøv igjen</string>
+    <string name="action_copy">Kopier</string>
+    <string name="action_copied">Kopiert</string>
+    <string name="updated_ago">Oppdatert %1$s</string>
+    <string name="last_seven_days">Siste 7 dager</string>
+
+    <string name="notification_channel_alerts">Varsler å se på snart</string>
+    <string name="notifications_ask_title">Få varsler på denne telefonen</string>
+    <string name="notifications_ask_body">Når noe på nettverket ditt rører din DeKoi, eller din DeKoi blir frakoblet, kan den si fra med en gang. Tillat varslinger for å få disse varslene.</string>
+    <string name="notifications_ask_allow">Fortsett</string>
+    <string name="notifications_ask_later">Ikke nå</string>
+
+    <string name="error_network">Får ikke kontakt akkurat nå. Sjekk internettforbindelsen på denne telefonen.</string>
+    <string name="error_generic">Noe gikk galt. Prøv igjen.</string>
+    <string name="action_take_tour">Vis meg rundt</string>
+    <string name="known_device">Kjent enhet</string>
+    <string name="action_mark_known">Merk som kjent</string>
+    <string name="action_unmark_known">Fjern fra kjente enheter</string>
+</resources>

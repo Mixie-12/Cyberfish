@@ -37,11 +37,11 @@
     <string name="licences_body">DeKoi is built with these libraries and fonts. Each is used under the licence named above it.</string>
     <string name="licences_show">Show licence text</string>
     <string name="licences_hide">Hide licence text</string>
-    <string name="licence_apache">Apache License 2.0</string>
-    <string name="licence_mit">MIT License</string>
-    <string name="licence_ofl">SIL Open Font License 1.1</string>
-    <string name="licence_android_sdk">Android Software Development Kit License</string>
-    <string name="licence_ml_kit">ML Kit Terms of Service</string>
+    <string name="licence_apache" translatable="false">Apache License 2.0</string>
+    <string name="licence_mit" translatable="false">MIT License</string>
+    <string name="licence_ofl" translatable="false">SIL Open Font License 1.1</string>
+    <string name="licence_android_sdk" translatable="false">Android Software Development Kit License</string>
+    <string name="licence_ml_kit" translatable="false">ML Kit Terms of Service</string>
 
     <string name="wifi_name_title">Your Wi-Fi name</string>
     <string name="wifi_name_footer">Your DeKoi warns you when a Wi-Fi network near it copies this name to trick your devices into joining. It needs only the name, never your Wi-Fi password.</string>
