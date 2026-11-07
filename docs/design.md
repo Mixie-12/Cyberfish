@@ -45,7 +45,7 @@ last 24 h, one per source device, on quiet hairline-edged cards (severity
 chip, title, device, "See what to do"), each opening its alert; hidden when
 none. (3) 2x2 tiles: devices on your network (count, "3 new this week"),
 alerts in 7 days (count and sparkline), Your DeKoi (status, last check-in),
-protections ("All 8 protections on", amber when one fails, grey while
+checks ("All 8 checks on", amber when one fails, grey while
 offline; opens Your DeKoi); tabular figures roll on change (300 ms); one
 column above font scale 1.5. (4) Seven-day bar chart stacked by severity;
 tapping a bar opens Alerts for that day. (5) Latest five events.
@@ -101,7 +101,7 @@ watches only the network it is plugged into."
 
 **Your DeKoi.** Hero in the HUD frame (fish mark, name, status, "Checked
 in 1 min ago"). The setup checklist while setting up; otherwise "What DeKoi
-is watching" (ADR 0013): one row per monitor in plain words with the numbers
+watches" (ADR 0013): one row per monitor in plain words with the numbers
 the DeKoi reports ("Checking traffic against 48,213 known attack patterns",
 "Updated 3 Nov"), a green check when on, amber when failing, grey otherwise
 and while offline; the software version and when it last updated; the
