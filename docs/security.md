@@ -44,6 +44,10 @@ The data flow and every contract are in `docs/architecture.md`.
 Further: typed passwords never leave the device (tested: agent `test_sources`,
 end-to-end assertion that the attacker's password is absent from the backend).
 
+Hardware (verified 2026-11-07, `docs/STATUS.md` Phase 7): from the LAN only
+the eight decoy ports answer and port 22 is the decoy, not the host's SSH;
+the login alert arrived about 1 s after the attempt with the fixed template.
+
 ## OWASP Top 10 (2025)
 
 | Risk                                   | Control in DeKoi                                                                 |

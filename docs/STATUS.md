@@ -1,9 +1,9 @@
 # Status
 
-Updated 2026-11-07. Code for Phases 0 to 4 and the network detection of ADR
-0003 is on `main` and green in CI. Phases 5 (notifications) and 6 (DeKoi
-Setup) are being built in parallel branches. Phase 3 (deploy) waits for the
-owner's bootstrap; Phase 7 (hardware) for a session with a Pi.
+Updated 2026-11-07. Phases 0 to 6 are on `main`, deployed by CI and released
+as v0.1.1. The Phase 7 hardware test passed end to end with the findings
+below. Next: device identification and the app redesign the owner asked for
+(Phase 8).
 
 ## Owner answers (Phase 0 and later)
 
@@ -25,8 +25,8 @@ owner's bootstrap; Phase 7 (hardware) for a session with a Pi.
 | cosign public key                    | `device/host/etc/dekoi/cosign.pub` (on every card)        |
 | Android release keystore, password   | GitHub secrets `ANDROID_KEYSTORE_BASE64`, `ANDROID_KEYSTORE_PASSWORD`; 1Password item "DeKoi Android release signing key". Alias `dekoi`. Certificate SHA-256 `7F:57:59:C5:01:5B:FC:7A:34:7A:72:35:35:54:07:91:96:E6:21:58:5A:9F:EE:69:44:75:86:A7:E8:43:67:41` |
 | Notification webhook secret          | GitHub secret `NOTIFY_SECRET` (generated 2026-11-07; written to Vault and the function by the deploy job) |
-| Supabase access token, DB password   | Not created yet (owner action 1)                          |
-| Google web client secret, Firebase service account | Not created yet (owner action 3)            |
+| Supabase access token, DB password   | GitHub secrets `SUPABASE_ACCESS_TOKEN`, `SUPABASE_DB_PASSWORD` (docs/runbooks/deploy-backend.md) |
+| Google web client secret, Firebase service account | GitHub secrets `GOOGLE_WEB_CLIENT_SECRET`, `FCM_SERVICE_ACCOUNT` (docs/runbooks/google-firebase.md) |
 
 ## Phase log
 
@@ -47,7 +47,8 @@ units: claim, register, online with all eight decoys, SSH and HTTP login
 attempts, port scan, network sweep, network inventory, IDS starting locked
 down, no typed password in the backend. Signature enforcement tested.
 
-### Phase 3: Deploy (waiting for owner action 1)
+### Phase 3: Deploy (done)
+Production deployed by CI only; see "Done 2026-11-07" below.
 
 ### Phase 4: Android app (done, phone test pending)
 All screens, plain language for every event kind, Google sign-in with nonce,
@@ -75,12 +76,27 @@ CLI arguments; 19 tests; rendered files validated by cloud-init and netplan in
 CI. The Imager spike is ADR 0008: Imager downloads and checks the image itself,
 needs elevation, and reports only an exit code on Windows.
 
-### Phase 7: Hardware, hardening, release (not started)
+### Phase 7: Hardware, hardening, release (hardware test done 2026-11-07)
+Released v0.1.0 and v0.1.1 (signed APK, DeKoi Setup MSI, signed images).
+Tested on a Raspberry Pi on a home LAN by ethernet, an Honor PTP-N49 phone
+(Android 16) by USB, and the owner's Windows 11 PC on Wi-Fi:
+
+| Step | Result |
+| ---- | ------ |
+| Release files | APK and MSI SHA-256 match the release; APK signer matches the pinned certificate |
+| Sign-in | Failed on v0.1.0 (Google 28444: an Android client ID in `GOOGLE_WEB_CLIENT_ID`); works on v0.1.1. The deploy now checks the ID and secret with Google (ADR 0009) |
+| Card | DeKoi Setup with Imager 2.0.8 wrote the card with the cloud-init files |
+| Pairing | First QR scan crashed the app (scanner `MlKitException` not caught, fixed in `86d026d`, not yet released); second scan paired |
+| First start | Online and "You're protected" about 4 minutes after power-on; 8 decoys, 5 hosts in the inventory |
+| Surface | All 65535 TCP ports from the LAN: only the 8 decoy ports open; port 22 answers with the decoy banner, not the host's SSH |
+| SSH and HTTP login | Both reported; push "Someone tried to sign in to your DeKoi" about 1 s after the SSH attempt, fixed template |
+| Port scan | Reported |
+| ARP sweep | Not reported when sent from the Wi-Fi PC (253 targets); not verified from a wired host, see Known limitations |
+| Typed passwords | Not shown in the app; the hardware check of the stored rows was not done (covered by the CI end-to-end test) |
 
 ## Owner actions open
 
-1. Phase 7 session: a Raspberry Pi 4 or 5, a memory card, a card reader, a
-   network cable, an Android phone; about one hour.
+1. Optional: repeat the ARP sweep from a PC connected by cable.
 
 Done 2026-11-07:
 - Supabase project `rmllpietnopviodbdkky` deployed entirely by CI (migrations,
@@ -100,8 +116,11 @@ Done 2026-11-07:
 - DeKoi sees traffic to itself and broadcast traffic, not traffic between
   other devices (ADR 0003); a mirror-port option is on the roadmap.
 - HTTPS decoy is off until each device has its own certificate.
-- IDS rules are at most a week old; a live IDS alert, the nftables and
-  ulogd2 path, DHCP and name-poisoning probes are verified on hardware only.
+- IDS rules are at most a week old. On hardware the nftables and ulogd2 scan
+  path is verified; a live IDS alert, DHCP and name-poisoning probes are not.
+- An ARP sweep from a Wi-Fi client was not detected by a wired DeKoi; many
+  access points answer or filter broadcast ARP for Wi-Fi clients. Retest from
+  a wired host before relying on sweep detection across Wi-Fi.
 - No edge rate limiting without a Supabase custom domain.
 - Free Supabase plan: backups are manual dumps.
 
