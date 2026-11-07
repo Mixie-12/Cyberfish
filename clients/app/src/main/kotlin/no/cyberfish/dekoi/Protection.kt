@@ -31,6 +31,8 @@ private val INTRUSION_KINDS =
         "name_poisoning",
         "ids_alert",
         "file_access",
+        "evil_twin",
+        "new_access_point",
         "dns_hijack",
         "port_forward",
     )
