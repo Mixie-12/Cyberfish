@@ -5,6 +5,7 @@ import androidx.compose.ui.geometry.Size
 import no.cyberfish.dekoi.Device
 import no.cyberfish.dekoi.HostKind
 import no.cyberfish.dekoi.Network
+import no.cyberfish.dekoi.ui.Dimens
 import kotlin.math.PI
 import kotlin.math.cos
 import kotlin.math.max
@@ -92,8 +93,8 @@ private const val TAU = (2 * PI).toFloat()
 // In dp. Tiles are 40 dp with a one-line caption under them; neighbours on
 // a ring sit PITCH apart, and the rings sit far enough apart that captions
 // and the spokes between them stay clear.
-private const val TILE = 40f
-private const val PITCH = 64f
+private val TILE = Dimens.tile.value
+internal const val PITCH = 64f
 private const val INNER_RADIUS = 80f
 private const val RING_GAP = 72f
 private const val ORBIT_GAP = 64f

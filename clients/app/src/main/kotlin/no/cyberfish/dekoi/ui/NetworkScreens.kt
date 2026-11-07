@@ -5,10 +5,8 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.selection.toggleable
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
@@ -16,8 +14,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalResources
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextAlign
@@ -37,79 +33,7 @@ import no.cyberfish.dekoi.ui.components.KeyValueRow
 import no.cyberfish.dekoi.ui.components.KindTile
 import no.cyberfish.dekoi.ui.components.MissingScreen
 import no.cyberfish.dekoi.ui.components.Screen
-import no.cyberfish.dekoi.ui.components.StaleLabel
-import java.time.Duration
 import java.time.Instant
-
-private val NEW_WINDOW = Duration.ofDays(7)
-
-private fun NetworkHost.isNew(now: Instant) = Duration.between(firstSeenAt, now) < NEW_WINDOW
-
-@Composable
-fun NetworkScreen(
-    data: OwnerData,
-    now: Instant,
-    listState: LazyListState,
-    onNavigate: (Route) -> Unit,
-) {
-    Screen(stringResource(R.string.tab_network), listState = listState, subtitle = { StaleLabel(data.updatedAt, now) }) {
-        item {
-            Text(
-                stringResource(R.string.network_body),
-                style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
-        item {
-            InsetSection {
-                InsetRow(
-                    stringResource(R.string.networks_title),
-                    subtitle = pluralStringResource(R.plurals.networks_count, data.networks.size, data.networks.size),
-                    leading = {
-                        Icon(
-                            painterResource(R.drawable.ic_wifi),
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.primary,
-                        )
-                    },
-                    onClick = { onNavigate(Route.Networks) },
-                )
-            }
-        }
-        if (data.loaded && data.hosts.isEmpty()) item { EmptyState(R.drawable.ic_lan, stringResource(R.string.network_empty)) }
-        if (data.hosts.isNotEmpty()) {
-            item {
-                InsetSection {
-                    data.hosts.forEach { host -> HostRow(host, now) { onNavigate(Route.HostDetail(host.deviceId, host.mac)) } }
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun HostRow(
-    host: NetworkHost,
-    now: Instant,
-    onClick: () -> Unit,
-) {
-    val resources = LocalResources.current
-    val label =
-        when {
-            host.trusted -> R.string.network_known
-            host.isNew(now) -> R.string.network_new
-            else -> null
-        }
-    InsetRow(
-        hostDisplayName(host, resources::getString),
-        subtitle = listOfNotNull(stringResource(looksLike(host.kind)), host.vendor, host.ip).joinToString(" · "),
-        leading = { KindTile(host.kind) },
-        trailing = {
-            label?.let { Text(stringResource(it), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary) }
-        },
-        onClick = onClick,
-    )
-}
 
 @Composable
 fun HostDetailScreen(

@@ -61,6 +61,7 @@ import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
 import no.cyberfish.dekoi.R
 import no.cyberfish.dekoi.alertBadgeCount
+import no.cyberfish.dekoi.ui.network.NetworkScreen
 import java.time.Instant
 
 /** Every place in the app. The four tab roots, then the screens pushed on a tab. */

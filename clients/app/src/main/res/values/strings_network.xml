@@ -1,17 +1,45 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Network tab, device detail and networks (NetworkScreens.kt). -->
+<!-- Network tab, device detail and networks (ui/network). -->
 <resources>
-    <string name="network_body">Devices your DeKoi has seen on your network. New ones are marked.</string>
+    <plurals name="network_devices">
+        <item quantity="one">%1$d device</item>
+        <item quantity="other">%1$d devices</item>
+    </plurals>
+    <plurals name="network_need_attention">
+        <item quantity="one">%1$d needs attention</item>
+        <item quantity="other">%1$d need attention</item>
+    </plurals>
     <string name="network_new">New</string>
     <string name="network_known">Known</string>
     <string name="network_private">Phone or tablet with a private address</string>
     <string name="network_unknown_maker">Unknown maker</string>
     <string name="network_empty">Your DeKoi lists the devices on your network here within 15 minutes of starting.</string>
+    <string name="network_view_map">Map</string>
+    <string name="network_view_list">List</string>
+    <string name="network_attention">Needs attention</string>
+    <string name="network_new_this_week">New this week</string>
+    <string name="network_online">Online</string>
+    <string name="network_not_seen">Not seen recently</string>
+    <string name="network_no_room">No room</string>
+    <string name="network_search">Search devices</string>
+    <string name="network_search_clear">Clear search</string>
+    <string name="network_sort">Sort: %1$s</string>
+    <string name="network_sort_name">Name</string>
+    <string name="network_sort_last_seen">Last seen</string>
+    <string name="network_sort_kind">Kind</string>
+    <string name="network_by_room">By room</string>
+    <string name="network_no_match">No devices match your search.</string>
+    <string name="network_map_footer">Shows the devices DeKoi can see, not how they are connected.</string>
+    <string name="network_map_description">Map of the devices DeKoi can see. %1$s</string>
+    <string name="network_show_list">Show as list</string>
+    <string name="network_show_all">Show all</string>
+
     <string name="networks_title">Networks</string>
     <plurals name="networks_count">
         <item quantity="one">%1$d network</item>
         <item quantity="other">%1$d networks</item>
     </plurals>
+    <string name="networks_not_reported">Not reported yet</string>
     <string name="networks_home">Your home network</string>
     <string name="networks_other">Another network</string>
     <string name="networks_addresses">Addresses</string>
