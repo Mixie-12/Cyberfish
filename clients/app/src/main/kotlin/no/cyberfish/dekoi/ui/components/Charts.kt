@@ -25,6 +25,7 @@ import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.RoundRect
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
@@ -46,12 +47,12 @@ import no.cyberfish.dekoi.ui.tabular
 
 private const val DRAW_IN_MS = 500
 private val BAR_CHART_HEIGHT = 120.dp
-private val BAR_RADIUS = 4.dp
+private val BAR_RADIUS = 2.dp
 private val BAR_GAP = 6.dp
 private val SPARK_STROKE = 2.dp
-private val LIST_BAR = 6.dp
+private val LIST_BAR = 4.dp
 private val STRIP_HEIGHT = 24.dp
-private const val SPARK_FILL_ALPHA = 0.12f
+private const val SPARK_FILL_ALPHA = 0.2f
 
 /**
  * One bar of a [StackedBarChart]: its segment values from the bottom up,
@@ -87,7 +88,15 @@ fun StackedBarChart(
     val progress = drawIn()
     val highest = bars.maxOfOrNull { it.values.sum() }?.coerceAtLeast(1) ?: 1
     val empty = MaterialTheme.colorScheme.outlineVariant
-    Row(modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(BAR_GAP)) {
+    Row(
+        modifier.fillMaxWidth().drawBehind {
+            // The grid: top, middle and base of the bars.
+            val line = Dimens.hairline.toPx()
+            val base = BAR_CHART_HEIGHT.toPx() - line / 2
+            for (y in listOf(line / 2, base / 2, base)) drawLine(empty, Offset(0f, y), Offset(size.width, y), line)
+        },
+        horizontalArrangement = Arrangement.spacedBy(BAR_GAP),
+    ) {
         bars.forEachIndexed { index, bar ->
             Column(
                 Modifier
@@ -128,7 +137,7 @@ fun StackedBarChart(
     }
 }
 
-/** A small trend line with a faint fill under it. Decorative: say the numbers in text beside it. */
+/** A small trend line with a glow under it that fades to nothing. Decorative: say the numbers in text beside it. */
 @Composable
 fun Sparkline(
     values: List<Int>,
@@ -156,7 +165,7 @@ fun Sparkline(
             }
         val shown = size.width * progress.value
         clipRect(left = if (ltr) 0f else size.width - shown, right = if (ltr) shown else size.width) {
-            drawPath(fill, color.copy(alpha = SPARK_FILL_ALPHA))
+            drawPath(fill, Brush.verticalGradient(listOf(color.copy(alpha = SPARK_FILL_ALPHA), Color.Transparent)))
             drawPath(line, color, style = Stroke(stroke, cap = StrokeCap.Round, join = StrokeJoin.Round))
         }
     }

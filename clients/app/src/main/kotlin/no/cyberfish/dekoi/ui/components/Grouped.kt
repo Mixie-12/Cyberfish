@@ -15,23 +15,20 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.layout
-import androidx.compose.ui.layout.onPlaced
-import androidx.compose.ui.layout.positionInParent
+import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -39,20 +36,21 @@ import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
 import no.cyberfish.dekoi.R
 import no.cyberfish.dekoi.ui.Dimens
 import no.cyberfish.dekoi.ui.address
+import no.cyberfish.dekoi.ui.headingCase
+import no.cyberfish.dekoi.ui.label
 
 private const val COPIED_MS = 2000L
 private val CHEVRON = 20.dp
 
 /**
- * Rows on one rounded card, with an optional heading above and footer
- * below, as in the iOS Settings app. Put [InsetRow]s or rows built on it in
- * [content]; separators fall between them.
+ * A list structured by hairlines, with an optional label above and footer
+ * below. Put [InsetRow]s or rows built on it in [content]: each draws a
+ * hairline along its top, and the list closes with one along its bottom.
  */
 @Composable
 fun InsetSection(
@@ -61,35 +59,45 @@ fun InsetSection(
     footer: String? = null,
     content: @Composable ColumnScope.() -> Unit,
 ) {
+    val hairline = MaterialTheme.colorScheme.outlineVariant
     Column(modifier.fillMaxWidth()) {
         title?.let {
             Text(
-                it,
-                style = MaterialTheme.typography.titleMedium,
-                modifier = Modifier.padding(start = Dimens.spaceL, end = Dimens.spaceL, bottom = Dimens.spaceS).semantics { heading() },
+                it.headingCase(),
+                style = MaterialTheme.typography.label,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(bottom = Dimens.spaceS).semantics { heading() },
             )
         }
-        Surface(shape = MaterialTheme.shapes.large, color = MaterialTheme.colorScheme.surface) {
-            // Every row draws a separator along its top edge. Moving the rows
-            // up by one hairline tucks the first one under the card's edge.
-            Column(
-                Modifier.layout { measurable, constraints ->
-                    val hairline = Dimens.hairline.roundToPx()
-                    val rows = measurable.measure(constraints)
-                    layout(rows.width, (rows.height - hairline).coerceAtLeast(0)) { rows.place(0, -hairline) }
-                },
-                content = content,
-            )
-        }
+        // The top line also covers content that is not a row, such as a chart;
+        // the first row's own line falls on it.
+        Column(
+            Modifier.fillMaxWidth().drawWithContent {
+                drawContent()
+                drawHairline(hairline, bottom = false)
+                drawHairline(hairline, bottom = true)
+            },
+            content = content,
+        )
         footer?.let {
             Text(
                 it,
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(start = Dimens.spaceL, end = Dimens.spaceL, top = Dimens.spaceS),
+                modifier = Modifier.padding(top = Dimens.spaceS),
             )
         }
     }
+}
+
+/** A full-width hairline just inside the top or bottom edge. */
+private fun DrawScope.drawHairline(
+    color: Color,
+    bottom: Boolean,
+) {
+    val width = Dimens.hairline.toPx()
+    val y = if (bottom) size.height - width / 2 else width / 2
+    drawLine(color, Offset(0f, y), Offset(size.width, y), width)
 }
 
 /**
@@ -108,32 +116,19 @@ fun InsetRow(
     onClick: (() -> Unit)? = null,
     chevron: Boolean = onClick != null,
 ) {
-    val separator = MaterialTheme.colorScheme.outlineVariant
-    // Where the text starts and ends inside the padding; the separator starts at the text.
-    var textStart by remember { mutableFloatStateOf(0f) }
-    var textEnd by remember { mutableFloatStateOf(0f) }
+    val hairline = MaterialTheme.colorScheme.outlineVariant
     Row(
         modifier
             .fillMaxWidth()
             .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier)
             .heightIn(min = Dimens.row)
-            .padding(horizontal = Dimens.spaceL, vertical = Dimens.spaceM)
-            .drawBehind {
-                val y = Dimens.hairline.toPx() / 2 - Dimens.spaceM.toPx()
-                val outside = Dimens.spaceL.toPx()
-                val (from, to) = if (layoutDirection == LayoutDirection.Ltr) textStart to size.width + outside else -outside to textEnd
-                drawLine(separator, Offset(from, y), Offset(to, y), Dimens.hairline.toPx())
-            },
+            .drawBehind { drawHairline(hairline, bottom = false) }
+            .padding(vertical = Dimens.spaceM),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(Dimens.spaceM),
     ) {
         leading?.invoke()
-        Column(
-            Modifier.weight(1f).onPlaced {
-                textStart = it.positionInParent().x
-                textEnd = textStart + it.size.width
-            },
-        ) {
+        Column(Modifier.weight(1f)) {
             Text(title, style = MaterialTheme.typography.bodyLarge, color = titleColor, maxLines = 2, overflow = TextOverflow.Ellipsis)
             subtitle?.let {
                 Text(it, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 2)
