@@ -49,7 +49,4 @@ object DesignTokens {
     val WARNING = Tone(0xFFFFB547, 0xFF29221B, 0xFFFFD99E)
     val INFO = Tone(0xFFA9B8D4, 0xFF1D222F, 0xFFD5DDEC)
     val SAFE = Tone(0xFF4ED18B, 0xFF102625, 0xFFA6EBC2)
-
-    /** Koi orange, for the logo and onboarding art only; interactive elements use tint (ADR 0011). */
-    const val BRAND = 0xFFE8743B
 }

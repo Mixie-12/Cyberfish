@@ -26,4 +26,7 @@ object Dimens {
     val heroRadius = 28.dp
 
     val hairline = 1.dp
+
+    /** The 45-degree corner cut of the HUD frame and the primary button. */
+    val cut = 8.dp
 }
