@@ -21,7 +21,7 @@ import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.unit.dp
-import com.google.android.gms.common.api.ApiException
+import com.google.mlkit.common.MlKitException
 import kotlinx.coroutines.launch
 import no.cyberfish.dekoi.BuildConfig
 import no.cyberfish.dekoi.R
@@ -59,8 +59,8 @@ fun AddDeviceScreen(
                     scope.launch {
                         try {
                             scanQrCode(context)?.let(::submit)
-                        } catch (_: ApiException) {
-                            result = resources.getString(R.string.error_generic)
+                        } catch (_: MlKitException) {
+                            result = resources.getString(R.string.add_scan_failed)
                         }
                     }
                 },

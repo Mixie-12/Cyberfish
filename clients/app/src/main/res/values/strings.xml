@@ -136,6 +136,7 @@
     <string name="add_title">Add a DeKoi</string>
     <string name="add_body">On your computer, DeKoi Setup shows a code once the memory card is ready.</string>
     <string name="add_scan">Scan the code</string>
+    <string name="add_scan_failed">The scanner did not work. Type the code shown under the square code in DeKoi Setup instead.</string>
     <string name="add_manual_label">Or type the code</string>
     <string name="add_manual_button">Add</string>
     <string name="add_invalid">That is not a DeKoi code. Check it and try again.</string>
