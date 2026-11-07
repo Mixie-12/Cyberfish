@@ -1,7 +1,7 @@
 #!/bin/sh
 # Copies the public values from the OpenTofu outputs into GitHub repository
 # variables: Firebase and sign-in for the app and backend, and the identities
-# GitHub Actions uses to reach Google without keys (ADR 0009, 0016). No secret
+# GitHub Actions uses to reach Google without keys (ADR 0009, 0022). No secret
 # passes through here; the FCM key is created and handed to the backend by
 # the rotate-keys workflow.
 set -eu

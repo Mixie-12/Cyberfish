@@ -1,5 +1,5 @@
 # Keyless access from GitHub Actions through workload identity federation
-# (ADR 0016). Each pool trusts exactly one workflow on one kind of ref, so a
+# (ADR 0022). Each pool trusts exactly one workflow on one kind of ref, so a
 # token from any other workflow, branch, tag or repository is refused at the
 # token exchange, before IAM is asked.
 

@@ -1,4 +1,4 @@
-# The device image signing key in Cloud KMS (ADR 0016). The private key is
+# The device image signing key in Cloud KMS (ADR 0022). The private key is
 # created in an HSM and cannot be exported; the release workflow can only ask
 # KMS to sign, and only from a v* tag in the release environment.
 #
@@ -108,7 +108,7 @@ output "cosign_kms_key" {
 }
 
 # The public key in the PEM format cosign.pub uses; written to the card
-# (docs/runbooks/rotate-keys.md, "Switch new cards to the KMS key").
+# (docs/runbooks/rotate-keys.md, "Switch new cards to the Cloud KMS key").
 output "image_signing_public_key" {
   value = join("", [for k in data.google_kms_crypto_key_version.image_signing : k.public_key[0].pem])
 }
