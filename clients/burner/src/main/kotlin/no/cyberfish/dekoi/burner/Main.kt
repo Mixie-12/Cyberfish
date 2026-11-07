@@ -49,7 +49,6 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
 import androidx.compose.ui.window.rememberWindowState
@@ -61,7 +60,12 @@ import java.util.Locale
 
 fun main() =
     application {
-        Window(onCloseRequest = ::exitApplication, title = text("app_name"), state = rememberWindowState(width = 840.dp, height = 780.dp)) {
+        Window(
+            onCloseRequest = ::exitApplication,
+            title = text("app_name"),
+            icon = appIconPainter,
+            state = rememberWindowState(width = 840.dp, height = 780.dp),
+        ) {
             // AWT sizes are in the same scaled units as dp. The minimum fits
             // the content column and the QR code next to the claim code.
             LaunchedEffect(window) { window.minimumSize = Dimension(720, 560) }
@@ -166,7 +170,7 @@ private fun ColumnScope.SetupScreen(
 
 @Composable
 private fun ColumnScope.Welcome(setup: Setup) {
-    Horizon(markSize = 64.sp, seaHeight = 72.dp, glow = true)
+    Horizon(markHeight = 36.dp, seaHeight = 72.dp, glow = true)
     Text(text("app_name"), Modifier.align(Alignment.CenterHorizontally), style = Type.wordmark)
     Body(text("welcome_purpose"), TextAlign.Center)
     Body(text("welcome_code"), TextAlign.Center)
@@ -363,7 +367,7 @@ private fun Done(
     Lines(nextSteps(code, cable).mapIndexed { index, step -> "%02d".format(Locale.ROOT, index + 1) to step }, labelWidth = 56.dp)
     Secondary(text("done_first_start"))
     Actions { Action(text("action_prepare_another"), setup::lookForCards) }
-    Horizon(markSize = 24.sp, seaHeight = 56.dp, glow = false)
+    Horizon(markHeight = 13.dp, seaHeight = 56.dp, glow = false)
 }
 
 /** What the owner does after the card is written (docs/runbooks/setup-and-pair.md). */

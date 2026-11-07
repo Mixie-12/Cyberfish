@@ -18,7 +18,9 @@ Release builds need the public backend settings as Gradle properties:
 `shared/` turns `device/image.json` into a constant and bundles
 `device/cloud-init/` and `device/host/` at build time, for DeKoi Setup and
 the app. DeKoi Setup also bundles the CyberFish fonts from `UX/UI/` with
-their OFL-1.1 licence texts. After `:shared:test`, check the rendered
+their OFL-1.1 licence texts, and the app icon from `Images/` for its window
+and its mark; the app's build reads the mark's outline from that icon (ADR
+0030). After `:shared:test`, check the rendered
 cloud-init files with cloud-init itself (from the repository root):
 
 ```
