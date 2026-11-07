@@ -109,10 +109,12 @@ jobs:
           secrets=("NOTIFY_SECRET=$NOTIFY_SECRET")
           if [ -n "$FCM_SERVICE_ACCOUNT" ]; then secrets+=("FCM_SERVICE_ACCOUNT=$FCM_SERVICE_ACCOUNT"); fi
           supabase secrets set --remote="$PROJECT_REF" --yes "${secrets[@]}"
-      - name: Deploy functions
-        run: supabase functions deploy notify --remote="$PROJECT_REF" --use-api --yes
+      # Expand before switching: a function may call what a new migration
+      # adds, while the old function keeps working with the new schema.
       - name: Apply migrations
         run: supabase db push --remote="$PROJECT_REF" --yes
+      - name: Deploy functions
+        run: supabase functions deploy notify --remote="$PROJECT_REF" --use-api --yes
       - name: Show configuration changes
         run: supabase config diff --remote="$PROJECT_REF"
       - name: Apply configuration
