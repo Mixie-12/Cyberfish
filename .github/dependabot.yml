@@ -1,6 +1,41 @@
+# One weekly pull request per ecosystem. New versions wait a week before they
+# are proposed, so a compromised release has time to be found and pulled.
+# Security updates are not delayed.
 version: 2
 updates:
   - package-ecosystem: github-actions
     directory: /
     schedule:
       interval: weekly
+    cooldown:
+      default-days: 7
+    groups:
+      actions:
+        patterns: ["*"]
+  - package-ecosystem: gradle
+    directory: /clients
+    schedule:
+      interval: weekly
+    cooldown:
+      default-days: 7
+    groups:
+      gradle:
+        patterns: ["*"]
+  - package-ecosystem: pip
+    directory: /device/canary
+    schedule:
+      interval: weekly
+    cooldown:
+      default-days: 7
+    groups:
+      pip:
+        patterns: ["*"]
+  - package-ecosystem: docker
+    directories: [/device/agent, /device/canary, /device/ids]
+    schedule:
+      interval: weekly
+    cooldown:
+      default-days: 7
+    groups:
+      docker:
+        patterns: ["*"]
