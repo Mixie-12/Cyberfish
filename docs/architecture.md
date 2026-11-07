@@ -20,7 +20,7 @@ App <--FCM push-- Edge Function "notify" <--database webhook on events insert
 | ------------------------------- | ----------------------------- | ---------------------------------------- |
 | LAN to decoys                   | anyone on the customer LAN    | decoys in a locked-down container        |
 | LAN discovery traffic to agent  | anyone on the customer LAN    | kernel filter, bounded parsers, cleaned and bounded strings, fixed vocabularies |
-| Canary container to agent       | possibly compromised decoys   | one-way, read-only log file; no secrets  |
+| Canary container to agent       | possibly compromised decoys   | one-way, read-only log volume; its image file read without following links, size bounded; no secrets |
 | Agent to backend                | any internet client           | 256-bit device secret, input validation  |
 | App to backend                  | any internet client           | Supabase Auth JWT, RLS, column grants    |
 | Registry to device              | GHCR, CI                      | cosign signature required by Podman      |
@@ -50,6 +50,7 @@ a `_v1` function never changes; new behaviour goes into `_v2`.
 | --------------------- | ----------------------------------------------------------- | ------------- |
 | `device_register_v1`  | `claim_code`, `secret`, `agent_version`                     | device id     |
 | `device_heartbeat_v1` | `device_id`, `secret`, `agent_version`, `services`, `local_ip` | nothing    |
+| `device_heartbeat_v2` | the v1 arguments, `monitors` (up to 16), `images` (up to 8) | nothing      |
 | `device_events_v1`    | `device_id`, `secret`, `events` (array, 1 to 200)           | rows inserted |
 | `device_hosts_v1`     | `device_id`, `secret`, `hosts` (array, up to 1024)          | rows written  |
 | `device_hosts_v2`     | `device_id`, `secret`, `hosts` (up to 1024), `networks` (up to 64) | rows written |
@@ -91,6 +92,29 @@ is refused as malformed. Hosts come from the bounded `arp-scan`; how the
 agent identifies them and finds networks is in `device/agent/dekoi_agent/`
 (`identify.py`, `classify.py`, `inventory.py`).
 
+Monitoring report (ADR 0013). Monitor object: `name`, each once, from
+`decoys`, `port_scan`, `arp_watch`, `dhcp_watch`, `router_watch`,
+`name_poisoning`, `ids`, `inventory`; `state` from `ok`, `starting`, `off`,
+`failed`; optional `detail` with only the counts `rules`, `hosts` and
+`decoys` (up to 7 digits) and `ruleset_date` (`YYYY-MM-DD`). Image object:
+`name`, each once, from `canary`, `agent`, `ids`; `version` (1 to 32
+characters of `[0-9A-Za-z.+-]`); `updated_at`, the image's build time in UTC
+(`YYYY-MM-DDTHH:MM:SSZ`). Both are stored in `devices.monitors` and
+`devices.images`, checked by domains, and read by the owner; v1 leaves them
+as they are. The agent calls v2 and falls back to v1 on 404 (an older
+backend) or 400 (report refused), so the device stays online. How the agent
+judges each monitor, and where the IDS and image facts come from, is in
+`device/agent/dekoi_agent/monitors.py`.
+
+Readiness: the agent tells systemd it is ready once the backend has
+accepted its first heartbeat, or at once while it waits to be claimed. An
+updated agent image that does not become ready within the unit's
+`TimeoutStartSec` (15 minutes) is rolled back by `podman auto-update`. The
+cost: when the backend is unreachable at boot, systemd restarts the agent
+every 15 minutes until a heartbeat gets through (queued events are kept on
+disk), and the IDS, ordered after the agent, starts after the first
+timeout.
+
 Responses the agent must handle:
 
 | HTTP | Meaning                                  | Agent behaviour                             |
@@ -99,6 +123,7 @@ Responses the agent must handle:
 | 400  | malformed input                          | drop the batch, log it; never retry it      |
 | 403  | registration refused or secret rejected  | before registration: retry with backoff;    |
 |      |                                          | after: device was removed, back off to 1 h  |
+| 404  | function unknown (older backend)         | heartbeat: use `device_heartbeat_v1`        |
 | 5xx, network error | backend unavailable            | keep the batch, retry with backoff          |
 
 ## App API (v1)
@@ -109,6 +134,8 @@ Responses the agent must handle:
 | Read own data          | `select` on `devices`, `events`, `network_hosts`, `networks` (RLS) |
 | Rename, remove device  | `update` of `name`, `delete` on `devices` (RLS)            |
 | Trust a host           | `update` of `trusted` on `network_hosts` (RLS)             |
+| Name a host, its room  | `update` of `label` (1 to 40 characters) and `room` (1 to 32), no control characters, on `network_hosts` (RLS) |
+| Mark events seen       | `acknowledge_events_v1(event_ids)`: up to 500 ids, own devices' events only; `events.seen_at` keeps the first time; returns the number newly marked |
 | Push token             | `register_push_token_v1(token)`, `unregister_push_token_v1(token)` |
 | Delete account         | `delete_account_v1()`                                      |
 

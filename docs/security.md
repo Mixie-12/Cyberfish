@@ -30,14 +30,14 @@ The data flow and every contract are in `docs/architecture.md`.
 
 | #  | Abuse case                                                       | Control                                                     | Evidence |
 | -- | ---------------------------------------------------------------- | ----------------------------------------------------------- | -------- |
-| 1  | User A reads or changes user B's data                            | RLS on every table, column grants, ownership checks in RPCs | tested: `backend/supabase/tests/database/03_isolation.test.sql`, `00_hardening`, `08_device_identification` |
+| 1  | User A reads or changes user B's data                            | RLS on every table, column grants, ownership checks in RPCs | tested: `backend/supabase/tests/database/03_isolation.test.sql`, `00_hardening`, `08_device_identification`, `10_incidents_rooms_monitoring` |
 | 2  | Anonymous caller reads any table                                 | default privileges revoked, explicit grants only            | tested: `00_hardening`, `03_isolation`, `08_device_identification` |
 | 3  | Claim code guessing, reuse, probing, flooding                    | 128-bit codes, hashed, single use per side, generic errors, 5 pending per user | tested: `01_claim_register` |
-| 4  | Device impersonation, writing another device's rows              | 256-bit secret per device, hashed, rows scoped to the secret's device | tested: `02_device_api`, `08_device_identification` |
-| 5  | Oversized or malformed input, control characters, HTML           | size and shape checks in RPCs, field allowlist, bounded strings without control characters, fixed vocabularies; on the device, a kernel filter and bounded parsers for discovery traffic | tested: `02_device_api`, `06_network_detection`, `08_device_identification`, agent `test_sources`, `test_identify` (including a seeded fuzz test) |
+| 4  | Device impersonation, writing another device's rows              | 256-bit secret per device, hashed, rows scoped to the secret's device | tested: `02_device_api`, `08_device_identification`, `10_incidents_rooms_monitoring` |
+| 5  | Oversized or malformed input, control characters, HTML           | size and shape checks in RPCs, field allowlist, bounded strings without control characters, fixed vocabularies; on the device, a kernel filter and bounded parsers for discovery traffic | tested: `02_device_api`, `06_network_detection`, `08_device_identification`, `10_incidents_rooms_monitoring` (monitoring report, names and rooms), agent `test_sources`, `test_identify` (including a seeded fuzz test), `test_monitors` |
 | 6  | Code execution inside the canary                                 | own user namespace, no capabilities, read-only root, no secrets, write-only log volume | tested (lockdown starts under real Podman): `device/e2e/run.py`; config review: `dekoi-canary.container` |
 | 7  | Unsigned or foreign image pushed to the registry                 | Podman `policy.json`: only cosign-signed images from `ghcr.io/mixie-12` | tested: `signatures` job in `.github/workflows/device.yml` |
-| 8  | Attacker-controlled strings in notifications                     | fixed templates by event kind; payload carries the event id only | tested with Phase 5 (`notify` function tests) |
+| 8  | Attacker-controlled strings in notifications                     | fixed templates by event kind; payload carries the event id only; the names and rooms owners give hosts are not returned by `notification_targets_v2` | tested with Phase 5 (`notify` function tests) |
 | 9  | Anything beyond the intended surface on the project URL          | public schema only, GraphQL dropped, no buckets, no publications | verified 2026-11-07 against production: anonymous reads 401, private schema and GraphQL not exposed, no buckets, notify refuses requests without the secret |
 | 10 | Secrets in git history                                           | secrets only in GitHub secrets and 1Password                | tested: `gitleaks` on every push |
 
@@ -59,7 +59,7 @@ the login alert arrived about 1 s after the attempt with the fixed template.
 | A05 Injection                          | Static SQL only, typed RPC arguments, attacker text stored as data and rendered as plain text |
 | A06 Insecure design                    | Threat model above; decoys isolated from secrets; device API versioned          |
 | A07 Authentication failures            | Supabase Auth with Google ID tokens and nonce; device secrets 256-bit           |
-| A08 Software or data integrity failures| Signature verified before tag move (CI) and before run (device); rollback on failed update |
+| A08 Software or data integrity failures| Signature verified before tag move (CI) and before run (device); rollback on failed update, and an agent image counts as started only once the backend accepted its heartbeat |
 | A09 Logging and alerting failures      | Offline detection, push alerts, CI on every change; devices keep journals in memory only |
 | A10 Mishandling of exceptional conditions | Fail closed: refused credentials back off, malformed batches dropped, no catch-all handlers |
 
@@ -67,8 +67,9 @@ the login alert arrived about 1 s after the attempt with the fixed template.
 
 Object-level and function-level authorization (API1, API5): RLS and exact
 function grants, tested. Authentication (API2): Supabase Auth, device secrets.
-Property-level authorization (API3): column grants (only `name` and `trusted`
-are writable), tested. Resource consumption (API4): batch limits, pending-claim
+Property-level authorization (API3): column grants (only `devices.name` and
+`network_hosts.trusted`, `label` and `room` are writable; read state only
+through `acknowledge_events_v1`), tested. Resource consumption (API4): batch limits, pending-claim
 limit, bounded fields; no edge rate limit without a custom domain (ADR 0001).
 Business flows (API6): single-use pairing. SSRF (API7): the only outbound call
 from the backend goes to a fixed FCM URL. Misconfiguration (API8): see A02.
