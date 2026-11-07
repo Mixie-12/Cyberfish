@@ -24,4 +24,13 @@ class HostsTest {
         assertEquals("Kitchen", savedOwnerText("  Kitchen ", ROOM_MAX))
         assertNull(savedOwnerText("   ", ROOM_MAX))
     }
+
+    @Test
+    fun `suggested rooms are those in use, then common ones, each once`() {
+        assertEquals(
+            listOf("kitchen", "Office", "Living room", "Hallway"),
+            suggestedRooms(listOf("Office", "kitchen", "Kitchen"), listOf("Living room", "Kitchen", "Hallway")),
+        )
+        assertEquals(listOf("Living room"), suggestedRooms(emptyList(), listOf("Living room")))
+    }
 }

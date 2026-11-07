@@ -26,6 +26,12 @@ fun savedOwnerText(
     max: Int,
 ): String? = ownerText(typed, max).trim().ifEmpty { null }
 
+/** Rooms to offer when naming a host: those already in use, then the [common] ones, each once whatever its case. */
+fun suggestedRooms(
+    inUse: List<String>,
+    common: List<String>,
+): List<String> = (inUse.sortedWith(String.CASE_INSENSITIVE_ORDER) + common).distinctBy { it.lowercase() }
+
 /** A host first seen within this window counts as new (docs/design.md, "Network"). */
 private val NEW_WINDOW = Duration.ofDays(7)
 

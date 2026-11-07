@@ -61,6 +61,7 @@ import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
 import no.cyberfish.dekoi.R
 import no.cyberfish.dekoi.alertBadgeCount
+import no.cyberfish.dekoi.ui.network.HostDetailScreen
 import no.cyberfish.dekoi.ui.network.NetworkScreen
 import java.time.Instant
 
@@ -240,7 +241,7 @@ private fun SignedIn(
             }
             composable<Route.HostDetail> { entry ->
                 val route = entry.toRoute<Route.HostDetail>()
-                HostDetailScreen(data, now, route.deviceId, route.mac, viewModel::setTrusted, navigate, back)
+                HostDetailScreen(data, now, route.deviceId, route.mac, viewModel::setTrusted, viewModel::setNameAndRoom, navigate, back)
             }
             composable<Route.Networks> {
                 NetworksScreen(data, back)

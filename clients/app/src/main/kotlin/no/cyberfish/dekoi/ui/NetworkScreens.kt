@@ -1,107 +1,22 @@
 package no.cyberfish.dekoi.ui
 
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.selection.toggleable
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.text.style.TextAlign
 import no.cyberfish.dekoi.Network
-import no.cyberfish.dekoi.NetworkHost
 import no.cyberfish.dekoi.R
 import no.cyberfish.dekoi.contains
-import no.cyberfish.dekoi.hostDisplayName
 import no.cyberfish.dekoi.kindName
-import no.cyberfish.dekoi.looksLike
 import no.cyberfish.dekoi.ui.components.BarList
-import no.cyberfish.dekoi.ui.components.CopyableRow
 import no.cyberfish.dekoi.ui.components.EmptyState
-import no.cyberfish.dekoi.ui.components.InsetRow
 import no.cyberfish.dekoi.ui.components.InsetSection
 import no.cyberfish.dekoi.ui.components.KeyValueRow
-import no.cyberfish.dekoi.ui.components.KindTile
-import no.cyberfish.dekoi.ui.components.MissingScreen
 import no.cyberfish.dekoi.ui.components.Screen
-import java.time.Instant
-
-@Composable
-fun HostDetailScreen(
-    data: OwnerData,
-    now: Instant,
-    deviceId: String,
-    mac: String,
-    onTrust: (NetworkHost, Boolean) -> Unit,
-    onNavigate: (Route) -> Unit,
-    onBack: () -> Unit,
-) {
-    val host = data.hosts.firstOrNull { it.deviceId == deviceId && it.mac == mac }
-    if (host == null) {
-        MissingScreen(R.string.tab_network, data.loaded, R.drawable.ic_device_unknown, R.string.host_missing, onBack)
-        return
-    }
-    val resources = LocalResources.current
-    Screen(hostDisplayName(host, resources::getString), onBack = onBack) {
-        item {
-            Column(
-                Modifier.fillMaxWidth(),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(Dimens.spaceS),
-            ) {
-                KindTile(host.kind, hero = true)
-                Text(stringResource(looksLike(host.kind)), style = MaterialTheme.typography.titleMedium, textAlign = TextAlign.Center)
-                Text(
-                    stringResource(R.string.host_last_seen_ago, relativeTime(host.lastSeenAt, now)),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
-        }
-        item {
-            InsetSection {
-                InsetRow(stringResource(R.string.host_see_alerts), onClick = { onNavigate(Route.FilteredAlerts(mac = host.mac)) })
-            }
-        }
-        item {
-            InsetSection(title = stringResource(R.string.host_about)) {
-                KeyValueRow(stringResource(R.string.event_detail_vendor), host.vendor ?: stringResource(R.string.network_unknown_maker))
-                host.model?.let { KeyValueRow(stringResource(R.string.host_model), it) }
-                host.hostname?.let { KeyValueRow(stringResource(R.string.host_announced_name), it) }
-                if (host.services.isNotEmpty()) KeyValueRow(stringResource(R.string.host_services), host.services.joinToString(", "))
-            }
-        }
-        item {
-            InsetSection(
-                title = stringResource(R.string.host_connection),
-                footer = stringResource(R.string.host_private_note).takeIf { host.isPrivateMac },
-            ) {
-                KeyValueRow(stringResource(R.string.host_address), host.ip)
-                CopyableRow(stringResource(R.string.event_detail_mac), host.mac)
-                KeyValueRow(stringResource(R.string.host_first_seen), absoluteTime(host.firstSeenAt))
-                KeyValueRow(stringResource(R.string.host_last_seen), absoluteTime(host.lastSeenAt))
-            }
-        }
-        item {
-            InsetSection {
-                InsetRow(
-                    stringResource(R.string.host_known),
-                    modifier = Modifier.toggleable(host.trusted, role = Role.Switch) { onTrust(host, it) },
-                    trailing = { Switch(checked = host.trusted, onCheckedChange = null) },
-                )
-            }
-        }
-    }
-}
 
 @Composable
 fun NetworksScreen(

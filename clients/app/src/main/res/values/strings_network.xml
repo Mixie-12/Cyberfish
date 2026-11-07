@@ -53,17 +53,55 @@
     <string name="networks_footer">DeKoi watches only the network it is plugged into.</string>
     <string name="networks_empty">DeKoi lists the networks it can see here once it has started.</string>
 
+    <string name="host_title">Device</string>
+    <string name="host_online_now">Online now</string>
+    <string name="host_attention_body">It caused an alert in the last 24 hours.</string>
+    <string name="host_what_to_do">See what to do</string>
+    <string name="host_history">Last 14 days</string>
+    <plurals name="host_history_count">
+        <item quantity="one">%1$d alert from this device</item>
+        <item quantity="other">%1$d alerts from this device</item>
+    </plurals>
+    <string name="host_history_none">No alerts from this device.</string>
     <string name="host_see_alerts">See all alerts from this device</string>
     <string name="host_about">About</string>
     <string name="host_connection">Connection</string>
     <string name="host_model">Model</string>
+    <string name="host_system">System</string>
     <string name="host_announced_name">Announced name</string>
     <string name="host_services">Services it announces</string>
     <string name="host_address">Address</string>
+    <string name="host_network">Network</string>
     <string name="host_first_seen">First seen</string>
     <string name="host_last_seen">Last seen</string>
     <string name="host_last_seen_ago">Last seen %1$s</string>
     <string name="host_private_note">This device uses a private hardware address, which hides its maker. Phones and tablets do this to protect their owners’ privacy.</string>
     <string name="host_known">I know this device</string>
+    <string name="host_edit">Name and room</string>
+    <string name="host_edit_hint">Give it a name or say which room it is in</string>
+    <string name="host_name">Name</string>
+    <string name="host_room">Room</string>
+    <string name="host_suggested_rooms">Suggested rooms</string>
+    <string-array name="host_rooms">
+        <item>Living room</item>
+        <item>Kitchen</item>
+        <item>Bedroom</item>
+        <item>Office</item>
+        <item>Hallway</item>
+    </string-array>
     <string name="host_missing">DeKoi no longer lists this device.</string>
+
+    <!-- Operating systems (ADR 0010 vocabulary), as their makers write them. -->
+    <string name="os_android">Android</string>
+    <string name="os_ios">iOS</string>
+    <string name="os_ipados">iPadOS</string>
+    <string name="os_macos">macOS</string>
+    <string name="os_windows">Windows</string>
+    <string name="os_linux">Linux</string>
+    <string name="os_chromeos">ChromeOS</string>
+    <string name="os_tvos">tvOS</string>
+    <string name="os_webos">webOS</string>
+    <string name="os_tizen">Tizen</string>
+    <string name="os_fire_os">Fire OS</string>
+    <string name="os_other">Another system</string>
 </resources>
