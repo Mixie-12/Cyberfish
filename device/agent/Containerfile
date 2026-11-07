@@ -1,0 +1,25 @@
+# dekoi-agent. Build context: device/
+# The publishable key is public by design (anon role, RLS); it is built in so
+# it can be rotated for the whole fleet with an image update.
+# check=skip=SecretsUsedInArgOrEnv
+FROM docker.io/library/python:3.13-slim-trixie@sha256:09a17cad02668ae61ece136b4fd36ac3849e14f670ebedb637ea3e15580525bc
+ARG DEKOI_API_URL=""
+# hadolint ignore=DL3064
+ARG DEKOI_API_KEY=""
+ARG DEKOI_AGENT_VERSION=dev
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends arp-scan \
+ && rm -rf /var/lib/apt/lists/* \
+ && useradd --system --uid 10002 --no-create-home --shell /usr/sbin/nologin agent \
+ && install -d -o agent -g agent -m 0700 /var/lib/dekoi-agent
+COPY agent/dekoi_agent /opt/dekoi/dekoi_agent
+COPY canary/opencanary.conf /usr/share/dekoi/opencanary.conf
+# hadolint ignore=DL3064
+ENV PYTHONPATH=/opt/dekoi \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    DEKOI_API_URL=$DEKOI_API_URL \
+    DEKOI_API_KEY=$DEKOI_API_KEY \
+    DEKOI_AGENT_VERSION=$DEKOI_AGENT_VERSION
+USER 10002
+ENTRYPOINT ["python", "-m", "dekoi_agent"]
