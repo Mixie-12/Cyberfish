@@ -1,6 +1,7 @@
 package no.cyberfish.dekoi
 
 import android.app.Application
+import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import com.google.firebase.FirebaseApp
@@ -15,9 +16,15 @@ class DekoiApplication : Application() {
 
     override fun onCreate() {
         super.onCreate()
-        val channel =
-            NotificationChannel(ALERT_CHANNEL, getString(R.string.notification_channel_alerts), NotificationManager.IMPORTANCE_HIGH)
-        getSystemService(NotificationManager::class.java).createNotificationChannel(channel)
+        // Importance only applies when a channel is first created; the owner's
+        // later choices are kept.
+        val channels =
+            listOf(
+                NotificationChannel(URGENT_CHANNEL, getString(R.string.notification_channel_urgent), NotificationManager.IMPORTANCE_HIGH),
+                NotificationChannel(ALERT_CHANNEL, getString(R.string.notification_channel_alerts), NotificationManager.IMPORTANCE_DEFAULT),
+                NotificationChannel(UPDATES_CHANNEL, getString(R.string.notification_channel_updates), NotificationManager.IMPORTANCE_LOW),
+            ).onEach { it.lockscreenVisibility = Notification.VISIBILITY_PRIVATE }
+        getSystemService(NotificationManager::class.java).createNotificationChannels(channels)
 
         val options =
             firebaseOptions(

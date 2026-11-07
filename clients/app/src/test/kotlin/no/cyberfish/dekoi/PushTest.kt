@@ -17,6 +17,19 @@ class PushTest {
     }
 
     @Test
+    fun aMessageCanOnlyUseTheChannelsTheAppCreates() {
+        assertEquals(URGENT_CHANNEL, channelFor("alerts_urgent"))
+        assertEquals(UPDATES_CHANNEL, channelFor("updates"))
+        assertEquals(ALERT_CHANNEL, channelFor("something_else"))
+        assertEquals(ALERT_CHANNEL, channelFor(null))
+    }
+
+    @Test
+    fun notificationsAreTaggedByEvent() {
+        assertEquals("event-42", notificationTag(42))
+    }
+
+    @Test
     fun onlyAPositiveEventIdOpensAnEvent() {
         assertEquals(42L, eventIdFrom("42"))
         assertNull(eventIdFrom(null))

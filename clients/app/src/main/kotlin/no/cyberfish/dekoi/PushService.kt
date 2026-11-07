@@ -50,12 +50,24 @@ class PushService : FirebaseMessagingService() {
             Intent(this, MainActivity::class.java)
                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
                 .apply { eventId?.let { putExtra(EVENT_ID_EXTRA, it.toString()) } }
+        val channel = channelFor(content.channelId)
+        // What a locked phone shows instead: nothing about the network.
+        val public =
+            Notification
+                .Builder(this, channel)
+                .setSmallIcon(R.drawable.ic_notification)
+                .setContentTitle(getString(R.string.notification_public_title))
+                .setContentText(getString(R.string.notification_public_text))
+                .build()
         val notification =
             Notification
-                .Builder(this, ALERT_CHANNEL)
-                .setSmallIcon(R.drawable.ic_tab_activity)
+                .Builder(this, channel)
+                .setSmallIcon(R.drawable.ic_notification)
                 .setContentTitle(content.title)
                 .setContentText(content.body)
+                .setStyle(Notification.BigTextStyle().bigText(content.body))
+                .setVisibility(Notification.VISIBILITY_PRIVATE)
+                .setPublicVersion(public)
                 .setAutoCancel(true)
                 .setContentIntent(
                     PendingIntent.getActivity(
@@ -65,7 +77,7 @@ class PushService : FirebaseMessagingService() {
                         PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
                     ),
                 ).build()
-        manager.notify(eventId?.toInt() ?: 0, notification)
+        manager.notify(eventId?.let(::notificationTag), 0, notification)
     }
 
     override fun onDestroy() {
