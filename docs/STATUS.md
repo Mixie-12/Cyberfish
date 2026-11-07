@@ -62,7 +62,13 @@ pgTAP tests and 8 Deno tests; verified end to end locally against a mock FCM.
 The backend deploys without Firebase; pushes start once the service account
 secret exists.
 
-### Phase 6: DeKoi Setup (in progress, parallel branch)
+### Phase 6: DeKoi Setup (groundwork done, UI in progress)
+Card file rendering (user-data with the host files, netplan network-config;
+hostile Wi-Fi input cannot inject YAML; the WPA key is stored, not the
+passphrase), Windows card listing (only removable, non-system disks), Imager
+CLI arguments; 19 tests; rendered files validated by cloud-init and netplan in
+CI. The Imager spike is ADR 0008: Imager downloads and checks the image itself,
+needs elevation, and reports only an exit code on Windows.
 
 ### Phase 7: Hardware, hardening, release (not started)
 
