@@ -1,83 +1,100 @@
 # Status
 
-Current phase: 2 (device stack), finishing; Phase 3 waits for owner actions.
+Updated 2026-11-07. Code for Phases 0 to 4 and the network detection of ADR
+0003 is on `main` and green in CI. Phases 5 (notifications) and 6 (DeKoi
+Setup) are being built in parallel branches. Phase 3 (deploy) waits for the
+owner's bootstrap; Phase 7 (hardware) for a session with a Pi.
 
-## Owner answers (Phase 0)
+## Owner answers (Phase 0 and later)
 
 | Question             | Answer                                             |
 | -------------------- | -------------------------------------------------- |
 | Backend hosting      | Supabase Cloud (ADR 0001)                          |
 | Deployment           | GitOps: CI changes every environment (ADR 0002)    |
+| Detection scope      | Maximum in one box: decoys, IDS, LAN watchers (ADR 0003) |
 | Repository           | Private; no CodeQL                                 |
 | Android app ID       | `no.cyberfish.dekoi`                               |
 | License              | Proprietary, no license file (default)             |
-| Domain               | Not needed for the MVP on Supabase Cloud           |
-| Image signing key    | Generated 2026-11-07; see "Secrets" below          |
-| Firebase and Google  | Pending; steps will be provided in Phase 4         |
-| Hardware             | Pending; needed in Phase 7                         |
+| Commits              | Unsigned commits allowed                           |
 
 ## Secrets and where they live
 
-| Secret                          | Where                                                    |
-| ------------------------------- | -------------------------------------------------------- |
-| cosign private key and password | GitHub Actions secrets `COSIGN_PRIVATE_KEY`, `COSIGN_PASSWORD`; backup in the owner's 1Password, vault "Encryption", item "DeKoi cosign image signing key" |
-| cosign public key               | `device/host/etc/dekoi/cosign.pub` (on every card)       |
-| Supabase access token, DB password | Not created yet (Phase 3 bootstrap)                   |
-
-## Development machine
-
-Windows 11. Installed in Phase 0: Temurin JDK 21.0.13, Android SDK
-(platform 36, build-tools 36.1.0, platform-tools), Supabase CLI 3.0.0
-(`%LOCALAPPDATA%\Programs\supabase`), Raspberry Pi Imager 2.0.8 (ships
-`rpi-imager-cli.cmd`). Already present: Docker Desktop 29.9, Python 3.13 and
-3.14, uv, Node 24, WSL2 Ubuntu 24.04, gh (authenticated as Mixie-12), 1Password
-CLI 2.41.
+| Secret                               | Where                                                     |
+| ------------------------------------ | --------------------------------------------------------- |
+| cosign image signing key, password   | GitHub secrets `COSIGN_PRIVATE_KEY`, `COSIGN_PASSWORD`; 1Password vault "Encryption", item "DeKoi cosign image signing key" |
+| cosign public key                    | `device/host/etc/dekoi/cosign.pub` (on every card)        |
+| Android release keystore, password   | GitHub secrets `ANDROID_KEYSTORE_BASE64`, `ANDROID_KEYSTORE_PASSWORD`; 1Password item "DeKoi Android release signing key". Alias `dekoi`. Certificate SHA-256 `7F:57:59:C5:01:5B:FC:7A:34:7A:72:35:35:54:07:91:96:E6:21:58:5A:9F:EE:69:44:75:86:A7:E8:43:67:41` |
+| Supabase access token, DB password   | Not created yet (owner action 1)                          |
+| Google web client secret, Firebase service account | Not created yet (owner action 3)            |
 
 ## Phase log
 
 ### Phase 0: Bootstrap (done)
-- Toolchain installed; downloads verified against published SHA-256.
-- Repository skeleton, ADR 0001, gitleaks workflow, Dependabot for Actions.
+Toolchain installed with verified downloads; skeleton, ADRs, gitleaks, Dependabot.
 
-### Phase 1: Backend schema and security core (done)
-- Five migrations: default privileges revoked, schema with RLS, device API v1,
-  app API v1, pg_cron jobs. Secrets and push tokens in a private schema.
-- 78 pgTAP tests cover abuse cases 1 to 5 and the exact grants of every API
-  role. Supabase advisors report nothing at warn level. Green locally and in
-  CI. The deploy job (ADR 0002) is in place and skipped until bootstrap.
-- Verified through the real local gateway: claim, register, 403 for a refused
-  registration, 400 for malformed input.
+### Phase 1: Backend (done)
+Six migrations (hardened defaults, schema with RLS, device API v1, app API v1,
+jobs, network detection kinds). 87 pgTAP tests cover abuse cases 1 to 5 and
+the exact grants of every API role; advisors clean. CI deploy job ready.
 
-### Phase 2: Device stack (in progress)
-- Done: agent (33 unit and consistency tests), canary and agent images,
-  host configuration, cloud-init template, image signing key, CI checks,
-  end-to-end harness, signature enforcement test, image publishing workflow.
-- Smoke test found and fixed: OpenCanary rejects MySQL banners not starting
-  with 3 to 6; SSH host keys need a writable volume; UserNS=auto needs
-  subordinate ID ranges that Debian does not create.
-- Open: end-to-end and signature jobs green in CI.
+### Phase 2: Device (done, hardware pending)
+Agent (decoy logs, port scans, ARP sweeps and spoofing, rogue DHCP and IPv6
+routers, name poisoning, Suricata alerts), canary, IDS and agent images,
+host configuration, first-boot template, image signing. 46 unit and
+consistency tests. CI end-to-end on a real runner with the production Quadlet
+units: claim, register, online with all eight decoys, SSH and HTTP login
+attempts, port scan, network sweep, network inventory, IDS starting locked
+down, no typed password in the backend. Signature enforcement tested.
+
+### Phase 3: Deploy (waiting for owner action 1)
+
+### Phase 4: Android app (done, phone test pending)
+All screens, plain language for every event kind, Google sign-in with nonce,
+QR scanning without camera permission. 12 unit tests, Android lint clean.
+
+### Phase 5: Notifications (in progress, parallel branch)
+
+### Phase 6: DeKoi Setup (in progress, parallel branch)
+
+### Phase 7: Hardware, hardening, release (not started)
 
 ## Owner actions open
 
-1. Bootstrap Supabase Cloud (Phase 3): create the project and store its ref
-   and keys in GitHub. Exact steps will be in
-   `docs/runbooks/deploy-backend.md`.
-2. After the first image publish: make the GHCR packages `dekoi-canary` and
-   `dekoi-agent` public (GitHub, Packages, package settings), so devices can
-   pull without credentials.
+1. Supabase bootstrap: `docs/runbooks/deploy-backend.md`, steps 1 to 6.
+   Gives CI `SUPABASE_PROJECT_REF`, `SUPABASE_PUBLISHABLE_KEY` (variables) and
+   `SUPABASE_ACCESS_TOKEN`, `SUPABASE_DB_PASSWORD` (secrets).
+2. Make the GHCR packages public once each exists: `dekoi-canary` now,
+   `dekoi-agent` and `dekoi-ids` after their first publish.
+3. Google and Firebase (one Google Cloud project, used for nothing else):
+   - OAuth consent screen (external, app name DeKoi).
+   - OAuth client "Web application": its client ID becomes the repository
+     variable `GOOGLE_WEB_CLIENT_ID`, its secret the secret
+     `GOOGLE_WEB_CLIENT_SECRET`.
+   - OAuth client "Android": package `no.cyberfish.dekoi`, SHA-256 from the
+     table above. No secret.
+   - Firebase project on the same Google Cloud project, Android app
+     `no.cyberfish.dekoi`; its public values become variables (names in the
+     Phase 5 report), and a service account key for FCM the secret
+     `FCM_SERVICE_ACCOUNT`.
+4. Phase 7 session: a Raspberry Pi 4 or 5, a memory card, a card reader, a
+   network cable, an Android phone; about one hour.
 
 ## Known limitations (MVP)
 
-- Host configuration is frozen when a card is written; only images update.
-- HTTPS decoy is off until each device can have its own certificate.
-- nftables and ulogd2 port-scan path is verified on hardware, not in CI.
-- Outbound traffic from the device is not restricted.
+- Host configuration is frozen when a card is written; images update.
+- DeKoi sees traffic to itself and broadcast traffic, not traffic between
+  other devices (ADR 0003); a mirror-port option is on the roadmap.
+- HTTPS decoy is off until each device has its own certificate.
+- IDS rules are at most a week old; a live IDS alert, the nftables and
+  ulogd2 path, DHCP and name-poisoning probes are verified on hardware only.
+- No edge rate limiting without a Supabase custom domain.
+- Free Supabase plan: backups are manual dumps.
 
 ## Roadmap (out of MVP scope)
 
 iOS app; web dashboard; decoy personas selectable in the app; shared household
 access and roles beyond owner; email sign-in; custom OS image build; host
-configuration as a signed .deb; mDNS advertising of the decoy; realtime updates
-in the app; Google Play listing; code-signing certificates for DeKoi Setup;
-billing; staged fleet rollouts; multi-region hosting; Cloudflare in front of
-the API (needs a Supabase custom domain).
+configuration as a signed .deb; mirror-port mode for full network inspection;
+mDNS advertising of the decoy; realtime updates in the app; Google Play
+listing; code-signing certificates for DeKoi Setup; billing; staged fleet
+rollouts; multi-region hosting; Cloudflare in front of the API.
