@@ -75,7 +75,9 @@ entry is the severity glyph and word, the lead event's title and "14 times
 bright: the dot glows, and the dot, glyph and word carry the severity
 colour, nothing else does. Seen incidents are grey and quiet: a hollow grey
 dot, grey glyph and word, a lighter title. Known devices are dimmed with
-"Known device". Entries use `animateItem()`.
+"Known device". Entries use `animateItem()`. While any alert is unread,
+the tab's header has a text action, "Mark all as read", which asks first
+above 20 unread alerts; a cross-linked list does not offer it.
 
 **Alert detail.** One incident; opening it marks its events seen
 (`acknowledge_events_v1`) and clears their notifications. (1) A critical
@@ -376,8 +378,10 @@ spoofing it would hand the router password to the attacker.
 
 ## Notifications
 
-FCM notification messages, as today (ADR 0011). `notify` picks the channel
-by severity and names the source device's kind from fixed templates:
+FCM notification messages, as today (ADR 0011), in the phone's language:
+Bokmål for a Norwegian phone, else English (ADR 0024). `notify` picks the
+channel by severity and names the source device's kind from fixed
+templates:
 
 | Channel | Name | Importance | Carries |
 | ------- | ---- | ---------- | ------- |

@@ -115,6 +115,9 @@ records why.
   expiry issues; nightly encrypted backups; repository settings as code.
 - First-run tour, Learn topics for every event kind, home-screen widget,
   motion and haptics (`docs/design.md`, "Motion").
+- Pushes in the phone's language, English or Bokmål, through
+  `register_push_token_v2` and `notification_targets_v3` (ADR 0024); the
+  severity colour on every notification; "Mark all as read" on Alerts.
 
 Verified by CI on `main` (`9dc0efd`, `b69caca`): pgTAP 19 files, 417 tests,
 advisors clean; `notify` 18 tests; agent 212 tests, ruff clean; app 158,
@@ -207,7 +210,8 @@ nightly update (after v0.2.0); the ARP sweep from a wired PC.
   are specified but not built; only the weekly advisors run.
 - Free Supabase plan: nightly dumps, no point-in-time recovery; sessions
   never expire; the project may pause after a week of low activity.
-- Push titles are in English; `notify` does not know the phone's language.
+- A phone's push language changes when the app next opens signed in;
+  Nynorsk phones get Bokmål pushes (ADR 0024).
 - libaums builds its native helpers for 4 KB pages, so 16 KB-page phones
   run the app in compatibility mode; without it, the card writer can crash
   mid-write (ADR 0014).
