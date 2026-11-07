@@ -1,7 +1,7 @@
 -- Storage limits and the notify gate (ADR 0016).
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(20);
+select plan(21);
 
 insert into auth.users (id, email) values
   ('00000000-0000-0000-0000-00000000000a', 'a@test.invalid'),
@@ -184,6 +184,13 @@ select results_eq(
   $$ select name from public.devices where owner_id = '00000000-0000-0000-0000-00000000000b' order by name $$,
   $$ values ('B one'), ('Running'), ('Waiting') $$,
   'setups whose DeKoi never registered within 30 days are removed'
+);
+
+-- Migrations that add kinds in parallel must not drop each other's: every
+-- kind the events table accepts has a severity.
+select is_empty(
+  $$ select k from unnest(private.event_kinds()) as k where private.event_severity(k, '{}') is null $$,
+  'every event kind has a severity'
 );
 
 select * from finish();

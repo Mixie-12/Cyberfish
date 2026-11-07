@@ -321,3 +321,55 @@ as $$
 $$;
 
 select cron.schedule('dekoi-pending-setups', '37 3 * * *', 'select private.expire_pending_setups()');
+
+-- 20261107183000 (dns_hijack, port_forward) and 20261107193000 (new_host)
+-- each redefined the backend's event kinds and the severities without the
+-- other's kinds, so device_health_v1 failed on every DNS or port forward
+-- finding. One list again, with every kind and its severity as those
+-- migrations decided them.
+create or replace function private.event_kinds()
+  returns text[]
+  language sql
+  immutable
+  set search_path = ''
+as $$
+  select private.device_event_kinds()
+    || array['device_offline', 'device_online', 'new_host', 'dns_hijack', 'port_forward']
+$$;
+
+alter table public.events drop constraint events_kind_check;
+alter table public.events add constraint events_kind_check check (kind = any (private.event_kinds()));
+
+-- Critical: someone tried to get in, or is redirecting traffic on the
+-- network (spoofed addresses, a rogue DHCP server, poisoned name lookups,
+-- name lookups answered with other addresses than the real ones). Warning:
+-- probing and contact (connections, port and network scans), the device
+-- going offline, IPv6 router advertisements from a new router, which smart
+-- home hubs acting as Thread border routers send legitimately, and a new
+-- port opened to the internet through UPnP, which games consoles and
+-- cameras do legitimately. Info: the device came back, and a device joined
+-- the network. IDS alerts follow Suricata's severity: 1 critical, 2
+-- warning, 3 and lower priorities info; an alert without a severity is a
+-- warning. A kind missing here yields null and fails the insert, so a new
+-- kind cannot be added without deciding its severity.
+create or replace function private.event_severity(kind text, detail jsonb)
+  returns text
+  language sql
+  immutable
+  set search_path = ''
+as $$
+  select case
+    when kind = 'ids_alert' then
+      case
+        when pg_catalog.jsonb_typeof(detail -> 'severity') is distinct from 'number' then 'warning'
+        when (detail ->> 'severity')::numeric = 1 then 'critical'
+        when (detail ->> 'severity')::numeric >= 3 then 'info'
+        else 'warning'
+      end
+    when kind in ('login_attempt', 'arp_spoof', 'rogue_dhcp', 'name_poisoning', 'dns_hijack') then 'critical'
+    when kind in (
+      'connection', 'port_scan', 'host_scan', 'rogue_router', 'device_offline', 'port_forward'
+    ) then 'warning'
+    when kind in ('device_online', 'new_host') then 'info'
+  end
+$$;
