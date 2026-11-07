@@ -38,6 +38,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.unit.dp
 import androidx.core.content.edit
+import no.cyberfish.dekoi.Device
 import no.cyberfish.dekoi.R
 import no.cyberfish.dekoi.attentionByMac
 import no.cyberfish.dekoi.hostDisplayName
@@ -102,7 +103,7 @@ fun NetworkScreen(
         if (entries.isNotEmpty()) {
             item { Text(summary, style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant) }
         }
-        item { NetworksRow(data.networks.size) { onNavigate(Route.Networks) } }
+        item { Links(data.networks.size, data.devices, onNavigate) }
         if (entries.isEmpty()) {
             item { EmptyState(R.drawable.ic_lan, stringResource(R.string.network_empty)) }
             return@Screen
@@ -159,25 +160,37 @@ private fun summary(entries: List<HostEntry>): String {
     ).joinToString(" · ")
 }
 
+/** The Networks screen, and the Insights of each DeKoi (ADR 0015). */
 @Composable
-private fun NetworksRow(
-    count: Int,
-    onClick: () -> Unit,
+private fun Links(
+    networks: Int,
+    devices: List<Device>,
+    onNavigate: (Route) -> Unit,
 ) {
     InsetSection {
         InsetRow(
             stringResource(R.string.networks_title),
             subtitle =
-                if (count > 0) {
-                    pluralStringResource(R.plurals.networks_count, count, count)
+                if (networks > 0) {
+                    pluralStringResource(R.plurals.networks_count, networks, networks)
                 } else {
                     stringResource(R.string.networks_not_reported)
                 },
             leading = {
                 Icon(painterResource(R.drawable.ic_wifi), contentDescription = null, tint = MaterialTheme.colorScheme.primary)
             },
-            onClick = onClick,
+            onClick = { onNavigate(Route.Networks) },
         )
+        devices.forEach { device ->
+            InsetRow(
+                stringResource(R.string.insights_title),
+                subtitle = if (devices.size > 1) device.name else stringResource(R.string.insights_open_subtitle),
+                leading = {
+                    Icon(painterResource(R.drawable.ic_network_check), contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+                },
+                onClick = { onNavigate(Route.Insights(device.id)) },
+            )
+        }
     }
 }
 

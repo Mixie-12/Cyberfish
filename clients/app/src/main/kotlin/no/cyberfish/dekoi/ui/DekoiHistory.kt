@@ -58,25 +58,33 @@ fun UptimeCard(
         } else {
             pluralStringResource(R.plurals.dekoi_uptime_summary, known, hours.count { it == Uptime.ONLINE }, known)
         }
+    Section(number, stringResource(R.string.last_seven_days), modifier) { UptimeWeek(hours, summary) }
+}
+
+/** A week hour by hour: [summary] in words, the strip, its ends and a legend of its colours. */
+@Composable
+fun UptimeWeek(
+    hours: List<Uptime>,
+    summary: String,
+    modifier: Modifier = Modifier,
+) {
     val colors = LocalSeverityColors.current
-    Section(number, stringResource(R.string.last_seven_days), modifier) {
-        Column(verticalArrangement = Arrangement.spacedBy(Dimens.spaceS)) {
-            // TalkBack hears the summary once, from the strip.
-            Text(summary, style = MaterialTheme.typography.titleMedium, modifier = Modifier.clearAndSetSemantics { })
-            UptimeStrip(hours, summary, Modifier.padding(top = Dimens.spaceXs))
-            Row(Modifier.fillMaxWidth().clearAndSetSemantics { }) {
-                AxisLabel(stringResource(R.string.dekoi_uptime_start), Modifier.weight(1f))
-                AxisLabel(stringResource(R.string.dekoi_uptime_end))
-            }
-            FlowRow(
-                Modifier.padding(top = Dimens.spaceXs),
-                horizontalArrangement = Arrangement.spacedBy(Dimens.spaceL),
-                verticalArrangement = Arrangement.spacedBy(Dimens.spaceXs),
-            ) {
-                Swatch(colors.safe.color, stringResource(R.string.device_online))
-                Swatch(colors.offline, stringResource(R.string.device_offline))
-                Swatch(MaterialTheme.colorScheme.outlineVariant, stringResource(R.string.dekoi_uptime_unknown))
-            }
+    Column(modifier, verticalArrangement = Arrangement.spacedBy(Dimens.spaceS)) {
+        // TalkBack hears the summary once, from the strip.
+        Text(summary, style = MaterialTheme.typography.titleMedium, modifier = Modifier.clearAndSetSemantics { })
+        UptimeStrip(hours, summary, Modifier.padding(top = Dimens.spaceXs))
+        Row(Modifier.fillMaxWidth().clearAndSetSemantics { }) {
+            AxisLabel(stringResource(R.string.dekoi_uptime_start), Modifier.weight(1f))
+            AxisLabel(stringResource(R.string.dekoi_uptime_end))
+        }
+        FlowRow(
+            Modifier.padding(top = Dimens.spaceXs),
+            horizontalArrangement = Arrangement.spacedBy(Dimens.spaceL),
+            verticalArrangement = Arrangement.spacedBy(Dimens.spaceXs),
+        ) {
+            Swatch(colors.safe.color, stringResource(R.string.device_online))
+            Swatch(colors.offline, stringResource(R.string.device_offline))
+            Swatch(MaterialTheme.colorScheme.outlineVariant, stringResource(R.string.dekoi_uptime_unknown))
         }
     }
 }

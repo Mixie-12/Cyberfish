@@ -21,6 +21,7 @@ import no.cyberfish.dekoi.Event
 import no.cyberfish.dekoi.GoogleIdToken
 import no.cyberfish.dekoi.Network
 import no.cyberfish.dekoi.NetworkHost
+import no.cyberfish.dekoi.NetworkInsights
 import no.cyberfish.dekoi.OwnerSettings
 import no.cyberfish.dekoi.R
 import no.cyberfish.dekoi.shared.ClaimCode
@@ -168,6 +169,7 @@ class AppViewModel(
             backend.signOut()
             owner.value = OwnerData()
             ownerSettings.value = null
+            insightData.value = null
         }
 
     fun deleteAccount() =
@@ -175,6 +177,7 @@ class AppViewModel(
             backend.deleteAccount()
             owner.value = OwnerData()
             ownerSettings.value = null
+            insightData.value = null
         }
 
     private suspend fun load() =
@@ -245,6 +248,24 @@ class AppViewModel(
         name: String?,
     ) = run {
         backend.setWifiName(device, name)
+        owner.value = owner.value.copy(devices = backend.devices())
+    }
+
+    private val insightData = MutableStateFlow<NetworkInsights?>(null)
+
+    /** The network insights of the DeKoi last opened on the Insights screen; null until loaded, and again after signing out. */
+    val insights: StateFlow<NetworkInsights?> = insightData.asStateFlow()
+
+    fun loadInsights(deviceId: String) =
+        run {
+            insightData.value = backend.insights(deviceId)
+        }
+
+    fun setSpeedTest(
+        device: Device,
+        on: Boolean,
+    ) = run {
+        backend.setSpeedTest(device, on)
         owner.value = owner.value.copy(devices = backend.devices())
     }
 }
