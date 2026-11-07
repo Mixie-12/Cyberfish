@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -12,6 +13,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -41,6 +43,7 @@ import no.cyberfish.dekoi.ui.components.Screen
 @Composable
 fun AddDekoiScreen(
     onClaim: (ClaimCode, (Int) -> Unit) -> Unit,
+    onWriteCard: () -> Unit,
     onBack: () -> Unit,
 ) {
     val context = LocalContext.current
@@ -110,6 +113,18 @@ fun AddDekoiScreen(
         result?.let {
             item {
                 Text(it, style = MaterialTheme.typography.bodyLarge, modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite })
+            }
+        }
+        item {
+            Column(verticalArrangement = Arrangement.spacedBy(Dimens.spaceS)) {
+                Text(
+                    stringResource(R.string.write_offer),
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                OutlinedButton(onClick = onWriteCard, modifier = Modifier.fillMaxWidth().heightIn(min = Dimens.touchTarget)) {
+                    Text(stringResource(R.string.write_offer_button))
+                }
             }
         }
     }

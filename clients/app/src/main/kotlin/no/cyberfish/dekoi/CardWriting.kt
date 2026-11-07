@@ -179,25 +179,24 @@ class CardWriting(
 
     /**
      * Starts over and lets go of an open card. A card being written, or a
-     * written card whose code is not linked yet, is kept; a claim whose
-     * answer never came (the screen that sent it is gone) may be sent again.
+     * written card whose code is not linked yet, is kept.
      */
     @Synchronized
     fun reset() {
-        when (val current = states.value) {
-            is WriteState.Writing, is WriteState.Written -> {
-                return
-            }
+        val current = states.value
+        if (current is WriteState.Writing || current is WriteState.Written || current is WriteState.Linking) return
+        release()
+        states.value = WriteState.Connect
+    }
 
-            is WriteState.Linking -> {
-                states.value = WriteState.Written(current.code)
-            }
-
-            else -> {
-                release()
-                states.value = WriteState.Connect
-            }
-        }
+    /**
+     * A new visit to the screen: starts over, and a claim whose answer never
+     * came (the screen that sent it is gone) may be sent again.
+     */
+    @Synchronized
+    fun enter() {
+        val current = states.value
+        if (current is WriteState.Linking) states.value = WriteState.Written(current.code) else reset()
     }
 
     private fun release() {

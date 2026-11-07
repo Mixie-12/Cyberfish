@@ -160,13 +160,33 @@ class CardWritingTest {
     }
 
     @Test
-    fun aClaimWhoseAnswerWasLostIsSentAgainOnTheNextVisit() {
+    fun leavingKeepsAClaimInFlight() {
         written()
         writing.claim()
         writing.reset()
 
+        assertEquals(WriteState.Linking(code), writing.state.value)
+        assertNull(writing.claim())
+    }
+
+    @Test
+    fun aClaimWhoseAnswerWasLostIsSentAgainOnTheNextVisit() {
+        written()
+        writing.claim()
+        writing.enter()
+
         assertEquals(WriteState.Written(code), writing.state.value)
         assertEquals(code, writing.claim())
+    }
+
+    @Test
+    fun aNewVisitStartsOverLikeReset() {
+        val connection = Connection()
+        confirm(card(connection = connection))
+        writing.enter()
+
+        assertEquals(WriteState.Connect, writing.state.value)
+        assertEquals(1, connection.closed)
     }
 
     @Test
