@@ -44,8 +44,8 @@ import java.nio.ByteOrder
  * throws IllegalArgumentException, so a reader that reports anything, an
  * empty slot or a card just put in, closes the app. Also changed: reads and
  * writes go in commands of at most 240 blocks, any failed transfer is
- * followed by Reset Recovery, or a port reset when the reader refuses it,
- * before the command goes again, a retried
+ * followed by Reset Recovery before the command goes again, without
+ * libaums' native code, a retried
  * command starts from the buffer it was given, a transfer that moves nothing
  * ends the data phase instead of looping, the status is read even after
  * short data, and the InitRequired handling, which libaums never triggers,
@@ -59,6 +59,8 @@ internal class ScsiBlockDevice(
     private val lun: Byte,
     /** The mass storage interface's number, which the reset names. */
     private val interfaceId: Int,
+    /** The addresses of its bulk endpoints, whose halts the reset clears. */
+    private val endpoints: List<Int>,
 ) : BlockDeviceDriver {
     private val commandBuffer = ByteBuffer.allocate(COMMAND_SIZE)
     private val statusBuffer = ByteBuffer.allocate(CommandStatusWrapper.SIZE)
@@ -260,21 +262,29 @@ internal class ScsiBlockDevice(
     /**
      * Reset Recovery (USB MSC BOT 1.0, 5.3.4): Bulk-Only Mass Storage Reset,
      * then both endpoints out of halt, so the reader waits for a new command.
-     * A reader that refuses it gets a port reset, as Linux's usb-storage
-     * escalates (usb_stor_port_reset): it starts again as if plugged in,
-     * keeps its address and the app's connection, and reports the reset as
-     * unit attention 29h, which [transfer] retries.
      */
     private fun reset(after: IOException) {
-        if (usb.controlTransfer(RESET_TYPE, RESET_REQUEST, 0, interfaceId, ByteArray(0), 0) >= 0) {
-            usb.clearFeatureHalt(usb.inEndpoint)
-            usb.clearFeatureHalt(usb.outEndpoint)
-            return
+        if (usb.controlTransfer(RESET_TYPE, RESET_REQUEST, 0, interfaceId, ByteArray(0), 0) < 0) {
+            throw IOException("The reader did not take a reset", after)
         }
-        try {
-            usb.resetDevice()
-        } catch (error: IOException) {
-            throw IOException("The reader took neither a reset nor a port reset: ${error.message}", after)
+        endpoints.forEach(::clearHalt)
+    }
+
+    /**
+     * Clears [endpoint]'s halt with the standard requests (USB 2.0, 9.4.5
+     * GET_STATUS and 9.4.1 CLEAR_FEATURE), only when it reports one: a
+     * stall resets the host's side already, and clearing an endpoint that
+     * is not halted would put the reader's data toggle out of step.
+     * libaums 0.10.0's clearFeatureHalt and resetDevice cannot be used: its
+     * libusb-lib.so exports Java_me_jahnen_libaums_usb_... for a class in
+     * me.jahnen.libaums.core.usb, so both throw UnsatisfiedLinkError.
+     */
+    private fun clearHalt(endpoint: Int) {
+        val status = ByteArray(2)
+        val read = usb.controlTransfer(GET_STATUS_TYPE, GET_STATUS, 0, endpoint, status, status.size)
+        if (read != status.size || status[0].toInt() and HALTED == 0) return
+        if (usb.controlTransfer(CLEAR_FEATURE_TYPE, CLEAR_FEATURE, ENDPOINT_HALT, endpoint, ByteArray(0), 0) < 0) {
+            throw IOException("The reader did not clear a halted endpoint")
         }
     }
 
@@ -289,6 +299,14 @@ internal class ScsiBlockDevice(
         const val RETRY_DELAY_MS = 100L
         const val RESET_TYPE = 0x21
         const val RESET_REQUEST = 0xFF
+
+        // Standard endpoint requests (USB 2.0, 9.3 and 9.4).
+        const val GET_STATUS_TYPE = 0x82
+        const val GET_STATUS = 0x00
+        const val CLEAR_FEATURE_TYPE = 0x02
+        const val CLEAR_FEATURE = 0x01
+        const val ENDPOINT_HALT = 0x00
+        const val HALTED = 0x01
 
         // Additional sense code 29h: power on, reset or bus device reset occurred (SPC).
         const val RESET_OCCURRED = 0x29

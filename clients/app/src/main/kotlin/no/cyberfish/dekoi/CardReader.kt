@@ -116,7 +116,7 @@ fun openCard(
         if (luns !in 0..MAX_LUN) throw WriteFailed(WriteFailure.CARD_ERROR)
         val cards =
             (0..luns).mapNotNull { lun ->
-                onCard { inserted(ScsiBlockDevice(connection, lun.toByte(), storage.id)) }
+                onCard { inserted(ScsiBlockDevice(connection, lun.toByte(), storage.id, listOf(input.address, output.address))) }
             }
         val card = cards.singleOrNull() ?: throw WriteFailed(if (cards.isEmpty()) WriteFailure.NO_CARD else WriteFailure.SEVERAL_CARDS)
         opened = OpenCard(reader, card, connection)
