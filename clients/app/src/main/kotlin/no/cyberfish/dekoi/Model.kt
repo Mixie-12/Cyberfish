@@ -119,6 +119,8 @@ data class EventDetail(
     val protocol: String? = null,
     val signature: String? = null,
     val category: String? = null,
+    val share: String? = null,
+    val file: String? = null,
 )
 
 @Serializable

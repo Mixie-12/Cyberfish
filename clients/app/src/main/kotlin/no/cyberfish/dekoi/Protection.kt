@@ -28,6 +28,7 @@ private val INTRUSION_KINDS =
         "rogue_router",
         "name_poisoning",
         "ids_alert",
+        "file_access",
     )
 
 val Event.isIntrusion: Boolean get() = kind in INTRUSION_KINDS
