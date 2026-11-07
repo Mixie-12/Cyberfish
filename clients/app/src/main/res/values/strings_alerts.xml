@@ -118,6 +118,14 @@
     <string name="alerts_empty">No alerts yet. When your DeKoi notices something on your network, it shows up here.</string>
     <string name="alerts_empty_filtered">No alerts match these filters.</string>
     <string name="alerts_show_all">Show all alerts</string>
+    <string name="alerts_mark_all_read">Mark all as read</string>
+    <!-- Asked only above 20 unread alerts. -->
+    <plurals name="alerts_mark_all_read_title">
+        <item quantity="one">Mark %1$d alert as read?</item>
+        <item quantity="other">Mark all %1$d alerts as read?</item>
+    </plurals>
+    <string name="alerts_mark_all_read_body">Your alerts stay in the list, and you can still open each one.</string>
+    <string name="alerts_mark_all_read_confirm">Mark as read</string>
 
     <string name="alert_missing">This alert is no longer available.</string>
     <string name="alert_do_now">Do this now</string>
