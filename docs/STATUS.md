@@ -103,6 +103,20 @@ removed after 30 days; a test that account deletion reaches every table
 verified through the local gateway; backup dump and restore verified
 locally.
 
+Integration (2026-11-08, not yet pushed or deployed): the Wi-Fi watch
+(ADR 0019) and the request and storage limits (ADR 0016) merged onto
+`main` at `0eb5e02`, with three new migrations after the production ones:
+`20261107235000_wifi_watch`, `20261108000000_request_and_storage_limits`
+and `20261108000100_client_address` (`device_health_v1` takes the public
+address from `private.client_ip()`). `12_event_vocabulary` now lists
+every event kind with its severity. Locally: pgTAP 18 files, 409 tests,
+advisors clean; `notify` 18 tests; agent 196 tests, ruff clean; app 45,
+shared 5 and DeKoi Setup 24 unit tests, ktlint and Android lint clean. Not
+verified: that `cf-connecting-ip` and `cf-ipcountry` reach
+`request.headers` on the hosted project. Without them the per-address
+limits are off, no public address is stored and the Wi-Fi watch keeps the
+radio off (`docs/security.md`, "Monitoring").
+
 ## Owner actions open
 
 1. Optional: repeat the ARP sweep from a PC connected by cable.
