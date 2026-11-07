@@ -21,19 +21,22 @@ private const val READ_10 = 0x28
 private const val WRITE_10 = 0x2A
 
 private const val NOT_READY = 0x02
+private const val ILLEGAL_REQUEST = 0x05
 private const val UNIT_ATTENTION = 0x06
 private const val DATA_PROTECT = 0x07
 private const val BECOMING_READY = 0x04
 private const val WRITE_PROTECTED = 0x27
 private const val MEDIUM_CHANGED = 0x28
 private const val MEDIUM_NOT_PRESENT = 0x3A
+private const val INVALID_FIELD = 0x24
 
 private const val BLOCK = 512
 
 /**
  * A USB card reader as the phone sees it: SCSI commands over bulk-only
  * transport (USB MSC BOT 1.0). Its sense data is the 18 bytes asked for,
- * and its additional length can say it has more, as real readers do.
+ * and its additional length can say it has more, as real readers do. It
+ * refuses reads and writes of more than [maxBlocks] blocks in one command.
  */
 private class SimulatedReader(
     private val card: ByteArray?,
@@ -41,6 +44,7 @@ private class SimulatedReader(
     private var becomingReady: Int = 0,
     private val locked: Boolean = false,
     private val additionalSenseLength: Int = 10,
+    private val maxBlocks: Int = Int.MAX_VALUE,
 ) : UsbCommunication {
     private val toHost = ArrayDeque<ByteBuffer>()
     private var write: Write? = null
@@ -52,6 +56,7 @@ private class SimulatedReader(
         val tag: Int,
         var offset: Int,
         var remaining: Int,
+        val refused: Boolean,
     )
 
     override fun bulkOutTransfer(src: ByteBuffer): Int {
@@ -79,15 +84,36 @@ private class SimulatedReader(
         val tag = little.getInt(4)
         val length = little.getInt(8)
         val offset = big.getInt(17) * BLOCK
-        val bytes = big.getShort(22) * BLOCK
+        val blocks = big.getShort(22).toInt()
+        val bytes = blocks * BLOCK
         when (cbw[15].toInt() and 0xFF) {
-            INQUIRY -> answer(tag, ByteArray(36))
-            TEST_UNIT_READY -> status(tag, ready())
-            READ_CAPACITY -> if (ready()) answer(tag, capacity()) else status(tag, false)
-            REQUEST_SENSE -> answer(tag, sense(length))
-            READ_10 -> answer(tag, checkNotNull(card).copyOfRange(offset, offset + bytes))
-            WRITE_10 -> write = Write(tag, offset, bytes)
-            else -> error("Command not simulated")
+            INQUIRY -> {
+                answer(tag, ByteArray(36))
+            }
+
+            TEST_UNIT_READY -> {
+                status(tag, ready())
+            }
+
+            READ_CAPACITY -> {
+                if (ready()) answer(tag, capacity()) else status(tag, false)
+            }
+
+            REQUEST_SENSE -> {
+                answer(tag, sense(length))
+            }
+
+            READ_10 -> {
+                if (blocks > maxBlocks) refuse(tag, bytes) else answer(tag, checkNotNull(card).copyOfRange(offset, offset + bytes))
+            }
+
+            WRITE_10 -> {
+                write = Write(tag, offset, bytes, refused = blocks > maxBlocks)
+            }
+
+            else -> {
+                error("Command not simulated")
+            }
         }
     }
 
@@ -96,13 +122,27 @@ private class SimulatedReader(
         src: ByteBuffer,
     ) {
         val count = src.remaining()
-        if (locked) src.position(src.limit()) else src.get(checkNotNull(card), pending.offset, count)
+        val kept = !locked && !pending.refused
+        if (kept) src.get(checkNotNull(card), pending.offset, count) else src.position(src.limit())
         pending.offset += count
         pending.remaining -= count
         if (pending.remaining > 0) return
         write = null
-        if (locked) fail(DATA_PROTECT, WRITE_PROTECTED)
-        status(pending.tag, !locked)
+        when {
+            pending.refused -> fail(ILLEGAL_REQUEST, INVALID_FIELD)
+            locked -> fail(DATA_PROTECT, WRITE_PROTECTED)
+        }
+        status(pending.tag, kept)
+    }
+
+    // The data phase still runs, as the host asked for it; the status says the command failed.
+    private fun refuse(
+        tag: Int,
+        bytes: Int,
+    ) {
+        toHost += ByteBuffer.wrap(ByteArray(bytes))
+        fail(ILLEGAL_REQUEST, INVALID_FIELD)
+        status(tag, false)
     }
 
     private fun ready(): Boolean {
@@ -206,7 +246,8 @@ class ScsiBlockDeviceTest {
         becomingReady: Int = 0,
         locked: Boolean = false,
         additionalSenseLength: Int = 10,
-    ) = ScsiBlockDevice(SimulatedReader(card, unitAttentions, becomingReady, locked, additionalSenseLength), 0)
+        maxBlocks: Int = Int.MAX_VALUE,
+    ) = ScsiBlockDevice(SimulatedReader(card, unitAttentions, becomingReady, locked, additionalSenseLength, maxBlocks), 0)
 
     @Test
     fun `an empty slot is no card`() {
@@ -244,6 +285,18 @@ class ScsiBlockDeviceTest {
         card.write(8, ByteBuffer.wrap(written))
         val read = ByteBuffer.allocate(4 * BLOCK)
         card.read(8, read)
+        assertContentEquals(written, read.array())
+        assertEquals(read.limit(), read.position())
+    }
+
+    @Test
+    fun `a reader that takes 240 blocks per command reads and writes a whole chunk`() {
+        // libaums sends the chunk as one command of 2048 blocks, which such a reader refuses.
+        val card = assertNotNull(inserted(reader(card = ByteArray(4096 * BLOCK), maxBlocks = 240)))
+        val written = Random(5).nextBytes(CHUNK)
+        card.write(1, ByteBuffer.wrap(written))
+        val read = ByteBuffer.allocate(CHUNK)
+        card.read(1, read)
         assertContentEquals(written, read.array())
         assertEquals(read.limit(), read.position())
     }

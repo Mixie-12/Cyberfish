@@ -23,7 +23,12 @@ navigation graph existed.
 - The app carries one file, `ScsiBlockDevice.kt`: libaums' class at
   fae7261 under its Apache-2.0 header, used by `openCard` instead of
   `BlockDeviceDriverFactory`. Everything else (USB transfers, SCSI command
-  classes, FAT32) stays libaums 0.10.0. Changed beyond upstream: a retried
+  classes, FAT32) stays libaums 0.10.0. Changed beyond upstream: reads and
+  writes go in commands of at most 240 blocks (120 KiB), as Linux's
+  usb-storage sends them to every USB mass storage device because "some
+  devices are known to choke with anything larger" (Windows sends 128,
+  macOS 256 over USB 2); libaums sends the app's 1 MiB chunk as one
+  command and one USB transfer. A retried
   command starts from the buffer it was given; a transfer that moves
   nothing ends the data phase; the status is read even after short data;
   unit attention is retried once when starting and is an error during a
@@ -38,8 +43,13 @@ navigation graph existed.
   and read back.
 - Every failure from the reader, a runtime exception included, becomes
   "this card could not be written" (`onCard`), and its cause is logged
-  under the tag `DeKoiCard`. The write stops with the partition table
+  under the tag `DeKoiCard` and shown under "Technical details" on the
+  failure screen, collapsed. The write stops with the partition table
   zeroed, as before.
+- Found on the owner's phone with v0.2.3: each write stopped about a
+  second after it started, six times, and the phone's log had already
+  dropped the app's lines. The 240-block limit is the fix for the most
+  likely cause; the details on the screen say what happened if it is not.
 - Navigation effects run only once the back stack has an entry.
 
 ## Consequences

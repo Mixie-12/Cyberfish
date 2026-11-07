@@ -42,7 +42,8 @@ import java.nio.ByteBuffer
  * libaums 0.10.0's ScsiBlockDevice with the upstream fixes d78996b and
  * fae7261, which no release has (ADR 0029). In 0.10.0 every REQUEST SENSE
  * throws IllegalArgumentException, so a reader that reports anything, an
- * empty slot or a card just put in, closes the app. Also changed: a retried
+ * empty slot or a card just put in, closes the app. Also changed: reads and
+ * writes go in commands of at most 240 blocks, a retried
  * command starts from the buffer it was given, a transfer that moves nothing
  * ends the data phase instead of looping, the status is read even after
  * short data, and the InitRequired handling, which libaums never triggers,
@@ -100,22 +101,43 @@ internal class ScsiBlockDevice(
     override fun read(
         deviceOffset: Long,
         buffer: ByteBuffer,
-    ) {
-        require(buffer.remaining() % blockSize == 0) { "Not whole blocks" }
-        readCommand.init(deviceOffset.toInt(), buffer.remaining(), blockSize)
-        transfer(readCommand, buffer)
-        buffer.position(buffer.limit())
+    ) = inPieces(deviceOffset, buffer) { block, piece ->
+        readCommand.init(block.toInt(), piece.remaining(), blockSize)
+        transfer(readCommand, piece)
     }
 
     @Synchronized
     override fun write(
         deviceOffset: Long,
         buffer: ByteBuffer,
+    ) = inPieces(deviceOffset, buffer) { block, piece ->
+        writeCommand.init(block.toInt(), piece.remaining(), blockSize)
+        transfer(writeCommand, piece)
+    }
+
+    /**
+     * Runs [command] on [buffer] in pieces of at most [MAX_BLOCKS] blocks,
+     * as Linux's usb-storage does for every USB mass storage device: "Some
+     * devices are known to choke with anything larger"
+     * (drivers/usb/storage/scsiglue.c). libaums sends any length as one
+     * command and one transfer. Leaves the position at the limit.
+     */
+    private inline fun inPieces(
+        deviceOffset: Long,
+        buffer: ByteBuffer,
+        command: (block: Long, piece: ByteBuffer) -> Unit,
     ) {
         require(buffer.remaining() % blockSize == 0) { "Not whole blocks" }
-        writeCommand.init(deviceOffset.toInt(), buffer.remaining(), blockSize)
-        transfer(writeCommand, buffer)
-        buffer.position(buffer.limit())
+        var block = deviceOffset
+        while (buffer.hasRemaining()) {
+            val bytes = minOf(buffer.remaining(), MAX_BLOCKS * blockSize)
+            // A duplicate keeps the array offsets, which libaums' transfers use.
+            val piece = buffer.duplicate()
+            piece.limit(buffer.position() + bytes)
+            command(block, piece)
+            buffer.position(buffer.position() + bytes)
+            block += bytes / blockSize
+        }
     }
 
     /**
@@ -228,6 +250,7 @@ internal class ScsiBlockDevice(
 
         // ScsiRequestSense requires 18.
         const val SENSE_SIZE = 18
+        const val MAX_BLOCKS = 240
         const val ATTEMPTS = 6
         const val RETRY_DELAY_MS = 100L
         const val RESET_TYPE = 0x21
