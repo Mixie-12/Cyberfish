@@ -9,6 +9,7 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ColorScheme
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.LocalTonalElevationEnabled
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Shapes
@@ -200,7 +201,11 @@ fun DekoiTheme(content: @Composable () -> Unit) {
         LocalReduceMotion provides rememberReduceMotion(),
         LocalTonalElevationEnabled provides false,
     ) {
-        MaterialTheme(colorScheme = colorScheme(palette, inverse, dark), typography = typography, shapes = shapes, content = content)
+        MaterialTheme(colorScheme = colorScheme(palette, inverse, dark), typography = typography, shapes = shapes) {
+            // Text outside a Material surface would otherwise default to
+            // black, which is unreadable on the dark background.
+            CompositionLocalProvider(LocalContentColor provides MaterialTheme.colorScheme.onBackground, content = content)
+        }
     }
 }
 
