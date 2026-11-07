@@ -55,6 +55,7 @@ import no.cyberfish.dekoi.ui.components.SegmentedControl
 import no.cyberfish.dekoi.ui.components.SeverityChip
 import no.cyberfish.dekoi.ui.components.Skeleton
 import no.cyberfish.dekoi.ui.components.StaleLabel
+import no.cyberfish.dekoi.ui.relativeTime
 import java.time.Instant
 
 private const val PREFERENCES = "network"
@@ -126,7 +127,7 @@ fun NetworkScreen(
                 groups.forEach { (group, rows) ->
                     item {
                         InsetSection(title = group.title(resources::getString)) {
-                            rows.forEach { HostRow(it) { open(it) } }
+                            rows.forEach { HostRow(it, now) { open(it) } }
                         }
                     }
                 }
@@ -285,10 +286,16 @@ internal fun Group.title(string: (Int) -> String): String =
 @Composable
 private fun HostRow(
     entry: HostEntry,
+    now: Instant,
     onClick: () -> Unit,
 ) {
     val host = entry.host
-    val status = stringResource(if (entry.online) R.string.network_online else R.string.network_not_seen)
+    val status =
+        if (entry.online) {
+            stringResource(R.string.host_online_now)
+        } else {
+            stringResource(R.string.host_last_seen_ago, relativeTime(host.lastSeenAt, now))
+        }
     InsetRow(
         entry.name,
         modifier = Modifier.semantics { stateDescription = status },

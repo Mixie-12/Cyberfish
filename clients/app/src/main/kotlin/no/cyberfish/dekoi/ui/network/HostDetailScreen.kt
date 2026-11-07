@@ -8,14 +8,12 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.selection.toggleable
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
@@ -31,7 +29,6 @@ import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
@@ -104,9 +101,9 @@ fun HostDetailScreen(
         item {
             InsetSection {
                 InsetRow(
-                    stringResource(R.string.host_known),
-                    modifier = Modifier.toggleable(host.trusted, role = Role.Switch) { onTrust(host, it) },
-                    trailing = { Switch(checked = host.trusted, onCheckedChange = null) },
+                    stringResource(if (host.trusted) R.string.host_unmark_known else R.string.host_mark_known),
+                    onClick = { onTrust(host, !host.trusted) },
+                    chevron = false,
                 )
                 InsetRow(
                     stringResource(R.string.host_edit),
