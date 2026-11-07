@@ -101,7 +101,8 @@ class WriteTest {
         val builder = Imager.elevatedStart(hostilePath, listOf("--cli", "\\\\.\\PhysicalDrive2"))
 
         val script =
-            "\$p = Start-Process -FilePath \$env:DEKOI_IMAGER -ArgumentList \$env:DEKOI_IMAGER_ARGS -Verb RunAs -Wait -PassThru; " +
+            "\$ErrorActionPreference = 'Stop'; " +
+                "\$p = Start-Process -FilePath \$env:DEKOI_IMAGER -ArgumentList \$env:DEKOI_IMAGER_ARGS -Verb RunAs -Wait -PassThru; " +
                 "exit \$p.ExitCode"
         assertEquals(listOf("powershell.exe", "-NoProfile", "-NonInteractive", "-Command", script), builder.command())
         assertEquals(hostilePath.toString(), builder.environment()["DEKOI_IMAGER"])

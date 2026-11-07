@@ -30,9 +30,12 @@ object Imager {
     // A constant script: the executable and its arguments arrive in environment
     // variables and are never parsed as PowerShell. RunAs shows the UAC prompt
     // that Imager's requireAdministrator manifest needs; -PassThru returns the
-    // exit code, the only result an elevated Imager can hand back.
+    // exit code, the only result an elevated Imager can hand back. Stop makes a
+    // failed start (UAC answered No) exit 1; otherwise the script would go on
+    // and exit 0 with no process.
     private const val ELEVATED_START =
-        "\$p = Start-Process -FilePath \$env:DEKOI_IMAGER -ArgumentList \$env:DEKOI_IMAGER_ARGS " +
+        "\$ErrorActionPreference = 'Stop'; " +
+            "\$p = Start-Process -FilePath \$env:DEKOI_IMAGER -ArgumentList \$env:DEKOI_IMAGER_ARGS " +
             "-Verb RunAs -Wait -PassThru; exit \$p.ExitCode"
 
     /** The process that starts Imager elevated and exits with Imager's exit code. */
