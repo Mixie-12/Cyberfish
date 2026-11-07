@@ -73,6 +73,7 @@ class Clock:
 def config(tmp_path: Path) -> Config:
     (tmp_path / "claim-code").write_text(CLAIM_CODE + "\n")
     (tmp_path / "canary.log").write_text("")
+    (tmp_path / "samba.log").write_text("")
     return Config(
         api_url="https://example.invalid",
         api_key="sb_publishable_test",
@@ -80,6 +81,7 @@ def config(tmp_path: Path) -> Config:
         state_path=tmp_path / "state.json",
         claim_code_path=tmp_path / "claim-code",
         canary_log=tmp_path / "canary.log",
+        samba_log=tmp_path / "samba.log",
         scan_log=tmp_path / "scan.json",
         ids_socket=tmp_path / "eve.sock",
         decoy_config=CANARY_CONFIG,
@@ -169,6 +171,24 @@ def test_events_are_delivered_without_passwords(config: Config, backend: FakeBac
     assert event["agent_event_id"] == 1
     assert "toor" not in json.dumps(call)
     assert agent.state.queue == []
+
+
+def test_file_share_events_are_delivered(config: Config, backend: FakeBackend) -> None:
+    agent = Agent(config, State(device_id="device-1", secret="a" * 64), Clock(), FakeListeners())
+    agent.tick()
+    config.samba_log.write_text(
+        "  192.168.1.50|Public|/srv/decoy/Public|connect|ok|Public\n"
+        "  192.168.1.50|Public|/srv/decoy/Public|pread_recv|ok|/srv/decoy/Public/notes.txt\n"
+    )
+    agent.tick()
+
+    (call,) = backend.called("device_events_v1")
+    assert [(e["kind"], e["service"], e["detail"]) for e in call["events"]] == [
+        ("connection", "smb", {"share": "Public"}),
+        ("file_access", "smb", {"share": "Public", "file": "notes.txt"}),
+    ]
+    position = State.load(config.state_path).positions["samba"]
+    assert position == [config.samba_log.stat().st_ino, config.samba_log.stat().st_size]
 
 
 def test_backend_outage_keeps_events_and_malformed_batches_are_dropped(

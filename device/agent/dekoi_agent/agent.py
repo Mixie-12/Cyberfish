@@ -10,7 +10,15 @@ from . import api, dns_check, health, identify, inventory, lan, monitors, upnp
 from .config import Config
 from .decoys import listening_ports, load_decoys, running_services
 from .detect import Collapser, ScanDetector
-from .sources import DatagramInbox, FileFollower, iso_time, parse_canary, parse_scan, parse_suricata
+from .sources import (
+    DatagramInbox,
+    FileFollower,
+    iso_time,
+    parse_canary,
+    parse_samba,
+    parse_scan,
+    parse_suricata,
+)
 from .state import State
 
 log = logging.getLogger(__name__)
@@ -59,6 +67,7 @@ class Agent:
         self.clock = clock
         self.decoys = load_decoys(config.decoy_config)
         self.canary = FileFollower(config.canary_log, _position(state, "canary"))
+        self.samba = FileFollower(config.samba_log, _position(state, "samba"))
         self.scans = FileFollower(config.scan_log, _position(state, "scan"))
         self.ids = DatagramInbox(config.ids_socket)
         self.listeners = listeners or lan.Listeners()
@@ -103,7 +112,7 @@ class Agent:
     def collect(self, at: float) -> None:
         self._identify()
         events = self.collapser.flush(at) + self._keep(at, self._observe(at))
-        followers = {"canary": self.canary, "scan": self.scans}
+        followers = {"canary": self.canary, "samba": self.samba, "scan": self.scans}
         positions = {
             name: list(f.position) for name, f in followers.items() if f.position is not None
         }
@@ -117,6 +126,7 @@ class Agent:
         found = [
             e for line in self.canary.read_lines() if (e := parse_canary(line, self.decoys, at))
         ]
+        found += [e for line in self.samba.read_lines() if (e := parse_samba(line, at))]
         for line in self.scans.read_lines():
             probe = parse_scan(line)
             if probe and (event := self.detector.observe(*probe)):
