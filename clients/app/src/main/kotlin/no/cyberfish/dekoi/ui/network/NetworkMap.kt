@@ -316,8 +316,8 @@ private fun Node(
 /**
  * A round tile on the background with a hairline [edge], a halo in the
  * colour of a recent alert, a "New" badge, and a status dot unless
- * [online] is null. [tile] goes first on the round tile itself, for a
- * shared element.
+ * [online] is null. [modifier] goes first on the round tile itself, not
+ * on the halo and marks around it, so a shared element moves only the tile.
  */
 @Composable
 private fun NodeMark(
@@ -325,12 +325,12 @@ private fun NodeMark(
     attention: Severity?,
     new: Boolean,
     online: Boolean?,
-    tile: Modifier = Modifier,
+    modifier: Modifier = Modifier,
     content: @Composable BoxScope.() -> Unit,
 ) {
     Box(Modifier.size(Dimens.tile).alertHalo(attention)) {
         Box(
-            tile
+            modifier
                 .matchParentSize()
                 .clip(CircleShape)
                 .background(MaterialTheme.colorScheme.background)
