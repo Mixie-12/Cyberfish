@@ -34,11 +34,13 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogWindowProvider
 import no.cyberfish.dekoi.R
 import no.cyberfish.dekoi.ui.Dimens
+import no.cyberfish.dekoi.ui.headingCase
 
 private val MISSING_SKELETON = 200.dp
 
 /**
- * A screen: an optional back button, a large title with an optional line
+ * A screen: an optional back button, a Michroma title in upper case with an
+ * optional line
  * under it (such as a [StaleLabel]), then scrolling content. Tab roots pass
  * the [listState] the tab bar scrolls to the top on reselect. A screen whose
  * content opens with its own heading passes no [title]; a list that spaces
@@ -57,18 +59,24 @@ fun Screen(
     LazyColumn(
         modifier = modifier.fillMaxSize().background(MaterialTheme.colorScheme.background),
         state = listState,
-        contentPadding = PaddingValues(start = Dimens.gutter, end = Dimens.gutter, top = Dimens.spaceM, bottom = Dimens.spaceXl),
+        contentPadding = PaddingValues(start = Dimens.gutter, end = Dimens.gutter, top = Dimens.spaceL, bottom = Dimens.section * 2),
         verticalArrangement = Arrangement.spacedBy(spacing),
     ) {
         item {
-            Column {
+            Column(verticalArrangement = Arrangement.spacedBy(Dimens.spaceS)) {
                 if (onBack != null) {
                     // Line the arrow up with the title under it.
                     IconButton(onClick = onBack, modifier = Modifier.offset(x = -Dimens.spaceM)) {
                         Icon(painterResource(R.drawable.ic_arrow_back), contentDescription = stringResource(R.string.action_back))
                     }
                 }
-                title?.let { Text(it, style = MaterialTheme.typography.displaySmall, modifier = Modifier.semantics { heading() }) }
+                title?.let {
+                    Text(
+                        it.headingCase(),
+                        style = MaterialTheme.typography.displaySmall,
+                        modifier = Modifier.semantics { heading() },
+                    )
+                }
                 subtitle?.invoke()
             }
         }

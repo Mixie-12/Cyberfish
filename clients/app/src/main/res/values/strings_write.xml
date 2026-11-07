@@ -2,8 +2,6 @@
 <!-- Write a card with this phone (WriteCardScreen.kt, WriteCardService.kt, CardReader.kt). -->
 <resources>
     <string name="write_title">Write a card</string>
-    <string name="write_offer">No computer? With a USB card reader, this phone can prepare the memory card itself.</string>
-    <string name="write_offer_button">Write a card with this phone</string>
 
     <string name="write_step_connect">01 / CONNECT THE READER</string>
     <string name="write_connect_body">Put a memory card of 8 to 256 GB in a USB card reader, then connect the reader to this phone.</string>

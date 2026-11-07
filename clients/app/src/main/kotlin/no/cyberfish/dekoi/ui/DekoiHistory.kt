@@ -30,6 +30,7 @@ import no.cyberfish.dekoi.Uptime
 import no.cyberfish.dekoi.hourlyUptime
 import no.cyberfish.dekoi.serviceName
 import no.cyberfish.dekoi.touchesPerDay
+import no.cyberfish.dekoi.ui.components.Section
 import no.cyberfish.dekoi.ui.components.Sparkline
 import no.cyberfish.dekoi.ui.components.UptimeStrip
 import java.time.Instant

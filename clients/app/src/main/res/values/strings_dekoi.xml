@@ -1,13 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Your DeKoi and its setup (DekoiScreens.kt), and the section label it shares with Home (ScreenParts.kt). -->
 <resources>
-    <string name="section_label">%1$02d / %2$s</string>
     <string name="setup_linked">Linked to your account</string>
     <string name="setup_first_start">First start</string>
     <string name="setup_online">Online</string>
     <string name="setup_protecting">Watching your network</string>
     <string name="setup_help_title">Still waiting?</string>
-    <string name="setup_help_body">Check that the memory card is in your DeKoi, that it has power, and that the network cable is plugged into your router. If you chose Wi-Fi, check the network name and password. If it still does not appear, prepare the card again with DeKoi Setup.</string>
     <string name="device_online">Online</string>
     <string name="device_offline">Offline</string>
     <string name="device_setting_up">Setting up</string>

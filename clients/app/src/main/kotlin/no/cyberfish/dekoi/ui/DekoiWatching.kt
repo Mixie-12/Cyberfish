@@ -33,6 +33,7 @@ import no.cyberfish.dekoi.softwareUpdatedAt
 import no.cyberfish.dekoi.ui.components.InsetRow
 import no.cyberfish.dekoi.ui.components.InsetSection
 import no.cyberfish.dekoi.ui.components.KeyValueRow
+import no.cyberfish.dekoi.ui.components.Section
 import no.cyberfish.dekoi.watchList
 import java.text.NumberFormat
 import java.time.Instant

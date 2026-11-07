@@ -71,6 +71,7 @@ import no.cyberfish.dekoi.ui.LocalReduceMotion
 import no.cyberfish.dekoi.ui.LocalSeverityColors
 import no.cyberfish.dekoi.ui.Route
 import no.cyberfish.dekoi.ui.components.BrandTile
+import no.cyberfish.dekoi.ui.components.HudFrame
 import no.cyberfish.dekoi.ui.components.kindIcon
 import no.cyberfish.dekoi.ui.tabular
 import java.time.Instant
@@ -159,6 +160,7 @@ internal fun NetworkMap(
                         )
                 }.transformable(transform, canPan = { view.zoom > 1f })
                 .pointerInput(Unit) { detectTapGestures(onDoubleTap = { view = MapView() }) },
+            contentPadding = 0.dp,
         ) {
             Box(
                 Modifier.matchParentSize().background(

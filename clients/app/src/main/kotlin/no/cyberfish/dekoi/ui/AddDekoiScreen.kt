@@ -107,6 +107,7 @@ import no.cyberfish.dekoi.ui.components.BrandTile
 import no.cyberfish.dekoi.ui.components.ErrorBanner
 import no.cyberfish.dekoi.ui.components.InsetSection
 import no.cyberfish.dekoi.ui.components.KindTile
+import no.cyberfish.dekoi.ui.components.PrimaryButton
 import no.cyberfish.dekoi.ui.components.Screen
 import no.cyberfish.dekoi.ui.components.StatusRing
 import no.cyberfish.dekoi.ungroupedOffset
@@ -196,17 +197,10 @@ fun SetupProgress(
             }
         }
         InsetSection(title = stringResource(R.string.dekoi_setup)) { Timeline(device) }
-        if (device?.needsSetupHelp(now) == true) {
-            InsetSection(title = stringResource(R.string.setup_help_title), footer = stringResource(R.string.add_help_again)) {
-                StepList {
-                    StepItem(R.drawable.ic_sd_card, R.string.add_help_card)
-                    StepItem(R.drawable.ic_power, R.string.add_help_power)
-                    StepItem(R.drawable.ic_cable, R.string.add_help_cable)
-                    StepItem(R.drawable.ic_wifi, R.string.add_help_wifi)
-                }
-            }
+        if (device?.needsSetupHelp(now) == true) SetupHelp()
+        PrimaryButton(onClick = onDone, modifier = Modifier.fillMaxWidth()) {
+            Text(stringResource(R.string.add_done), style = MaterialTheme.typography.labelLarge)
         }
-        WideButton(onDone) { Text(stringResource(R.string.add_done), style = MaterialTheme.typography.labelLarge) }
     }
 }
 
@@ -266,7 +260,10 @@ private fun Prepare(
         PrepareArt()
         Headline(stringResource(R.string.add_prepare_title), stringResource(R.string.add_prepare_body))
         Column(verticalArrangement = Arrangement.spacedBy(Dimens.spaceS)) {
-            WideButton(onWriteCard) { ButtonLabel(R.drawable.ic_sd_card, R.string.add_write_card) }
+            PrimaryButton(
+                onClick = onWriteCard,
+                modifier = Modifier.fillMaxWidth(),
+            ) { ButtonLabel(R.drawable.ic_sd_card, R.string.add_write_card) }
             Text(
                 stringResource(R.string.add_write_card_hint),
                 style = MaterialTheme.typography.bodyMedium,
@@ -325,7 +322,9 @@ private fun CodeEntry(
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
-            WideButton(::scan, enabled = !claiming) { ButtonLabel(R.drawable.ic_qr_code_scanner, R.string.add_scan) }
+            PrimaryButton(onClick = ::scan, enabled = !claiming, modifier = Modifier.fillMaxWidth()) {
+                ButtonLabel(R.drawable.ic_qr_code_scanner, R.string.add_scan)
+            }
             OutlinedTextField(
                 value = typed,
                 onValueChange = { typed = typedCode(it) },
@@ -344,7 +343,7 @@ private fun CodeEntry(
                 keyboardActions = KeyboardActions(onDone = { submit() }),
                 modifier = Modifier.fillMaxWidth(),
             )
-            WideButton(::submit, enabled = code != null && !claiming) {
+            PrimaryButton(onClick = ::submit, enabled = code != null && !claiming, modifier = Modifier.fillMaxWidth()) {
                 Text(stringResource(R.string.add_manual_button), style = MaterialTheme.typography.labelLarge)
             }
             val message = scanProblem ?: problem
@@ -365,6 +364,19 @@ private object GroupsOfFour : VisualTransformation {
                 override fun transformedToOriginal(offset: Int): Int = ungroupedOffset(offset, text.length)
             }
         return TransformedText(AnnotatedString(text.text.chunked(CODE_GROUP).joinToString(" ")), mapping)
+    }
+}
+
+/** What to check when a new DeKoi takes longer than it should to appear; here and on Your DeKoi. */
+@Composable
+fun SetupHelp() {
+    InsetSection(title = stringResource(R.string.setup_help_title), footer = stringResource(R.string.add_help_again)) {
+        StepList {
+            StepItem(R.drawable.ic_sd_card, R.string.add_help_card)
+            StepItem(R.drawable.ic_power, R.string.add_help_power)
+            StepItem(R.drawable.ic_cable, R.string.add_help_cable)
+            StepItem(R.drawable.ic_wifi, R.string.add_help_wifi)
+        }
     }
 }
 
@@ -505,24 +517,6 @@ private fun StepItem(
         Icon(painterResource(icon), contentDescription = null, tint = MaterialTheme.colorScheme.primary)
         Text(stringResource(text), style = MaterialTheme.typography.bodyLarge, modifier = Modifier.weight(1f))
     }
-}
-
-/** A primary action: outlined and lit in the accent, never a solid fill (ADR 0020). */
-@Composable
-private fun WideButton(
-    onClick: () -> Unit,
-    enabled: Boolean = true,
-    content: @Composable RowScope.() -> Unit,
-) {
-    val edge = if (enabled) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant
-    OutlinedButton(
-        onClick = onClick,
-        enabled = enabled,
-        modifier = Modifier.fillMaxWidth().heightIn(min = Dimens.touchTarget),
-        border = BorderStroke(Dimens.hairline, edge),
-        contentPadding = ButtonDefaults.ButtonWithIconContentPadding,
-        content = content,
-    )
 }
 
 @Composable

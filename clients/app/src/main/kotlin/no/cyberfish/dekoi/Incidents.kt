@@ -120,7 +120,7 @@ fun incidentSubtitle(
     val start = clock(incident.start)
     val end = clock(incident.end)
     return listOfNotNull(
-        string(R.string.alert_known).takeIf { known },
+        string(R.string.known_device).takeIf { known },
         amount,
         if (start == end) end else string(R.string.alert_time_range).format(start, end),
     ).joinToString(SEPARATOR)

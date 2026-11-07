@@ -22,10 +22,6 @@ import no.cyberfish.dekoi.ui.LocalSeverityColors
 private val DOT = 10.dp
 private val DOT_GAP = 2.dp
 private val TAG_PADDING = 6.dp
-private val CUT = 12.dp
-
-// The brand guide draws the HUD frame in the accent "at about 15% opacity".
-private const val FRAME_ALPHA = 0.15f
 
 /**
  * Online (filled) or not seen recently (hollow), on a ring of the
@@ -68,18 +64,5 @@ internal fun Tag(
         color = color,
         style = style,
         maxLines = 1,
-    )
-}
-
-/** The brand's HUD frame around a hero area (ADR 0020): a hairline in the accent, corners cut at 45 degrees. */
-@Composable
-internal fun HudFrame(
-    modifier: Modifier = Modifier,
-    content: @Composable BoxScope.() -> Unit,
-) {
-    val shape = CutCornerShape(CUT)
-    Box(
-        modifier.clip(shape).border(Dimens.hairline, MaterialTheme.colorScheme.primary.copy(alpha = FRAME_ALPHA), shape),
-        content = content,
     )
 }

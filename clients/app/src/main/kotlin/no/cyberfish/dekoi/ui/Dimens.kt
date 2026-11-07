@@ -9,7 +9,7 @@ object Dimens {
     val spaceM = 12.dp
     val spaceL = 16.dp
     val gutter = 20.dp
-    val section = 24.dp
+    val section = 32.dp
     val spaceXl = 32.dp
 
     val touchTarget = 48.dp

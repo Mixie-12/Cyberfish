@@ -47,7 +47,15 @@ private const val LOCKUP_GAP = 0.6f
 /** The guide's limit: the glow version only for large and hero use, from 48 dp tall. */
 private val GLOW_FROM = 48.dp
 
-private val markStyle = TextStyle(fontFamily = markFont, fontWeight = FontWeight.ExtraBold, letterSpacing = MARK_TRACKING.em)
+// JetBrains Mono's ligatures and contextual alternates would draw the
+// mark's "<>" as a diamond.
+private val markStyle =
+    TextStyle(
+        fontFamily = markFont,
+        fontWeight = FontWeight.ExtraBold,
+        letterSpacing = MARK_TRACKING.em,
+        fontFeatureSettings = "liga 0, calt 0",
+    )
 
 /**
  * The CyberFish mark, `><>` in JetBrains Mono ExtraBold: white with a blue

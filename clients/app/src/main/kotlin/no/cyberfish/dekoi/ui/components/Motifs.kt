@@ -7,15 +7,23 @@ import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.CutCornerShape
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.State
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -27,6 +35,7 @@ import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.withStyle
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import no.cyberfish.dekoi.shared.DesignTokens
 import no.cyberfish.dekoi.ui.Dimens
@@ -46,27 +55,34 @@ private val HORIZON_LINE = 1.5.dp
 
 /**
  * The HUD frame that marks a hero area: one thin blue line at 15 % with
- * small 45-degree cut corners, and nothing else on it.
+ * small 45-degree cut corners, and nothing else on it. Content that moves,
+ * such as the network map, stays inside it.
  */
 @Composable
 fun HudFrame(
     modifier: Modifier = Modifier,
+    contentPadding: Dp = Dimens.spaceL,
     content: @Composable BoxScope.() -> Unit,
 ) {
     val line = MaterialTheme.colorScheme.primary.copy(alpha = HUD_ALPHA)
-    Box(modifier.border(Dimens.hairline, line, CutCornerShape(Dimens.cut)).padding(Dimens.spaceL), content = content)
+    val shape = CutCornerShape(Dimens.cut)
+    Box(modifier.clip(shape).border(Dimens.hairline, line, shape).padding(contentPadding), content = content)
 }
 
 /**
  * The horizon: a glowing blue line along the top, with its glow above it,
  * and faint lines below it that spread out towards the bottom like a dark
  * sea. A shimmer drifts along the line once every 16 s; still when
- * animations are off. Decorative.
+ * animations are off, or when [still] because something else on screen
+ * moves (one idle loop per screen). Decorative.
  */
 @Composable
-fun Horizon(modifier: Modifier = Modifier) {
+fun Horizon(
+    modifier: Modifier = Modifier,
+    still: Boolean = false,
+) {
     val blue = MaterialTheme.colorScheme.primary
-    val shimmer = if (LocalReduceMotion.current) null else shimmer()
+    val shimmer = if (still || LocalReduceMotion.current) null else shimmer()
     Canvas(modifier.clearAndSetSemantics { }) {
         val y = HORIZON_GLOW.toPx()
         drawHorizon(blue, y)
@@ -118,6 +134,26 @@ private fun DrawScope.drawShimmer(
     val x = -band + (size.width + 2 * band) * progress
     val shine = Brush.horizontalGradient(fading(Color(DesignTokens.WHITE).copy(alpha = SHIMMER_ALPHA)), startX = x - band, endX = x + band)
     drawLine(shine, Offset(0f, y), Offset(size.width, y), HORIZON_LINE.toPx())
+}
+
+/**
+ * A numbered section: its [SectionLabel] and a hairline to the edge, then
+ * its content. Space and the line set it apart, not a card.
+ */
+@Composable
+fun Section(
+    number: Int,
+    title: String,
+    modifier: Modifier = Modifier,
+    content: @Composable ColumnScope.() -> Unit,
+) {
+    Column(modifier.fillMaxWidth().padding(top = Dimens.spaceS), verticalArrangement = Arrangement.spacedBy(Dimens.spaceL)) {
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Dimens.spaceM)) {
+            SectionLabel(number, title)
+            HorizontalDivider(Modifier.weight(1f))
+        }
+        content()
+    }
 }
 
 /**

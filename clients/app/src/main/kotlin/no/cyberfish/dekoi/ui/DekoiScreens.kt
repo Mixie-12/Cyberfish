@@ -27,6 +27,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.text.selection.SelectionContainer
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -75,11 +76,15 @@ import no.cyberfish.dekoi.nameToSave
 import no.cyberfish.dekoi.needsSetupHelp
 import no.cyberfish.dekoi.status
 import no.cyberfish.dekoi.ui.components.ConfirmDialog
+import no.cyberfish.dekoi.ui.components.FishMark
+import no.cyberfish.dekoi.ui.components.HudFrame
 import no.cyberfish.dekoi.ui.components.InsetRow
 import no.cyberfish.dekoi.ui.components.InsetSection
 import no.cyberfish.dekoi.ui.components.KeyValueRow
 import no.cyberfish.dekoi.ui.components.MissingScreen
+import no.cyberfish.dekoi.ui.components.PrimaryButton
 import no.cyberfish.dekoi.ui.components.Screen
+import no.cyberfish.dekoi.ui.components.Section
 import no.cyberfish.dekoi.ui.components.StaleLabel
 import java.time.Instant
 
@@ -92,9 +97,7 @@ private val STEP_TICK = 16.dp
 private val STEP_DOT = 8.dp
 private val STEP_BORDER = 2.dp
 private val STEP_LINE = 2.dp
-private const val HUD_ALPHA = 0.15f
-private val HUD_CUT = 12.dp
-private const val FISH_MARK = "><>"
+private val HERO_MARK = 48.dp
 
 /** Online, offline or setting up, in words. */
 @StringRes
@@ -220,69 +223,30 @@ private fun Hero(
     now: Instant,
     modifier: Modifier = Modifier,
 ) {
-    Column(
-        modifier
-            .fillMaxWidth()
-            .hudFrame(MaterialTheme.colorScheme.primary.copy(alpha = HUD_ALPHA))
-            .padding(horizontal = Dimens.gutter, vertical = Dimens.spaceXl),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(Dimens.spaceM),
-    ) {
-        FishMark()
-        Text(device.name, style = MaterialTheme.typography.headlineMedium, textAlign = TextAlign.Center)
-        Row(
-            Modifier.semantics(mergeDescendants = true) { liveRegion = LiveRegionMode.Polite },
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(Dimens.spaceS),
+    HudFrame(modifier.fillMaxWidth(), contentPadding = Dimens.spaceXl) {
+        Column(
+            Modifier.fillMaxWidth(),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(Dimens.spaceM),
         ) {
-            StatusDot(statusColor(status), pulse = status == DekoiStatus.ONLINE)
-            Text(stringResource(statusWord(status)), style = MaterialTheme.typography.labelLarge)
-        }
-        Text(
-            checkedIn(device, now),
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            textAlign = TextAlign.Center,
-        )
-    }
-}
-
-/**
- * Stand-in for the brand's HUD frame until the shared one lands (ADR 0020):
- * one thin line around the edge with small 45-degree cut corners.
- */
-private fun Modifier.hudFrame(color: Color): Modifier =
-    drawBehind {
-        val stroke = Dimens.hairline.toPx()
-        val cut = HUD_CUT.toPx()
-        val left = stroke / 2
-        val top = stroke / 2
-        val right = size.width - stroke / 2
-        val bottom = size.height - stroke / 2
-        val frame =
-            Path().apply {
-                moveTo(left + cut, top)
-                lineTo(right - cut, top)
-                lineTo(right, top + cut)
-                lineTo(right, bottom - cut)
-                lineTo(right - cut, bottom)
-                lineTo(left + cut, bottom)
-                lineTo(left, bottom - cut)
-                lineTo(left, top + cut)
-                close()
+            FishMark(HERO_MARK)
+            Text(device.name, style = MaterialTheme.typography.headlineMedium, textAlign = TextAlign.Center)
+            Row(
+                Modifier.semantics(mergeDescendants = true) { liveRegion = LiveRegionMode.Polite },
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(Dimens.spaceS),
+            ) {
+                StatusDot(statusColor(status), pulse = status == DekoiStatus.ONLINE)
+                Text(stringResource(statusWord(status)), style = MaterialTheme.typography.labelLarge)
             }
-        drawPath(frame, color, style = Stroke(stroke))
+            Text(
+                checkedIn(device, now),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center,
+            )
+        }
     }
-
-/** Stand-in for the brand's fish mark until the shared one lands (ADR 0020). Decorative. */
-@Composable
-private fun FishMark() {
-    Text(
-        FISH_MARK,
-        style = MaterialTheme.typography.displaySmall,
-        color = MaterialTheme.colorScheme.primary,
-        modifier = Modifier.clearAndSetSemantics { },
-    )
 }
 
 /** The steps as a line down the screen, and help once setup takes longer than it should. */
@@ -300,11 +264,7 @@ private fun SetupChecklist(
                 SetupStepRow(step, device.hasDone(step), current = step == current, last = step == SetupStep.entries.last())
             }
         }
-        if (device.needsSetupHelp(now)) {
-            Hairline()
-            Text(stringResource(R.string.setup_help_title), style = MaterialTheme.typography.titleMedium)
-            Text(stringResource(R.string.setup_help_body), style = MaterialTheme.typography.bodyLarge)
-        }
+        if (device.needsSetupHelp(now)) SetupHelp()
     }
 }
 
@@ -390,10 +350,10 @@ private fun TryDecoy(
         Text(stringResource(R.string.dekoi_try_body), style = MaterialTheme.typography.bodyLarge)
         Column {
             entrances.forEach { (entrance, address) ->
-                Hairline()
+                HorizontalDivider()
                 EntranceRow(entrance, address)
             }
-            Hairline()
+            HorizontalDivider()
         }
     }
 }
@@ -491,7 +451,7 @@ private fun NameEditor(
         )
         Row(Modifier.align(Alignment.End), horizontalArrangement = Arrangement.spacedBy(Dimens.spaceS)) {
             TextButton(onClick = onDone) { Text(stringResource(R.string.action_cancel)) }
-            OutlinedButton(onClick = save, enabled = name != null) { Text(stringResource(R.string.action_save)) }
+            PrimaryButton(onClick = save, enabled = name != null) { Text(stringResource(R.string.action_save)) }
         }
     }
 }

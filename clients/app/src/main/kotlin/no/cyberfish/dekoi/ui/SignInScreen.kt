@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -57,24 +58,19 @@ import kotlinx.coroutines.launch
 import no.cyberfish.dekoi.BuildConfig
 import no.cyberfish.dekoi.R
 import no.cyberfish.dekoi.requestGoogleIdToken
+import no.cyberfish.dekoi.ui.components.FishMark
+import no.cyberfish.dekoi.ui.components.Horizon
+import no.cyberfish.dekoi.ui.components.PrimaryButton
+import no.cyberfish.dekoi.ui.components.Wordmark
 
 private val HERO_HEIGHT = 240.dp
 private val MARK_GAP = 20.dp
+private val MARK_HEIGHT = 56.dp
+private val WORDMARK_HEIGHT = 24.dp
 private val FLOAT_DISTANCE = 6.dp
 private const val FLOAT_MS = 3000
-private val GLOW = 16.dp
-private const val MARK = "><>"
 private const val REFLECTION_ALPHA = 0.2f
-private const val SEA_LINES = 7
-private const val SEA_ALPHA = 0.35f
-
-/** A stroke of the horizon line: wide and faint ones make the glow around the bright one. */
-private class HorizonStroke(
-    val width: Dp,
-    val alpha: Float,
-)
-
-private val horizonStrokes = listOf(HorizonStroke(12.dp, 0.06f), HorizonStroke(4.dp, 0.2f), HorizonStroke(1.dp, 1f))
+private const val HORIZON_SHARE = 0.55f
 
 /**
  * Signing in, the brand's first impression (ADR 0020): the mark floating
@@ -127,7 +123,7 @@ fun SignInScreen(viewModel: AppViewModel) {
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(Dimens.spaceL),
             ) {
-                Wordmark()
+                Wordmark(WORDMARK_HEIGHT, Modifier.semantics(mergeDescendants = true) { heading() })
                 Text(stringResource(R.string.signin_tagline), style = MaterialTheme.typography.titleMedium, textAlign = TextAlign.Center)
                 Text(
                     stringResource(R.string.signin_body),
@@ -135,17 +131,7 @@ fun SignInScreen(viewModel: AppViewModel) {
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     textAlign = TextAlign.Center,
                 )
-                // Outlined and lit in the accent, never a solid fill (ADR 0020).
-                OutlinedButton(
-                    onClick = ::signIn,
-                    enabled = !asking,
-                    modifier = Modifier.fillMaxWidth().heightIn(min = Dimens.touchTarget),
-                    border =
-                        BorderStroke(
-                            Dimens.hairline,
-                            if (asking) MaterialTheme.colorScheme.outlineVariant else MaterialTheme.colorScheme.primary,
-                        ),
-                ) {
+                PrimaryButton(onClick = ::signIn, enabled = !asking, modifier = Modifier.fillMaxWidth()) {
                     Text(stringResource(R.string.signin_button), style = MaterialTheme.typography.labelLarge)
                 }
                 (failure ?: refused)?.let {
@@ -179,61 +165,19 @@ private fun Hero() {
                 label = "float",
             )
         }
+    // The horizon's line runs through the middle: the mark floats above it, its reflection below.
     Box(Modifier.fillMaxWidth().height(HERO_HEIGHT).clearAndSetSemantics { }, contentAlignment = Alignment.Center) {
-        Horizon(Modifier.fillMaxSize())
-        // Centred on the horizon: the mark above it, the reflection below.
+        Horizon(Modifier.fillMaxWidth().fillMaxHeight(HORIZON_SHARE).align(Alignment.BottomCenter), still = float != null)
         Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(MARK_GAP * 2)) {
-            FishMark(Modifier.graphicsLayer { translationY = -(float?.value ?: 0f) * distance })
+            FishMark(MARK_HEIGHT, Modifier.graphicsLayer { translationY = -(float?.value ?: 0f) * distance })
             FishMark(
+                MARK_HEIGHT,
                 Modifier.graphicsLayer {
                     translationY = (float?.value ?: 0f) * distance
                     scaleY = -1f
                     alpha = REFLECTION_ALPHA
                 },
             )
-        }
-    }
-}
-
-/** Stand-in for the shared FishMark (ADR 0020): the `><>` mark with a glow in the accent. */
-@Composable
-private fun FishMark(modifier: Modifier = Modifier) {
-    val glow = with(LocalDensity.current) { GLOW.toPx() }
-    Text(
-        MARK,
-        modifier = modifier,
-        style = MaterialTheme.typography.displayMedium.copy(shadow = Shadow(MaterialTheme.colorScheme.primary, blurRadius = glow)),
-    )
-}
-
-/** Stand-in for the shared Wordmark (ADR 0020). */
-@Composable
-private fun Wordmark() {
-    Text(stringResource(R.string.app_name), style = MaterialTheme.typography.displaySmall, modifier = Modifier.semantics { heading() })
-}
-
-/**
- * Stand-in for the shared Horizon (ADR 0020): a glowing line across the
- * middle that fades at both ends, and faint lines below it that spread out
- * toward the bottom, like a dark sea.
- */
-@Composable
-private fun Horizon(modifier: Modifier = Modifier) {
-    val accent = MaterialTheme.colorScheme.primary
-    Canvas(modifier) {
-        fun line(
-            y: Float,
-            width: Float,
-            alpha: Float,
-        ) {
-            val brush = Brush.horizontalGradient(listOf(Color.Transparent, accent.copy(alpha = alpha), Color.Transparent))
-            drawLine(brush, Offset(0f, y), Offset(size.width, y), width)
-        }
-        val horizon = size.height / 2
-        horizonStrokes.forEach { line(horizon, it.width.toPx(), it.alpha) }
-        for (i in 1..SEA_LINES) {
-            val depth = i.toFloat() / (SEA_LINES + 1)
-            line(horizon + horizon * depth * depth, Dimens.hairline.toPx(), SEA_ALPHA * (1 - depth))
         }
     }
 }

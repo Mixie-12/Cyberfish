@@ -67,6 +67,8 @@ import no.cyberfish.dekoi.cardReaders
 import no.cyberfish.dekoi.openCard
 import no.cyberfish.dekoi.shared.CardContent
 import no.cyberfish.dekoi.shared.ClaimCode
+import no.cyberfish.dekoi.ui.components.HudFrame
+import no.cyberfish.dekoi.ui.components.PrimaryButton
 import no.cyberfish.dekoi.ui.components.Screen
 
 /**
@@ -197,7 +199,7 @@ private fun Choose(
         Body(stringResource(R.string.write_choose_body))
         Column {
             readers.forEach { reader ->
-                Hairline()
+                HorizontalDivider()
                 Text(
                     reader.name,
                     style = MaterialTheme.typography.bodyLarge,
@@ -209,7 +211,7 @@ private fun Choose(
                             .padding(vertical = Dimens.spaceL),
                 )
             }
-            Hairline()
+            HorizontalDivider()
         }
     }
 }
@@ -223,20 +225,22 @@ private fun Confirm(
     val context = LocalContext.current
     RefuseObscuredTouches()
     Step(R.string.write_step_confirm) {
-        HudFrame {
-            Text(card.name, style = MaterialTheme.typography.titleMedium)
-            Text(
-                Formatter.formatShortFileSize(context, card.bytes),
-                style = MaterialTheme.typography.bodyLarge.tabular(),
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-            Body(stringResource(R.string.write_confirm_body, Formatter.formatShortFileSize(context, CardContent.image.downloadSize)))
-            OutlinedButton(
-                onClick = onErase,
-                modifier = Modifier.fillMaxWidth().heightIn(min = Dimens.touchTarget),
-                border = BorderStroke(Dimens.hairline, MaterialTheme.colorScheme.error),
-            ) {
-                Text(stringResource(R.string.write_erase), color = MaterialTheme.colorScheme.error)
+        HudFrame(Modifier.fillMaxWidth()) {
+            Column(verticalArrangement = Arrangement.spacedBy(Dimens.spaceS)) {
+                Text(card.name, style = MaterialTheme.typography.titleMedium)
+                Text(
+                    Formatter.formatShortFileSize(context, card.bytes),
+                    style = MaterialTheme.typography.bodyLarge.tabular(),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                Body(stringResource(R.string.write_confirm_body, Formatter.formatShortFileSize(context, CardContent.image.downloadSize)))
+                OutlinedButton(
+                    onClick = onErase,
+                    modifier = Modifier.fillMaxWidth().heightIn(min = Dimens.touchTarget),
+                    border = BorderStroke(Dimens.hairline, MaterialTheme.colorScheme.error),
+                ) {
+                    Text(stringResource(R.string.write_erase), color = MaterialTheme.colorScheme.error)
+                }
             }
         }
         TextButton(onClick = onCancel) { Text(stringResource(R.string.action_cancel)) }
@@ -268,7 +272,7 @@ private fun Writing(progress: WriteState.Writing) {
             Phase(R.string.write_phase_download, progress.downloaded, image.downloadSize)
             Phase(R.string.write_phase_write, progress.written, image.extractSize)
             Phase(R.string.write_phase_check, progress.checked, image.extractSize)
-            Hairline()
+            HorizontalDivider()
         }
         Body(stringResource(R.string.write_keep_connected))
     }
@@ -290,7 +294,7 @@ private fun Phase(
             done > 0 -> MaterialTheme.colorScheme.primary
             else -> MaterialTheme.colorScheme.outline
         }
-    Hairline()
+    HorizontalDivider()
     Row(
         Modifier.fillMaxWidth().heightIn(min = Dimens.row).padding(vertical = Dimens.spaceM),
         verticalAlignment = Alignment.CenterVertically,
@@ -343,7 +347,7 @@ private fun Linked(
         Body(stringResource(R.string.write_done_body, name))
         Column {
             listOf(R.string.write_next_card, R.string.write_next_cable, R.string.write_next_power).forEachIndexed { index, step ->
-                Hairline()
+                HorizontalDivider()
                 Row(
                     Modifier.fillMaxWidth().padding(vertical = Dimens.spaceM),
                     horizontalArrangement = Arrangement.spacedBy(Dimens.spaceM),
@@ -356,7 +360,7 @@ private fun Linked(
                     Text(stringResource(step), style = MaterialTheme.typography.bodyLarge)
                 }
             }
-            Hairline()
+            HorizontalDivider()
         }
         Action(R.string.write_done_button, onDone)
     }
@@ -423,7 +427,7 @@ private fun Step(
         // Announced when the step changes, not on every progress update.
         Text(
             stringResource(label),
-            style = MaterialTheme.typography.labelMedium.copy(letterSpacing = LABEL_TRACKING),
+            style = MaterialTheme.typography.label,
             color = MaterialTheme.colorScheme.primary,
             modifier =
                 Modifier.semantics {
@@ -435,43 +439,18 @@ private fun Step(
     }
 }
 
-private val LABEL_TRACKING = 0.13.em
-
 @Composable
 private fun Body(text: String) {
     Text(text, style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
 }
 
 @Composable
-private fun Hairline() {
-    HorizontalDivider(thickness = Dimens.hairline, color = MaterialTheme.colorScheme.outlineVariant)
-}
-
-/** Primary actions are outlined, never a solid fill (ADR 0020). */
-@Composable
 private fun Action(
     @StringRes label: Int,
     onClick: () -> Unit,
 ) {
-    OutlinedButton(onClick = onClick, modifier = Modifier.fillMaxWidth().heightIn(min = Dimens.touchTarget)) {
-        Text(stringResource(label))
-    }
+    PrimaryButton(onClick = onClick, modifier = Modifier.fillMaxWidth()) { Text(stringResource(label)) }
 }
-
-/** The brand's HUD frame (ADR 0020): one faint accent line with 45-degree cut corners. */
-@Composable
-private fun HudFrame(content: @Composable () -> Unit) {
-    Column(
-        Modifier
-            .fillMaxWidth()
-            .border(Dimens.hairline, MaterialTheme.colorScheme.primary.copy(alpha = HUD_ALPHA), CutCornerShape(HUD_CUT))
-            .padding(Dimens.spaceL),
-        verticalArrangement = Arrangement.spacedBy(Dimens.spaceS),
-    ) { content() }
-}
-
-private val HUD_CUT = 10.dp
-private const val HUD_ALPHA = 0.15f
 
 /** Progress as a lit line: a soft glow under a thin accent line, on a hairline track. */
 @Composable

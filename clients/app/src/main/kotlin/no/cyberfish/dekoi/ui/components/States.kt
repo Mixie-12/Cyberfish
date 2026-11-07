@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Icon
@@ -43,6 +44,7 @@ import java.time.Instant
 private val STALE_AFTER = Duration.ofMinutes(5)
 private const val SKELETON_MS = 800
 private val EMPTY_GLYPH = 48.dp
+private val EMPTY_HORIZON = 64.dp
 
 /** A placeholder block; shape a few of them like the content that is loading. Still when animations are off. */
 @Composable
@@ -90,7 +92,10 @@ fun ErrorBanner(
     }
 }
 
-/** Nothing to show yet: a glyph, one sentence, and the next step in [action] when there is one. */
+/**
+ * Nothing to show yet: a glyph over the [Horizon], one sentence, and the
+ * next step in [action] when there is one.
+ */
 @Composable
 fun EmptyState(
     @DrawableRes glyph: Int,
@@ -99,7 +104,7 @@ fun EmptyState(
     action: (@Composable () -> Unit)? = null,
 ) {
     Column(
-        modifier.fillMaxWidth().padding(vertical = Dimens.spaceXl, horizontal = Dimens.gutter),
+        modifier.fillMaxWidth().padding(vertical = Dimens.spaceXl),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(Dimens.spaceM),
     ) {
@@ -109,11 +114,13 @@ fun EmptyState(
             modifier = Modifier.size(EMPTY_GLYPH),
             tint = MaterialTheme.colorScheme.outline,
         )
+        Horizon(Modifier.fillMaxWidth().height(EMPTY_HORIZON))
         Text(
             text,
             style = MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center,
+            modifier = Modifier.padding(horizontal = Dimens.gutter),
         )
         action?.invoke()
     }

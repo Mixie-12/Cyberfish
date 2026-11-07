@@ -10,7 +10,7 @@
     <string name="learn_open">Read</string>
     <string name="learn_missing">This topic is not in this version of the app.</string>
 
-    <string name="learn_honeypot_title">What a honeypot is</string>
+    <string name="learn_honeypot_title">How a decoy works</string>
     <string name="learn_honeypot_summary">Why a box that holds nothing can tell you so much.</string>
     <string-array name="learn_honeypot_body">
         <item>A honeypot is a decoy: something that looks worth a look but holds nothing of value. Security teams have used them for a long time to spot intruders early.</item>

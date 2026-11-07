@@ -56,11 +56,13 @@ import no.cyberfish.dekoi.ui.OwnerData
 import no.cyberfish.dekoi.ui.Route
 import no.cyberfish.dekoi.ui.absoluteTime
 import no.cyberfish.dekoi.ui.components.CopyableRow
+import no.cyberfish.dekoi.ui.components.HudFrame
 import no.cyberfish.dekoi.ui.components.InsetRow
 import no.cyberfish.dekoi.ui.components.InsetSection
 import no.cyberfish.dekoi.ui.components.KeyValueRow
 import no.cyberfish.dekoi.ui.components.KindTile
 import no.cyberfish.dekoi.ui.components.MissingScreen
+import no.cyberfish.dekoi.ui.components.PrimaryButton
 import no.cyberfish.dekoi.ui.components.Screen
 import no.cyberfish.dekoi.ui.components.SeverityChip
 import no.cyberfish.dekoi.ui.components.Sparkline
@@ -101,7 +103,7 @@ fun HostDetailScreen(
         item {
             InsetSection {
                 InsetRow(
-                    stringResource(if (host.trusted) R.string.host_unmark_known else R.string.host_mark_known),
+                    stringResource(if (host.trusted) R.string.action_unmark_known else R.string.action_mark_known),
                     onClick = { onTrust(host, !host.trusted) },
                     chevron = false,
                 )
@@ -131,9 +133,9 @@ private fun Hero(
     now: Instant,
 ) {
     val online = host.isOnline(now)
-    HudFrame(Modifier.fillMaxWidth()) {
+    HudFrame(Modifier.fillMaxWidth(), contentPadding = Dimens.section) {
         Column(
-            Modifier.fillMaxWidth().padding(Dimens.section),
+            Modifier.fillMaxWidth(),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(Dimens.spaceS),
         ) {
@@ -159,7 +161,7 @@ private fun Hero(
                     style = MaterialTheme.typography.bodyMedium,
                 )
                 when {
-                    host.trusted -> Tag(stringResource(R.string.network_known))
+                    host.trusted -> Tag(stringResource(R.string.known_device))
                     host.isNew(now) -> Tag(stringResource(R.string.network_new), color = MaterialTheme.colorScheme.primary)
                 }
             }
@@ -310,7 +312,7 @@ private fun EditSheet(
             }
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(Dimens.spaceS, Alignment.End)) {
                 TextButton(onClick = close) { Text(stringResource(R.string.action_cancel)) }
-                OutlinedButton(onClick = {
+                PrimaryButton(onClick = {
                     onSave(savedOwnerText(label, LABEL_MAX), savedOwnerText(room, ROOM_MAX))
                     close()
                 }) { Text(stringResource(R.string.action_save)) }

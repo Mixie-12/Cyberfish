@@ -72,7 +72,7 @@ fun SettingsScreen(
     val now = Instant.now()
     Screen(stringResource(R.string.tab_settings), listState = listState) {
         item {
-            Group(title = stringResource(R.string.settings_account_title)) {
+            InsetSection(title = stringResource(R.string.settings_account_title)) {
                 InsetRow(email.orEmpty(), subtitle = stringResource(R.string.settings_account))
                 InsetRow(
                     stringResource(R.string.settings_sign_out),
@@ -83,7 +83,7 @@ fun SettingsScreen(
             }
         }
         item {
-            Group(title = stringResource(R.string.settings_devices)) {
+            InsetSection(title = stringResource(R.string.settings_devices)) {
                 devices.forEach { device ->
                     InsetRow(
                         device.name,
@@ -111,13 +111,15 @@ fun SettingsScreen(
         item { WeeklySummary(weeklySummary, onWeeklySummary) }
         item { Privacy() }
         item {
-            Group(title = stringResource(R.string.settings_about)) {
+            InsetSection(title = stringResource(R.string.settings_about)) {
                 KeyValueRow(stringResource(R.string.settings_version), BuildConfig.VERSION_NAME)
+                InsetRow(stringResource(R.string.learn_title), onClick = { onNavigate(Route.Learn) })
+                InsetRow(stringResource(R.string.action_take_tour), onClick = { onNavigate(Route.Onboarding) })
                 InsetRow(stringResource(R.string.licences_title), onClick = { onNavigate(Route.Licences) })
             }
         }
         item {
-            Group(footer = stringResource(R.string.settings_delete_footer)) {
+            InsetSection(footer = stringResource(R.string.settings_delete_footer)) {
                 InsetRow(
                     stringResource(R.string.settings_delete),
                     titleColor = MaterialTheme.colorScheme.error,
@@ -141,53 +143,6 @@ fun SettingsScreen(
     }
 }
 
-/**
- * Stand-in for the restyled InsetSection (ADR 0020), with its parameters:
- * an uppercase label, then rows between hairlines instead of on a card.
- */
-@Composable
-private fun Group(
-    modifier: Modifier = Modifier,
-    title: String? = null,
-    footer: String? = null,
-    content: @Composable ColumnScope.() -> Unit,
-) {
-    val hairline = MaterialTheme.colorScheme.outlineVariant
-    Column(modifier.fillMaxWidth()) {
-        title?.let {
-            Text(
-                it.toUpperCase(LocaleList.current),
-                style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier =
-                    Modifier.padding(start = Dimens.spaceL, end = Dimens.spaceL, bottom = Dimens.spaceS).semantics {
-                        heading()
-                        contentDescription = it
-                    },
-            )
-        }
-        // Each row draws a separator along its top edge; the group's own lines
-        // go over the first one and under the last row.
-        Column(
-            Modifier.drawWithContent {
-                drawContent()
-                val width = Dimens.hairline.toPx()
-                drawLine(hairline, Offset(0f, width / 2), Offset(size.width, width / 2), width)
-                drawLine(hairline, Offset(0f, size.height - width / 2), Offset(size.width, size.height - width / 2), width)
-            },
-            content = content,
-        )
-        footer?.let {
-            Text(
-                it,
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(start = Dimens.spaceL, end = Dimens.spaceL, top = Dimens.spaceS),
-            )
-        }
-    }
-}
-
 /** A row of text that wraps freely, for sentences an InsetRow would cut short at large font sizes. */
 @Composable
 private fun ProseRow(
@@ -204,10 +159,8 @@ private fun ProseRow(
                 .fillMaxWidth()
                 .drawBehind {
                     val width = Dimens.hairline.toPx()
-                    val inset = Dimens.spaceL.toPx()
-                    val (from, to) = if (layoutDirection == LayoutDirection.Ltr) inset to size.width else 0f to size.width - inset
-                    drawLine(separator, Offset(from, width / 2), Offset(to, width / 2), width)
-                }.padding(horizontal = Dimens.spaceL, vertical = Dimens.spaceM),
+                    drawLine(separator, Offset(0f, width / 2), Offset(size.width, width / 2), width)
+                }.padding(vertical = Dimens.spaceM),
     )
 }
 
@@ -224,7 +177,7 @@ private val stored =
 
 @Composable
 private fun Privacy() {
-    Group(title = stringResource(R.string.settings_privacy_title), footer = stringResource(R.string.settings_privacy_kept)) {
+    InsetSection(title = stringResource(R.string.settings_privacy_title), footer = stringResource(R.string.settings_privacy_kept)) {
         ProseRow(stringResource(R.string.settings_privacy_intro), MaterialTheme.colorScheme.onSurfaceVariant)
         stored.forEach { ProseRow(stringResource(it)) }
     }
@@ -260,7 +213,7 @@ private fun Notifications() {
     }
     val on = stringResource(R.string.settings_notifications_on)
     val off = stringResource(R.string.settings_notifications_off)
-    Group(
+    InsetSection(
         title = stringResource(R.string.settings_notifications),
         footer = stringResource(R.string.settings_notifications_footer),
     ) {
@@ -368,7 +321,7 @@ fun LicencesScreen(onBack: () -> Unit) {
 private fun LicenceSection(licence: Licence) {
     var open by rememberSaveable { mutableStateOf(false) }
     val reduceMotion = LocalReduceMotion.current
-    Group(
+    InsetSection(
         modifier = if (reduceMotion) Modifier else Modifier.animateContentSize(expandSpring()),
         title = stringResource(licence.name),
         footer = licence.terms,

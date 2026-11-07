@@ -102,7 +102,6 @@
     </plurals>
     <!-- From one time of day to another, as in 15:13–15:20. -->
     <string name="alert_time_range">%1$s–%2$s</string>
-    <string name="alert_known">Known device</string>
 
     <string name="alerts_filter_all">All</string>
     <string name="alerts_filter_unread">Unread</string>
@@ -135,13 +134,12 @@
     <string name="alert_device_unlisted">DeKoi has not listed this device yet.</string>
     <string name="alert_device_dekoi">Your DeKoi</string>
 
-    <string name="event_trust">Mark as known</string>
     <string name="event_trust_hint">If you know this device, mark it as known. DeKoi then stops warning you about it.</string>
     <string name="event_trusted">Marked as known. Activity from it no longer counts as a warning.</string>
-    <string name="event_untrust">Remove from known devices</string>
     <string name="alert_trust_confirm_title">Mark this device as known?</string>
     <string name="alert_trust_confirm_body">Do this only if you set it up yourself, such as a second router or a Wi-Fi extender. A device doing this without your knowledge can see your traffic, and DeKoi would stop warning you about it.</string>
-    <string name="alert_trust_confirm">Mark as known</string>
+
+    <string name="alert_learn_more">Learn more</string>
 
     <string name="event_details">Technical details</string>
     <string name="event_detail_time">When</string>

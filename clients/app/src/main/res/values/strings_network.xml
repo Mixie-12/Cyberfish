@@ -10,7 +10,6 @@
         <item quantity="other">%1$d need attention</item>
     </plurals>
     <string name="network_new">New</string>
-    <string name="network_known">Known device</string>
     <string name="network_private">Phone or tablet with a private address</string>
     <string name="network_unknown_maker">Unknown maker</string>
     <string name="network_empty">Your DeKoi lists the devices on your network here within 15 minutes of starting.</string>
@@ -78,8 +77,6 @@
     <string name="host_last_seen">Last seen</string>
     <string name="host_last_seen_ago">Last seen %1$s</string>
     <string name="host_private_note">This device uses a private hardware address, which hides its maker. Phones and tablets do this to protect their owners’ privacy.</string>
-    <string name="host_mark_known">Mark as known</string>
-    <string name="host_unmark_known">Remove from known devices</string>
     <string name="host_edit">Name and room</string>
     <string name="host_edit_hint">Give it a name or say which room it is in</string>
     <string name="host_name">Name</string>

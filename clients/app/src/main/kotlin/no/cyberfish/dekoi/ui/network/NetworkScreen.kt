@@ -309,7 +309,7 @@ private fun HostRow(
         trailing = {
             when {
                 entry.attention != null -> SeverityChip(entry.attention)
-                host.trusted -> Tag(stringResource(R.string.network_known))
+                host.trusted -> Tag(stringResource(R.string.known_device))
                 entry.new -> Tag(stringResource(R.string.network_new), color = MaterialTheme.colorScheme.primary)
             }
         },

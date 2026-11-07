@@ -23,6 +23,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -72,10 +73,13 @@ import no.cyberfish.dekoi.severityLabel
 import no.cyberfish.dekoi.status
 import no.cyberfish.dekoi.ui.components.Bar
 import no.cyberfish.dekoi.ui.components.ErrorBanner
+import no.cyberfish.dekoi.ui.components.Horizon
 import no.cyberfish.dekoi.ui.components.InsetRow
 import no.cyberfish.dekoi.ui.components.InsetSection
+import no.cyberfish.dekoi.ui.components.PrimaryButton
 import no.cyberfish.dekoi.ui.components.RollingNumber
 import no.cyberfish.dekoi.ui.components.Screen
+import no.cyberfish.dekoi.ui.components.Section
 import no.cyberfish.dekoi.ui.components.SeverityChip
 import no.cyberfish.dekoi.ui.components.Skeleton
 import no.cyberfish.dekoi.ui.components.Sparkline
@@ -98,8 +102,6 @@ private const val CHART_DAYS = 7
 private const val CHANGE_MS = 300
 private const val GLOW_ALPHA = 0.22f
 private const val GLOW_REACH = 0.8f
-private const val HORIZON_LINES = 6
-private const val HORIZON_FADE = 0.8f
 private const val SEPARATOR = " · "
 private val TILE_SPARK = 24.dp
 private val SMALL_ICON = 16.dp
@@ -144,7 +146,9 @@ fun HomeScreen(
                 LaunchedEffect(Unit) { ringDrawn = true }
             }
             if (dekoi == null) {
-                item(key = "add") { NoDekoi({ onNavigate(Route.AddDekoi) }, Modifier.itemMotion(this, still)) }
+                item(key = "add") {
+                    NoDekoi({ onNavigate(Route.AddDekoi) }, { onNavigate(Route.Onboarding) }, Modifier.itemMotion(this, still))
+                }
                 return@Screen
             }
             val attention = needsAttention(data.events, data.trustedMacs, now, ATTENTION_ITEMS)
@@ -206,39 +210,17 @@ private fun StatusHero(
     }
 }
 
-/** No DeKoi yet: the way to add one, above the brand's horizon. */
+/** No DeKoi yet: the way to add one and the tour, above the brand's horizon. */
 @Composable
 private fun NoDekoi(
     onAdd: () -> Unit,
+    onTour: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Column(modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(Dimens.spaceXl)) {
-        OutlinedButton(onClick = onAdd, modifier = Modifier.fillMaxWidth()) { Text(stringResource(R.string.action_add_dekoi)) }
-        Horizon()
-    }
-}
-
-/**
- * Stand-in for the brand's horizon until the shared one lands (ADR 0020):
- * a lit line, and faint lines below it that spread out like a dark sea.
- */
-@Composable
-private fun Horizon(modifier: Modifier = Modifier) {
-    val glow = MaterialTheme.colorScheme.primary
-    val sea = MaterialTheme.colorScheme.outlineVariant
-    Canvas(modifier.fillMaxWidth().height(HORIZON_HEIGHT)) {
-        val stroke = Dimens.hairline.toPx()
-        drawLine(
-            Brush.horizontalGradient(listOf(Color.Transparent, glow, Color.Transparent)),
-            Offset(0f, stroke),
-            Offset(size.width, stroke),
-            stroke * 2,
-        )
-        for (line in 1..HORIZON_LINES) {
-            val depth = line.toFloat() / HORIZON_LINES
-            val y = size.height * depth * depth
-            drawLine(sea.copy(alpha = 1 - depth * HORIZON_FADE), Offset(0f, y), Offset(size.width, y), stroke)
-        }
+    Column(modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(Dimens.spaceL)) {
+        PrimaryButton(onClick = onAdd, modifier = Modifier.fillMaxWidth()) { Text(stringResource(R.string.action_add_dekoi)) }
+        TextButton(onClick = onTour, modifier = Modifier.fillMaxWidth()) { Text(stringResource(R.string.action_take_tour)) }
+        Horizon(Modifier.fillMaxWidth().height(HORIZON_HEIGHT))
     }
 }
 

@@ -29,9 +29,8 @@ sh clients/app/icon/render.sh
 
 ## Symbols and marks
 
-In `drawable/`, besides `ic_launcher_monochrome.xml`,
-`ic_launcher_foreground.xml` (drawn by `BrandTile`) and `ic_notification.xml`
-(the status bar icon) are the earlier koi mark. Every other `ic_*.xml` is a
+In `drawable/`, besides `ic_launcher_monochrome.xml`, `ic_notification.xml`
+(the status bar icon) is the earlier koi mark. Every other `ic_*.xml` is a
 Material Symbol (docs/design.md, "Libraries"):
 
 - Source: https://github.com/google/material-design-icons, commit

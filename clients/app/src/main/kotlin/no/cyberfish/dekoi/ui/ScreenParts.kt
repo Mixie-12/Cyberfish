@@ -49,55 +49,6 @@ fun TileGrid(
     }
 }
 
-/**
- * A numbered section label, "02 / LAST 7 DAYS": small and uppercase, with
- * the brand name kept as DeKoi (ADR 0020). TalkBack hears [text] as a
- * heading, without the number.
- */
-@Composable
-private fun SectionTitle(
-    number: Int,
-    text: String,
-    modifier: Modifier = Modifier,
-) {
-    val locale = LocalLocale.current.platformLocale
-    val brand = stringResource(R.string.app_name)
-    val label = text.uppercase(locale).replace(brand.uppercase(locale), brand)
-    Text(
-        stringResource(R.string.section_label, number, label),
-        style = MaterialTheme.typography.labelMedium,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-        modifier =
-            modifier.semantics {
-                heading()
-                contentDescription = text
-            },
-    )
-}
-
-/** A numbered section: its label and a hairline to the edge, then its content. Space and the line set it apart, not a card. */
-@Composable
-fun Section(
-    number: Int,
-    title: String,
-    modifier: Modifier = Modifier,
-    content: @Composable ColumnScope.() -> Unit,
-) {
-    Column(modifier.fillMaxWidth().padding(top = Dimens.spaceS), verticalArrangement = Arrangement.spacedBy(Dimens.spaceL)) {
-        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Dimens.spaceM)) {
-            SectionTitle(number, title)
-            Hairline(Modifier.weight(1f))
-        }
-        content()
-    }
-}
-
-/** A thin line across the content, the brand's way of separating things. */
-@Composable
-fun Hairline(modifier: Modifier = Modifier) {
-    HorizontalDivider(modifier, Dimens.hairline, MaterialTheme.colorScheme.outlineVariant)
-}
-
 /** A part of a screen fades in or out and slides into place as the data changes; [still] when animations are off. */
 fun Modifier.itemMotion(
     item: LazyItemScope,

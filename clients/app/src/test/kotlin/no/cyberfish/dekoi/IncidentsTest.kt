@@ -124,7 +124,7 @@ class IncidentsTest {
 
     private val strings =
         mapOf(
-            R.string.alert_known to "Known device",
+            R.string.known_device to "Known device",
             R.string.alert_time_range to "%1\$s–%2\$s",
         )
 

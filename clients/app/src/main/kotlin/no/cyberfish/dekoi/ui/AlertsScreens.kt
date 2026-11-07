@@ -123,7 +123,7 @@ fun AlertRow(
     val known = host?.trusted == true
     val subtitle =
         listOfNotNull(
-            host?.let { stringResource(if (known) R.string.alert_known else looksLike(it.kind)) },
+            host?.let { stringResource(if (known) R.string.known_device else looksLike(it.kind)) },
             amount(event)?.let { pluralStringResource(it.words, it.count, it.count) },
             relativeTime(event.occurredAt, now),
         ).joinToString(SEPARATOR)
@@ -337,7 +337,7 @@ private fun SeverityGlyph(
 @Composable
 private fun DayHeader(label: String) {
     Text(
-        label.uppercase(LocalLocale.current.platformLocale),
+        label.headingCase(),
         style = MaterialTheme.typography.labelMedium,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
         modifier =
@@ -408,7 +408,7 @@ private fun TimelineEntry(
                     tint = accent,
                 )
                 Text(
-                    severityWord.uppercase(LocalLocale.current.platformLocale),
+                    severityWord.headingCase(),
                     style = MaterialTheme.typography.labelMedium,
                     color = accent,
                 )

@@ -38,12 +38,14 @@ import kotlinx.coroutines.launch
 import no.cyberfish.dekoi.R
 import no.cyberfish.dekoi.ui.Dimens
 import no.cyberfish.dekoi.ui.LocalReduceMotion
-import no.cyberfish.dekoi.ui.learn.Horizon
+import no.cyberfish.dekoi.ui.components.Horizon
+import no.cyberfish.dekoi.ui.components.HudFrame
+import no.cyberfish.dekoi.ui.components.PrimaryButton
+import no.cyberfish.dekoi.ui.components.SectionLabel
+import no.cyberfish.dekoi.ui.headingCase
 import no.cyberfish.dekoi.ui.learn.Scene
 import no.cyberfish.dekoi.ui.learn.SceneDrawing
-import no.cyberfish.dekoi.ui.learn.SectionLabel
 import no.cyberfish.dekoi.ui.learn.drawingHeight
-import no.cyberfish.dekoi.ui.learn.headingCase
 
 private enum class Page(
     @param:StringRes val label: Int,
@@ -98,7 +100,7 @@ fun OnboardingScreen(
             verticalArrangement = Arrangement.spacedBy(Dimens.spaceL),
         ) {
             PageMarks(pager.currentPage, pages.size)
-            OutlinedButton(
+            PrimaryButton(
                 onClick = {
                     when {
                         !last -> scope.launch { pager.turnTo(pager.currentPage + 1, reduceMotion) }
@@ -106,8 +108,7 @@ fun OnboardingScreen(
                         else -> onDone()
                     }
                 },
-                modifier = Modifier.fillMaxWidth().heightIn(min = Dimens.touchTarget),
-                border = BorderStroke(Dimens.hairline, MaterialTheme.colorScheme.primary),
+                modifier = Modifier.fillMaxWidth(),
             ) {
                 Text(stringResource(action), style = MaterialTheme.typography.labelLarge)
             }
@@ -134,7 +135,7 @@ private fun PageContent(
         verticalArrangement = Arrangement.spacedBy(Dimens.spaceL),
     ) {
         SceneDrawing(page.scene, Modifier.fillMaxWidth().height(drawingHeight()))
-        Horizon(Modifier.fillMaxWidth().height(HORIZON))
+        Horizon(Modifier.fillMaxWidth().height(HORIZON), still = true)
         SectionLabel(number, stringResource(page.label))
         Text(
             stringResource(page.title).headingCase(),

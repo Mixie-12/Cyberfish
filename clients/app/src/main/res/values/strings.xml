@@ -31,4 +31,8 @@
 
     <string name="error_network">Can’t connect right now. Check this phone’s internet connection.</string>
     <string name="error_generic">Something went wrong. Try again.</string>
+    <string name="action_take_tour">Take the tour</string>
+    <string name="known_device">Known device</string>
+    <string name="action_mark_known">Mark as known</string>
+    <string name="action_unmark_known">Remove from known devices</string>
 </resources>

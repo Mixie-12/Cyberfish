@@ -88,6 +88,7 @@ import no.cyberfish.dekoi.trustNeedsConfirmation
 import no.cyberfish.dekoi.ui.components.BrandTile
 import no.cyberfish.dekoi.ui.components.ConfirmDialog
 import no.cyberfish.dekoi.ui.components.CopyableRow
+import no.cyberfish.dekoi.ui.components.HudFrame
 import no.cyberfish.dekoi.ui.components.InsetRow
 import no.cyberfish.dekoi.ui.components.InsetSection
 import no.cyberfish.dekoi.ui.components.KeyValueRow
@@ -95,6 +96,8 @@ import no.cyberfish.dekoi.ui.components.KindTile
 import no.cyberfish.dekoi.ui.components.MissingScreen
 import no.cyberfish.dekoi.ui.components.Screen
 import no.cyberfish.dekoi.ui.components.severityGlyph
+import no.cyberfish.dekoi.ui.learn.learnTopicFor
+import no.cyberfish.dekoi.ui.motion.CriticalAlertHaptic
 import java.time.Duration
 import java.time.Instant
 import java.time.ZoneId
@@ -111,10 +114,8 @@ private const val MAX_VALUES = 10
 // As many as the agent reports for one scan.
 private const val MAX_PORTS = 64
 
-private const val HUD_ALPHA = 0.15f
 private val ALARM_AREA = 192.dp
 private val RING_WIDTH = 3.dp
-private val HUD_CUT = 12.dp
 private val STEP_MARK = 28.dp
 private val SMALL_ICON = 18.dp
 private val EVENT_DOT = 8.dp
@@ -155,6 +156,7 @@ fun AlertDetailScreen(
     val zone = ZoneId.systemDefault()
     val clock = rememberClock(zone)
     val gateways = data.networks.filter { it.deviceId == incident.lead.deviceId }.mapNotNullTo(mutableSetOf()) { it.gateway }
+    CriticalAlertHaptic(alarm)
     Screen(title = null, onBack = onBack) {
         item { if (alarm) AlarmHero(incident, host, now, clock) else Band(incident, host, now, clock) }
         item { ThreatCard(threat) }
@@ -162,6 +164,11 @@ fun AlertDetailScreen(
         // Every incident from a device on the network, a new one included, offers to mark it as known.
         host?.let { item { Trust(it, incident.kinds.any(::trustNeedsConfirmation), onTrust) } }
         item { WhatHappened(incident, gateways, clock) }
+        learnTopicFor(incident.lead.kind)?.let { topic ->
+            item {
+                TextButton(onClick = { onNavigate(Route.LearnTopic(topic.id)) }) { Text(stringResource(R.string.alert_learn_more)) }
+            }
+        }
         item { Source(incident, host, data, now, onNavigate) }
         item { TechnicalDetails(incident, host) }
     }
@@ -217,9 +224,9 @@ private fun AlarmHero(
         progress.animateTo(ALARM_PULSES.toFloat(), tween(ALARM_MS, easing = LinearEasing))
         played = true
     }
-    HudFrame {
+    HudFrame(Modifier.fillMaxWidth(), contentPadding = Dimens.gutter) {
         Column(
-            Modifier.fillMaxWidth().padding(Dimens.gutter),
+            Modifier.fillMaxWidth(),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(Dimens.spaceM),
         ) {
@@ -230,18 +237,6 @@ private fun AlarmHero(
             Headline(incident, host, summary(incident, now, clock), TextAlign.Center)
         }
     }
-}
-
-/**
- * The HUD frame of ADR 0020 around a hero: a faint accent line with cut
- * corners and nothing else. Drawn here until the shared one is in
- * ui/components; the two are meant to be swapped one for the other.
- */
-@Composable
-private fun HudFrame(content: @Composable () -> Unit) {
-    Box(
-        Modifier.fillMaxWidth().border(Dimens.hairline, MaterialTheme.colorScheme.primary.copy(alpha = HUD_ALPHA), CutCornerShape(HUD_CUT)),
-    ) { content() }
 }
 
 /**
@@ -276,7 +271,7 @@ private fun SeverityLine(severity: Severity) {
     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Dimens.spaceS)) {
         Icon(painterResource(severityGlyph(severity)), contentDescription = null, tint = color)
         Text(
-            stringResource(severityLabel(severity)).uppercase(LocalLocale.current.platformLocale),
+            stringResource(severityLabel(severity)).headingCase(),
             style = MaterialTheme.typography.labelLarge,
             color = color,
         )
@@ -424,7 +419,7 @@ private fun Trust(
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
-            TextButton(onClick = { onTrust(host, false) }) { Text(stringResource(R.string.event_untrust)) }
+            TextButton(onClick = { onTrust(host, false) }) { Text(stringResource(R.string.action_unmark_known)) }
         } else {
             Text(
                 stringResource(R.string.event_trust_hint),
@@ -434,14 +429,14 @@ private fun Trust(
             OutlinedButton(
                 onClick = { if (confirm) confirming = true else onTrust(host, true) },
                 modifier = Modifier.fillMaxWidth().heightIn(min = Dimens.touchTarget),
-            ) { Text(stringResource(R.string.event_trust)) }
+            ) { Text(stringResource(R.string.action_mark_known)) }
         }
     }
     if (confirming) {
         ConfirmDialog(
             R.string.alert_trust_confirm_title,
             R.string.alert_trust_confirm_body,
-            R.string.alert_trust_confirm,
+            R.string.action_mark_known,
             onConfirm = {
                 confirming = false
                 onTrust(host, true)

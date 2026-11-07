@@ -27,8 +27,12 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import no.cyberfish.dekoi.R
 import no.cyberfish.dekoi.ui.Dimens
+import no.cyberfish.dekoi.ui.components.Horizon
+import no.cyberfish.dekoi.ui.components.HudFrame
 import no.cyberfish.dekoi.ui.components.MissingScreen
 import no.cyberfish.dekoi.ui.components.Screen
+import no.cyberfish.dekoi.ui.components.SectionLabel
+import no.cyberfish.dekoi.ui.headingCase
 
 private val CHEVRON = 20.dp
 private val NUMBER = 28.dp
@@ -39,7 +43,7 @@ fun LearnScreen(
     onOpen: (LearnTopic) -> Unit,
     onBack: () -> Unit,
 ) {
-    Screen(stringResource(R.string.learn_title).headingCase(), onBack = onBack) {
+    Screen(stringResource(R.string.learn_title), onBack = onBack) {
         item {
             Text(
                 stringResource(R.string.learn_intro),
@@ -101,7 +105,7 @@ fun LearnTopicScreen(
         MissingScreen(R.string.learn_title, loaded = true, R.drawable.ic_info, R.string.learn_missing, onBack)
         return
     }
-    Screen(stringResource(topic.title).headingCase(), onBack = onBack) {
+    Screen(stringResource(topic.title), onBack = onBack) {
         item {
             HudFrame(Modifier.fillMaxWidth()) {
                 SceneDrawing(topic.scene, Modifier.fillMaxWidth().height(drawingHeight()))
