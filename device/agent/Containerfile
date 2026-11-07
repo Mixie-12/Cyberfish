@@ -14,6 +14,8 @@ RUN apt-get update \
  && install -d -o agent -g agent -m 0700 /var/lib/dekoi-agent
 COPY agent/dekoi_agent /opt/dekoi/dekoi_agent
 COPY canary/opencanary.conf /usr/share/dekoi/opencanary.conf
+# Version and build time, reported in the heartbeat (ADR 0013).
+RUN printf '%s %s\n' "$DEKOI_AGENT_VERSION" "$(date -u +%Y-%m-%dT%H:%M:%SZ)" > /usr/share/dekoi/image
 # hadolint ignore=DL3064
 ENV PYTHONPATH=/opt/dekoi \
     PYTHONDONTWRITEBYTECODE=1 \
