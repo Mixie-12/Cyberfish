@@ -6,7 +6,7 @@ import no.cyberfish.dekoi.R
 
 /**
  * One topic of the Learn library: a title, a one-line summary, a few short
- * paragraphs, what DeKoi does about it and steps for the owner. [id] goes
+ * paragraphs, what DeKoi does about it, steps for the owner and a drawing. [id] goes
  * into routes and links, so it never changes once shipped.
  */
 enum class LearnTopic(
@@ -16,6 +16,7 @@ enum class LearnTopic(
     @param:ArrayRes val body: Int,
     @param:StringRes val dekoi: Int,
     @param:ArrayRes val steps: Int,
+    val scene: Scene,
 ) {
     HONEYPOT(
         "honeypot",
@@ -24,6 +25,7 @@ enum class LearnTopic(
         R.array.learn_honeypot_body,
         R.string.learn_honeypot_dekoi,
         R.array.learn_honeypot_steps,
+        Scene.DECOY,
     ),
     SIGN_IN(
         "sign_in",
@@ -32,6 +34,7 @@ enum class LearnTopic(
         R.array.learn_sign_in_body,
         R.string.learn_sign_in_dekoi,
         R.array.learn_sign_in_steps,
+        Scene.TOUCH,
     ),
     PORT_SCAN(
         "port_scan",
@@ -40,6 +43,7 @@ enum class LearnTopic(
         R.array.learn_port_scan_body,
         R.string.learn_port_scan_dekoi,
         R.array.learn_port_scan_steps,
+        Scene.PROBE,
     ),
     NETWORK_SWEEP(
         "network_sweep",
@@ -48,6 +52,7 @@ enum class LearnTopic(
         R.array.learn_network_sweep_body,
         R.string.learn_network_sweep_dekoi,
         R.array.learn_network_sweep_steps,
+        Scene.SWEEP,
     ),
     IMPERSONATION(
         "impersonation",
@@ -56,6 +61,7 @@ enum class LearnTopic(
         R.array.learn_impersonation_body,
         R.string.learn_impersonation_dekoi,
         R.array.learn_impersonation_steps,
+        Scene.IMPOSTOR,
     ),
     FAKE_SETTINGS(
         "fake_settings",
@@ -64,6 +70,7 @@ enum class LearnTopic(
         R.array.learn_fake_settings_body,
         R.string.learn_fake_settings_dekoi,
         R.array.learn_fake_settings_steps,
+        Scene.SETTINGS,
     ),
     WIFI_COPY(
         "wifi_copy",
@@ -72,6 +79,7 @@ enum class LearnTopic(
         R.array.learn_wifi_copy_body,
         R.string.learn_wifi_copy_dekoi,
         R.array.learn_wifi_copy_steps,
+        Scene.WIFI_COPY,
     ),
     NEW_DEVICE(
         "new_device",
@@ -80,6 +88,7 @@ enum class LearnTopic(
         R.array.learn_new_device_body,
         R.string.learn_new_device_dekoi,
         R.array.learn_new_device_steps,
+        Scene.NEW_DEVICE,
     ),
     PORT_FORWARD(
         "port_forward",
@@ -88,6 +97,7 @@ enum class LearnTopic(
         R.array.learn_port_forward_body,
         R.string.learn_port_forward_dekoi,
         R.array.learn_port_forward_steps,
+        Scene.EXPOSED,
     ),
     DNS_TAMPERING(
         "dns_tampering",
@@ -96,6 +106,7 @@ enum class LearnTopic(
         R.array.learn_dns_tampering_body,
         R.string.learn_dns_tampering_dekoi,
         R.array.learn_dns_tampering_steps,
+        Scene.DNS,
     ),
     HOME_SAFETY(
         "home_safety",
@@ -104,6 +115,7 @@ enum class LearnTopic(
         R.array.learn_home_safety_body,
         R.string.learn_home_safety_dekoi,
         R.array.learn_home_safety_steps,
+        Scene.STEPS,
     ),
     ;
 

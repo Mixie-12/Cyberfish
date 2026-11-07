@@ -111,7 +111,7 @@
         <item>Copies are often open, or less protected than the real network, so devices can join them without your password.</item>
         <item>Not every new network with your name is a copy. Mesh Wi-Fi systems and extra access points use the same name on purpose.</item>
     </string-array>
-    <string name="learn_wifi_copy_dekoi">Your DeKoi uses its own Wi-Fi radio to look at the networks around it every few minutes. In its first day it learns your access points. After that, a network with your name and weaker protection is an alert, and a new access point with the same protection is a quieter note. For this, your DeKoi needs to know your Wi-Fi name.</string>
+    <string name="learn_wifi_copy_dekoi">Every few minutes your DeKoi checks the Wi-Fi networks nearby with its own radio. After learning your access points in its first day, it alerts you to any network with your name and weaker protection. It needs your Wi-Fi name for this.</string>
     <string-array name="learn_wifi_copy_steps">
         <item>If you recently added a mesh point or a new access point, this is expected and you need to do nothing.</item>
         <item>If not, don’t join a network with your name that suddenly asks for no password.</item>
@@ -176,4 +176,18 @@
         <item>Put visitors and smart home gadgets on a guest network, if your router has one.</item>
         <item>Use a different password for each important account, and turn on two-step sign-in.</item>
     </string-array>
+
+    <!-- Descriptions of the drawings, read by screen readers. -->
+    <string name="scene_decoy">Your devices connected to your router, and your DeKoi beside them, which nothing touches.</string>
+    <string name="scene_touch">An unknown device reaches your DeKoi, and an alert appears on a phone.</string>
+    <string name="scene_steps">A card with three numbered steps, ticked off one by one.</string>
+    <string name="scene_watch">Your DeKoi in the middle of your network, watching in every direction.</string>
+    <string name="scene_probe">A device knocking on one door of your DeKoi after another.</string>
+    <string name="scene_sweep">A device calling on every other device on the network in turn.</string>
+    <string name="scene_impostor">A device posing as your router, with a phone’s traffic going through it.</string>
+    <string name="scene_settings">A phone asking for network settings and getting two answers, one from your router and one from another device.</string>
+    <string name="scene_wifi_copy">Two Wi-Fi networks with the same name, and a phone joining the copy.</string>
+    <string name="scene_new_device">A new device appearing among the devices on your network.</string>
+    <string name="scene_exposed">A camera in your home with an open path to the internet.</string>
+    <string name="scene_dns">A phone asking the way to a website and being sent to a copy.</string>
 </resources>
