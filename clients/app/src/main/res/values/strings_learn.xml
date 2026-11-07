@@ -1,0 +1,193 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The Learn library (ui/learn). Plain words for someone who is not
+     technical; calm; say only what DeKoi does. Paragraphs of three or four
+     lines at most. -->
+<resources>
+    <string name="learn_title">Learn</string>
+    <string name="learn_intro">Short explanations of what DeKoi looks out for, and what you can do about each one.</string>
+    <string name="learn_section_dekoi">What DeKoi does about it</string>
+    <string name="learn_section_you">What you can do</string>
+    <string name="learn_open">Read</string>
+    <string name="learn_missing">This topic is not in this version of the app.</string>
+
+    <string name="learn_honeypot_title">What a honeypot is</string>
+    <string name="learn_honeypot_summary">Why a box that holds nothing can tell you so much.</string>
+    <string-array name="learn_honeypot_body">
+        <item>A honeypot is a decoy: something that looks worth a look but holds nothing of value. Security teams have used them for a long time to spot intruders early.</item>
+        <item>Your DeKoi is one. On your network it looks like a storage box for photos and backups, and it shows up when someone browses the network from a computer.</item>
+        <item>None of your own devices has a reason to use it. So when something tries to open it, sign in to it or test it, that is worth knowing about.</item>
+        <item>This keeps alerts rare and meaningful. DeKoi does not have to guess what is normal on your network: any touch is a signal.</item>
+        <item>DeKoi sees what is sent to it and what is sent to every device at once. It does not see private traffic between your other devices.</item>
+    </string-array>
+    <string name="learn_honeypot_dekoi">Your DeKoi runs several decoys at once, such as a file share, a web page and a remote sign-in. It records which device touched them and how, and sends an alert to your phone. The app shows which user name was tried, never the password.</string>
+    <string-array name="learn_honeypot_steps">
+        <item>Leave your DeKoi plugged in and connected to your router, where it can see your network.</item>
+        <item>If you are curious, open it from your own computer. You will get an alert, and you can then mark your computer as known.</item>
+        <item>When an alert arrives, open it and follow its steps.</item>
+    </string-array>
+
+    <string name="learn_sign_in_title">Someone tried to sign in</string>
+    <string name="learn_sign_in_summary">A device tried a user name and password on your DeKoi.</string>
+    <string-array name="learn_sign_in_body">
+        <item>Your DeKoi offers ways to sign in, as many real storage boxes and computers do. Nobody in your home has an account on it, so nobody has a reason to try.</item>
+        <item>A sign-in attempt usually means one of two things: a person testing what they can get into, or harmful software on one of your devices trying common passwords on everything it finds.</item>
+        <item>Either way, something on your network is looking for a way in. If it tries your DeKoi, it may be trying your other devices too.</item>
+        <item>Sometimes the cause is harmless, such as a curious family member. The alert says which device it was, so you can find out.</item>
+    </string-array>
+    <string name="learn_sign_in_dekoi">Your DeKoi records the time, the device, the way it tried to sign in and the user name it used. The password is never shown in the app. Repeated tries from the same device are grouped into one alert.</string>
+    <string-array name="learn_sign_in_steps">
+        <item>Open the alert and check which device it came from.</item>
+        <item>If you don’t recognise it, take it off your network. The alert’s steps show how for that kind of device.</item>
+        <item>From a device you trust, change the passwords of your important accounts, such as email and banking, and turn on two-step sign-in where you can.</item>
+        <item>If it was you or someone you know, mark the device as known.</item>
+    </string-array>
+
+    <string name="learn_port_scan_title">Port scans</string>
+    <string name="learn_port_scan_summary">A device checked which doors your DeKoi has open.</string>
+    <string-array name="learn_port_scan_body">
+        <item>Every device on a network has numbered doors, called ports, that other devices use to reach it. A printer listens behind one door, a web page behind another.</item>
+        <item>A port scan is a device knocking on many of these doors quickly to see which ones open. It is often the first step before an attack: finding out what is there.</item>
+        <item>Some ordinary tools scan too, such as network apps and some security software. A scan from a device you know may be harmless; a scan from one you don’t know is worth acting on.</item>
+        <item>DeKoi also knows the patterns of common attack tools. When traffic to your DeKoi matches one, you get an alert about that as well.</item>
+    </string-array>
+    <string name="learn_port_scan_dekoi">Your DeKoi notices when a device tries many of its doors in a short time, and tells you which device it was and how many doors it tried. Only the decoys answer, so the scan finds nothing real.</string>
+    <string-array name="learn_port_scan_steps">
+        <item>Check which device the scan came from.</item>
+        <item>If you don’t recognise it, take it off your network and follow the steps in the alert.</item>
+        <item>If it is a computer you know, check it for programs you did not install, and run its security scan.</item>
+    </string-array>
+
+    <string name="learn_network_sweep_title">Network sweeps</string>
+    <string name="learn_network_sweep_summary">A device asked for every address on your network.</string>
+    <string-array name="learn_network_sweep_body">
+        <item>Every device on your home network has an address. A network sweep is one device asking for each address in turn, to make a list of everything that is there.</item>
+        <item>It is like someone walking down a street trying every front door. It is often how an intruder, or harmful software, decides what to go after next.</item>
+        <item>Some routers, network apps and smart home hubs sweep the network to find devices. A sweep from your router or a hub you own is usually harmless.</item>
+        <item>DeKoi hears a sweep only if your network passes it on. Some Wi-Fi equipment holds these questions back, so a sweep from a device on Wi-Fi can go unnoticed.</item>
+    </string-array>
+    <string name="learn_network_sweep_dekoi">Your DeKoi hears these questions because they are sent to every device at once. When one device asks about many addresses in a short time, you get an alert naming that device.</string>
+    <string-array name="learn_network_sweep_steps">
+        <item>Check which device the sweep came from.</item>
+        <item>If it is your router or a hub you own, mark it as known. You won’t get notifications about it again.</item>
+        <item>If you don’t recognise it, take it off your network and follow the steps in the alert.</item>
+    </string-array>
+
+    <string name="learn_impersonation_title">Devices pretending to be others</string>
+    <string name="learn_impersonation_summary">A device claims an address or a name that belongs to another, often your router.</string>
+    <string-array name="learn_impersonation_body">
+        <item>On a home network, devices find each other by asking out loud: who has this address? The device that has it answers.</item>
+        <item>Nothing checks those answers. A device can answer for an address that is not its own, often your router’s. Your other devices then send their traffic through it without knowing. This is called ARP spoofing.</item>
+        <item>A device in that position can read and change what passes through it. It is worth acting on straight away.</item>
+        <item>A similar trick works with names. When a computer looks for a name that does not exist, a device can answer that it is that name, and so collect passwords.</item>
+    </string-array>
+    <string name="learn_impersonation_dekoi">Your DeKoi notices when an address is claimed by a second device while the first is still there, above all when it is your router’s address. It also asks now and then for names that do not exist, and alerts you when anything answers.</string>
+    <string-array name="learn_impersonation_steps">
+        <item>Open the alert and find the device it names.</item>
+        <item>Take that device off your network.</item>
+        <item>Restart your router, so every device learns again who is who.</item>
+        <item>Change the passwords of your important accounts using mobile data, not your home network.</item>
+    </string-array>
+
+    <string name="learn_fake_settings_title">Fake network settings</string>
+    <string name="learn_fake_settings_summary">Another device hands out network settings, which only your router should do.</string>
+    <string-array name="learn_fake_settings_body">
+        <item>When a device joins your network, it asks for its settings: its own address, and where to send its traffic. Your router answers, and the device follows those instructions.</item>
+        <item>If a second device answers too, some of your devices may follow its instructions instead. Their traffic can then pass through it, where it can be read or redirected.</item>
+        <item>Technical names for this are a rogue DHCP server or a rogue router.</item>
+        <item>Often the cause is innocent: a second router or Wi-Fi point plugged in with its own settings on. That still causes problems and is worth fixing.</item>
+    </string-array>
+    <string name="learn_fake_settings_dekoi">Your DeKoi regularly asks for settings, as a new device would, and checks who answers. If anything other than your router answers, or a second device announces itself as a router, you get an alert.</string>
+    <string-array name="learn_fake_settings_steps">
+        <item>Check which device the alert names.</item>
+        <item>If it is a second router or Wi-Fi point you own, switch it to access point or bridge mode, so only your main router hands out settings. Its manual explains how.</item>
+        <item>If you don’t recognise it, take it off your network and restart your router.</item>
+    </string-array>
+
+    <string name="learn_wifi_copy_title">Copies of your Wi-Fi</string>
+    <string name="learn_wifi_copy_summary">A Wi-Fi network nearby uses your network’s name.</string>
+    <string-array name="learn_wifi_copy_body">
+        <item>Phones and laptops join Wi-Fi by its name. If two networks have the same name, a device may join either one.</item>
+        <item>A copy of your Wi-Fi, sometimes called an evil twin, is a network set up nearby with your name, to lure your devices onto it. Whoever runs it can read and change what those devices send.</item>
+        <item>Copies are often open, or less protected than the real network, so devices can join them without your password.</item>
+        <item>Not every new network with your name is a copy. Mesh Wi-Fi systems and extra access points use the same name on purpose.</item>
+    </string-array>
+    <string name="learn_wifi_copy_dekoi">Every few minutes your DeKoi checks the Wi-Fi networks nearby with its own radio. After learning your access points in its first day, it alerts you to any network with your name and weaker protection. It needs your Wi-Fi name for this.</string>
+    <string-array name="learn_wifi_copy_steps">
+        <item>If you recently added a mesh point or a new access point, this is expected and you need to do nothing.</item>
+        <item>If not, don’t join a network with your name that suddenly asks for no password.</item>
+        <item>In your router’s app, check that your Wi-Fi uses WPA3 or WPA2 security and a long password.</item>
+    </string-array>
+
+    <string name="learn_new_device_title">New devices</string>
+    <string name="learn_new_device_summary">Something joined your network for the first time.</string>
+    <string-array name="learn_new_device_body">
+        <item>DeKoi keeps a list of the devices on your network. After its first day, it tells you when a device it has never seen before joins.</item>
+        <item>Most of the time this is good news: a new phone, a guest, a smart speaker you just set up. The alert says what the device looks like, so you can tell.</item>
+        <item>Sometimes it is a neighbour who knows your Wi-Fi password, or something that should not be there.</item>
+        <item>Many phones use a private hardware address for each network and change it now and then. They can show up as new even though you know them.</item>
+    </string-array>
+    <string name="learn_new_device_dekoi">Your DeKoi notes what kind of device it looks like, its maker where it can tell, and when it joined, and shows it as new in your network list. New devices are for your information; your DeKoi cannot block them.</string>
+    <string-array name="learn_new_device_steps">
+        <item>Look at what the device looks like and when it joined.</item>
+        <item>If you know it, mark it as known.</item>
+        <item>If you don’t, change your Wi-Fi password and reconnect your own devices. Anything that does not know the new password drops off.</item>
+    </string-array>
+
+    <string name="learn_port_forward_title">Open to the internet</string>
+    <string name="learn_port_forward_summary">A device asked your router to let the internet reach it.</string>
+    <string-array name="learn_port_forward_body">
+        <item>Your router normally keeps the internet out: devices at home can reach out, but nothing outside can reach in.</item>
+        <item>A port forward is an exception: a door from the internet straight to one device at home. Games consoles, cameras and remote access apps sometimes open one by themselves, through a router feature called UPnP.</item>
+        <item>An open door is not a problem by itself, but anyone on the internet can knock on it. If the device behind it has a weak password or old software, someone outside can try to get in.</item>
+    </string-array>
+    <string name="learn_port_forward_dekoi">Every hour your DeKoi reads the list of open doors from your router, if your router shares it, and changes nothing. It tells you when a new door appears and which device it leads to.</string>
+    <string-array name="learn_port_forward_steps">
+        <item>Check which device the door leads to, and whether you use that device from outside your home.</item>
+        <item>If you don’t, turn off remote access in that device’s app, or remove the forward in your router’s app.</item>
+        <item>If no device needs it, turn off UPnP in your router’s app, so devices cannot open doors by themselves.</item>
+    </string-array>
+
+    <string name="learn_dns_tampering_title">DNS tampering</string>
+    <string name="learn_dns_tampering_summary">Website names on your network lead to the wrong place.</string>
+    <string-array name="learn_dns_tampering_body">
+        <item>When you type a website’s name, your device first asks for its address, much like looking up a number in a phone book. Your router usually answers.</item>
+        <item>If someone changes that phone book, the name you type can lead somewhere else, such as a copy of your bank’s website made to collect passwords.</item>
+        <item>This is called DNS tampering. It can happen when an attacker or harmful software changes your router’s settings.</item>
+    </string-array>
+    <string name="learn_dns_tampering_dekoi">Every hour your DeKoi looks up a fixed list of well-known names twice: once through your network, and once through a trusted service over an encrypted connection. If the answers keep disagreeing, you get an alert.</string>
+    <string-array name="learn_dns_tampering_steps">
+        <item>Until this is resolved, sign in to websites using mobile data rather than your home Wi-Fi.</item>
+        <item>Restart your router. If the alert comes back, ask your internet provider for help, or reset the router as its manual describes and give it a new admin password.</item>
+        <item>Check your computers for programs you did not install.</item>
+    </string-array>
+
+    <string name="learn_home_safety_title">Keeping your home network safe</string>
+    <string name="learn_home_safety_summary">A few habits that make trouble less likely.</string>
+    <string-array name="learn_home_safety_body">
+        <item>Most trouble on a home network arrives through a weak password, an old device that no longer gets updates, or a program that should not have been installed.</item>
+        <item>A few habits close most of those doors. None of them needs technical knowledge.</item>
+        <item>Your DeKoi is one layer: it tells you when it notices something. These habits make it less likely that anything goes wrong in the first place.</item>
+    </string-array>
+    <string name="learn_home_safety_dekoi">Your DeKoi watches for devices that look around your network or pretend to be something else, and tells you what to do. It cannot block devices, so the steps it gives you are done in your router or on the device itself.</string>
+    <string-array name="learn_home_safety_steps">
+        <item>Give your Wi-Fi a long password, and use WPA3 or WPA2 security.</item>
+        <item>Change your router’s admin password from the one it came with.</item>
+        <item>Keep your router, phones and computers up to date. Turn on automatic updates where you can.</item>
+        <item>Put visitors and smart home gadgets on a guest network, if your router has one.</item>
+        <item>Use a different password for each important account, and turn on two-step sign-in.</item>
+    </string-array>
+
+    <!-- Descriptions of the drawings, read by screen readers. -->
+    <string name="scene_decoy">Your devices connected to your router, and your DeKoi beside them, which nothing touches.</string>
+    <string name="scene_touch">An unknown device reaches your DeKoi, and an alert appears on a phone.</string>
+    <string name="scene_steps">A card with three numbered steps, ticked off one by one.</string>
+    <string name="scene_watch">Your DeKoi in the middle of your network, watching in every direction.</string>
+    <string name="scene_probe">A device knocking on one door of your DeKoi after another.</string>
+    <string name="scene_sweep">A device calling on every other device on the network in turn.</string>
+    <string name="scene_impostor">A device posing as your router, with a phone’s traffic going through it.</string>
+    <string name="scene_settings">A phone asking for network settings and getting two answers, one from your router and one from another device.</string>
+    <string name="scene_wifi_copy">Two Wi-Fi networks with the same name, and a phone joining the copy.</string>
+    <string name="scene_new_device">A new device appearing among the devices on your network.</string>
+    <string name="scene_exposed">A camera in your home with an open path to the internet.</string>
+    <string name="scene_dns">A phone asking the way to a website and being sent to a copy.</string>
+</resources>

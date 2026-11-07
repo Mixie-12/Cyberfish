@@ -71,9 +71,13 @@ import no.cyberfish.dekoi.alertBadgeCount
 import no.cyberfish.dekoi.isSetUp
 import no.cyberfish.dekoi.shared.DesignTokens
 import no.cyberfish.dekoi.ui.components.Screen
+import no.cyberfish.dekoi.ui.learn.LearnScreen
+import no.cyberfish.dekoi.ui.learn.LearnTopicScreen
 import no.cyberfish.dekoi.ui.network.HostDetailScreen
 import no.cyberfish.dekoi.ui.network.NetworkScreen
 import no.cyberfish.dekoi.ui.network.NetworksScreen
+import no.cyberfish.dekoi.ui.onboarding.OnboardingOnce
+import no.cyberfish.dekoi.ui.onboarding.OnboardingScreen
 import java.time.Instant
 
 /** Every place in the app. The four tab roots, then the screens pushed on a tab. */
@@ -115,6 +119,16 @@ sealed interface Route {
     @Serializable data object WriteCard : Route
 
     @Serializable data object Licences : Route
+
+    /** The first-run tour, shown once after the first sign-in; without the tab bar. */
+    @Serializable data object Onboarding : Route
+
+    @Serializable data object Learn : Route
+
+    /** A Learn topic by its stable id (ui/learn/LearnTopic.kt). */
+    @Serializable data class LearnTopic(
+        val id: String,
+    ) : Route
 }
 
 private enum class Tab(
@@ -218,6 +232,7 @@ private fun SignedIn(
         viewModel.eventOpened()
     }
     NotificationPermission(setUp = data.devices.any { it.isSetUp })
+    OnboardingOnce { navController.navigate(Route.Onboarding) }
 
     // Screens link to tab roots as well as pushed screens; a tab root switches tabs.
     val navigate: (Route) -> Unit = { route ->
@@ -230,7 +245,11 @@ private fun SignedIn(
         Transitions(with(LocalDensity.current) { PUSH_DISTANCE.roundToPx() }, LocalLayoutDirection.current, reduceMotion, tabSwitch)
 
     Scaffold(
-        bottomBar = { TabBar(currentTab, alertBadgeCount(data.events, data.trustedMacs), ::selectTab) },
+        bottomBar = {
+            if (entry?.destination?.hasRoute(Route.Onboarding::class) != true) {
+                TabBar(currentTab, alertBadgeCount(data.events, data.trustedMacs), ::selectTab)
+            }
+        },
         snackbarHost = { SnackbarHost(snackbar) },
         containerColor = MaterialTheme.colorScheme.background,
     ) { padding ->
@@ -304,6 +323,19 @@ private fun SignedIn(
             }
             composable<Route.Licences> {
                 LicencesScreen(back)
+            }
+            composable<Route.Onboarding> {
+                OnboardingScreen(
+                    needsDekoi = data.loaded && data.devices.isEmpty(),
+                    onDone = back,
+                    onAddDekoi = { navController.navigate(Route.AddDekoi) { popUpTo<Route.Onboarding> { inclusive = true } } },
+                )
+            }
+            composable<Route.Learn> {
+                LearnScreen(onOpen = { navigate(Route.LearnTopic(it.id)) }, onBack = back)
+            }
+            composable<Route.LearnTopic> { entry ->
+                LearnTopicScreen(entry.toRoute<Route.LearnTopic>().id, back)
             }
             composable<Route.Settings> {
                 val settings by viewModel.settings.collectAsStateWithLifecycle()
