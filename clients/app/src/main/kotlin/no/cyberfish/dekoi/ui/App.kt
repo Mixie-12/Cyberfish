@@ -69,6 +69,7 @@ import no.cyberfish.dekoi.ui.network.NetworkScreen
 import no.cyberfish.dekoi.ui.network.NetworksScreen
 import no.cyberfish.dekoi.ui.onboarding.OnboardingOnce
 import no.cyberfish.dekoi.ui.onboarding.OnboardingScreen
+import no.cyberfish.dekoi.ui.onboarding.rememberWelcome
 import java.time.Instant
 
 /** Every place in the app. The four tab roots, then the screens pushed on a tab. */
@@ -176,6 +177,8 @@ private fun SignedIn(
     val reduceMotion = LocalReduceMotion.current
     val tabSwitch = remember { TabSwitch() }
     val listStates = Tab.entries.associateWith { rememberLazyListState() }
+    // Here rather than on Home, so it is not read again on every return to Home.
+    val welcome = rememberWelcome()
     // A tab root names its tab; a pushed screen belongs to the tab it was pushed on.
     var lastTab by rememberSaveable { mutableStateOf(Tab.HOME) }
     val currentTab = entry?.rootTab() ?: lastTab
@@ -258,7 +261,7 @@ private fun SignedIn(
             predictivePopExitTransition = { transitions.exit(this, Direction.BACK_GESTURE) },
         ) {
             screen<Route.Home> {
-                HomeScreen(data, now, refreshing, listStates.getValue(Tab.HOME), viewModel::refresh, navigate)
+                HomeScreen(data, now, refreshing, listStates.getValue(Tab.HOME), welcome, viewModel::refresh, navigate)
             }
             screen<Route.Alerts> {
                 AlertsScreen(

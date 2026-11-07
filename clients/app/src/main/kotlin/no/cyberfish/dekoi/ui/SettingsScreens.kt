@@ -14,7 +14,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.text.selection.SelectionContainer
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
@@ -31,7 +30,6 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalResources
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
@@ -92,18 +90,7 @@ fun SettingsScreen(
                         onClick = { onNavigate(Route.Dekoi(device.id)) },
                     )
                 }
-                InsetRow(
-                    stringResource(R.string.action_add_dekoi),
-                    titleColor = MaterialTheme.colorScheme.primary,
-                    leading = {
-                        Icon(
-                            painterResource(R.drawable.ic_add),
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.primary,
-                        )
-                    },
-                    onClick = { onNavigate(Route.AddDekoi) },
-                )
+                AddDekoiRow(R.string.action_add_dekoi) { onNavigate(Route.AddDekoi) }
             }
         }
         if (devices.isNotEmpty()) item { WifiNameSection(devices, onSetWifiName) }

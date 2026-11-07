@@ -103,6 +103,7 @@ import no.cyberfish.dekoi.shared.ClaimCode
 import no.cyberfish.dekoi.typedCode
 import no.cyberfish.dekoi.ui.components.BrandTile
 import no.cyberfish.dekoi.ui.components.ErrorBanner
+import no.cyberfish.dekoi.ui.components.InsetRow
 import no.cyberfish.dekoi.ui.components.InsetSection
 import no.cyberfish.dekoi.ui.components.KindTile
 import no.cyberfish.dekoi.ui.components.PrimaryButton
@@ -366,6 +367,20 @@ private object GroupsOfFour : VisualTransformation {
             }
         return TransformedText(AnnotatedString(text.text.chunked(CODE_GROUP).joinToString(" ")), mapping)
     }
+}
+
+/** A row of an InsetSection that opens Add DeKoi: a plus and [label] in the accent. On Home and in Settings. */
+@Composable
+fun AddDekoiRow(
+    @StringRes label: Int,
+    onClick: () -> Unit,
+) {
+    InsetRow(
+        stringResource(label),
+        titleColor = MaterialTheme.colorScheme.primary,
+        leading = { Icon(painterResource(R.drawable.ic_add), contentDescription = null, tint = MaterialTheme.colorScheme.primary) },
+        onClick = onClick,
+    )
 }
 
 /** What to check when a new DeKoi takes longer than it should to appear; here and on Your DeKoi. */

@@ -43,17 +43,23 @@ Alerts filtered to that service; Home tiles to their tabs.
 hairline. (1) Status hero: 120 dp ring around a shield, coloured by
 `Protection`, with a soft glow of that colour behind it; existing `status_*`
 strings, polite live region, ring draws in once (700 ms), not on every
-return. (2) "Needs attention": up to three critical or warning alerts of the
+return; the words fade through when the status changes. Then, until a DeKoi
+is fully set up or the owner closes it (remembered on the phone), the
+welcome in a HUD frame: "Welcome to DeKoi", three numbered steps with
+symbols (prepare the memory card, with this phone or DeKoi Setup; plug in
+the network cable, then the power; watch it come online here), "Add a
+DeKoi" and "Take the tour". Once closed, without a DeKoi, an "Add a DeKoi"
+row. (2) "Needs attention": up to three critical or warning alerts of the
 last 24 h, one per source device, on quiet hairline-edged cards (severity
 chip, title, device, "See what to do"), each opening its alert; hidden when
 none. (3) 2x2 tiles: devices on your network (count, "3 new this week"),
 alerts in 7 days (count and sparkline), Your DeKoi (status, last check-in),
 checks ("All 8 checks on", amber when one fails, grey while
 offline; opens Your DeKoi); tabular figures roll on change (300 ms); one
-column above font scale 1.5. (4) Seven-day bar chart stacked by severity;
+column above font scale 1.5; under them an "Add another DeKoi" row unless
+the welcome shows. (4) Seven-day bar chart stacked by severity;
 tapping a bar opens Alerts for that day. (5) Latest five events.
-`PullToRefreshBox` replaces the Refresh button. Without a DeKoi: "Add DeKoi"
-above the horizon.
+`PullToRefreshBox` replaces the Refresh button.
 
 **Alerts.** A calm timeline of incidents (ADR 0013), grouped by
 `incidents()` in `Incidents.kt`: events from one DeKoi and one source, each
@@ -164,10 +170,13 @@ last, in red, with confirmation.
 
 **Sign-in and onboarding.** Brand hero with a slowly floating koi mark (6 s,
 static without animations), tagline, "Continue with Google", inline errors.
-Add DeKoi: three-step card (prepare the card, scan, plug in); "Scan the code"
+The tour (four pages over the horizon) opens once per tour version after
+sign-in, so a changed tour reaches existing owners once; its last page
+offers "Add a DeKoi" without one, "Done" otherwise; Settings keeps "Take the
+tour". Add DeKoi: three-step card (prepare the card, scan, plug in); "Scan the code"
 primary, "Type the code" secondary with a 26-character input in groups of
 four. After a claim, a vertical timeline (linked, first start, online,
-watching) ticks off as data arrives, polling every 15 s while visible; help
+watching; the same `SetupTimeline` as on Your DeKoi) ticks off as data arrives, polling every 15 s while visible; help
 after 20 min; on success the ring completes, then the notification
 permission request.
 
