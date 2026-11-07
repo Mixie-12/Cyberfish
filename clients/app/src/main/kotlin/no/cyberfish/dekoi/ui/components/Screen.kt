@@ -36,12 +36,13 @@ private val MISSING_SKELETON = 200.dp
 /**
  * A screen: an optional back button, a large title with an optional line
  * under it (such as a [StaleLabel]), then scrolling content. Tab roots pass
- * the [listState] the tab bar scrolls to the top on reselect. A list that
- * spaces its items itself passes its own [spacing].
+ * the [listState] the tab bar scrolls to the top on reselect. A screen whose
+ * content opens with its own heading passes no [title]; a list that spaces
+ * its items itself passes its own [spacing].
  */
 @Composable
 fun Screen(
-    title: String,
+    title: String?,
     modifier: Modifier = Modifier,
     listState: LazyListState = rememberLazyListState(),
     onBack: (() -> Unit)? = null,
@@ -63,7 +64,7 @@ fun Screen(
                         Icon(painterResource(R.drawable.ic_arrow_back), contentDescription = stringResource(R.string.action_back))
                     }
                 }
-                Text(title, style = MaterialTheme.typography.displaySmall, modifier = Modifier.semantics { heading() })
+                title?.let { Text(it, style = MaterialTheme.typography.displaySmall, modifier = Modifier.semantics { heading() }) }
                 subtitle?.invoke()
             }
         }

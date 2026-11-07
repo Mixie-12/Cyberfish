@@ -1,8 +1,6 @@
 package no.cyberfish.dekoi.ui
 
 import android.text.format.DateFormat
-import androidx.compose.animation.animateContentSize
-import androidx.compose.animation.core.snap
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
@@ -28,11 +26,9 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.InputChip
 import androidx.compose.material3.InputChipDefaults
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -43,7 +39,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.drawBehind
-import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -51,19 +46,15 @@ import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.layout.onPlaced
 import androidx.compose.ui.layout.positionInParent
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLocale
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.collapse
-import androidx.compose.ui.semantics.expand
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import no.cyberfish.dekoi.AlertFilter
@@ -75,27 +66,17 @@ import no.cyberfish.dekoi.R
 import no.cyberfish.dekoi.SEPARATOR
 import no.cyberfish.dekoi.Severity
 import no.cyberfish.dekoi.amount
-import no.cyberfish.dekoi.cancelAlertNotification
 import no.cyberfish.dekoi.eventText
-import no.cyberfish.dekoi.hostDisplayName
 import no.cyberfish.dekoi.incidentSubtitle
-import no.cyberfish.dekoi.isIntrusion
 import no.cyberfish.dekoi.looksLike
 import no.cyberfish.dekoi.serviceName
 import no.cyberfish.dekoi.severityLabel
-import no.cyberfish.dekoi.steps
 import no.cyberfish.dekoi.subject
 import no.cyberfish.dekoi.timeline
-import no.cyberfish.dekoi.ui.components.CopyableRow
 import no.cyberfish.dekoi.ui.components.EmptyState
 import no.cyberfish.dekoi.ui.components.ErrorBanner
 import no.cyberfish.dekoi.ui.components.InsetRow
-import no.cyberfish.dekoi.ui.components.InsetSection
-import no.cyberfish.dekoi.ui.components.KeyValueRow
-import no.cyberfish.dekoi.ui.components.KindTile
-import no.cyberfish.dekoi.ui.components.MissingScreen
 import no.cyberfish.dekoi.ui.components.Screen
-import no.cyberfish.dekoi.ui.components.SeverityChip
 import no.cyberfish.dekoi.ui.components.SeverityTile
 import no.cyberfish.dekoi.ui.components.Skeleton
 import no.cyberfish.dekoi.ui.components.StaleLabel
@@ -481,171 +462,5 @@ private fun TimelineSkeleton() {
                 }
             }
         }
-    }
-}
-
-@Composable
-fun AlertDetailScreen(
-    data: OwnerData,
-    eventId: Long,
-    onTrust: (NetworkHost, Boolean) -> Unit,
-    onNavigate: (Route) -> Unit,
-    onBack: () -> Unit,
-) {
-    val context = LocalContext.current
-    // Seeing the alert here makes its notification redundant.
-    LaunchedEffect(eventId) { cancelAlertNotification(context, eventId) }
-    val event = data.events.firstOrNull { it.id == eventId }
-    if (event == null) {
-        MissingScreen(R.string.tab_alerts, data.loaded, R.drawable.ic_notifications, R.string.alert_missing, onBack)
-        return
-    }
-    val host = data.hostFor(event.srcMac)
-    Screen(
-        eventTitle(event, host),
-        onBack = onBack,
-        subtitle = {
-            Row(
-                Modifier.padding(top = Dimens.spaceS),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(Dimens.spaceS),
-            ) {
-                SeverityChip(event.severity)
-                Text(
-                    absoluteTime(event.occurredAt),
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
-        },
-    ) {
-        item {
-            InsetSection(title = stringResource(R.string.event_why)) {
-                Text(
-                    stringResource(eventText(event).explanation),
-                    style = MaterialTheme.typography.bodyLarge,
-                    modifier = Modifier.padding(Dimens.spaceL),
-                )
-            }
-        }
-        host?.let { item { SourceDevice(it, onNavigate) } }
-        item { WhatToDo(event, host) }
-        if (event.isIntrusion && host != null) item { Trust(host, onTrust) }
-        item { TechnicalDetails(event, host) }
-    }
-}
-
-@Composable
-private fun SourceDevice(
-    host: NetworkHost,
-    onNavigate: (Route) -> Unit,
-) {
-    val resources = LocalResources.current
-    InsetSection(title = stringResource(R.string.alert_device)) {
-        InsetRow(
-            hostDisplayName(host, resources::getString),
-            subtitle = stringResource(looksLike(host.kind)),
-            leading = { KindTile(host.kind) },
-            onClick = { onNavigate(Route.HostDetail(host.deviceId, host.mac)) },
-        )
-    }
-}
-
-@Composable
-private fun WhatToDo(
-    event: Event,
-    host: NetworkHost?,
-) {
-    val steps = steps(event.kind, host?.kind ?: HostKind.UNKNOWN)
-    InsetSection(title = stringResource(R.string.event_advice)) {
-        Column(Modifier.padding(Dimens.spaceL), verticalArrangement = Arrangement.spacedBy(Dimens.spaceM)) {
-            if (steps.isEmpty()) Text(stringResource(R.string.alert_nothing_to_do), style = MaterialTheme.typography.bodyLarge)
-            steps.forEachIndexed { index, step ->
-                Row(horizontalArrangement = Arrangement.spacedBy(Dimens.spaceM)) {
-                    Text("${index + 1}.", style = MaterialTheme.typography.bodyLarge.tabular(), color = MaterialTheme.colorScheme.primary)
-                    Text(stringResource(step.text), style = MaterialTheme.typography.bodyLarge)
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun Trust(
-    host: NetworkHost,
-    onTrust: (NetworkHost, Boolean) -> Unit,
-) {
-    Column(verticalArrangement = Arrangement.spacedBy(Dimens.spaceS)) {
-        if (host.trusted) {
-            Text(
-                stringResource(R.string.event_trusted),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-            TextButton(onClick = { onTrust(host, false) }) { Text(stringResource(R.string.event_untrust)) }
-        } else {
-            OutlinedButton(
-                onClick = { onTrust(host, true) },
-                modifier = Modifier.fillMaxWidth(),
-            ) { Text(stringResource(R.string.event_trust)) }
-        }
-    }
-}
-
-/** Collapsed by default: addresses and ports are for whoever wants them. Values from the device are plain text. */
-@Composable
-private fun TechnicalDetails(
-    event: Event,
-    host: NetworkHost?,
-) {
-    var open by rememberSaveable { mutableStateOf(false) }
-    val spec = if (LocalReduceMotion.current) snap() else expandSpring<IntSize>()
-    InsetSection(Modifier.animateContentSize(spec)) {
-        InsetRow(
-            stringResource(R.string.event_details),
-            modifier =
-                Modifier.semantics {
-                    if (open) {
-                        collapse {
-                            open = false
-                            true
-                        }
-                    } else {
-                        expand {
-                            open = true
-                            true
-                        }
-                    }
-                },
-            trailing = {
-                Icon(
-                    painterResource(R.drawable.ic_expand_more),
-                    contentDescription = null,
-                    modifier = Modifier.rotate(if (open) 180f else 0f),
-                    tint = MaterialTheme.colorScheme.outline,
-                )
-            },
-            onClick = { open = !open },
-            chevron = false,
-        )
-        if (!open) return@InsetSection
-        KeyValueRow(stringResource(R.string.event_detail_time), absoluteTime(event.occurredAt))
-        if (event.count > 1) InsetRow(pluralStringResource(R.plurals.event_repeated, event.count, event.count))
-        event.srcIp?.let { KeyValueRow(stringResource(R.string.event_detail_source), it) }
-        event.srcMac?.let { CopyableRow(stringResource(R.string.event_detail_mac), it) }
-        host?.vendor?.let { KeyValueRow(stringResource(R.string.event_detail_vendor), it) }
-        event.dstPort?.let { KeyValueRow(stringResource(R.string.event_detail_port), it.toString()) }
-        event.detail.username?.let { KeyValueRow(stringResource(R.string.event_detail_username), it) }
-        event.detail.path?.let { KeyValueRow(stringResource(R.string.event_detail_path), it) }
-        (event.detail.clientVersion ?: event.detail.userAgent)?.let { KeyValueRow(stringResource(R.string.event_detail_client), it) }
-        event.detail.command?.let { KeyValueRow(stringResource(R.string.event_detail_command), it) }
-        event.detail.signature?.let { KeyValueRow(stringResource(R.string.event_detail_signature), it) }
-        event.detail.category?.let { KeyValueRow(stringResource(R.string.event_detail_category), it) }
-        event.detail.claimedIp?.let { KeyValueRow(stringResource(R.string.event_detail_claimed_ip), it) }
-        event.detail.previousMac?.let { CopyableRow(stringResource(R.string.event_detail_previous_mac), it) }
-        event.detail.serverIp?.let { KeyValueRow(stringResource(R.string.event_detail_server), it) }
-        event.detail.protocol?.let { KeyValueRow(stringResource(R.string.event_detail_protocol), it.uppercase()) }
-        event.detail.targets?.let { KeyValueRow(stringResource(R.string.event_detail_targets), it.toString()) }
-        if (event.detail.ports.isNotEmpty()) KeyValueRow(stringResource(R.string.event_detail_ports), event.detail.ports.joinToString(", "))
     }
 }

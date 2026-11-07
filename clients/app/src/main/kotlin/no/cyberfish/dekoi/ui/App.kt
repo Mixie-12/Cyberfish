@@ -240,7 +240,15 @@ private fun SignedIn(
                 AlertsScreen(data, now, entry.toRoute(), rememberLazyListState(), viewModel::refresh, navigate, onBack = back)
             }
             composable<Route.AlertDetail> { entry ->
-                AlertDetailScreen(data, entry.toRoute<Route.AlertDetail>().eventId, viewModel::setTrusted, navigate, back)
+                AlertDetailScreen(
+                    data,
+                    now,
+                    entry.toRoute<Route.AlertDetail>().eventId,
+                    onAcknowledge = viewModel::acknowledge,
+                    onTrust = viewModel::setTrusted,
+                    onNavigate = navigate,
+                    onBack = back,
+                )
             }
             composable<Route.Network> {
                 NetworkScreen(data, now, listStates.getValue(Tab.NETWORK), navigate)

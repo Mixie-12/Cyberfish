@@ -103,7 +103,6 @@
     <string name="alert_do_now">Do this now</string>
     <string name="event_advice">What to do</string>
     <string name="alert_nothing_to_do">Nothing to do.</string>
-    <string name="alert_copy_mac">Copy hardware address</string>
     <string name="alert_what_happened">What happened</string>
     <plurals name="alert_show_all_events">
         <item quantity="one">Show %1$d event</item>
@@ -124,11 +123,6 @@
     <string name="alert_trust_confirm_body">Do this only if you set it up yourself, such as a second router or a Wi-Fi extender. A device doing this without your knowledge can see your traffic, and DeKoi would stop warning you about it.</string>
     <string name="alert_trust_confirm">Mark as known</string>
 
-    <string name="event_why">Why it matters</string>
-    <plurals name="event_repeated">
-        <item quantity="one">Happened once</item>
-        <item quantity="other">Happened %1$d times</item>
-    </plurals>
     <string name="event_details">Technical details</string>
     <string name="event_detail_time">When</string>
     <string name="event_detail_started">Started</string>
