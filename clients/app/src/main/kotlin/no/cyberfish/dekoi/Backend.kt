@@ -12,8 +12,10 @@ import io.github.jan.supabase.postgrest.from
 import io.github.jan.supabase.postgrest.postgrest
 import io.github.jan.supabase.postgrest.query.Order
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.serialization.json.add
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
+import kotlinx.serialization.json.putJsonArray
 import no.cyberfish.dekoi.shared.ClaimCode
 
 /**
@@ -110,5 +112,10 @@ class Backend(
 
     private companion object {
         const val EVENT_LIMIT = 200L
+    }
+
+    /** Marks events seen; the backend takes up to 500 ids and ignores events of other owners (ADR 0013). */
+    suspend fun acknowledge(ids: List<Long>) {
+        client.postgrest.rpc("acknowledge_events_v1", buildJsonObject { putJsonArray("event_ids") { ids.forEach { add(it) } } })
     }
 }

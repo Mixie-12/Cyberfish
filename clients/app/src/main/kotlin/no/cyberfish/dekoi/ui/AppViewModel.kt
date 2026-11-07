@@ -189,4 +189,15 @@ class AppViewModel(
     private companion object {
         const val TOO_MANY_REQUESTS = 429
     }
+
+    /**
+     * Marks events seen. The app shows them as seen at once; if the backend
+     * refuses, the next refresh brings them back as unseen.
+     */
+    fun acknowledge(ids: List<Long>) {
+        val seenAt = Instant.now()
+        owner.value =
+            owner.value.copy(events = owner.value.events.map { if (it.id in ids && it.seenAt == null) it.copy(seenAt = seenAt) else it })
+        run { backend.acknowledge(ids) }
+    }
 }
