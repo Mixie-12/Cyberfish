@@ -42,6 +42,15 @@ Write code the way a kernel maintainer reviews it.
    build that properly.
 
 
+## GitOps
+
+Git is the only source of truth for every running environment, and CI is the
+only thing that changes them (ADR 0002). Never change production by hand: no
+dashboard edits, no ad hoc CLI commands against the hosted project, no logging
+in to devices. If something cannot be expressed in git yet, it is a one-time
+bootstrap step and belongs in a runbook.
+
+
 ## Security rules
 
 - No secrets in the repository, code, logs, commit messages or chat. Use

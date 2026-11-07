@@ -71,6 +71,9 @@ Pi.
   backend and app releases.
 - No over-engineering: no microservices, no message queues, no Kubernetes, no
   custom auth, no custom crypto, no custom update system, no custom disk writer.
+- GitOps: every running environment is defined in git and changed only by CI.
+  No manual changes in dashboards, no ad hoc commands against production.
+  One-time bootstrap steps are written down in a runbook (ADR 0002).
 
 
 ## 3. Architecture (decided)
@@ -333,10 +336,12 @@ signed .deb is a roadmap item.
 - arm64 images are built under QEMU, only on `main` and tags, to stay within
   the free Actions minutes of a private repository. GHCR packages are set to
   public so devices pull without credentials.
-- CI never holds the database password, a Supabase access token or a
-  service-role key. Backend deployment (`supabase db push`,
-  `supabase functions deploy`) is a documented step run from the owner's
-  machine.
+- Deployment is GitOps (ADR 0002). A push to `main` that passes the backend
+  tests deploys migrations, project configuration and Edge Functions with
+  `supabase db push`, `supabase config push` and `supabase functions deploy`
+  against `--remote=<project ref>`. A `v*` tag releases device images, the
+  APK and installers. CI holds the Supabase access token and database
+  password as repository secrets, used only by the deploy job on `main`.
 
 
 ## 4. Security requirements
@@ -441,9 +446,11 @@ it.
   image.
 
 ### Phase 3: Backend deployment (needs owner input)
-- Supabase Cloud project created by the owner (EU region, 2FA on the account),
-  linked with the CLI, migrations pushed, Auth set to Google only, unused
-  features off.
+- Supabase Cloud project created by the owner (EU region, 2FA on the account,
+  an account used for nothing else). The owner stores the project ref as a
+  repository variable and the access token and database password as
+  repository secrets; from then on the deploy job in CI applies migrations,
+  configuration (Auth set to Google only, unused features off) and functions.
 - Backups: the Free plan has no downloadable backups. Document a
   `supabase db dump` procedure and test one restore into a local stack. Before
   real customers, the owner decides on a paid plan with daily backups.
@@ -506,8 +513,9 @@ app.
 
 Everything below verified, with the evidence recorded in `docs/STATUS.md`.
 
-1. CI green on `main` for all workflows. Release `v0.1.0` published with signed
-   artifacts and checksums.
+1. CI green on `main` for all workflows, including the backend deploy job.
+   Release `v0.1.0` published with signed artifacts and checksums. Production
+   holds nothing that was not applied by CI from git.
 2. Backend live on Supabase Cloud. The surface checks of section 4, case 9
    pass from outside. The Supabase account uses 2FA. One dump-and-restore
    tested.
