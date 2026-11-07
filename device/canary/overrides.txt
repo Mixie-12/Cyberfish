@@ -1,0 +1,9 @@
+# OpenCanary 0.9.10 pins every dependency exactly, including versions with
+# known High vulnerabilities (OSV-Scanner). These lines replace its pins
+# when requirements.txt is compiled; the image installs with --no-deps.
+# Delete a line once an OpenCanary release requires a fixed version.
+twisted==26.10.0
+pyasn1==0.6.5
+urllib3==2.8.0
+# Twisted 26.10 requires zope.interface 8; OpenCanary pins 7.2.
+zope-interface>=8
