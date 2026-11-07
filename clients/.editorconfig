@@ -1,0 +1,5 @@
+root = true
+
+[*.{kt,kts}]
+# Compose names composable functions like types (HomeScreen, Card).
+ktlint_function_naming_ignore_when_annotated_with = Composable
