@@ -1,10 +1,17 @@
 package no.cyberfish.dekoi.burner
 
+import no.cyberfish.dekoi.shared.ClaimCode
+import java.nio.file.Files
 import java.nio.file.Path
+import kotlin.io.path.createTempDirectory
 import kotlin.test.Test
+import kotlin.test.assertContains
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
+import kotlin.test.assertIs
+import kotlin.test.assertNull
+import kotlin.test.assertTrue
 
 class WriteTest {
     @Test
@@ -86,5 +93,71 @@ class WriteTest {
     fun `an image without HTTPS or a real hash is refused`() {
         assertFailsWith<IllegalArgumentException> { Image("http://x/y.img.xz", "a".repeat(64)) }
         assertFailsWith<IllegalArgumentException> { Image("https://x/y.img.xz", "A".repeat(64)) }
+    }
+
+    @Test
+    fun `Imager is started elevated by a constant script with the values in the environment`() {
+        val hostilePath = Path.of("C:/Users/O'Brien \u2019\$(x) & y/rpi-imager.exe")
+        val builder = Imager.elevatedStart(hostilePath, listOf("--cli", "\\\\.\\PhysicalDrive2"))
+
+        val script =
+            "\$ErrorActionPreference = 'Stop'; " +
+                "\$p = Start-Process -FilePath \$env:DEKOI_IMAGER -ArgumentList \$env:DEKOI_IMAGER_ARGS -Verb RunAs -Wait -PassThru; " +
+                "exit \$p.ExitCode"
+        assertEquals(listOf("powershell.exe", "-NoProfile", "-NonInteractive", "-Command", script), builder.command())
+        assertEquals(hostilePath.toString(), builder.environment()["DEKOI_IMAGER"])
+        assertEquals("\"--cli\" \"\\\\.\\PhysicalDrive2\"", builder.environment()["DEKOI_IMAGER_ARGS"])
+    }
+
+    @Test
+    fun `Imager is found only where its installer puts it`() {
+        val programFiles = createTempDirectory("programs")
+        assertNull(Imager.windowsExecutable(programFiles.toString()))
+        assertNull(Imager.windowsExecutable(null))
+        val exe = Files.createDirectories(programFiles.resolve("Raspberry Pi Ltd/Imager")).resolve("rpi-imager.exe")
+        Files.writeString(exe, "")
+        assertEquals(exe, Imager.windowsExecutable(programFiles.toString()))
+        programFiles.toFile().deleteRecursively()
+    }
+
+    private fun quotedArguments(builder: ProcessBuilder): List<String> =
+        Regex("\"([^\"]*)\"")
+            .findAll(checkNotNull(builder.environment()["DEKOI_IMAGER_ARGS"]))
+            .map { it.groupValues[1] }
+            .toList()
+
+    private fun List<String>.after(flag: String): Path = Path.of(this[indexOf(flag) + 1])
+
+    @Test
+    fun `a card write renders the files, passes them to Imager and removes them`() {
+        val code = ClaimCode.generate()
+        val drive = Drive("\\\\.\\PhysicalDrive2", "SDXC Card", 63864569856)
+        var seen: List<String> = emptyList()
+        val result =
+            writeCard(Path.of("C:/imager.exe"), drive, Network.WiFi("Home", "password", "NO"), code) { builder ->
+                seen = quotedArguments(builder)
+                assertContains(Files.readString(seen.after("--cloudinit-userdata")), "content: \"${code.value}\"")
+                assertContains(Files.readString(seen.after("--cloudinit-networkconfig")), "regulatory-domain: \"NO\"")
+                0
+            }
+
+        assertEquals(WriteResult.Written(code), result)
+        assertEquals(drive.device, seen.last())
+        assertFalse(Files.exists(seen.after("--cloudinit-userdata").parent))
+    }
+
+    @Test
+    fun `a failed write returns the end of Imager's log`() {
+        val result =
+            writeCard(Path.of("C:/imager.exe"), Drive("d", "l", 1), Network.Cable, ClaimCode.generate()) { builder ->
+                val log = quotedArguments(builder).after("--log-file")
+                Files.writeString(log, "x".repeat(40_000) + "Error: Download corrupt. SHA256 does not match")
+                1
+            }
+
+        val failed = assertIs<WriteResult.Failed>(result)
+        assertEquals(1, failed.exitCode)
+        assertTrue(failed.log.endsWith("Error: Download corrupt. SHA256 does not match"))
+        assertTrue(failed.log.length <= 32 * 1024)
     }
 }

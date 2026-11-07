@@ -47,4 +47,11 @@ object WindowsDrives {
                 sizeBytes = size,
             )
         }
+
+    fun list(): List<Drive> {
+        val process = ProcessBuilder(command).redirectError(ProcessBuilder.Redirect.DISCARD).start()
+        val output = process.inputStream.use { it.readBytes().toString(Charsets.UTF_8) }
+        check(process.waitFor() == 0) { "Get-Disk exited with ${process.exitValue()}" }
+        return parse(output)
+    }
 }
