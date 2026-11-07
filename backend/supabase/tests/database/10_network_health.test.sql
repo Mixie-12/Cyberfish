@@ -2,7 +2,7 @@
 -- 1, 2, 4 and 5 for device_health_v1, its tables and the speed test setting.
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(59);
+select plan(60);
 
 insert into auth.users (id, email) values
   ('00000000-0000-0000-0000-00000000000a', 'a@test.invalid'),
@@ -375,7 +375,8 @@ select results_eq(
 
 select is((select count(*)::integer from public.speed_tests), 0, 'no speed test is stored while it is off');
 
--- The address a report came from, as Cloudflare sets it.
+-- The address a report came from: as Cloudflare sets it, else as Supabase
+-- documents it.
 
 select set_config('request.headers',
   '{"cf-connecting-ip": "203.0.113.7", "cf-ipcountry": "NO", "x-forwarded-for": "198.51.100.1, 203.0.113.7"}',
@@ -395,7 +396,7 @@ select results_eq(
   $$ select public_ip, public_country from public.devices
      where id = '00000000-0000-0000-0000-0000000000a1' $$,
   $$ values (null::inet, null::text) $$,
-  'a malformed address and an unknown country are not stored, and X-Forwarded-For is never used'
+  'a malformed address and an unknown country are not stored; cf-connecting-ip wins over X-Forwarded-For'
 );
 
 select set_config('request.headers', '{"cf-connecting-ip": "2001:db8::7", "cf-ipcountry": "T1"}', true);
@@ -405,6 +406,15 @@ select results_eq(
      where id = '00000000-0000-0000-0000-0000000000a1' $$,
   $$ values ('2001:db8::7', null::text) $$,
   'an IPv6 address is stored; Tor is not a country'
+);
+
+select set_config('request.headers', '{"x-forwarded-for": " 198.51.100.9 , 10.0.0.1"}', true);
+select pg_temp.forwards(null);
+select results_eq(
+  $$ select host(public_ip), public_country from public.devices
+     where id = '00000000-0000-0000-0000-0000000000a1' $$,
+  $$ values ('198.51.100.9', null::text) $$,
+  'without cf-connecting-ip the address is the first X-Forwarded-For entry'
 );
 
 select set_config('request.headers', '', true);

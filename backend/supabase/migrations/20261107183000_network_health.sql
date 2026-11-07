@@ -132,10 +132,14 @@ $$;
 --   port_forward event.
 -- - download_mbps: a speed test result; stored only while the owner has the
 --   test on, and at most one per 20 hours.
--- The public address and its country are taken from the request headers
--- that Cloudflare in front of the Supabase API sets: cf-connecting-ip is
--- the address Cloudflare saw (X-Forwarded-For begins with whatever the
--- client sent), cf-ipcountry its country, XX when unknown and T1 for Tor.
+-- The public address is cf-connecting-ip, which Cloudflare in front of the
+-- Supabase API sets to the address it saw, or else the first entry of
+-- X-Forwarded-For, the header Supabase documents for the client address
+-- (docs/guides/api/securing-your-api). A client can put its own value first
+-- in X-Forwarded-For; the only client here holds the device secret and
+-- could report anything anyway, and the address is only shown to the
+-- owner. The country is cf-ipcountry when the platform passes it on: XX
+-- when unknown, T1 for Tor. No header is ever looked up elsewhere.
 -- Returns {"speed_test": true} while the owner has the test on and no result
 -- is stored for the last 20 hours.
 create function public.device_health_v1(
@@ -155,7 +159,10 @@ as $$
 declare
   v_forwards jsonb := nullif(device_health_v1.forwards, 'null'::jsonb);
   v_headers jsonb := coalesce(nullif(pg_catalog.current_setting('request.headers', true), ''), '{}')::jsonb;
-  v_ip text := v_headers ->> 'cf-connecting-ip';
+  v_ip text := pg_catalog.btrim(coalesce(
+    v_headers ->> 'cf-connecting-ip',
+    pg_catalog.split_part(v_headers ->> 'x-forwarded-for', ',', 1)
+  ));
   v_country text := v_headers ->> 'cf-ipcountry';
   v_previous_dns text;
   v_speed_test boolean;
