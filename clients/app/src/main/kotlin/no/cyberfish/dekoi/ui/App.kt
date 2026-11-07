@@ -100,6 +100,8 @@ sealed interface Route {
 
     /** Writing a DeKoi card with this phone (ADR 0014, 0017); its screen comes from the card-writing work. */
     @Serializable data object WriteCard : Route
+
+    @Serializable data object Licences : Route
 }
 
 private enum class Tab(
@@ -262,6 +264,9 @@ private fun SignedIn(
             }
             composable<Route.AddDekoi> {
                 AddDekoiScreen(data, now, onRefresh = viewModel::refreshDevices, onNavigate = navigate, onBack = back)
+            }
+            composable<Route.Licences> {
+                LicencesScreen(back)
             }
             composable<Route.Settings> {
                 SettingsScreen(

@@ -1,10 +1,18 @@
 package no.cyberfish.dekoi.ui
 
 import android.app.NotificationManager
+import android.content.Context
 import android.content.Intent
 import android.provider.Settings
+import androidx.annotation.RawRes
+import androidx.annotation.StringRes
+import androidx.compose.animation.animateContentSize
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -12,20 +20,36 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.intl.LocaleList
+import androidx.compose.ui.text.toUpperCase
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.lifecycle.compose.LifecycleResumeEffect
+import no.cyberfish.dekoi.ALERT_CHANNEL
 import no.cyberfish.dekoi.BuildConfig
 import no.cyberfish.dekoi.Device
 import no.cyberfish.dekoi.R
+import no.cyberfish.dekoi.UPDATES_CHANNEL
+import no.cyberfish.dekoi.URGENT_CHANNEL
 import no.cyberfish.dekoi.ui.components.BrandTile
 import no.cyberfish.dekoi.ui.components.ConfirmDialog
 import no.cyberfish.dekoi.ui.components.InsetRow
-import no.cyberfish.dekoi.ui.components.InsetSection
+import no.cyberfish.dekoi.ui.components.KeyValueRow
 import no.cyberfish.dekoi.ui.components.Screen
+import java.time.Instant
 
 @Composable
 fun SettingsScreen(
@@ -37,9 +61,10 @@ fun SettingsScreen(
     onNavigate: (Route) -> Unit,
 ) {
     var confirming by remember { mutableStateOf(false) }
+    val now = Instant.now()
     Screen(stringResource(R.string.tab_settings), listState = listState) {
         item {
-            InsetSection(title = stringResource(R.string.settings_account_title)) {
+            Group(title = stringResource(R.string.settings_account_title)) {
                 InsetRow(email.orEmpty(), subtitle = stringResource(R.string.settings_account))
                 InsetRow(
                     stringResource(R.string.settings_sign_out),
@@ -50,9 +75,14 @@ fun SettingsScreen(
             }
         }
         item {
-            InsetSection(title = stringResource(R.string.settings_devices)) {
+            Group(title = stringResource(R.string.settings_devices)) {
                 devices.forEach { device ->
-                    InsetRow(device.name, leading = { BrandTile() }, onClick = { onNavigate(Route.Dekoi(device.id)) })
+                    InsetRow(
+                        device.name,
+                        subtitle = stringResource(statusWord(device, now)),
+                        leading = { BrandTile() },
+                        onClick = { onNavigate(Route.Dekoi(device.id)) },
+                    )
                 }
                 InsetRow(
                     stringResource(R.string.action_add_dekoi),
@@ -69,22 +99,15 @@ fun SettingsScreen(
             }
         }
         item { Notifications() }
+        item { Privacy() }
         item {
-            InsetSection(title = stringResource(R.string.settings_privacy_title)) {
-                Text(
-                    stringResource(R.string.settings_privacy_body),
-                    style = MaterialTheme.typography.bodyLarge,
-                    modifier = Modifier.padding(Dimens.spaceL),
-                )
+            Group(title = stringResource(R.string.settings_about)) {
+                KeyValueRow(stringResource(R.string.settings_version), BuildConfig.VERSION_NAME)
+                InsetRow(stringResource(R.string.licences_title), onClick = { onNavigate(Route.Licences) })
             }
         }
         item {
-            InsetSection(title = stringResource(R.string.settings_about)) {
-                InsetRow(stringResource(R.string.settings_version, BuildConfig.VERSION_NAME))
-            }
-        }
-        item {
-            InsetSection {
+            Group(footer = stringResource(R.string.settings_delete_footer)) {
                 InsetRow(
                     stringResource(R.string.settings_delete),
                     titleColor = MaterialTheme.colorScheme.error,
@@ -108,25 +131,261 @@ fun SettingsScreen(
     }
 }
 
-/** Whether this phone shows DeKoi's notifications; the row opens the system settings, where the owner changes it. */
+/**
+ * Stand-in for the restyled InsetSection (ADR 0020), with its parameters:
+ * an uppercase label, then rows between hairlines instead of on a card.
+ */
+@Composable
+private fun Group(
+    modifier: Modifier = Modifier,
+    title: String? = null,
+    footer: String? = null,
+    content: @Composable ColumnScope.() -> Unit,
+) {
+    val hairline = MaterialTheme.colorScheme.outlineVariant
+    Column(modifier.fillMaxWidth()) {
+        title?.let {
+            Text(
+                it.toUpperCase(LocaleList.current),
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier =
+                    Modifier.padding(start = Dimens.spaceL, end = Dimens.spaceL, bottom = Dimens.spaceS).semantics {
+                        heading()
+                        contentDescription = it
+                    },
+            )
+        }
+        // Each row draws a separator along its top edge; the group's own lines
+        // go over the first one and under the last row.
+        Column(
+            Modifier.drawWithContent {
+                drawContent()
+                val width = Dimens.hairline.toPx()
+                drawLine(hairline, Offset(0f, width / 2), Offset(size.width, width / 2), width)
+                drawLine(hairline, Offset(0f, size.height - width / 2), Offset(size.width, size.height - width / 2), width)
+            },
+            content = content,
+        )
+        footer?.let {
+            Text(
+                it,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(start = Dimens.spaceL, end = Dimens.spaceL, top = Dimens.spaceS),
+            )
+        }
+    }
+}
+
+/** A row of text that wraps freely, for sentences an InsetRow would cut short at large font sizes. */
+@Composable
+private fun ProseRow(
+    text: String,
+    color: Color = Color.Unspecified,
+) {
+    val separator = MaterialTheme.colorScheme.outlineVariant
+    Text(
+        text,
+        style = MaterialTheme.typography.bodyLarge,
+        color = color,
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .drawBehind {
+                    val width = Dimens.hairline.toPx()
+                    val inset = Dimens.spaceL.toPx()
+                    val (from, to) = if (layoutDirection == LayoutDirection.Ltr) inset to size.width else 0f to size.width - inset
+                    drawLine(separator, Offset(from, width / 2), Offset(to, width / 2), width)
+                }.padding(horizontal = Dimens.spaceL, vertical = Dimens.spaceM),
+    )
+}
+
+/** What the backend keeps about an owner (backend/supabase/migrations, ADR 0015 for the public address). */
+private val stored =
+    listOf(
+        R.string.settings_privacy_email,
+        R.string.settings_privacy_hosts,
+        R.string.settings_privacy_makers,
+        R.string.settings_privacy_user_names,
+        R.string.settings_privacy_public_address,
+        R.string.settings_privacy_push,
+    )
+
+@Composable
+private fun Privacy() {
+    Group(title = stringResource(R.string.settings_privacy_title), footer = stringResource(R.string.settings_privacy_kept)) {
+        ProseRow(stringResource(R.string.settings_privacy_intro), MaterialTheme.colorScheme.onSurfaceVariant)
+        stored.forEach { ProseRow(stringResource(it)) }
+    }
+}
+
+/** A notification channel (Push.kt) and what it carries, in the words of the alert levels. */
+private class Channel(
+    val id: String,
+    @param:StringRes val name: Int,
+    @param:StringRes val carries: Int,
+)
+
+private val channels =
+    listOf(
+        Channel(URGENT_CHANNEL, R.string.notification_channel_urgent, R.string.settings_channel_urgent),
+        Channel(ALERT_CHANNEL, R.string.notification_channel_alerts, R.string.settings_channel_alerts),
+        Channel(UPDATES_CHANNEL, R.string.notification_channel_updates, R.string.settings_channel_updates),
+    )
+
+/**
+ * Whether each kind of notification reaches this phone. The owner changes
+ * them in the system settings, which each row opens; the state is read
+ * again on return.
+ */
 @Composable
 private fun Notifications() {
     val context = LocalContext.current
     val manager = context.getSystemService(NotificationManager::class.java)
-    var enabled by remember { mutableStateOf(manager.areNotificationsEnabled()) }
+    var allowed by remember { mutableStateOf(allowedChannels(manager)) }
     LifecycleResumeEffect(manager) {
-        enabled = manager.areNotificationsEnabled()
+        allowed = allowedChannels(manager)
         onPauseOrDispose { }
     }
-    InsetSection(title = stringResource(R.string.settings_notifications)) {
-        InsetRow(
-            stringResource(R.string.settings_notifications_row),
-            subtitle = stringResource(if (enabled) R.string.settings_notifications_on else R.string.settings_notifications_off),
-            onClick = {
-                context.startActivity(
-                    Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName),
-                )
-            },
+    val on = stringResource(R.string.settings_notifications_on)
+    val off = stringResource(R.string.settings_notifications_off)
+    Group(
+        title = stringResource(R.string.settings_notifications),
+        footer = stringResource(R.string.settings_notifications_footer),
+    ) {
+        channels.forEach { channel ->
+            InsetRow(
+                stringResource(channel.name),
+                subtitle = stringResource(channel.carries),
+                trailing = {
+                    Text(
+                        if (channel.id in allowed) on else off,
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                },
+                onClick = { context.startActivity(notificationSettings(context, manager, channel.id)) },
+            )
+        }
+    }
+}
+
+/** The channels that can show: the app may notify at all and the owner has not turned the channel off. */
+private fun allowedChannels(manager: NotificationManager): Set<String> {
+    if (!manager.areNotificationsEnabled()) return emptySet()
+    return channels.map { it.id }.filterTo(mutableSetOf()) { id ->
+        val importance = manager.getNotificationChannel(id)?.importance ?: NotificationManager.IMPORTANCE_NONE
+        importance != NotificationManager.IMPORTANCE_NONE
+    }
+}
+
+/** A channel's own settings; the app's settings when notifications are off for the whole app, since a channel cannot be turned on then. */
+private fun notificationSettings(
+    context: Context,
+    manager: NotificationManager,
+    channel: String,
+): Intent {
+    val app = Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName)
+    if (!manager.areNotificationsEnabled()) return app
+    return Intent(Settings.ACTION_CHANNEL_NOTIFICATION_SETTINGS)
+        .putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName)
+        .putExtra(Settings.EXTRA_CHANNEL_ID, channel)
+}
+
+/**
+ * What the app is built with, grouped by licence, from the Gradle
+ * dependencies (`./gradlew :app:dependencies --configuration
+ * releaseRuntimeClasspath`). Licences that require their text to travel
+ * with the app have it in res/raw; Google's terms are named with their
+ * address.
+ */
+private class Licence(
+    @param:StringRes val name: Int,
+    val libraries: List<String>,
+    @param:RawRes val text: Int? = null,
+    val terms: String? = null,
+)
+
+private val licences =
+    listOf(
+        Licence(
+            R.string.licence_apache,
+            listOf(
+                "Android Jetpack: Compose, Material 3, Activity, Lifecycle, Navigation, Credentials",
+                "Kotlin, kotlinx.coroutines, kotlinx.serialization, kotlinx-datetime, kotlinx-io, kotlinx.collections.immutable",
+                "Ktor",
+                "OkHttp, Okio",
+                "Firebase Cloud Messaging",
+                "Kermit",
+                "Multiplatform Settings",
+                "cryptography-kotlin",
+                "kaml, snakeyaml-engine-kmp",
+                "urlencoder",
+                "Guava ListenableFuture",
+                "JSpecify, JetBrains annotations, Error Prone annotations, javax.inject",
+                "Material Symbols",
+            ),
+            text = R.raw.licence_apache_2_0,
+        ),
+        Licence(R.string.licence_mit, listOf("supabase-kt"), text = R.raw.licence_supabase_kt),
+        Licence(R.string.licence_mit, listOf("SLF4J"), text = R.raw.licence_slf4j),
+        Licence(
+            R.string.licence_android_sdk,
+            listOf("Google Play services", "Google Identity Services"),
+            terms = "https://developer.android.com/studio/terms",
+        ),
+        Licence(R.string.licence_ml_kit, listOf("Google code scanner"), terms = "https://developers.google.com/ml-kit/terms"),
+    )
+
+@Composable
+fun LicencesScreen(onBack: () -> Unit) {
+    Screen(stringResource(R.string.licences_title), onBack = onBack) {
+        item {
+            Text(
+                stringResource(R.string.licences_body),
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+        licences.forEach { licence -> item { LicenceSection(licence) } }
+    }
+}
+
+@Composable
+private fun LicenceSection(licence: Licence) {
+    var open by rememberSaveable { mutableStateOf(false) }
+    val reduceMotion = LocalReduceMotion.current
+    Group(
+        modifier = if (reduceMotion) Modifier else Modifier.animateContentSize(expandSpring()),
+        title = stringResource(licence.name),
+        footer = licence.terms,
+    ) {
+        licence.libraries.forEach { ProseRow(it) }
+        licence.text?.let { text ->
+            InsetRow(
+                stringResource(if (open) R.string.licences_hide else R.string.licences_show),
+                titleColor = MaterialTheme.colorScheme.primary,
+                onClick = { open = !open },
+                chevron = false,
+            )
+            if (open) LicenceText(text)
+        }
+    }
+}
+
+@Composable
+private fun LicenceText(
+    @RawRes text: Int,
+) {
+    val resources = LocalResources.current
+    val content = remember(text) { resources.openRawResource(text).bufferedReader().use { it.readText() } }
+    SelectionContainer {
+        Text(
+            content,
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(Dimens.spaceL),
         )
     }
 }
