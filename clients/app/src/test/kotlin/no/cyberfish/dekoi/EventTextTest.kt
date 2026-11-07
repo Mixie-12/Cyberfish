@@ -57,7 +57,7 @@ class EventTextTest {
 
     @Test
     fun `every decoy the device runs has a plain name`() {
-        val decoys = listOf("ftp", "http", "mysql", "rdp", "redis", "ssh", "telnet", "vnc")
+        val decoys = listOf("ftp", "http", "mysql", "rdp", "redis", "smb", "ssh", "telnet", "vnc")
         for (decoy in decoys) {
             assertNotEquals(R.string.service_other, serviceName(decoy), decoy)
         }

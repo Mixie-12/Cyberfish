@@ -28,6 +28,7 @@ select results_eq(
        ('device_online', 'info'),
        ('dns_hijack', 'critical'),
        ('evil_twin', 'critical'),
+       ('file_access', 'critical'),
        ('host_scan', 'warning'),
        ('ids_alert', 'warning'),
        ('login_attempt', 'critical'),

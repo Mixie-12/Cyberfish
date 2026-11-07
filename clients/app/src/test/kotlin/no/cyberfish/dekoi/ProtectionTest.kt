@@ -42,7 +42,7 @@ class ProtectionTest {
 
     @Test
     fun `recent activity on a decoy needs attention`() {
-        for (kind in listOf("login_attempt", "connection", "port_scan", "host_scan", "arp_spoof", "ids_alert")) {
+        for (kind in listOf("login_attempt", "connection", "port_scan", "host_scan", "arp_spoof", "ids_alert", "file_access")) {
             assertEquals(Protection.ATTENTION, protection(listOf(device()), listOf(event(kind)), emptySet(), now), kind)
         }
     }

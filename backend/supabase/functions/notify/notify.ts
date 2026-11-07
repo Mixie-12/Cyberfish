@@ -105,6 +105,10 @@ const TEMPLATES: Record<string, (noun: string) => Template> = {
     title: "A new access point uses your Wi-Fi name",
     body: ALERT_BODY,
   }),
+  file_access: (n) => ({
+    title: `A ${n} opened a file on your decoy file share`,
+    body: ALERT_BODY,
+  }),
   device_offline: () => ({
     title: "Your DeKoi went offline",
     body:

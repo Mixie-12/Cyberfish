@@ -8,6 +8,7 @@
     <string name="service_database">database</string>
     <string name="service_rdp">remote desktop</string>
     <string name="service_vnc">screen sharing</string>
+    <string name="service_file_share">file share</string>
     <string name="service_other">service</string>
     <string name="port_web">web pages</string>
     <string name="port_file_sharing">file sharing</string>
@@ -54,7 +55,7 @@
     <string name="event_file_access_title">Someone opened a file on your decoy file share</string>
     <string name="event_file_access_action">Opened a file on the decoy file share</string>
     <string name="event_file_access_consequence">Someone on your network is looking through files that are not theirs.</string>
-    <string name="event_file_access_why">Your DeKoi shares a few files that look worth opening but mean nothing. Ordinary devices never open them by themselves.</string>
+    <string name="event_file_access_why">Your DeKoi shows a shared folder with tempting file names, and nothing real is in them. Nobody in your home needs these files, so opening one means someone on your network is looking for passwords, money or personal papers.</string>
     <string name="event_port_forward_title">%1$s can now be reached from the internet</string>
     <string name="event_port_forward_action">Opened a way in from the internet</string>
     <string name="event_port_forward_consequence">Anyone on the internet can now try to connect to it.</string>
@@ -161,4 +162,6 @@
     <string name="event_detail_server">Server</string>
     <string name="event_detail_protocol">Method</string>
     <string name="event_detail_targets">Addresses asked for</string>
+    <string name="event_detail_share">Shared folder</string>
+    <string name="event_detail_file">File opened</string>
 </resources>

@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<link rel="icon" href="data:,">
+<title>$name</title>
+<style>
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; }
+  body {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    min-height: 100%; padding: 24px 16px;
+    font: 14px/1.45 -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    color: #1f2933;
+    background: linear-gradient(160deg, #e9eef4 0%, #d5dee8 55%, #c3cfdc 100%);
+  }
+  .panel {
+    width: 100%; max-width: 380px; padding: 32px 32px 28px;
+    background: #fff; border-radius: 12px;
+    box-shadow: 0 1px 2px rgba(15, 30, 50, .08), 0 12px 32px rgba(15, 30, 50, .14);
+  }
+  .device { display: flex; align-items: center; gap: 14px; margin-bottom: 24px; }
+  .device svg { flex: none; }
+  h1 { margin: 0; font-size: 20px; font-weight: 600; letter-spacing: .2px; }
+  .model { margin: 2px 0 0; font-size: 12px; color: #6b7785; }
+  .error {
+    margin: 0 0 16px; padding: 10px 12px; border-radius: 6px;
+    background: #fdecec; color: #a32020; font-size: 13px;
+  }
+  label { display: block; margin: 0 0 6px; font-size: 12px; font-weight: 600; color: #3e4c59; }
+  input[type=text], input[type=password] {
+    display: block; width: 100%; margin: 0 0 16px; padding: 10px 12px;
+    font: inherit; color: inherit; background: #f7f9fb;
+    border: 1px solid #cbd3dc; border-radius: 6px;
+  }
+  input[type=text]:focus, input[type=password]:focus {
+    outline: none; border-color: #2f6fb2; background: #fff;
+    box-shadow: 0 0 0 3px rgba(47, 111, 178, .18);
+  }
+  .remember { display: flex; align-items: center; gap: 8px; margin: 0 0 20px; font-size: 13px; color: #3e4c59; }
+  .remember input { margin: 0; }
+  .remember label { margin: 0; font-size: 13px; font-weight: 400; }
+  button {
+    width: 100%; padding: 11px; border: 0; border-radius: 6px;
+    font: inherit; font-weight: 600; color: #fff; background: #2f6fb2; cursor: pointer;
+  }
+  button:hover { background: #285f99; }
+  button:focus-visible { outline: 3px solid rgba(47, 111, 178, .35); outline-offset: 2px; }
+  .status {
+    display: flex; flex-wrap: wrap; justify-content: center; gap: 4px 14px;
+    margin-top: 20px; font-size: 12px; color: #52606d;
+  }
+  .status span { white-space: nowrap; }
+  .dot {
+    display: inline-block; width: 8px; height: 8px; margin-right: 6px; border-radius: 50%;
+    background: #2e9d5b; vertical-align: 0;
+  }
+</style>
+</head>
+<body>
+<main class="panel">
+  <div class="device">
+    <svg width="44" height="44" viewBox="0 0 44 44" aria-hidden="true">
+      <rect x="4" y="3" width="36" height="38" rx="5" fill="#33475b"/>
+      <rect x="9" y="8" width="26" height="5" rx="1.5" fill="#5f7891"/>
+      <rect x="9" y="15.5" width="26" height="5" rx="1.5" fill="#5f7891"/>
+      <rect x="9" y="23" width="26" height="5" rx="1.5" fill="#5f7891"/>
+      <rect x="9" y="30.5" width="26" height="5" rx="1.5" fill="#5f7891"/>
+      <circle cx="31" cy="10.5" r="1.2" fill="#6fe0a0"/>
+      <circle cx="31" cy="18" r="1.2" fill="#6fe0a0"/>
+      <circle cx="31" cy="25.5" r="1.2" fill="#6fe0a0"/>
+      <circle cx="31" cy="33" r="1.2" fill="#6fe0a0"/>
+    </svg>
+    <div>
+      <h1>$name</h1>
+      <p class="model">$model &middot; Firmware $firmware</p>
+    </div>
+  </div>
+  <form method="post" action="/index.html">
+    <!--STARTERR-->
+    <p class="error" role="alert">The user name or password you entered is incorrect.</p>
+    <!--ENDERR-->
+    <label for="username">User name</label>
+    <input type="text" id="username" name="username" autocomplete="username" autocapitalize="none" spellcheck="false" required autofocus>
+    <label for="password">Password</label>
+    <input type="password" id="password" name="password" autocomplete="current-password" required>
+    <div class="remember">
+      <input type="checkbox" id="remember" name="remember" value="1">
+      <label for="remember">Remember me</label>
+    </div>
+    <button type="submit">Sign in</button>
+  </form>
+</main>
+<footer class="status">
+  <span><i class="dot"></i>System status: Healthy</span>
+  <span>Volume 1: 4 of 4 disks online</span>
+  <span>Last backup: 02:14</span>
+</footer>
+</body>
+</html>

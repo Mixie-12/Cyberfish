@@ -120,6 +120,7 @@ Deno.test("every event kind has its own template; anything else gets the generic
     "port_forward",
     "evil_twin",
     "new_access_point",
+    "file_access",
     "device_offline",
   ];
   const generic = templateFor("something_new");

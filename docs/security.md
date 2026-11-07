@@ -19,10 +19,11 @@ date recorded in `docs/STATUS.md`), **pending** (not yet shown).
 
 | Actor                         | Can reach                                  | Must never reach                         |
 | ----------------------------- | ------------------------------------------ | ---------------------------------------- |
-| Anyone on the customer LAN    | decoys, the firewall, broadcast traffic    | the agent, its secret, the host          |
+| Anyone on the customer LAN    | decoys and their announcements, the firewall, broadcast traffic | the agent, its secret, the host, any real file |
 | A compromised router          | answers to the agent's own requests        | the agent's secret, any change on the router made by DeKoi |
 | Anyone within Wi-Fi range     | the scan results (what their beacons say)  | the agent's privileges, the host, notification text |
 | A compromised decoy process   | its own container, write-only log volume   | secrets, the backend, the host           |
+| A compromised announcer       | its own container, nothing else            | any volume, events, secrets, the host    |
 | Any internet client           | the Data API with the publishable key      | any row, any function except device RPCs |
 | A signed-in owner             | their own rows through RLS                 | other owners' rows, device credentials   |
 | A stolen or cloned device     | its own device's rows through device RPCs  | other devices' rows, owners' data        |
@@ -41,7 +42,7 @@ The data flow and every contract are in `docs/architecture.md`.
 | 3  | Claim code guessing, reuse, probing, flooding                    | 128-bit codes, hashed, single use per side, generic errors, 5 pending per user | tested: `01_claim_register` |
 | 4  | Device impersonation, writing another device's rows              | 256-bit secret per device, hashed, rows scoped to the secret's device | tested: `02_device_api`, `08_device_identification` |
 | 5  | Oversized or malformed input, control characters, HTML           | size and shape checks in RPCs, field allowlist, bounded strings without control characters, fixed vocabularies; on the device, a kernel filter and bounded parsers for discovery traffic | tested: `02_device_api`, `06_network_detection`, `08_device_identification`, agent `test_sources`, `test_identify` (including a seeded fuzz test) |
-| 6  | Code execution inside the canary                                 | own user namespace, no capabilities, read-only root, no secrets, write-only log volume | tested (lockdown starts under real Podman): `device/e2e/run.py`; config review: `dekoi-canary.container` |
+| 6  | Code execution inside the canary or the announcer (OpenCanary, Samba, avahi, wsdd2) | own user namespace, no capabilities, read-only root, no secrets; the canary writes only its log volume, the announcer mounts nothing | tested (lockdown starts under real Podman): `device/e2e/run.py`; config review: `dekoi-canary.container`, `dekoi-announce.container` |
 | 7  | Unsigned, foreign or edge image pushed to the registry           | Podman `policy.json`: only the three release repositories, signed with a key on the card; edge images unsigned in separate repositories | tested: `device/tests/signatures.sh` with the image library of Debian trixie, the card's release (`signatures` job), `test_host_config` |
 | 8  | Attacker-controlled strings in notifications                     | fixed templates by event kind; payload carries the event id only; the weekly summary is a fixed template with three whole numbers and no payload | tested with Phase 5 (`notify` function tests) |
 | 9  | Anything beyond the intended surface on the project URL          | public schema only, GraphQL dropped, no buckets, no publications | verified 2026-11-07 against production: anonymous reads 401, private schema and GraphQL not exposed, no buckets, notify refuses requests without the secret |
@@ -53,17 +54,25 @@ The data flow and every contract are in `docs/architecture.md`.
 | 15 | A compromised agent misusing the radio                           | the host reads three bytes of one file and accepts two capital letters; raspi-config checks the ISO list; the scan unit keeps only CAP_NET_ADMIN on a read-only system; the agent can make the host scan or stop, nothing else | config review; shellcheck and `systemd-analyze verify` in CI; pending on hardware |
 | 16 | Flooding the API from one address or account                     | write limits per address and per user in PostgREST's pre-request function (ADR 0016) | tested: `14_request_limits`; HTTP 429 through the local gateway verified 2026-11-08 |
 | 17 | Filling the database or the function quota from accounts and devices of one's own | storage limits per account and device, push tokens capped, abandoned setups removed, notify calls capped per account and in all (ADR 0016) | tested: `15_storage_limits` |
-| 13 | Signing or deploying code nobody approved                        | `permissions: {}` in every workflow; signing only in the `release` environment (v* tags, owner approval), bound by workload identity federation to that workflow, ref and environment; production secrets only on `main` | config: `infra/github/apply.sh`, `infra/google/github.tf`; pending: repository public and `apply.sh` run |
-| 14 | A leaked CI credential stays useful                              | KMS signing key cannot be exported; webhook secret and FCM key replaced monthly and never in GitHub; no database password in CI; an issue 30 days before the other credentials expire | `rotate-keys.yml`, `expiry.yml`; pending: first runs |
-| 15 | A known-vulnerable dependency ships                              | Grype before signing (fails on fixable critical), weekly Grype on `:stable`, OSV-Scanner on pip and Gradle, Dependabot | `device-images.yml`, `security.yml`; OSV-Scanner run locally 2026-11-07 |
-| 16 | Production data lost                                             | nightly dump, encrypted with age, kept 90 days              | `backup.yml`; pending: recipients file and a restore test |
+| 18 | Signing or deploying code nobody approved                        | `permissions: {}` in every workflow; signing only in the `release` environment (v* tags, owner approval), bound by workload identity federation to that workflow, ref and environment; production secrets only on `main` | config: `infra/github/apply.sh`, `infra/google/github.tf`; pending: repository public and `apply.sh` run |
+| 19 | A leaked CI credential stays useful                              | KMS signing key cannot be exported; webhook secret and FCM key replaced monthly and never in GitHub; no database password in CI; an issue 30 days before the other credentials expire | `rotate-keys.yml`, `expiry.yml`; pending: first runs |
+| 20 | A known-vulnerable dependency ships                              | Grype before signing (fails on fixable critical), weekly Grype on `:stable`, OSV-Scanner on pip and Gradle, Dependabot | `device-images.yml`, `security.yml`; OSV-Scanner run locally 2026-11-07 |
+| 21 | Production data lost                                             | nightly dump, encrypted with age, kept 90 days              | `backup.yml`; pending: recipients file and a restore test |
+| 22 | The decoy file share becomes a way in: a sign-in or guest access that works, a writable share, real data | no account exists, failed sign-ins never become guest sessions, only Public opens without a password and it is read-only, its files are dull text written for the decoy and baked into the image | tested: `device/e2e/run.py` (sign-in refused, bait file read); verified 2026-11-07 on the built image under Podman 5.4.2 with the units' flags: every password share refuses anonymous access, sign-in and writes refused |
+| 23 | Hostile user, share or file names from the file share            | only the user name, share and file are kept, bounded and stripped; Samba logs no password or hash; fixed detail keys `share` and `file` | tested: agent `test_sources` (real Samba records), `18_file_access` |
+| 24 | Discovery traffic floods the owner with alerts                   | NetBIOS, mDNS and WS-Discovery are answered but never parsed; listing the shares (`IPC$`) and clients probing without a password are not events | tested: agent `test_sources`; `device/e2e/run.py` (anonymous listing yields no sign-in event) |
+| 25 | Exhausting the device through the file share                     | at most 20 smbd processes, state in a small tmpfs, logs rotated at 1 MB | config review: `canary/persona/smb.conf` |
 
 Further: typed passwords never leave the device (tested: agent `test_sources`,
-end-to-end assertion that the attacker's password is absent from the backend).
+end-to-end assertion that the attacker's password, typed into the web page
+and the file share, is absent from the backend).
 
 Hardware (verified 2026-11-07, `docs/STATUS.md` Phase 7): from the LAN only
 the eight decoy ports answer and port 22 is the decoy, not the host's SSH;
 the login alert arrived about 1 s after the attempt with the fixed template.
+The file share and its announcements (ADR 0018) are pending on hardware:
+the new ports from the LAN, the decoy in Windows Explorer and Finder, and
+port 5000.
 
 ## Outbound traffic from the device
 

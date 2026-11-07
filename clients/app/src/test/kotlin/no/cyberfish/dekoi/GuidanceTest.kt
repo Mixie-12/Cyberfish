@@ -17,6 +17,7 @@ class GuidanceTest {
             "rogue_router",
             "name_poisoning",
             "ids_alert",
+            "file_access",
         )
 
     @Test

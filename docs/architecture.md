@@ -8,7 +8,7 @@ is the source of truth for every function named here.
 ## Data flow
 
 ```
-Pi: OpenCanary --log file--> agent --HTTPS, anon key + device secret--> Supabase RPCs
+Pi: OpenCanary, Samba --log files--> agent --HTTPS, anon key + device secret--> Supabase RPCs
 Pi: host Wi-Fi scan (iw) --/run/dekoi/wifi--> agent --country--> host Wi-Fi scan
                                                                             |
 App <--HTTPS, user JWT, RLS-- Postgres tables <------------------------------+
@@ -18,13 +18,31 @@ agent --ICMP, UDP 53, HTTP (UPnP, read-only)--> gateway and resolver on the LAN
 agent --HTTPS--> 1.1.1.1 (DNS over HTTPS), speed.cloudflare.com (speed test, opt-in)
 ```
 
+## Decoys
+
+One image, `dekoi-canary`, runs as two containers, both with their own user
+namespace, no capabilities and a read-only root (ADR 0005, ADR 0018):
+
+| Container        | Runs                                  | Volumes                          |
+| ---------------- | ------------------------------------- | -------------------------------- |
+| `dekoi-canary`   | OpenCanary and the Samba file share   | log volume (`opencanary.log`, `samba.log`), SSH host keys |
+| `dekoi-announce` | NetBIOS names (`nmbd`), mDNS (`avahi-daemon`), WS-Discovery (`wsdd2`) | none |
+
+Their ports are the sets in `device/host/etc/nftables.conf`, which a test
+keeps equal to the decoys; TCP 5000 is redirected to the web decoy. The
+persona (name, model, firmware, shares, bait files) is defined once in
+`device/canary/persona/` and filled into the configuration when the image
+is built; new cards take its name as host name. Discovery (NetBIOS, mDNS,
+WS-Discovery, listing the shares through `IPC$`, anonymous probes) never
+becomes an event; signing in, opening a share and reading a file do.
+
 ## Trust boundaries
 
 | Boundary                        | Who is on the other side      | Control                                  |
 | ------------------------------- | ----------------------------- | ---------------------------------------- |
-| LAN to decoys                   | anyone on the customer LAN    | decoys in a locked-down container        |
+| LAN to decoys                   | anyone on the customer LAN    | decoys and their announcements in locked-down containers |
 | LAN discovery traffic to agent  | anyone on the customer LAN    | kernel filter, bounded parsers, cleaned and bounded strings, fixed vocabularies |
-| Canary container to agent       | possibly compromised decoys   | one-way, read-only log file; no secrets  |
+| Canary container to agent       | possibly compromised decoys   | one-way, read-only log files; no secrets |
 | Wi-Fi radio to agent            | anyone within radio range     | the host only scans; iw's text read-only, parsed unprivileged, bounded, cleaned |
 | Agent to host Wi-Fi scan        | a compromised agent           | one file, three bytes read, two capital letters accepted |
 | Agent to backend                | any internet client           | 256-bit device secret, input validation  |
@@ -71,7 +89,7 @@ Kinds a device may report (`private.device_event_kinds()`):
 | Kind             | Source                                   | Typical detail                      |
 | ---------------- | ---------------------------------------- | ----------------------------------- |
 | `login_attempt`  | decoy                                    | `username`, `path`, `client_version` |
-| `connection`     | decoy                                    | `path`, `user_agent`, `command`     |
+| `connection`     | decoy                                    | `path`, `user_agent`, `command`, `share` |
 | `port_scan`      | firewall log, closed ports on the box    | `ports`                             |
 | `host_scan`      | ARP watcher, one host asking for many    | `targets`                           |
 | `arp_spoof`      | ARP watcher, an address claimed twice    | `claimed_ip`, `previous_mac`        |
@@ -81,6 +99,7 @@ Kinds a device may report (`private.device_event_kinds()`):
 | `ids_alert`      | Suricata                                 | `signature`, `category`, `severity`, `signature_id` |
 | `evil_twin`      | Wi-Fi watch, a weaker copy of the home network | `security`, `home_security`, `channel`, `signal_dbm` |
 | `new_access_point` | Wi-Fi watch, a new access point with the home name | as `evil_twin` |
+| `file_access`    | file share decoy, a file was read        | `share`, `file`                     |
 
 The backend writes five more kinds itself (`private.event_kinds()`):
 `device_offline` and `device_online` (scheduled job and heartbeat),

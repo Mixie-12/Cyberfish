@@ -686,6 +686,8 @@ private fun TechnicalDetails(
                 R.string.event_detail_server to incident.values { it.detail.serverIp },
                 R.string.event_detail_protocol to incident.values { it.detail.protocol?.uppercase() },
                 R.string.event_detail_targets to incident.values { it.detail.targets },
+                R.string.event_detail_share to incident.values { it.detail.share },
+                R.string.event_detail_file to incident.values { it.detail.file },
                 R.string.event_detail_ports to
                     incident.events
                         .flatMap { it.detail.ports }

@@ -31,6 +31,7 @@ fun serviceName(service: String?): Int =
         "mysql", "redis" -> R.string.service_database
         "rdp" -> R.string.service_rdp
         "vnc" -> R.string.service_vnc
+        "smb" -> R.string.service_file_share
         else -> R.string.service_other
     }
 

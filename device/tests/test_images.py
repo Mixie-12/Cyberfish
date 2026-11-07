@@ -18,9 +18,9 @@ def test_every_image_carries_its_version_file() -> None:
 
 def test_the_canary_copies_its_version_file_next_to_the_log_the_agent_reads() -> None:
     config = Config.from_env({"DEKOI_API_URL": "https://x.invalid", "DEKOI_API_KEY": "k"})
-    containerfile = (DEVICE / "canary" / "Containerfile").read_text()
-    copy = f"cp --remove-destination {monitors.IMAGE_FILE} {config.canary_log.parent / 'image'} ||"
-    assert copy in containerfile
+    supervise = (DEVICE / "canary" / "supervise.py").read_text()
+    assert f'IMAGE_FILE = Path("{monitors.IMAGE_FILE}")' in supervise
+    assert f'IMAGE_COPY = Path("{config.canary_log.parent / "image"}")' in supervise
 
 
 def test_the_ids_sends_statistics_often_enough() -> None:
