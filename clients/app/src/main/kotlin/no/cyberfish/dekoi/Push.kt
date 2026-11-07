@@ -6,6 +6,7 @@ import android.os.Build
 import com.google.android.gms.tasks.Task
 import com.google.firebase.FirebaseOptions
 import kotlinx.coroutines.suspendCancellableCoroutine
+import no.cyberfish.dekoi.shared.DesignTokens
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 
@@ -20,6 +21,14 @@ const val UPDATES_CHANNEL = "updates"
 fun channelFor(requested: String?): String = requested?.takeIf { it in CHANNELS } ?: ALERT_CHANNEL
 
 private val CHANNELS = setOf(URGENT_CHANNEL, ALERT_CHANNEL, UPDATES_CHANNEL)
+
+/** The colour of a channel's severity; notify.ts sends a copy for the notifications the phone draws itself. */
+fun notificationColor(channel: String): Int =
+    when (channel) {
+        URGENT_CHANNEL -> DesignTokens.CRITICAL.color
+        UPDATES_CHANNEL -> DesignTokens.INFO.color
+        else -> DesignTokens.WARNING.color
+    }.toInt()
 
 /** Must match the tag notify.ts sets, so opening an alert in the app can clear its notification. */
 fun notificationTag(eventId: Long): String = "event-$eventId"

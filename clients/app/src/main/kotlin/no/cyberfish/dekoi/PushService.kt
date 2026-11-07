@@ -63,6 +63,7 @@ class PushService : FirebaseMessagingService() {
             Notification
                 .Builder(this, channel)
                 .setSmallIcon(R.drawable.ic_notification)
+                .setColor(notificationColor(channel))
                 .setContentTitle(content.title)
                 .setContentText(content.body)
                 .setStyle(Notification.BigTextStyle().bigText(content.body))
