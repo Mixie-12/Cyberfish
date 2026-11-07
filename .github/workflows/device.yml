@@ -38,6 +38,51 @@ jobs:
           && mkdir -p /etc/containers/systemd && cp /host/etc/containers/systemd/*.container /etc/containers/systemd/
           && /usr/lib/systemd/system-generators/podman-system-generator --dryrun >/dev/null'
 
+  # Abuse case 7: a device accepts only images signed with the DeKoi key. Uses
+  # the repository's policy with the namespace pointed at a local registry,
+  # a throwaway key, and the same cosign flags as the release workflow.
+  signatures:
+    needs: checks
+    runs-on: ubuntu-24.04
+    env:
+      REGISTRY: localhost:5000/dekoi
+      ALPINE: docker.io/library/alpine@sha256:3f4d6b32e26703c6082839234f43769d5046b3ac7c910033911d1e71d8cd630a
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: sigstore/cosign-installer@756fe2d284c7292c4e9b62c8a28f1e5629c59532 # v4.1.3
+        with:
+          cosign-release: v3.1.4
+      - name: Publish a signed and an unsigned image to a local registry
+        run: |
+          sudo podman run -d -p 5000:5000 docker.io/library/registry@sha256:a3d8aaa63ed8681a604f1dea0aa03f100d5895b6a58ace528858a7b332415373
+          sudo podman pull -q "$ALPINE"
+          for name in signed unsigned; do
+            sudo podman tag "$ALPINE" "$REGISTRY/$name:stable"
+            sudo podman push -q --tls-verify=false --digestfile "$RUNNER_TEMP/$name.digest" "$REGISTRY/$name:stable"
+          done
+          cd "$RUNNER_TEMP"
+          COSIGN_PASSWORD=test cosign generate-key-pair
+          COSIGN_PASSWORD=test cosign sign --yes --key cosign.key --allow-http-registry \
+            --use-signing-config=false --new-bundle-format=false --tlog-upload=false \
+            "$REGISTRY/signed@$(cat signed.digest)"
+      - name: Install the device policy for the local namespace
+        run: |
+          sed -e "s|ghcr.io/mixie-12|$REGISTRY|" -e "s|/etc/dekoi/cosign.pub|$RUNNER_TEMP/cosign.pub|" \
+            device/host/etc/containers/policy.json | sudo tee /etc/containers/policy.json
+          sed -e "s|ghcr.io/mixie-12|$REGISTRY|" device/host/etc/containers/registries.d/dekoi.yaml \
+            | sudo tee /etc/containers/registries.d/dekoi.yaml
+          sudo podman rmi --force "$REGISTRY/signed:stable" "$REGISTRY/unsigned:stable" "$ALPINE"
+      - name: Signed image is accepted
+        run: sudo podman pull --tls-verify=false "$REGISTRY/signed:stable"
+      - name: Unsigned and foreign images are refused
+        run: |
+          for image in "$REGISTRY/unsigned:stable" "$ALPINE"; do
+            if sudo podman pull --tls-verify=false "$image"; then
+              echo "accepted $image without a valid signature"
+              exit 1
+            fi
+          done
+
   # The real Quadlet units and images on a throwaway machine, against a local
   # Supabase (device/e2e/run.py describes what is and is not covered).
   e2e:
@@ -55,6 +100,7 @@ jobs:
           supabase status -o json > "$RUNNER_TEMP/supabase.json"
       - name: Prepare the host as first boot does
         run: |
+          sudo systemctl mask --now ssh.service ssh.socket
           echo "containers:2147483647:2147483648" | sudo tee -a /etc/subuid /etc/subgid
           sudo sysctl -w net.ipv4.ip_unprivileged_port_start=0
           sudo install -D -m 0644 -t /etc/containers/systemd device/host/etc/containers/systemd/*.container
@@ -72,4 +118,7 @@ jobs:
         run: sudo python3 device/e2e/run.py "$RUNNER_TEMP/supabase.json"
       - name: Device logs
         if: failure()
-        run: sudo journalctl --no-pager -u dekoi-canary -u dekoi-agent | tail -n 200
+        run: |
+          sudo journalctl --no-pager -u dekoi-agent -n 100
+          sudo journalctl --no-pager -u dekoi-canary -n 60
+          sudo ss -ltnp
