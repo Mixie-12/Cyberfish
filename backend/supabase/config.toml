@@ -166,9 +166,13 @@ site_url = "http://127.0.0.1:3000"
 # The public URL that Auth serves on. Defaults to the API external URL with `/auth/v1` appended.
 # external_url = ""
 # A list of *exact* URLs that auth providers are permitted to redirect to post authentication.
+# The app signs in with Google ID tokens and uses no redirect. The browser flow, which the Google
+# provider also allows, can return only to site_url or this list, so it hands tokens to no website.
 additional_redirect_urls = []
 # How long tokens are valid for, in seconds. Defaults to 3600 (1 hour), maximum 604,800 (1 week).
-jwt_expiry = 3600
+# An access token cannot be revoked before it expires, also not by signing out or deleting the
+# account; 15 minutes bounds a stolen one. Supabase advises against less than 5 minutes.
+jwt_expiry = 900
 # JWT issuer URL. If not set, defaults to auth.external_url.
 # jwt_issuer = ""
 # Path to JWT signing key. DO NOT commit your signing keys file to git.
@@ -177,8 +181,12 @@ jwt_expiry = 3600
 enable_refresh_token_rotation = true
 # Allows refresh tokens to be reused after expiry, up to the specified interval in seconds.
 # Requires enable_refresh_token_rotation = true.
+# A refresh token works once; using it again after 10 seconds (the grace for concurrent
+# refreshes) ends the whole session, so a copied token is noticed.
 refresh_token_reuse_interval = 10
 # Allow/disallow new user signups to your project. Existing users can still sign in.
+# Anyone may sign up, through Google only: email, phone, anonymous, Web3 and passkey sign-in and
+# manual linking are off below. Second factors are Google's.
 enable_signup = true
 # Allow/disallow anonymous sign-ins to your project.
 enable_anonymous_sign_ins = false
@@ -200,6 +208,9 @@ password_requirements = ""
 # rp_id = "localhost"
 # rp_origins = ["http://127.0.0.1:3000"]
 
+# Per client address. Google ID-token sign-in and session refresh both count as token_refresh;
+# 150 per 5 minutes leaves room for many phones behind one carrier address. The other limits
+# guard sign-in methods that are off.
 [auth.rate_limit]
 # Number of emails that can be sent per hour. Requires auth.email.smtp to be enabled.
 email_sent = 2
@@ -278,6 +289,7 @@ max_frequency = "5s"
 # 14152127777 = "123456"
 
 # Configure logged in session timeouts.
+# Time-boxed sessions, inactivity timeouts and single sessions need the Pro plan.
 # [auth.sessions]
 # Force log out after the specified duration.
 # timebox = "24h"

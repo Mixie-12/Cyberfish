@@ -47,6 +47,8 @@ The data flow and every contract are in `docs/architecture.md`.
 | 13 | Forged access points: crafted names and elements, beacon floods  | the host only scans; iw's text parsed by the unprivileged agent, split on newline only, first kernel field per block, privacy bit decides open, names decoded, bounded to 32 bytes and cleaned; at most 16 reports a day | tested: agent `test_wifi` with real iw output |
 | 14 | The owner's Wi-Fi name as an injection vector                    | column grant, 32 bytes, no control characters, never in a notification or on the host | tested: `13_wifi_watch`, `00_hardening`, `notify` tests |
 | 15 | A compromised agent misusing the radio                           | the host reads three bytes of one file and accepts two capital letters; raspi-config checks the ISO list; the scan unit keeps only CAP_NET_ADMIN on a read-only system; the agent can make the host scan or stop, nothing else | config review; shellcheck and `systemd-analyze verify` in CI; pending on hardware |
+| 16 | Flooding the API from one address or account                     | write limits per address and per user in PostgREST's pre-request function (ADR 0016) | tested: `14_request_limits`; HTTP 429 through the local gateway verified 2026-11-08 |
+| 17 | Filling the database or the function quota from accounts and devices of one's own | storage limits per account and device, push tokens capped, abandoned setups removed, notify calls capped per account and in all (ADR 0016) | tested: `15_storage_limits` |
 
 Further: typed passwords never leave the device (tested: agent `test_sources`,
 end-to-end assertion that the attacker's password is absent from the backend).
@@ -124,7 +126,10 @@ function grants, tested. Authentication (API2): Supabase Auth, device secrets.
 Property-level authorization (API3): column grants (only `name`,
 `speed_test`, `wifi_name`, `trusted`, `label`, `room` and `weekly_summary`
 are writable), tested. Resource consumption (API4): batch limits, pending-claim
-limit, bounded fields; no edge rate limit without a custom domain (ADR 0001).
+limit, bounded fields, write limits per address and per user, storage
+limits per account and device, a cap on notify calls (ADR 0016), tested;
+reads are bounded by statement timeouts and `max_rows`, with aggregates and
+query plans off; no edge firewall without a custom domain.
 Business flows (API6): single-use pairing. SSRF (API7): the only outbound call
 from the backend goes to a fixed FCM URL. Misconfiguration (API8): see A02.
 Inventory (API9): one documented API (`docs/architecture.md`). Unsafe
@@ -138,6 +143,86 @@ storage. Crypto: platform TLS, system CAs only. Auth: Credential Manager with
 nonce. Network: cleartext forbidden in release. Platform: no exported components
 except the launcher; no WebView. Code: R8 in release, lint clean, dependencies
 pinned. Resilience: out of MVP scope.
+
+## Platform settings
+
+Auth, from `backend/supabase/config.toml` and applied by CI: sign-up open,
+through Google only, with the nonce checked; email, phone, anonymous, Web3
+and passkey sign-in, manual linking and MFA enrolment off; no redirect URLs
+besides the site URL; access tokens valid 15 minutes; refresh tokens single
+use, with reuse after 10 seconds ending the session; Auth's own rate limits
+per address (Google sign-in and refresh share `token_refresh`, verified in
+the Auth source). PostgREST, from a migration: the pre-request check of
+ADR 0016, no OpenAPI description, no aggregates, no query plans. Only the
+`public` schema is exposed; Realtime has no published tables and Storage
+no buckets (`00_hardening`).
+
+Settings that the current CI token cannot write. Each needs the owner once:
+either a one-time bootstrap check, or a replacement token with the named
+permission so CI owns the setting.
+
+| Setting | Required | How |
+| ------- | -------- | --- |
+| Realtime service | off: nothing in DeKoi uses Realtime, and while it runs anyone with the publishable key can broadcast on public channels and use up the plan's Realtime quota | Management API `PATCH /v1/projects/{ref}/config/realtime` with `{"suspend": true, "private_only": true}` from CI (token permission "Realtime Config" read-write), or Realtime, Settings, "Enable Realtime service" |
+| SSL enforcement for direct database connections | on | `[db.ssl_enforcement] enabled = true` in `config.toml` once the token has "SSL Enforcement" read-write; `config push` fails on it before |
+| Auth audit logs in the database | off: the rows hold addresses and are not deleted with the account | dashboard only: Authentication, Audit Logs, "Write audit logs to the database" |
+| Auth IP address forwarding (`Sb-Forwarded-For`) | off (the default for new projects): otherwise a caller with a secret key chooses the address Auth counts | dashboard only: Authentication, Rate Limits |
+
+## Personal data
+
+What the backend stores about people, for the privacy policy. The jobs
+that delete it are in `docs/architecture.md`, "Scheduled jobs".
+
+| Data | About | Where | Kept |
+| ---- | ----- | ----- | ---- |
+| Google account: email address, name, picture URL, Google account ID, sign-in times | the owner | Supabase Auth (`auth.users`, `auth.identities`) | until the account is deleted |
+| Sessions: address and user agent of each sign-in and refresh | the owner | `auth.sessions`, `auth.refresh_tokens` | until sign-out or account deletion; the Free plan has no session expiry |
+| Push tokens | the owner's phones | `private.push_tokens` | until sign-out, until FCM reports the app removed, beyond the 10 newest, or account deletion |
+| DeKoi names, local and public address, country, versions, decoys, monitors, online state, network check results, speed test setting, home Wi-Fi name and Wi-Fi watch state | the owner | `public.devices` | until the DeKoi or the account is removed; a setup never started is removed after 30 days |
+| Settings and when the last weekly summary was sent | the owner | `public.owner_settings`, `private.weekly_summaries` | until the account is deleted |
+| Events: source IP and hardware address, user names and paths typed into decoys, user agents, IDS signatures, the hardware address, security, channel and signal of access points that carry the home Wi-Fi name (possibly a neighbour's), when the owner read them | people and devices on or near the owner's network | `public.events` | 90 days |
+| Network inventory: hardware and IP addresses, maker, host names (often a person's name), model, kind, system, services, trust, the owner's names and rooms for them | devices on the owner's network | `public.network_hosts`, `public.networks` | 90 days after last seen |
+| Network health, speed tests, port forwards (internal address and the description any device on the network chose) | the owner's network and its devices | `public.health_samples`, `public.speed_tests`, `public.port_forwards` | 90 days |
+| Source of the last push per DeKoi | devices on the owner's network | `private.notified_sources` | 1 day |
+| Client address (IPv6 by its /64) or user ID with a request count | anyone writing to the API | `private.rate_counters` | at most 70 minutes |
+| API, Auth and function logs with client addresses | anyone calling the API | Supabase's log store | 1 day on the Free plan |
+| Encrypted backups of all of the above | everyone above | GitHub Actions artifacts | 30 days (`docs/runbooks/restore-backup.md`) |
+
+Never stored: passwords typed into decoys (they never leave the device),
+traffic contents, precise location (the country comes from the platform's
+`CF-IPCountry` header), the names of other Wi-Fi networks. The access
+points the Wi-Fi watch learned stay on the DeKoi (ADR 0019).
+
+Deleting the account (`delete_account_v1`) deletes the Auth user, and every
+other table refers to `auth.users` or to such a table with
+`on delete cascade`. `04_account` checks both: the deletion itself, and that
+every table in `public` and `private` is reached that way, so a table added
+later cannot be forgotten. What remains afterwards: rate counts for up to
+70 minutes, platform logs for a day, backups for 30 days.
+
+Processors: Supabase (database, Auth, functions; EU, Stockholm), Google
+(sign-in; FCM receives the push token, a fixed notification text and the
+event id), GitHub (encrypted backups, which it cannot read).
+
+## Monitoring
+
+What should run on a schedule, for the CI work to build. Each is a
+read-only check against the project with the CI token or database
+password; a failing run emails the owner. SQL checks connect as `postgres`.
+
+| Check | Fails when | When |
+| ----- | ---------- | ---- |
+| Advisors: `supabase db advisors --remote --type all --fail-on warn` | any warning. The project's run adds Auth lints; ignore by name only those that cannot apply to Google-only sign-in on the Free plan (leaked password protection, MFA options), nothing else | daily and after every deploy |
+| Configuration drift: `supabase config diff --remote`, and `GET /v1/projects/{ref}/config/realtime` | a difference from `config.toml`, or Realtime not suspended (see "Platform settings") | daily |
+| Surface checks in `docs/runbooks/deploy-backend.md` | any unexpected status | daily |
+| Backup and restore test (`docs/runbooks/restore-backup.md`) | any step | daily |
+| Jobs: `cron.job_run_details` of the last day | a status other than `succeeded`, or a job of `cron.job` without a run | daily |
+| Database size: `pg_database_size(current_database())` | over 350 MB, 70% of the Free plan's 500 MB | daily |
+| Notify quota: events received this calendar month, an upper bound on `notify` calls | over 400,000 of the Free plan's 500,000 | daily |
+| Notify gate: hours of the last day with more than 600 events | any: pushes were held back for everyone (ADR 0016) | daily |
+| Flooding: per account, devices, setups waiting, reported events of the last day and push tokens | any account over half its limit (ADR 0016), or setups waiting over 100 in all | daily |
+| Client address: `private.rate_counters` holds `ip` buckets while devices are online | none: the platform no longer sends `CF-Connecting-IP`, and the per-address limits are off | daily |
+| CI access token expiry (`docs/runbooks/deploy-backend.md`, step 4) | less than 30 days left; a reminder in the owner's calendar, since the token cannot read its own expiry | monthly |
 
 ## Known limitations
 

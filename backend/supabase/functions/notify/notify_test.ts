@@ -9,7 +9,8 @@ import {
   templateFor,
 } from "./notify.ts";
 
-const SECRET = "test-shared-secret";
+const SECRET = "a".repeat(64);
+const PREVIOUS_SECRET = "b".repeat(64);
 const OWNER = "00000000-0000-4000-8000-00000000000a";
 const SUPABASE = "http://supabase.test";
 const FCM = "http://fcm.test";
@@ -71,11 +72,12 @@ function fakeFetch(rows: unknown[], fcmStatus = 200, fcmBody: unknown = {}) {
   return { calls, fetchFn: fetchFn as typeof fetch };
 }
 
-async function handler(fetchFn: typeof fetch) {
+async function handler(fetchFn: typeof fetch, previousNotifySecret = "") {
   const { account } = await serviceAccount();
   return createHandler(
     {
       notifySecret: SECRET,
+      previousNotifySecret,
       supabaseUrl: SUPABASE,
       serviceRoleKey: "service-role-key",
       serviceAccount: account,
@@ -171,6 +173,40 @@ Deno.test("a wrong or missing secret is refused before anything else happens", a
   const noHeader = new Request("http://notify.test/", { method: "POST", body: "{}" });
   equal((await handle(noHeader)).status, 401);
   equal(calls.length, 0);
+});
+
+Deno.test("during a rotation the previous secret is accepted too, and nothing else", async () => {
+  const { calls, fetchFn } = fakeFetch([]);
+  const handle = await handler(fetchFn, PREVIOUS_SECRET);
+  equal((await handle(webhook({ event_id: 1 }, SECRET))).status, 204);
+  equal((await handle(webhook({ event_id: 2 }, PREVIOUS_SECRET))).status, 204);
+  equal((await handle(webhook({ event_id: 3 }, "c".repeat(64)))).status, 401);
+  equal((await handle(webhook({ event_id: 4 }, ""))).status, 401);
+  equal(calls.length, 2);
+});
+
+Deno.test("without a previous secret an empty header is still refused", async () => {
+  const { calls, fetchFn } = fakeFetch([]);
+  const handle = await handler(fetchFn, "");
+  equal((await handle(webhook({ event_id: 1 }, ""))).status, 401);
+  equal((await handle(webhook({ event_id: 1 }, PREVIOUS_SECRET))).status, 401);
+  equal(calls.length, 0);
+});
+
+Deno.test("short secrets stop the function from starting", async () => {
+  const { fetchFn } = fakeFetch([]);
+  const { account } = await serviceAccount();
+  const config = {
+    notifySecret: SECRET,
+    previousNotifySecret: "",
+    supabaseUrl: SUPABASE,
+    serviceRoleKey: "service-role-key",
+    serviceAccount: account,
+    fcmBaseUrl: FCM,
+  };
+  throws(() => createHandler({ ...config, notifySecret: "" }, fetchFn));
+  throws(() => createHandler({ ...config, notifySecret: "short" }, fetchFn));
+  throws(() => createHandler({ ...config, previousNotifySecret: "short" }, fetchFn));
 });
 
 Deno.test("a body without a positive integer event id or an owner id is rejected", async () => {

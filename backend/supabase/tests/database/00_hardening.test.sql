@@ -2,7 +2,7 @@
 -- invariants every future migration must keep.
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(8);
+select plan(11);
 
 select is_empty(
   $$
@@ -21,10 +21,10 @@ select is_empty(
     select p.oid::regprocedure::text
     from pg_proc as p
     join pg_namespace as n on n.oid = p.pronamespace
-    where n.nspname in ('public', 'private')
+    where n.nspname in ('public', 'private', 'guard')
       and not coalesce('search_path=""' = any (p.proconfig), false)
   $$,
-  'every function in public and private pins an empty search_path'
+  'every function in public, private and guard pins an empty search_path'
 );
 
 select is_empty(
@@ -110,12 +110,13 @@ select results_eq(
     from pg_proc as p
     join pg_namespace as n on n.oid = p.pronamespace
     cross join (values ('anon'), ('authenticated'), ('service_role')) as r (role)
-    where n.nspname in ('public', 'private')
+    where n.nspname in ('public', 'private', 'guard')
       and has_function_privilege(r.role, p.oid, 'execute')
     order by 1, 2
   $$,
   $$
     values
+      ('anon', 'check_request'),
       ('anon', 'device_events_v1'),
       ('anon', 'device_health_v1'),
       ('anon', 'device_heartbeat_v1'),
@@ -125,10 +126,12 @@ select results_eq(
       ('anon', 'device_register_v1'),
       ('anon', 'device_wifi_v1'),
       ('authenticated', 'acknowledge_events_v1'),
+      ('authenticated', 'check_request'),
       ('authenticated', 'claim_device_v1'),
       ('authenticated', 'delete_account_v1'),
       ('authenticated', 'register_push_token_v1'),
       ('authenticated', 'unregister_push_token_v1'),
+      ('service_role', 'check_request'),
       ('service_role', 'forget_push_token_v1'),
       ('service_role', 'notification_targets_v1'),
       ('service_role', 'notification_targets_v2'),
@@ -142,6 +145,39 @@ select ok(
     and not has_schema_privilege('authenticated', 'private', 'usage')
     and not exists (select 1 from pg_extension where extname = 'pg_graphql'),
   'the private schema is unreachable and GraphQL is disabled'
+);
+
+select is_empty(
+  $$ select pubname || ' ' || schemaname || '.' || tablename from pg_publication_tables $$,
+  'no table is published to Realtime'
+);
+
+-- The default privileges themselves: what a future migration creates starts
+-- closed until it grants something.
+create table public.hardening_probe (id integer);
+create function public.hardening_probe() returns integer language sql as 'select 1';
+create schema hardening_probe;
+create function hardening_probe.probe() returns integer language sql as 'select 1';
+
+select is_empty(
+  $$
+    select r.role
+    from (values ('anon'), ('authenticated'), ('service_role'), ('public')) as r (role)
+    where has_table_privilege(r.role, 'public.hardening_probe', 'select,insert,update,delete,truncate,references,trigger')
+      or has_function_privilege(r.role, 'public.hardening_probe()', 'execute')
+      or has_function_privilege(r.role, 'hardening_probe.probe()', 'execute')
+  $$,
+  'new tables and functions start without privileges for the API roles'
+);
+
+select is_empty(
+  $$
+    select r.role || ' ' || s.schema
+    from (values ('anon'), ('authenticated'), ('service_role')) as r (role)
+    cross join (values ('public'), ('private'), ('guard')) as s (schema)
+    where has_schema_privilege(r.role, s.schema, 'create')
+  $$,
+  'no API role can create objects in public, private or guard'
 );
 
 select * from finish();

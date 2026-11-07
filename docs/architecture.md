@@ -161,7 +161,13 @@ Responses the agent must handle:
 | 400  | malformed input                          | drop the batch, log it; never retry it      |
 | 403  | registration refused or secret rejected  | before registration: retry with backoff;    |
 |      |                                          | after: device was removed, back off to 1 h  |
+| 429  | over a request or storage limit          | keep the batch, retry with backoff          |
 | 5xx, network error | backend unavailable            | keep the batch, retry with backoff          |
+
+Every write through the Data API passes `guard.check_request()` first,
+which counts it per client address and per user (ADR 0016, limits in
+`private.request_limits()`). Triggers bound what one account or device can
+store (migration `20261108000000_request_and_storage_limits.sql`).
 
 ## App API (v1)
 
@@ -214,8 +220,10 @@ no mapping of their own.
 pg_cron runs `private.mark_offline_devices()` every 5 minutes (one
 `device_offline` event per outage), `private.apply_retention()` nightly
 (events, hosts, networks, health samples, port forwards and speed tests
-older than 90 days) and `private.post_weekly_summaries()` on Sundays at
-17:00 UTC.
+older than 90 days), `private.expire_pending_setups()` nightly (setups
+whose DeKoi never registered within 30 days),
+`private.prune_rate_counters()` every 10 minutes (ended request windows)
+and `private.post_weekly_summaries()` on Sundays at 17:00 UTC.
 
 ## Notifications
 
@@ -225,7 +233,9 @@ secret in Vault). `notify` asks `notification_targets_v2(event_id)` which
 phones to notify, with which template, severity and source kind, and sends
 FCM HTTP v1 messages whose data payload is `event_id` only. The rules are in
 `notification_targets_v1` (ADR 0007); `new_host` events notify at most once
-per DeKoi per 10 minutes, so devices that join together give one push.
+per DeKoi per 10 minutes, so devices that join together give one push. The
+webhook fires only while the account and the project are under their
+hourly notify limits (ADR 0016).
 
 The weekly job posts `{"weekly_summary_for": "<user id>"}` the same way, once
 per owner with a registered DeKoi. `notify` asks `weekly_summary_v1(user_id)`,
@@ -234,3 +244,6 @@ which returns the owner's phones with three numbers for the last 7 days
 percent), or nothing when the owner turned the summary off or already had
 one in the last 6 days. The push uses a fixed template on the `updates`
 channel and carries no data.
+
+`notify` accepts the secret in `NOTIFY_SECRET` and, while it is rotated,
+the one in `NOTIFY_SECRET_PREVIOUS` (`docs/runbooks/rotate-keys.md`).
