@@ -1,0 +1,17 @@
+# Tool configuration only. The agent has no runtime dependencies and is not
+# packaged; the image copies the dekoi_agent directory as is.
+
+[tool.ruff]
+line-length = 100
+target-version = "py313"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP", "S", "BLE", "SIM", "RUF", "PL"]
+ignore = ["PLR2004"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["S101", "S108", "PLR0913"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
