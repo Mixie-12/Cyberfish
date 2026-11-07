@@ -236,7 +236,7 @@ Charts are Compose Canvas (bars, bar list, sparkline, uptime strip); no chart
 library. Icons are Material Symbols Rounded vector drawables (weight 400,
 grade 0, 24 dp; filled variants for selected tabs), Apache-2.0, copied from
 google/material-design-icons at a pinned commit recorded in
-`clients/app/src/main/res/drawable/README.md`. No Lottie, no Accompanist, no
+`clients/app/src/main/res/README.md`. No Lottie, no Accompanist, no
 bundled fonts.
 
 ## Avoid

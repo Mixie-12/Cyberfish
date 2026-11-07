@@ -37,11 +37,12 @@ private enum class Tab(
     val route: String,
     @param:StringRes val label: Int,
     @param:DrawableRes val icon: Int,
+    @param:DrawableRes val selectedIcon: Int,
 ) {
-    HOME("home", R.string.tab_home, R.drawable.ic_tab_home),
-    ACTIVITY("activity", R.string.tab_activity, R.drawable.ic_tab_activity),
-    NETWORK("network", R.string.tab_network, R.drawable.ic_tab_network),
-    SETTINGS("settings", R.string.tab_settings, R.drawable.ic_tab_settings),
+    HOME("home", R.string.tab_home, R.drawable.ic_home, R.drawable.ic_home_fill),
+    ACTIVITY("activity", R.string.tab_activity, R.drawable.ic_notifications, R.drawable.ic_notifications_fill),
+    NETWORK("network", R.string.tab_network, R.drawable.ic_lan, R.drawable.ic_lan_fill),
+    SETTINGS("settings", R.string.tab_settings, R.drawable.ic_settings, R.drawable.ic_settings_fill),
 }
 
 @Composable
@@ -143,8 +144,9 @@ private fun TabBar(navController: NavHostController) {
     val route = current?.destination?.route
     NavigationBar(containerColor = MaterialTheme.colorScheme.surface) {
         Tab.entries.forEach { tab ->
+            val selected = route == tab.route
             NavigationBarItem(
-                selected = route == tab.route,
+                selected = selected,
                 onClick = {
                     navController.navigate(tab.route) {
                         popUpTo(Tab.HOME.route) { saveState = true }
@@ -152,7 +154,7 @@ private fun TabBar(navController: NavHostController) {
                         restoreState = true
                     }
                 },
-                icon = { Icon(painterResource(tab.icon), contentDescription = null) },
+                icon = { Icon(painterResource(if (selected) tab.selectedIcon else tab.icon), contentDescription = null) },
                 label = { Text(stringResource(tab.label)) },
             )
         }

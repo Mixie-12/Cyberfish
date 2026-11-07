@@ -65,7 +65,7 @@ fun Screen(
                 Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
                     if (onBack != null) {
                         IconButton(onClick = onBack) {
-                            Icon(painterResource(R.drawable.ic_back), contentDescription = stringResource(R.string.action_back))
+                            Icon(painterResource(R.drawable.ic_arrow_back), contentDescription = stringResource(R.string.action_back))
                         }
                     }
                     Spacer(Modifier.weight(1f))
