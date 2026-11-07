@@ -17,7 +17,11 @@ them.
 | 0009 | [Google Cloud and Firebase as code](0009-google-infrastructure-as-code.md) | accepted |
 | 0010 | [Device identification, networks and severity](0010-device-identification.md) | accepted |
 | 0011 | [App design system and notifications](0011-app-design.md) | accepted |
-| 0012 | [Linking a DeKoi from the phone](0012-phone-pairing.md) | accepted |
+| 0012 | [Linking a DeKoi from the phone](0012-phone-pairing.md) | superseded by 0017 |
 | 0013 | [Incidents, device names and rooms, monitoring status](0013-incidents-rooms-monitoring.md) | accepted |
 | 0014 | [Writing the card from the phone](0014-phone-writes-card.md) | accepted |
 | 0015 | [Network health, exposure checks and new-device alerts](0015-network-health-and-insights.md) | accepted |
+| 0017 | [Link by a secret the phone writes onto the card](0017-link-by-card-secret.md) | accepted |
+| 0018 | [A decoy that is easy to find](0018-visible-decoy.md) | accepted |
+| 0019 | [Watching the Wi-Fi for copies of the home network](0019-wifi-watch.md) | accepted |
+| 0020 | [The CyberFish brand in the apps](0020-cyberfish-brand.md) | accepted |
