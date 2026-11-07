@@ -1,11 +1,12 @@
 import stat
 from pathlib import Path
 
-from dekoi_agent.decoys import listening_ports, load_decoys, running_services
+from dekoi_agent.decoys import listening_ports, load_bait_users, load_decoys, running_services
 from dekoi_agent.inventory import mac_for, parse_arp_scan, scan_target
 from dekoi_agent.state import MAX_QUEUE, State
 
 CANARY_CONFIG = Path(__file__).parents[2] / "canary" / "opencanary.conf"
+PERSONA = Path(__file__).parents[2] / "canary" / "persona" / "persona.json"
 
 
 def test_state_round_trip_is_private(tmp_path: Path) -> None:
@@ -43,6 +44,13 @@ def test_decoys_are_the_canary_config_and_the_file_share() -> None:
         5900: "vnc",
         6379: "redis",
     }
+
+
+def test_bait_users_are_the_persona_names_in_lower_case(tmp_path: Path) -> None:
+    assert {"familie.admin", "nas-backup"} <= load_bait_users(PERSONA)
+    persona = tmp_path / "persona.json"
+    persona.write_text('{"name": "x", "bait_users": {"admin_user": "Familie.Admin"}}')
+    assert load_bait_users(persona) == {"familie.admin"}
 
 
 def test_listening_ports_and_running_services(tmp_path: Path) -> None:

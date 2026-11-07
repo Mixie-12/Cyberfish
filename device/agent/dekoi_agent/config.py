@@ -16,6 +16,7 @@ class Config:
     scan_log: Path
     ids_socket: Path
     decoy_config: Path
+    persona: Path
 
     @classmethod
     def from_env(cls, env: dict[str, str] = os.environ) -> "Config":
@@ -43,4 +44,5 @@ class Config:
             scan_log=Path(env.get("DEKOI_SCAN_LOG", "/var/log/ulog/dekoi-scan.json")),
             ids_socket=Path(env.get("DEKOI_IDS_SOCKET", "/run/dekoi-ids/eve.sock")),
             decoy_config=Path(env.get("DEKOI_DECOY_CONFIG", "/usr/share/dekoi/opencanary.conf")),
+            persona=Path(env.get("DEKOI_PERSONA", "/usr/share/dekoi/persona.json")),
         )

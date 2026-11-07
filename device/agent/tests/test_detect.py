@@ -48,6 +48,15 @@ def test_different_sources_are_not_collapsed() -> None:
     assert collapser.observe(T, second) == second
 
 
+def test_a_bait_sign_in_is_not_a_repeat_of_an_ordinary_one() -> None:
+    collapser = Collapser()
+    ordinary = {"kind": "login_attempt", "service": "smb", "src_ip": "10.0.0.9", "detail": {}}
+    bait = ordinary | {"detail": {"username": "nas-backup", "bait": True}}
+    assert collapser.observe(T, ordinary) == ordinary
+    assert collapser.observe(T + 1, bait) == bait
+    assert collapser.observe(T + 2, bait) is None
+
+
 def test_a_single_event_leaves_nothing_to_flush() -> None:
     collapser = Collapser()
     collapser.observe(T, {"kind": "connection", "service": "http", "src_ip": "10.0.0.9"})

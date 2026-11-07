@@ -29,3 +29,4 @@ them.
 | 0021 | [Endpoints and rules of the network checks](0021-network-check-endpoints.md) | accepted |
 | 0022 | [Keys in CI, image signing in Cloud KMS, automatic rotation](0022-ci-keys-and-signing.md) | accepted |
 | 0023 | [A home plan from the rooms the owner sets](0023-home-plan-from-rooms.md) | accepted |
+| 0024 | [Fake credentials in the bait files](0024-bait-credentials.md) | accepted |
