@@ -29,7 +29,7 @@ one-time bootstrap, routine deploys and checks. Backups: `restore-backup.md`.
    | Database                      | Read-write | temporary login role for `db push` and `db dump`; Vault in `rotate-keys.yml` |
    | Database Config, SSL Enforcement, Network Restrictions, Realtime Config, Storage Config | Read | `config diff` |
    | Connection Pooling            | Read       | `db push` connection            |
-   | Advisors                      | Read       | `db advisors` (security workflow) |
+   | Advisors                      | Read       | `db advisors` (monitor workflow)  |
    | Add-ons                       | Read       | `config push` (checks add-ons first; found by the first deploy) |
 
    Nothing else: no API Keys, API Key Secrets, Backups, branches or
