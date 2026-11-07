@@ -1,4 +1,4 @@
--- The language of a phone's push text (ADR 0024): register_push_token_v2,
+-- The language of a phone's push text (ADR 0025): register_push_token_v2,
 -- v1 as English, and the language in notification_targets_v3 and
 -- weekly_summary_v2.
 begin;

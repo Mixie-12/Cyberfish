@@ -379,7 +379,7 @@ spoofing it would hand the router password to the attacker.
 ## Notifications
 
 FCM notification messages, as today (ADR 0011), in the phone's language:
-Bokmål for a Norwegian phone, else English (ADR 0024). `notify` picks the
+Bokmål for a Norwegian phone, else English (ADR 0025). `notify` picks the
 channel by severity and names the source device's kind from fixed
 templates:
 

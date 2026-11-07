@@ -2,7 +2,7 @@
 # One image, two containers (ADR 0018): dekoi-canary runs OpenCanary and the
 # Samba file share; dekoi-announce runs what makes them visible on the
 # network (NetBIOS names, mDNS, WS-Discovery). The persona (canary/persona)
-# is filled into the configuration at build time.
+# is filled into the configuration and the bait files at build time.
 FROM docker.io/library/python:3.13-slim-trixie@sha256:09a17cad02668ae61ece136b4fd36ac3849e14f670ebedb637ea3e15580525bc AS build
 RUN apt-get update \
  && apt-get install -y --no-install-recommends build-essential \
@@ -15,7 +15,7 @@ COPY canary/render.py /tmp/render.py
 COPY canary/persona /tmp/persona
 WORKDIR /tmp/persona
 RUN python /tmp/render.py persona.json /tmp/rendered smb.conf avahi-daemon.conf \
-    skin/index.html skin/403.html skin/404.html skin/redirect.html
+    skin/index.html skin/403.html skin/404.html skin/redirect.html public
 
 FROM docker.io/library/python:3.13-slim-trixie@sha256:09a17cad02668ae61ece136b4fd36ac3849e14f670ebedb637ea3e15580525bc
 # avahi-daemon refuses to start unless its runtime directory belongs to its
@@ -33,7 +33,7 @@ COPY --from=build /tmp/rendered/smb.conf /etc/samba/smb.conf
 COPY --from=build /tmp/rendered/avahi-daemon.conf /etc/avahi/avahi-daemon.conf
 COPY --from=build /tmp/rendered/skin /opt/dekoi/skin
 COPY canary/persona/decoy.service /etc/avahi/services/decoy.service
-COPY canary/persona/public /srv/decoy/Public
+COPY --from=build /tmp/rendered/public /srv/decoy/Public
 COPY canary/opencanary.conf /etc/opencanaryd/opencanary.conf
 COPY canary/supervise.py agent/dekoi_agent/decoys.py /opt/dekoi/
 # Release version (the same build argument for every image) and build time,

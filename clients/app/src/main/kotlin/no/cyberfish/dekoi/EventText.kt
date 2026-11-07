@@ -53,7 +53,8 @@ fun portName(port: Int): Int? =
 fun eventText(event: Event): EventText =
     when (event.kind) {
         "login_attempt" -> {
-            EventText(R.string.event_login_title, R.string.event_login_action, R.string.event_login_consequence, R.string.event_login_why)
+            val consequence = if (event.detail.bait) R.string.event_login_bait_consequence else R.string.event_login_consequence
+            EventText(R.string.event_login_title, R.string.event_login_action, consequence, R.string.event_login_why)
         }
 
         "connection" -> {

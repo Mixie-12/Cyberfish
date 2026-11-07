@@ -33,7 +33,7 @@ fun notificationColor(channel: String): Int =
 
 /**
  * The language notify words this phone's pushes in, one of
- * private.push_languages (ADR 0024): Bokmål for any Norwegian locale, the
+ * private.push_languages (ADR 0025): Bokmål for any Norwegian locale, the
  * macrolanguage and Nynorsk included, else English.
  */
 fun pushLanguage(locale: Locale): String = if (locale.language in NORWEGIAN) "nb" else "en"

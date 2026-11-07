@@ -1,4 +1,4 @@
--- The language of a phone's push text (ADR 0024). It is only a key into
+-- The language of a phone's push text (ADR 0025). It is only a key into
 -- notify's fixed template table and never appears in a message. Old apps
 -- keep calling register_push_token_v1, and the deployed function keeps
 -- calling notification_targets_v2 and weekly_summary_v1 until the new one

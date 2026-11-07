@@ -88,7 +88,7 @@ Kinds a device may report (`private.device_event_kinds()`):
 
 | Kind             | Source                                   | Typical detail                      |
 | ---------------- | ---------------------------------------- | ----------------------------------- |
-| `login_attempt`  | decoy                                    | `username`, `path`, `client_version` |
+| `login_attempt`  | decoy                                    | `username`, `path`, `client_version`, `bait` (a user name from the bait files, ADR 0024) |
 | `connection`     | decoy                                    | `path`, `user_agent`, `command`, `share` |
 | `port_scan`      | firewall log, closed ports on the box    | `ports`                             |
 | `host_scan`      | ARP watcher, one host asking for many    | `targets`                           |
@@ -113,7 +113,8 @@ learning period is per DeKoi; an address another DeKoi knows is still new.
 control characters; `targets`, `severity` and `signature_id` as non-negative
 integers; `ports` as up to 64 numbers; `security` and `home_security` as one of
 `open`, `wep`, `wpa`, `wpa2`, `wpa3`; `channel` as up to three digits;
-`signal_dbm` as 0 or a negative integer of up to three digits. Payload
+`signal_dbm` as 0 or a negative integer of up to three digits; `bait` as a
+boolean. Payload
 excerpts and network names are never accepted. For the Wi-Fi watch kinds,
 `src_mac` is the access point's BSSID.
 
@@ -249,7 +250,7 @@ Every insert into `events` posts `{"event_id": <id>}` with the header
 `X-Notify-Secret` to the Edge Function `notify` (pg_net trigger; URL and
 secret in Vault). `notify` asks `notification_targets_v3(event_id)` which
 phones to notify, with which template, severity, source kind and language
-(ADR 0024), and sends FCM HTTP v1 messages whose data payload is `event_id`
+(ADR 0025), and sends FCM HTTP v1 messages whose data payload is `event_id`
 only. The rules are in `notification_targets_v1` (ADR 0007); `new_host`
 events notify at most once per DeKoi per 10 minutes, so devices that join
 together give one push. The webhook fires only while the account and the

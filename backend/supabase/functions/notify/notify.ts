@@ -3,7 +3,7 @@
 // (notification_targets_v3, weekly_summary_v2); this file only sends.
 // Notification text comes from fixed templates chosen by the phone's
 // language, event kind, severity and the source device's kind, all fixed
-// vocabularies checked by the database (ADR 0010, 0011, 0024); each is only
+// vocabularies checked by the database (ADR 0010, 0011, 0025); each is only
 // ever a key into the tables below. The only other values that reach a
 // message are the event id and the summary's three whole numbers, so
 // nothing an attacker typed or sent can ever appear on a phone.

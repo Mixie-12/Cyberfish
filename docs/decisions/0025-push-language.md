@@ -1,4 +1,4 @@
-# 0024: Push text in the phone's language
+# 0025: Push text in the phone's language
 
 Status: accepted, 2026-11-07
 

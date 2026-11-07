@@ -59,7 +59,10 @@ class Collapser:
         self._windows: dict[tuple, dict] = {}
 
     def observe(self, at: float, event: dict) -> dict | None:
-        key = (event["kind"], event.get("service"), event.get("src_ip"))
+        # A sign-in with a name from the bait files is never a repeat of an
+        # ordinary one: it is reported at once even within the window.
+        bait = event.get("detail", {}).get("bait", False)
+        key = (event["kind"], event.get("service"), event.get("src_ip"), bait)
         window = self._windows.get(key)
         if window is None:
             length = (

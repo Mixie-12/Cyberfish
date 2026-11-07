@@ -1,0 +1,14 @@
+Skann: pass og førerkort (Kari)
+
+Pass
+    Etternavn: NORDMANN
+    Fornavn: KARI
+    Fødselsdato: 14.03.1981
+    Fødselsnummer: 148381 24632
+    Passnummer: L898902C3
+    Gyldig til: 15.04.2032
+
+Førerkort
+    Klasse: B
+    Utstedt: 02.06.1999
+    Gyldig til: 02.06.2034
