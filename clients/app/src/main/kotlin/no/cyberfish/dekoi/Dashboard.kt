@@ -88,18 +88,6 @@ fun touchesPerDay(
     return eventsPerDay(touches, today, zone, days).map { day -> day.sumOf { it.count } }
 }
 
-/** The setup checklist, in the order the steps happen. */
-enum class SetupStep { LINKED, FIRST_START, ONLINE, WATCHING }
-
-/** Whether [step] is done; linking always is, since the owner sees only DeKois linked to their account. */
-fun Device.hasDone(step: SetupStep): Boolean =
-    when (step) {
-        SetupStep.LINKED -> true
-        SetupStep.FIRST_START -> registeredAt != null
-        SetupStep.ONLINE -> lastSeenAt != null
-        SetupStep.WATCHING -> services.isNotEmpty()
-    }
-
 /** What the name field keeps of [typed]: no control characters, at most [MAX_DEKOI_NAME], no half characters. */
 fun cleanName(typed: String): String {
     val name = typed.filterNot(Char::isISOControl).take(MAX_DEKOI_NAME)

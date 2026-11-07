@@ -68,7 +68,9 @@ import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
 import no.cyberfish.dekoi.R
 import no.cyberfish.dekoi.alertBadgeCount
+import no.cyberfish.dekoi.isSetUp
 import no.cyberfish.dekoi.shared.DesignTokens
+import no.cyberfish.dekoi.ui.components.Screen
 import no.cyberfish.dekoi.ui.network.HostDetailScreen
 import no.cyberfish.dekoi.ui.network.NetworkScreen
 import no.cyberfish.dekoi.ui.network.NetworksScreen
@@ -108,6 +110,11 @@ sealed interface Route {
     ) : Route
 
     @Serializable data object AddDekoi : Route
+
+    /** Writing a DeKoi card with this phone (ADR 0014, 0017); its screen comes from the card-writing work. */
+    @Serializable data object WriteCard : Route
+
+    @Serializable data object Licences : Route
 }
 
 private enum class Tab(
@@ -210,7 +217,7 @@ private fun SignedIn(
         navController.navigate(Route.AlertDetail(eventId))
         viewModel.eventOpened()
     }
-    NotificationPermission(hasDevice = data.devices.isNotEmpty())
+    NotificationPermission(setUp = data.devices.any { it.isSetUp })
 
     // Screens link to tab roots as well as pushed screens; a tab root switches tabs.
     val navigate: (Route) -> Unit = { route ->
@@ -273,7 +280,14 @@ private fun SignedIn(
                 )
             }
             composable<Route.AddDekoi> {
-                AddDekoiScreen(onClaim = viewModel::claim, onBack = back)
+                AddDekoiScreen(data, now, onRefresh = viewModel::refreshDevices, onNavigate = navigate, onBack = back)
+            }
+            // An empty screen until the card-writing work brings its own (ADR 0014).
+            composable<Route.WriteCard> {
+                Screen(stringResource(R.string.add_write_card), onBack = back) { }
+            }
+            composable<Route.Licences> {
+                LicencesScreen(back)
             }
             composable<Route.Settings> {
                 val settings by viewModel.settings.collectAsStateWithLifecycle()

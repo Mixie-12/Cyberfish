@@ -10,6 +10,7 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -17,15 +18,22 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.core.content.edit
+import kotlinx.coroutines.delay
 import no.cyberfish.dekoi.R
 import no.cyberfish.dekoi.shouldAskForNotifications
 
 private const val PREFERENCES = "notifications"
 private const val ASKED = "asked"
 
-/** Explains alerts once the first DeKoi is linked, then asks Android 13+ for the permission. */
+/** Long enough for a setup ring that has just filled (StatusRing) to finish drawing. */
+private const val AFTER_RING_MS = 1000L
+
+/**
+ * Explains alerts once a DeKoi has finished its setup, a moment after its
+ * setup ring completes, then asks Android 13+ for the permission.
+ */
 @Composable
-fun NotificationPermission(hasDevice: Boolean) {
+fun NotificationPermission(setUp: Boolean) {
     if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) return
     val context = LocalContext.current
     val preferences = remember { context.getSharedPreferences(PREFERENCES, Context.MODE_PRIVATE) }
@@ -38,7 +46,14 @@ fun NotificationPermission(hasDevice: Boolean) {
         asked = true
     }
 
-    if (!shouldAskForNotifications(Build.VERSION.SDK_INT, granted, asked, hasDevice)) return
+    var ready by remember { mutableStateOf(false) }
+    LaunchedEffect(setUp) {
+        if (!setUp) return@LaunchedEffect
+        delay(AFTER_RING_MS)
+        ready = true
+    }
+
+    if (!ready || !shouldAskForNotifications(Build.VERSION.SDK_INT, granted, asked, deviceSetUp = setUp)) return
     AlertDialog(
         onDismissRequest = markAsked,
         title = { Text(stringResource(R.string.notifications_ask_title)) },

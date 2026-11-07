@@ -1,14 +1,35 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Add DeKoi (AddDekoiScreen.kt). -->
+<!-- Add DeKoi (AddDekoiScreen.kt, ADR 0017). -->
 <resources>
     <string name="add_title">Add a DeKoi</string>
-    <string name="add_body">On your computer, DeKoi Setup shows a code once the memory card is ready.</string>
+
+    <string name="add_prepare_title">Get your DeKoi ready</string>
+    <string name="add_prepare_body">Your DeKoi starts from a memory card that links it to your account. Prepare the card once, then plug your DeKoi in.</string>
+    <string name="add_write_card">Write a card with this phone</string>
+    <string name="add_write_card_hint">You need a USB-C card reader for the memory card.</string>
+    <string name="add_computer_card">I prepared a card with DeKoi Setup on a computer</string>
+
+    <string name="add_code_body">DeKoi Setup shows a square code. Scan it, or type the code under it.</string>
     <string name="add_scan">Scan the code</string>
-    <string name="add_scan_failed">The scanner did not work. Type the code shown under the square code in DeKoi Setup instead.</string>
-    <string name="add_manual_label">Or type the code</string>
+    <string name="add_scan_failed">The scanner did not work. Type the code under the square code instead.</string>
+    <string name="add_manual_label">Code</string>
     <string name="add_manual_button">Add</string>
     <string name="add_invalid">That is not a DeKoi code. Check it and try again.</string>
-    <string name="add_refused">This code can’t be used. Prepare the card again with DeKoi Setup to get a new one.</string>
+    <string name="add_refused">This code can’t be used. Prepare the card again to get a new one.</string>
     <string name="add_too_many">Finish setting up your other DeKoi first.</string>
-    <string name="add_done">%1$s is linked to your account. Put the card in your DeKoi and plug it in.</string>
+
+    <string name="add_linked_title">Your DeKoi is linked</string>
+    <string name="add_linked_done">Your DeKoi is watching your network</string>
+    <string name="add_plug_in_title">Now plug it in</string>
+    <string name="add_plug_in_card">Put the memory card in your DeKoi.</string>
+    <string name="add_plug_in_cable">Plug the network cable into your DeKoi and your router.</string>
+    <string name="add_plug_in_power">Plug in the power. The first start takes a few minutes.</string>
+    <string name="add_help_card">The memory card is in your DeKoi.</string>
+    <string name="add_help_power">Your DeKoi has power.</string>
+    <string name="add_help_cable">The network cable runs from your DeKoi to your router.</string>
+    <string name="add_help_wifi">If you chose Wi-Fi, its name and password are right.</string>
+    <string name="add_help_again">If it still does not appear, prepare the card again.</string>
+    <string name="add_step_done">Done</string>
+    <string name="add_step_pending">Not yet</string>
+    <string name="add_done">Done</string>
 </resources>

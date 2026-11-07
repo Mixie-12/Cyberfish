@@ -285,15 +285,6 @@ private fun FishMark() {
     )
 }
 
-@StringRes
-private fun label(step: SetupStep): Int =
-    when (step) {
-        SetupStep.LINKED -> R.string.setup_linked
-        SetupStep.FIRST_START -> R.string.setup_first_start
-        SetupStep.ONLINE -> R.string.setup_online
-        SetupStep.WATCHING -> R.string.setup_protecting
-    }
-
 /** The steps as a line down the screen, and help once setup takes longer than it should. */
 @Composable
 private fun SetupChecklist(
@@ -343,7 +334,7 @@ private fun SetupStepRow(
             if (!last) Box(Modifier.width(STEP_LINE).weight(1f).background(line))
         }
         Text(
-            stringResource(label(step)),
+            stringResource(step.label),
             style = MaterialTheme.typography.bodyLarge,
             color = if (done || current) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.padding(bottom = if (last) 0.dp else Dimens.section),

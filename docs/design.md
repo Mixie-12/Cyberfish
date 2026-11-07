@@ -306,9 +306,9 @@ by severity and names the source device's kind from fixed templates:
 
 | Channel | Name | Importance | Carries |
 | ------- | ---- | ---------- | ------- |
-| `alerts_urgent` | Urgent alerts | HIGH | critical |
-| `alerts` | Alerts | DEFAULT | warning, device_offline |
-| `updates` | Updates | LOW | info |
+| `alerts_urgent` | Alerts to act on now | HIGH | critical |
+| `alerts` | Alerts to check soon | DEFAULT | warning, device_offline |
+| `updates` | For your information | LOW | info |
 
 Severity colour as the notification colour, a monochrome DeKoi small icon,
 `VISIBILITY_PRIVATE` with a public version "DeKoi: new alert about your

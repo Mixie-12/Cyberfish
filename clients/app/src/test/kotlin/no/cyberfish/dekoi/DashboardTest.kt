@@ -167,16 +167,6 @@ class DashboardTest {
     }
 
     @Test
-    fun `setup steps tick off as the DeKoi registers, checks in and starts its decoys`() {
-        val linked = device("a", registered = false, seenAgo = null)
-        assertEquals(listOf(true, false, false, false), SetupStep.entries.map { linked.hasDone(it) })
-        val started = device("a", seenAgo = null)
-        assertEquals(listOf(true, true, false, false), SetupStep.entries.map { started.hasDone(it) })
-        val watching = device("a", services = listOf("ssh"))
-        assertEquals(listOf(true, true, true, true), SetupStep.entries.map { watching.hasDone(it) })
-    }
-
-    @Test
     fun `the name field drops control characters, stops at the limit and never splits a character`() {
         assertEquals("Living room", cleanName("Living\n room\u0007"))
         assertEquals("a".repeat(MAX_DEKOI_NAME), cleanName("a".repeat(MAX_DEKOI_NAME + 5)))

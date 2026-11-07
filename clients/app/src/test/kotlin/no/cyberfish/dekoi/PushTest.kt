@@ -41,11 +41,11 @@ class PushTest {
     }
 
     @Test
-    fun theOwnerIsAskedOnceAfterLinkingADeKoiOnAndroid13AndLater() {
-        assertTrue(shouldAskForNotifications(sdk = 33, granted = false, askedBefore = false, hasDevice = true))
-        assertFalse(shouldAskForNotifications(sdk = 32, granted = false, askedBefore = false, hasDevice = true))
-        assertFalse(shouldAskForNotifications(sdk = 33, granted = true, askedBefore = false, hasDevice = true))
-        assertFalse(shouldAskForNotifications(sdk = 33, granted = false, askedBefore = true, hasDevice = true))
-        assertFalse(shouldAskForNotifications(sdk = 33, granted = false, askedBefore = false, hasDevice = false))
+    fun theOwnerIsAskedOnceADeKoiIsSetUpOnAndroid13AndLater() {
+        assertTrue(shouldAskForNotifications(sdk = 33, granted = false, askedBefore = false, deviceSetUp = true))
+        assertFalse(shouldAskForNotifications(sdk = 32, granted = false, askedBefore = false, deviceSetUp = true))
+        assertFalse(shouldAskForNotifications(sdk = 33, granted = true, askedBefore = false, deviceSetUp = true))
+        assertFalse(shouldAskForNotifications(sdk = 33, granted = false, askedBefore = true, deviceSetUp = true))
+        assertFalse(shouldAskForNotifications(sdk = 33, granted = false, askedBefore = false, deviceSetUp = false))
     }
 }

@@ -1,5 +1,6 @@
 package no.cyberfish.dekoi.ui.components
 
+import android.os.Build
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
 import androidx.compose.foundation.background
@@ -21,12 +22,15 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.SideEffect
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.DialogWindowProvider
 import no.cyberfish.dekoi.R
 import no.cyberfish.dekoi.ui.Dimens
 
@@ -102,8 +106,24 @@ fun ConfirmDialog(
         title = { Text(stringResource(title)) },
         text = { Text(stringResource(body)) },
         confirmButton = {
+            GuardAgainstOverlays()
             TextButton(onClick = onConfirm) { Text(stringResource(confirm), color = MaterialTheme.colorScheme.error) }
         },
         dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_cancel)) } },
     )
+}
+
+/**
+ * Keeps another app's window from tricking the owner into confirming
+ * (tapjacking): from Android 12 other apps' overlays are hidden while the
+ * dialog shows, and on every version a touch that passes through one is
+ * ignored. Call it inside the dialog, whose window it guards.
+ */
+@Composable
+private fun GuardAgainstOverlays() {
+    val window = (LocalView.current.parent as DialogWindowProvider).window
+    SideEffect {
+        window.decorView.filterTouchesWhenObscured = true
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) window.setHideOverlayWindows(true)
+    }
 }
