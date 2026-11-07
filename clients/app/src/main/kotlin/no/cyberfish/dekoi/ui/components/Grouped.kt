@@ -26,12 +26,15 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.collapse
+import androidx.compose.ui.semantics.expand
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
@@ -144,6 +147,45 @@ fun InsetRow(
             )
         }
     }
+}
+
+/**
+ * The "Technical details" row of an [InsetSection]: a tap shows or hides
+ * the rows after it, which the caller draws while [open]. Give the section
+ * an animateContentSize so they slide in.
+ */
+@Composable
+fun TechnicalDetailsRow(
+    open: Boolean,
+    onToggle: (Boolean) -> Unit,
+) {
+    InsetRow(
+        stringResource(R.string.event_details),
+        modifier =
+            Modifier.semantics {
+                if (open) {
+                    collapse {
+                        onToggle(false)
+                        true
+                    }
+                } else {
+                    expand {
+                        onToggle(true)
+                        true
+                    }
+                }
+            },
+        trailing = {
+            Icon(
+                painterResource(R.drawable.ic_expand_more),
+                contentDescription = null,
+                modifier = Modifier.rotate(if (open) 180f else 0f),
+                tint = MaterialTheme.colorScheme.outline,
+            )
+        },
+        onClick = { onToggle(!open) },
+        chevron = false,
+    )
 }
 
 /** A label and its value. Values from a device are plain text, never links. */

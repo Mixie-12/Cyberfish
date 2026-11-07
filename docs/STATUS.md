@@ -1,202 +1,214 @@
 # Status
 
-Updated 2026-11-08. Phases 0 to 6 are on `main`, deployed by CI and released
-as v0.1.1. The Phase 7 hardware test passed end to end with the findings
-below. Next: device identification and the app redesign the owner asked for
-(Phase 8).
+Updated 2026-11-07. Everything below is on `main` and deployed by CI (the
+production backend deploy is green at `b69caca`). The last release is
+v0.1.2; v0.2.0, which takes Phase 8 to the app, DeKoi Setup and devices,
+comes next (`docs/runbooks/release.md`).
 
-## Owner answers (Phase 0 and later)
+## Owner answers
 
-| Question             | Answer                                             |
-| -------------------- | -------------------------------------------------- |
-| Backend hosting      | Supabase Cloud (ADR 0001)                          |
-| Deployment           | GitOps: CI changes every environment (ADR 0002)    |
-| Detection scope      | Maximum in one box: decoys, IDS, LAN watchers (ADR 0003) |
-| Repository           | Private; no CodeQL                                 |
-| Android app ID       | `no.cyberfish.dekoi`                               |
-| License              | Proprietary, no license file (default)             |
-| Commits              | Unsigned commits allowed                           |
+| Question        | Answer                                                    |
+| --------------- | --------------------------------------------------------- |
+| Backend hosting | Supabase Cloud (ADR 0001)                                 |
+| Deployment      | GitOps: CI changes every environment (ADR 0002)           |
+| Detection scope | Maximum in one box: decoys, IDS, LAN watchers (ADR 0003)  |
+| Repository      | Private; no CodeQL                                        |
+| Android app ID  | `no.cyberfish.dekoi`                                      |
+| License         | Proprietary, no license file (default)                    |
+| Commits         | Unsigned commits allowed                                  |
 
-## Secrets and where they live
+## Secrets
 
-| Secret                               | Where                                                     |
-| ------------------------------------ | --------------------------------------------------------- |
-| First cosign image signing key, password | GitHub secrets `COSIGN_PRIVATE_KEY`, `COSIGN_PASSWORD` (move to the `release` environment); 1Password vault "Encryption", item "DeKoi cosign image signing key". Retires 2026-12-31 (ADR 0022) |
-| cosign public key                    | `device/host/etc/dekoi/cosign.pub` (on every card so far) |
-| Cloud KMS image signing key          | not created yet: needs a billing account (`infra/google/signing.tf`) |
-| Image signing backup key             | not created yet (`docs/runbooks/rotate-keys.md`)          |
-| Android release keystore, password   | GitHub secrets `ANDROID_KEYSTORE_BASE64`, `ANDROID_KEYSTORE_PASSWORD` (move to the `release` environment); 1Password item "DeKoi Android release signing key". Alias `dekoi`. Certificate SHA-256 `7F:57:59:C5:01:5B:FC:7A:34:7A:72:35:35:54:07:91:96:E6:21:58:5A:9F:EE:69:44:75:86:A7:E8:43:67:41` |
-| Notification webhook secret, FCM key | function secrets and Vault, replaced monthly by `rotate-keys.yml`; the GitHub secrets `NOTIFY_SECRET` and `FCM_SERVICE_ACCOUNT` are to be deleted after the first rotation |
-| Supabase access token                | GitHub secret `SUPABASE_ACCESS_TOKEN` (move to the `production` environment; needs Database read-write and Advisors read, docs/runbooks/deploy-backend.md) |
-| Supabase database password           | 1Password only; GitHub secret `SUPABASE_DB_PASSWORD` is unused and to be deleted |
-| Google web client secret             | GitHub secret `GOOGLE_WEB_CLIENT_SECRET` (move to the `production` environment) |
-| Backup decryption key                | not created yet (`docs/runbooks/restore-backup.md`)       |
+Where each credential belongs and how it is replaced:
+`docs/runbooks/rotate-keys.md`. Today every secret is a repository secret,
+none is in an environment, and the deploy job still uses
+`SUPABASE_DB_PASSWORD`; the owner actions below close that gap. 1Password
+vault "Encryption" holds "DeKoi cosign image signing key" (retires
+2026-12-31) and "DeKoi Android release signing key" (alias `dekoi`; the
+certificate is pinned in `.github/workflows/app-release.yml`).
 
 ## Phase log
 
 ### Phase 0: Bootstrap (done)
-Toolchain installed with verified downloads; skeleton, ADRs, gitleaks, Dependabot.
+Toolchain with verified downloads; skeleton, ADRs, gitleaks, Dependabot.
 
 ### Phase 1: Backend (done)
 Six migrations (hardened defaults, schema with RLS, device API v1, app API v1,
-jobs, network detection kinds). 87 pgTAP tests cover abuse cases 1 to 5 and
-the exact grants of every API role; advisors clean. CI deploy job ready.
+jobs, network detection kinds). pgTAP tests cover abuse cases 1 to 5 and the
+exact grants of every API role; advisors clean.
 
-### Phase 2: Device (done, hardware pending)
+### Phase 2: Device (done)
 Agent (decoy logs, port scans, ARP sweeps and spoofing, rogue DHCP and IPv6
 routers, name poisoning, Suricata alerts), canary, IDS and agent images,
-host configuration, first-boot template, image signing. 46 unit and
-consistency tests. CI end-to-end on a real runner with the production Quadlet
-units: claim, register, online with all eight decoys, SSH and HTTP login
-attempts, port scan, network sweep, network inventory, IDS starting locked
-down, no typed password in the backend. Signature enforcement tested.
+host configuration, first-boot template, image signing. CI end-to-end on a
+real runner with the production Quadlet units. Signature enforcement tested.
 
 ### Phase 3: Deploy (done)
-Production deployed by CI only; see "Done 2026-11-07" below.
+Production deployed by CI only: Supabase project `rmllpietnopviodbdkky`
+(migrations, `notify`, Google sign-in); Google Cloud project
+`dekoi-cyberfish` with Firebase and the FCM sender through OpenTofu
+(ADR 0009); images signed and public on GHCR. Surface checks from outside
+pass (`docs/runbooks/deploy-backend.md`).
 
-### Phase 4: Android app (done, phone test pending)
+### Phase 4: Android app (done)
 All screens, plain language for every event kind, Google sign-in with nonce,
-QR scanning without camera permission. 12 unit tests, Android lint clean.
+QR scanning without camera permission.
 
-### Phase 5: Notifications (done, phone test pending)
-Decision function in SQL (coalescing per device and source per 10 minutes,
-trusted sources never, device_offline always, device_online never), events
-trigger through pg_net with the webhook URL and secret in Vault, `notify`
-Edge Function sending FCM HTTP v1 with fixed templates (ADR 0007). 106
-pgTAP tests and 8 Deno tests; verified end to end locally against a mock FCM.
-The backend deploys without Firebase; pushes start once the service account
-secret exists.
-App: FCM started from Gradle properties (no google-services.json), token
-registered after sign-in and removed before sign-out, alerts channel, tapping
-opens the event, one plain-language permission request on Android 13+. FCM
-tokens are deprecated in firebase-messaging 26 but still work; app and
-function move to installation IDs together later (ADR 0007).
+### Phase 5: Notifications (done)
+Decision function in SQL (coalescing per device and source per 10 minutes),
+events trigger through pg_net with the webhook URL and secret in Vault,
+`notify` sends FCM HTTP v1 with fixed templates (ADR 0007). FCM tokens are
+deprecated in firebase-messaging 26 but still work; app and function move
+to installation IDs together later.
 
-### Phase 6: DeKoi Setup (groundwork done, UI in progress)
-Card file rendering (user-data with the host files, netplan network-config;
-hostile Wi-Fi input cannot inject YAML; the WPA key is stored, not the
-passphrase), Windows card listing (only removable, non-system disks), Imager
-CLI arguments; 19 tests; rendered files validated by cloud-init and netplan in
-CI. The Imager spike is ADR 0008: Imager downloads and checks the image itself,
-needs elevation, and reports only an exit code on Windows.
+### Phase 6: DeKoi Setup (done)
+Card files (cloud-init user-data, netplan; hostile Wi-Fi input cannot inject
+YAML), Windows card listing (removable, non-system disks only), Raspberry Pi
+Imager CLI (ADR 0008); rendered files validated by cloud-init and netplan.
 
-### Phase 7: Hardware, hardening, release (hardware test done 2026-11-07)
-Released v0.1.0 and v0.1.1 (signed APK, DeKoi Setup MSI, signed images).
-Tested on a Raspberry Pi on a home LAN by ethernet, an Honor PTP-N49 phone
-(Android 16) by USB, and the owner's Windows 11 PC on Wi-Fi:
+### Phase 7: Hardware test and release (done 2026-11-07)
+Released v0.1.0 to v0.1.2 (signed APK, DeKoi Setup MSI, signed images).
+Tested with a Raspberry Pi on a home LAN by ethernet, an Honor PTP-N49
+phone (Android 16) and the owner's Windows 11 PC on Wi-Fi:
 
 | Step | Result |
 | ---- | ------ |
 | Release files | APK and MSI SHA-256 match the release; APK signer matches the pinned certificate |
-| Sign-in | Failed on v0.1.0 (Google 28444: an Android client ID in `GOOGLE_WEB_CLIENT_ID`); works on v0.1.1. The deploy now checks the ID and secret with Google (ADR 0009) |
+| Sign-in | Failed on v0.1.0 (Google 28444: an Android client ID in `GOOGLE_WEB_CLIENT_ID`); works since v0.1.1; the deploy now checks the ID and secret with Google (ADR 0009) |
 | Card | DeKoi Setup with Imager 2.0.8 wrote the card with the cloud-init files |
-| Pairing | First QR scan crashed the app (scanner `MlKitException` not caught, fixed in `86d026d`, not yet released); second scan paired |
-| First start | Online and "You're protected" about 4 minutes after power-on; 8 decoys, 5 hosts in the inventory |
-| Surface | All 65535 TCP ports from the LAN: only the 8 decoy ports open; port 22 answers with the decoy banner, not the host's SSH |
-| SSH and HTTP login | Both reported; push "Someone tried to sign in to your DeKoi" about 1 s after the SSH attempt, fixed template |
+| Pairing | First QR scan crashed the app (fixed in `86d026d`, released in v0.1.2); second scan paired |
+| First start | Online and "You're protected" about 4 minutes after power-on; 8 decoys, 5 hosts |
+| Surface | All 65535 TCP ports from the LAN: only the 8 decoy ports open; port 22 is the decoy |
+| SSH and HTTP login | Both reported; push about 1 s after the SSH attempt, fixed template |
 | Port scan | Reported |
-| ARP sweep | Not reported when sent from the Wi-Fi PC (253 targets); not verified from a wired host, see Known limitations |
-| Typed passwords | Not shown in the app; the hardware check of the stored rows was not done (covered by the CI end-to-end test) |
+| ARP sweep | Not reported when sent from the Wi-Fi PC; not verified from a wired host |
+| Typed passwords | Not shown in the app (stored rows covered by the CI end-to-end test) |
 
-Backend hardening for public sign-up (2026-11-08, not yet deployed): Auth
-access tokens 15 minutes; write limits per address and per user in
-PostgREST's pre-request function; storage limits per account and device;
-a cap on `notify` calls against the Free plan quota; abandoned setups
-removed after 30 days; a test that account deletion reaches every table
-(ADR 0016, `docs/security.md`). HTTP 429 and the notify gate
-verified through the local gateway; backup dump and restore verified
-locally.
+### Phase 8: Identification, redesign, linking, hardening (built, release pending)
+Asked for by the owner after Phase 7, beyond `docs/PROMPT.md`; each ADR
+records why.
 
-Integration (2026-11-08, not yet pushed or deployed): the Wi-Fi watch
-(ADR 0019) and the request and storage limits (ADR 0016) merged onto
-`main` at `0eb5e02`, with three new migrations after the production ones:
-`20261107235000_wifi_watch`, `20261108000000_request_and_storage_limits`
-and `20261108000100_client_address` (`device_health_v1` takes the public
-address from `private.client_ip()`). `12_event_vocabulary` now lists
-every event kind with its severity. Locally: pgTAP 18 files, 409 tests,
-advisors clean; `notify` 18 tests; agent 196 tests, ruff clean; app 45,
-shared 5 and DeKoi Setup 24 unit tests, ktlint and Android lint clean. Not
-verified: that `cf-connecting-ip` and `cf-ipcountry` reach
-`request.headers` on the hosted project. Without them the per-address
-limits are off, no public address is stored and the Wi-Fi watch keeps the
-radio off (`docs/security.md`, "Monitoring").
+- Device identification and networks (ADR 0010): passive discovery, one
+  classification table, `device_hosts_v2`, `public.networks`,
+  `events.severity` generated in the database.
+- Severity channels (ADR 0011): `notify` picks `alerts_urgent`, `alerts` or
+  `updates` and names the source's kind, both from fixed vocabularies.
+- App redesign in the CyberFish brand (ADR 0011, 0020): dark only, bundled
+  Michroma and JetBrains Mono, Canvas charts, every screen rebuilt
+  (`docs/design.md`); DeKoi Setup shares the palette.
+- Linking by a card secret (ADR 0017, replaced ADR 0012, which was not
+  built): the claim code on the card is the proof of physical access.
+- Phone card writer (ADR 0014): a USB card reader on the phone; pinned
+  image, partition table written last, whole card read back.
+- Alerts as incidents with read state, host names and rooms, and monitoring
+  status through `device_heartbeat_v2` (ADR 0013).
+- Network health, DNS check, UPnP port forwards, new devices and the weekly
+  summary (ADR 0015, 0021).
+- Request and storage limits in Postgres, Auth tokens 15 minutes, account
+  deletion reaching every table (ADR 0016).
+- The visible decoy `family-nas`: file share with bait files, storage web
+  page, mDNS, WS-Discovery and NetBIOS announcements (ADR 0018).
+- The Wi-Fi watch: `evil_twin` and `new_access_point` alerts (ADR 0019).
+- CI (ADR 0022): signing only in the `release` environment, Cloud KMS key
+  as code, edge images unsigned, new cards trust only the three release
+  repositories; Grype, OSV-Scanner and advisors; monthly key rotation;
+  expiry issues; nightly encrypted backups; repository settings as code.
+- First-run tour, Learn topics for every event kind, home-screen widget,
+  motion and haptics (`docs/design.md`, "Motion").
 
-## Owner actions open
+Verified by CI on `main` (`9dc0efd`, `b69caca`): pgTAP 19 files, 417 tests,
+advisors clean; `notify` 18 tests; agent 212 tests, ruff clean; app 158,
+shared 23 and DeKoi Setup 15 unit tests, ktlint and Android lint clean;
+signature policy tests; the end-to-end test with the production units
+(every decoy and the announcer, file share sign-in and bait file,
+`device_hosts_v2`, `device_wifi_v1`, no typed password in the backend).
+Locally: HTTP 429 and the notify gate; backup dump and restore.
 
-1. Optional: repeat the ARP sweep from a PC connected by cable.
-2. Realtime: suspend it (nothing uses it; public channels are open to
-   anyone with the publishable key). Either give CI a token with "Realtime
-   Config" read-write so the deploy sets it, or turn it off once in the
-   dashboard (`docs/security.md`, "Platform settings").
-3. SSL enforcement for direct database connections: replace the CI token
-   with one that adds "SSL Enforcement" read-write; then
-   `[db.ssl_enforcement] enabled = true` can go into `config.toml`.
-4. Check in the dashboard: Auth audit logs are not written to the
-   database, and IP address forwarding is off.
-5. Backups: create an age key pair, store the private key in 1Password
-   ("DeKoi backup age key") and the public key as the repository variable
-   `BACKUP_AGE_RECIPIENT`, so the CI backup job can run
-   (`docs/runbooks/restore-backup.md`). Until then nothing backs up
-   production.
-6. Decide before real customers: Supabase Pro (daily backups, PITR as an
-   add-on, no pausing, session time-outs, higher quotas) and a custom
-   domain with a firewall in front of the API.
-2. CI keys and signing (ADR 0022), in this order: make the repository
-   public and run `infra/github/apply.sh`; move the secrets into the
-   environments; create the backup age key; replace the Supabase access
-   token; apply `infra/google` and, once notify reads
-   `NOTIFY_SECRET_PREVIOUS`, run `rotate-keys.yml`; decide on Cloud KMS
-   billing; switch new cards to the KMS and backup keys; rewrite the
-   existing card; retire the first key. Exact steps in the runbooks
-   `rotate-keys.md`, `restore-backup.md`, `deploy-backend.md`,
-   `google-firebase.md`.
-3. Update the canary's Python dependencies: OSV-Scanner reports known
-   vulnerabilities in twisted 26.4.0, urllib3 2.7.0 and pyasn1 0.6.4
-   (`device/canary/requirements.txt`).
+Needs hardware, not verified: the card writer with a real USB card reader;
+the decoy in Windows Explorer and Finder on the owner's LAN; the Wi-Fi
+watch against a real evil twin; the Pi running the new images after its
+nightly update (after v0.2.0); the ARP sweep from a wired PC.
 
-Done 2026-11-07:
-- Supabase project `rmllpietnopviodbdkky` deployed entirely by CI (migrations,
-  notify function and secrets, configuration with Google sign-in). Surface
-  checks from outside pass: anonymous reads 401, malformed device input 400,
-  only the `public` schema exposed, GraphQL and storage closed, notify refuses
-  requests without its secret.
-- Google Cloud project `dekoi-cyberfish` with Firebase, the Android app and the
-  FCM sender, created with OpenTofu (ADR 0009); sign-in clients created in the
-  console; all values in GitHub.
-- Images `dekoi-canary`, `dekoi-agent`, `dekoi-ids` published, signed and
-  public on GHCR.
+## Owner actions, in order
 
-## Known limitations (MVP)
+1. Supabase access token with the permissions in `deploy-backend.md`,
+   step 4 (Database read-write and Advisors read are new), stored as
+   `SUPABASE_ACCESS_TOKEN` (`rotate-keys.md`); it moves into `production`
+   with action 6. Then remove `SUPABASE_DB_PASSWORD` from the deploy job
+   (see its comment in `.github/workflows/backend.yml`) and from GitHub.
+   Backups, rotation and the advisors need this token.
+2. Backup key: create the age key, keep the private key in 1Password and
+   commit `backend/backup-recipients.txt` (`restore-backup.md`); then test
+   a restore once. Nothing backs up production until then.
+3. Suspend Realtime and turn on SSL enforcement: once in the dashboard, or
+   let CI own both ("Realtime Config" and "SSL Enforcement" read-write on
+   the token of action 1, plus a CI change; `docs/security.md`, "Platform
+   settings").
+4. Check in the dashboard that Auth audit logs are not written to the
+   database and that IP address forwarding is off (same section).
+5. Delete the signatures of the `:edge` images that `main` signed with the
+   first key before ADR 0022; the Pi's current card accepts them
+   (`rotate-keys.md`, "Take back a signed image").
+6. Repository visibility: make it public, so the `release` environment can
+   require the owner's approval. On a private repository GitHub Pro adds
+   environment secrets but not required reviewers (GitHub docs, checked
+   2026-11-07). Then run `infra/github/apply.sh` and move the secrets into
+   the environments: the Supabase token and Google client secret into
+   `production`, the cosign and Android keys into `release` (ADR 0022).
+7. Set `EXPIRES_SUPABASE_ACCESS_TOKEN`, `EXPIRES_GOOGLE_WEB_CLIENT_SECRET`
+   and `EXPIRES_COSIGN_PRIVATE_KEY` (2026-12-31) as in `rotate-keys.md`.
+8. `tofu apply` and `./publish.sh` in `infra/google`
+   (`google-firebase.md`), then run `rotate-keys.yml` and check it is green
+   (`rotate-keys.md`); then delete `NOTIFY_SECRET` and
+   `FCM_SERVICE_ACCOUNT` from GitHub.
+9. Decide on Cloud KMS billing (about 1 USD a month) before the first key
+   retires on 2026-12-31; then `rotate-keys.md`, "Switch new cards to the
+   Cloud KMS key".
+10. Update the canary's twisted, pyasn1 and urllib3
+    (`device/canary/requirements.txt`): OSV-Scanner reports High
+    vulnerabilities.
+11. Decide before real customers: Supabase Pro (daily backups, PITR as an
+    add-on, no pausing, session time-outs, higher quotas) and a custom
+    domain with a firewall in front of the API (ADR 0016).
+12. After v0.2.0 and the KMS switch, rewrite the Pi's card with the phone
+    or DeKoi Setup for the new host configuration: the decoy's firewall
+    ports, the Wi-Fi scan, trust in the three release repositories only.
+    Then retire the first key (`rotate-keys.md`, "Retire the first key").
+13. Optional: repeat the ARP sweep from a PC connected by cable.
 
-- Host configuration is frozen when a card is written; images update.
-- DeKoi sees traffic to itself and broadcast traffic, not traffic between
-  other devices (ADR 0003); a mirror-port option is on the roadmap.
-- HTTPS decoy is off until each device has its own certificate.
-- IDS rules are as old as the last approved image rebuild (weekly). On
-  hardware the nftables and ulogd2 scan path is verified; a live IDS alert,
-  DHCP and name-poisoning probes are not.
-- An ARP sweep from a Wi-Fi client was not detected by a wired DeKoi; many
-  access points answer or filter broadcast ARP for Wi-Fi clients. Retest from
-  a wired host before relying on sweep detection across Wi-Fi.
-- No edge firewall without a custom domain: limits are counted in Postgres
-  and only accepted writes count (ADR 0016). A flood from many accounts can
-  hold back everyone's pushes for an hour or fill the 500 MB database
-  within weeks; monitoring is the alarm.
-- Free Supabase plan: no downloadable backups (CI job specified, not yet
-  built), sessions never expire, and Supabase may pause a project after a
-  week of low activity.
-- No edge rate limiting without a Supabase custom domain.
-- Free Supabase plan: backups are nightly CLI dumps (`backup.yml`), not
-  point-in-time recovery.
-- Releases and weekly image rebuilds wait for the owner's approval.
-- The card written before ADR 0022 trusts every repository under
-  `ghcr.io/mixie-12` and only the first cosign key until it is rewritten.
+## Known limitations
+
+- Host configuration is frozen when a card is written; images update. The
+  Pi's current card has the old firewall and no Wi-Fi scan, and trusts
+  every repository under `ghcr.io/mixie-12` signed with the first key.
+- DeKoi sees traffic to itself and broadcasts, not traffic between other
+  devices (ADR 0003); no per-device bandwidth. The HTTPS decoy is off until
+  each device has its own certificate.
+- IDS rules are as old as the last approved release or weekly rebuild. Not
+  verified on hardware: a live IDS alert, DHCP and name-poisoning probes.
+  An ARP sweep from a Wi-Fi client was not detected by a wired DeKoi.
+- The per-address limits, the public address and country, and the Wi-Fi
+  watch's country need `cf-connecting-ip` and `cf-ipcountry` on the hosted
+  project; not yet verified. Without them those limits are off and the
+  radio stays off.
+- No edge firewall without a custom domain (ADR 0016): a flood from many
+  accounts can hold back everyone's pushes for an hour or fill the 500 MB
+  database within weeks. The checks in `docs/security.md`, "Monitoring",
+  are specified but not built; only the weekly advisors run.
+- Free Supabase plan: nightly dumps, no point-in-time recovery; sessions
+  never expire; the project may pause after a week of low activity.
+- Push titles are in English; `notify` does not know the phone's language.
+- libaums builds its native helpers for 4 KB pages, so 16 KB-page phones
+  run the app in compatibility mode; without it, the card writer can crash
+  mid-write (ADR 0014).
+- Incident grouping lives in both `Incidents.kt` and `weekly_summary_v1`.
+- Phones with private MAC addresses can reappear as new devices.
 
 ## Roadmap (out of MVP scope)
 
-iOS app; web dashboard; decoy personas selectable in the app; shared household
-access and roles beyond owner; email sign-in; custom OS image build; host
-configuration as a signed .deb; mirror-port mode for full network inspection;
-mDNS advertising of the decoy; realtime updates in the app; Google Play
-listing; code-signing certificates for DeKoi Setup; billing; staged fleet
-rollouts; multi-region hosting; Cloudflare in front of the API.
+iOS app; web dashboard; decoy personas selectable in the app; correcting a
+device's kind (ADR 0010); shared household access and roles beyond owner;
+email sign-in; custom OS image build; host configuration as a signed .deb;
+mirror-port mode for full network inspection; realtime updates in the app;
+Google Play listing; code-signing certificates for DeKoi Setup; billing;
+staged fleet rollouts; multi-region hosting; Cloudflare in front of the API.

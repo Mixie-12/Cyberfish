@@ -48,6 +48,20 @@ class ProtectionTest {
     }
 
     @Test
+    fun `wrong web addresses and a port opened to the internet need attention`() {
+        for (kind in listOf("dns_hijack", "port_forward")) {
+            assertEquals(Protection.ATTENTION, protection(listOf(device()), listOf(event(kind, mac = null)), emptySet(), now), kind)
+        }
+    }
+
+    @Test
+    fun `a copy of the home Wi-Fi needs attention`() {
+        for (kind in listOf("evil_twin", "new_access_point")) {
+            assertEquals(Protection.ATTENTION, protection(listOf(device()), listOf(event(kind, mac = null)), emptySet(), now), kind)
+        }
+    }
+
+    @Test
     fun `a new device on the network is information, not an attack`() {
         val joined = event("new_host").copy(severityName = "info")
         assertEquals(Protection.PROTECTED, protection(listOf(device()), listOf(joined), emptySet(), now))

@@ -30,5 +30,5 @@ detail one device at a time.
 - The plan is only as right as the owner's rooms, and the view says so.
 - The Rooms view merges rooms that differ only in case; List's "By room"
   still groups them as typed.
-- Garage and Other join the suggested rooms; translations of the list need
-  the two new entries.
+- Garage and Other join the suggested rooms in every language; lint fails
+  a translated list with fewer rooms.

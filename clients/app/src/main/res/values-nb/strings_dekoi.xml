@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="setup_linked">Koblet til kontoen din</string>
+    <string name="setup_first_start">Første oppstart</string>
+    <string name="setup_online">Tilkoblet</string>
+    <string name="setup_protecting">Passer på nettverket ditt</string>
+    <string name="setup_help_title">Venter du fortsatt?</string>
+    <string name="device_online">Tilkoblet</string>
+    <string name="device_offline">Frakoblet</string>
+    <string name="device_setting_up">Setter opp</string>
+    <string name="device_name">Navn</string>
+    <string name="device_address">Adresse på nettverket ditt</string>
+    <string name="device_remove">Fjern denne DeKoi</string>
+    <string name="device_remove_confirm_title">Fjerne denne DeKoi?</string>
+    <string name="device_remove_confirm_body">Den slutter å sende varsler til denne kontoen. Vil du bruke den igjen, gjør du klar minnekortet med DeKoi Setup.</string>
+    <string name="device_checked_in">Sist i kontakt %1$s</string>
+    <string name="device_never_checked_in">Ikke i kontakt ennå</string>
+    <string name="dekoi_setup">Oppsett</string>
+    <string name="dekoi_step_done">Ferdig</string>
+    <string name="dekoi_step_current">Pågår</string>
+    <string name="dekoi_step_pending">Ikke ennå</string>
+    <plurals name="dekoi_uptime_summary">
+        <item quantity="one">Tilkoblet %1$d av siste %2$d time</item>
+        <item quantity="other">Tilkoblet %1$d av de siste %2$d timene</item>
+    </plurals>
+    <string name="dekoi_uptime_none">Ingen historikk ennå</string>
+    <string name="dekoi_uptime_start">For 7 dager siden</string>
+    <string name="dekoi_uptime_end">Nå</string>
+    <string name="dekoi_uptime_unknown">Ukjent</string>
+    <string name="dekoi_watching">Dette passer DeKoi på</string>
+    <plurals name="dekoi_watch_decoys">
+        <item quantity="one">%1$d lokkedue er i gang</item>
+        <item quantity="other">%1$d lokkeduer er i gang</item>
+    </plurals>
+    <string name="dekoi_watch_port_scan">Ser etter enheter som leter etter åpninger</string>
+    <string name="dekoi_watch_arp">Ser etter enheter som utgir seg for å være andre</string>
+    <string name="dekoi_watch_dhcp">Ser etter andre enheter enn ruteren som deler ut nettverksinnstillinger</string>
+    <string name="dekoi_watch_router">Ser etter enheter som melder seg som ruteren din</string>
+    <string name="dekoi_watch_name_poisoning">Ser etter enheter som svarer på spørsmål de ikke skal svare på</string>
+    <plurals name="dekoi_watch_ids">
+        <item quantity="one">Sjekker trafikken mot %1$s kjent angrepsmønster</item>
+        <item quantity="other">Sjekker trafikken mot %1$s kjente angrepsmønstre</item>
+    </plurals>
+    <string name="dekoi_watch_ids_plain">Sjekker trafikken mot kjente angrepsmønstre</string>
+    <plurals name="dekoi_watch_inventory">
+        <item quantity="one">Holder oversikt over %1$d enhet</item>
+        <item quantity="other">Holder oversikt over %1$d enheter</item>
+    </plurals>
+    <string name="dekoi_watch_inventory_plain">Holder oversikt over enhetene på nettverket ditt</string>
+    <string name="dekoi_watch_other">En annen kontroll</string>
+    <string name="dekoi_state_on">På</string>
+    <string name="dekoi_state_starting">Starter</string>
+    <string name="dekoi_state_off">Slått av</string>
+    <string name="dekoi_state_unknown">Ukjent status</string>
+    <string name="dekoi_state_failed">Virker ikke akkurat nå</string>
+    <string name="dekoi_watching_older">Flere detaljer etter neste automatiske oppdatering.</string>
+    <string name="dekoi_watching_offline">Satt på pause mens din DeKoi er frakoblet.</string>
+    <string name="dekoi_software">Programvare %1$s</string>
+    <string name="dekoi_software_auto">Oppdaterer seg selv</string>
+    <string name="dekoi_decoys">Lokkeduer</string>
+    <string name="dekoi_decoys_footer">Falske tjenester som ser ut til å være verdt å bryte seg inn i. Ingenting på nettverket ditt har noen grunn til å røre dem.</string>
+    <plurals name="dekoi_touched">
+        <item quantity="one">Rørt %1$d gang denne uken</item>
+        <item quantity="other">Rørt %1$d ganger denne uken</item>
+    </plurals>
+    <string name="dekoi_not_touched">Ikke rørt denne uken</string>
+    <string name="dekoi_try">Prøv lokkeduen din</string>
+    <string name="dekoi_try_body">Åpne lokkeduen fra en datamaskin på dette nettverket for å se det en inntrenger ser. Logger du på med et oppdiktet navn og passord, eller åpner en delt mappe, får du et varsel.</string>
+    <string name="dekoi_try_login">Påloggingsside for lagring</string>
+    <string name="dekoi_try_login_where">Åpne adressen i en nettleser</string>
+    <string name="dekoi_try_windows">Delt mappe på Windows</string>
+    <string name="dekoi_try_windows_where">Skriv adressen i adressefeltet i Filutforsker</string>
+    <string name="dekoi_try_mac">Delt mappe på en Mac</string>
+    <string name="dekoi_try_mac_where">I Finder velger du «Gå» og så «Koble til tjener», og skriver inn adressen</string>
+    <string name="dekoi_details">Detaljer</string>
+    <string name="dekoi_rename">Gi nytt navn</string>
+    <string name="dekoi_linked_since">Koblet til siden</string>
+    <string name="dekoi_missing">Denne DeKoi er ikke lenger koblet til kontoen din.</string>
+</resources>

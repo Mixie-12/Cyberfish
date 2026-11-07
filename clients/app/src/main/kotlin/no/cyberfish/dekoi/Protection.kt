@@ -15,8 +15,10 @@ val ATTENTION_WINDOW: Duration = Duration.ofHours(24)
 /** A new device that has not come online by then gets troubleshooting help. */
 val SETUP_HELP_AFTER: Duration = Duration.ofMinutes(20)
 
-// Everything a device reports is suspicious (private.device_event_kinds());
-// device_online, device_offline and new_host come from the backend itself.
+// Everything a device reports is suspicious (private.device_event_kinds()),
+// and so are the findings of its network checks, dns_hijack and
+// port_forward (ADR 0015). device_online, device_offline and new_host come
+// from the backend itself.
 private val INTRUSION_KINDS =
     setOf(
         "login_attempt",
@@ -29,6 +31,10 @@ private val INTRUSION_KINDS =
         "name_poisoning",
         "ids_alert",
         "file_access",
+        "evil_twin",
+        "new_access_point",
+        "dns_hijack",
+        "port_forward",
     )
 
 val Event.isIntrusion: Boolean get() = kind in INTRUSION_KINDS

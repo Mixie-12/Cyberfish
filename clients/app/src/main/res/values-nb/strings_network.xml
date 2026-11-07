@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <plurals name="network_devices">
+        <item quantity="one">%1$d enhet</item>
+        <item quantity="other">%1$d enheter</item>
+    </plurals>
+    <plurals name="network_need_attention">
+        <item quantity="one">%1$d bør ses på</item>
+        <item quantity="other">%1$d bør ses på</item>
+    </plurals>
+    <string name="network_new">Ny</string>
+    <string name="network_private">Telefon eller nettbrett med privat Wi-Fi-adresse</string>
+    <string name="network_unknown_maker">Ukjent produsent</string>
+    <string name="network_empty">Din DeKoi viser enhetene på nettverket ditt her innen 15 minutter etter at den har startet.</string>
+    <string name="network_view_map">Kart</string>
+    <string name="network_view_rooms">Rom</string>
+    <string name="network_view_list">Liste</string>
+    <string name="network_attention">Bør ses på</string>
+    <string name="network_new_this_week">Nye denne uken</string>
+    <string name="network_online">Tilkoblet</string>
+    <string name="network_not_seen">Ikke sett nylig</string>
+    <string name="network_no_room">Uten rom</string>
+    <string name="network_search">Søk etter enheter</string>
+    <string name="network_search_clear">Tøm søket</string>
+    <string name="network_sort">Sortering: %1$s</string>
+    <string name="network_sort_name">Navn</string>
+    <string name="network_sort_last_seen">Sist sett</string>
+    <string name="network_sort_kind">Type</string>
+    <string name="network_by_room">Etter rom</string>
+    <string name="network_no_match">Ingen enheter passer med søket.</string>
+    <string name="network_map_footer">Viser enhetene din DeKoi kan se, ikke hvordan de er koblet sammen.</string>
+    <string name="network_map_description">Kart over enhetene din DeKoi kan se. %1$s</string>
+    <string name="network_show_list">Vis som liste</string>
+    <string name="network_show_all">Vis alle</string>
+    <string name="rooms_intro">Si hvilket rom hver enhet er i, så blir dette en plan over hjemmet ditt.</string>
+    <string name="rooms_not_placed">Ikke plassert ennå</string>
+    <string name="rooms_footer">Du velger rommene. Din DeKoi vet ikke hvor en enhet er.</string>
+
+    <string name="networks_title">Nettverk</string>
+    <plurals name="networks_count">
+        <item quantity="one">%1$d nettverk</item>
+        <item quantity="other">%1$d nettverk</item>
+    </plurals>
+    <string name="networks_not_reported">Ikke rapportert ennå</string>
+    <string name="networks_pending">Din DeKoi rapporterer nettverkene den kan se, etter neste automatiske oppdatering.</string>
+    <string name="networks_home">Hjemmenettverket ditt</string>
+    <string name="networks_other">Et annet nettverk</string>
+    <string name="networks_dekoi_address">Adressen til din DeKoi</string>
+    <string name="networks_addresses">Adresser</string>
+    <string name="networks_found">Slik vet din DeKoi om det</string>
+    <string name="networks_source_interface">Din DeKoi er koblet til det</string>
+    <string name="networks_source_router_advertisement">Meldt av en ruter</string>
+    <string name="networks_source_dhcp_route">Nås gjennom en ruter</string>
+    <string name="networks_source_observed">Sett i trafikken</string>
+    <string name="networks_gateway">Ruteradresse</string>
+    <string name="networks_devices">Enheter</string>
+    <string name="networks_none_seen">Ingen sett ennå</string>
+    <string name="networks_footer">Din DeKoi passer bare på nettverket den er koblet til.</string>
+
+    <string name="host_title">Enhet</string>
+    <string name="host_online_now">Tilkoblet nå</string>
+    <string name="host_attention_body">Den utløste et varsel det siste døgnet.</string>
+    <string name="host_what_to_do">Se hva du bør gjøre</string>
+    <string name="host_history">Siste 14 dager</string>
+    <plurals name="host_history_count">
+        <item quantity="one">%1$d varsel fra denne enheten</item>
+        <item quantity="other">%1$d varsler fra denne enheten</item>
+    </plurals>
+    <string name="host_history_none">Ingen varsler fra denne enheten.</string>
+    <string name="host_see_alerts">Se alle varsler fra denne enheten</string>
+    <string name="host_about">Om</string>
+    <string name="host_connection">Tilkobling</string>
+    <string name="host_model">Modell</string>
+    <string name="host_system">System</string>
+    <string name="host_announced_name">Navnet den oppgir</string>
+    <string name="host_services">Tjenester den tilbyr</string>
+    <string name="host_address">Adresse</string>
+    <string name="host_network">Nettverk</string>
+    <string name="host_first_seen">Først sett</string>
+    <string name="host_last_seen">Sist sett</string>
+    <string name="host_last_seen_ago">Sist sett %1$s</string>
+    <string name="host_private_note">Denne enheten bruker en privat Wi-Fi-adresse, som skjuler produsenten. Telefoner og nettbrett gjør dette for å verne om personvernet til eierne sine.</string>
+    <string name="host_edit">Navn og rom</string>
+    <string name="host_edit_hint">Gi den et navn eller si hvilket rom den står i</string>
+    <string name="host_name">Navn</string>
+    <string name="host_room">Rom</string>
+    <string name="host_suggested_rooms">Forslag til rom</string>
+    <!-- Entré, not Gang, which reads like ganger (times). -->
+    <string-array name="host_rooms">
+        <item>Stue</item>
+        <item>Kjøkken</item>
+        <item>Soverom</item>
+        <item>Kontor</item>
+        <item>Entré</item>
+        <item>Garasje</item>
+        <item>Annet</item>
+    </string-array>
+    <string name="host_missing">Din DeKoi viser ikke lenger denne enheten.</string>
+
+    <string name="place_title">Plasser enhetene dine</string>
+    <string name="place_progress">%1$d av %2$d</string>
+    <string name="place_question">Hvilket rom er den i?</string>
+    <string name="place_skip">Hopp over</string>
+    <plurals name="place_done">
+        <item quantity="one">%1$d enhet har nå et rom. Du kan endre rommet når som helst i detaljene for enheten.</item>
+        <item quantity="other">%1$d enheter har nå et rom. Du kan endre rommet til en enhet når som helst i detaljene for den.</item>
+    </plurals>
+    <string name="place_done_none">Ingen rom ble valgt denne gangen. Du kan plassere enhetene dine når som helst fra Rom.</string>
+    <string name="place_done_action">Se rommene dine</string>
+
+    <string name="os_other">Et annet system</string>
+</resources>

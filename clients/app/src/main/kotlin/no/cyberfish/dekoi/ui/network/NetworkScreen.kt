@@ -37,6 +37,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.unit.dp
 import androidx.core.content.edit
+import no.cyberfish.dekoi.Device
 import no.cyberfish.dekoi.R
 import no.cyberfish.dekoi.attentionByMac
 import no.cyberfish.dekoi.hostDisplayName
@@ -105,7 +106,7 @@ fun NetworkScreen(
         if (entries.isNotEmpty()) {
             item { Text(summary, style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant) }
         }
-        item { Links(data.networks.size, onNavigate) }
+        item { Links(data.networks.size, data.devices, onNavigate) }
         if (entries.isEmpty()) {
             item { EmptyState(R.drawable.ic_lan, stringResource(R.string.network_empty)) }
             return@Screen
@@ -160,10 +161,14 @@ private fun summary(entries: List<HostEntry>): String {
     ).joinToString(" · ")
 }
 
-/** Networks, and Add DeKoi where an owner looking at devices finds it; both show before any device does. */
+/**
+ * The Networks screen, the Insights of each DeKoi (ADR 0015), and Add DeKoi,
+ * where an owner looking at devices finds it; all show before any device does.
+ */
 @Composable
 private fun Links(
     networks: Int,
+    devices: List<Device>,
     onNavigate: (Route) -> Unit,
 ) {
     InsetSection {
@@ -180,6 +185,16 @@ private fun Links(
             },
             onClick = { onNavigate(Route.Networks) },
         )
+        devices.forEach { device ->
+            InsetRow(
+                stringResource(R.string.insights_title),
+                subtitle = if (devices.size > 1) device.name else stringResource(R.string.insights_open_subtitle),
+                leading = {
+                    Icon(painterResource(R.drawable.ic_network_check), contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+                },
+                onClick = { onNavigate(Route.Insights(device.id)) },
+            )
+        }
         InsetRow(
             stringResource(R.string.action_add_dekoi),
             titleColor = MaterialTheme.colorScheme.primary,

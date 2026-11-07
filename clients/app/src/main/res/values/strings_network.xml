@@ -109,16 +109,16 @@
     <string name="place_done_action">See your rooms</string>
 
     <!-- Operating systems (ADR 0010 vocabulary), as their makers write them. -->
-    <string name="os_android">Android</string>
-    <string name="os_ios">iOS</string>
-    <string name="os_ipados">iPadOS</string>
-    <string name="os_macos">macOS</string>
-    <string name="os_windows">Windows</string>
-    <string name="os_linux">Linux</string>
-    <string name="os_chromeos">ChromeOS</string>
-    <string name="os_tvos">tvOS</string>
-    <string name="os_webos">webOS</string>
-    <string name="os_tizen">Tizen</string>
-    <string name="os_fire_os">Fire OS</string>
+    <string name="os_android" translatable="false">Android</string>
+    <string name="os_ios" translatable="false">iOS</string>
+    <string name="os_ipados" translatable="false">iPadOS</string>
+    <string name="os_macos" translatable="false">macOS</string>
+    <string name="os_windows" translatable="false">Windows</string>
+    <string name="os_linux" translatable="false">Linux</string>
+    <string name="os_chromeos" translatable="false">ChromeOS</string>
+    <string name="os_tvos" translatable="false">tvOS</string>
+    <string name="os_webos" translatable="false">webOS</string>
+    <string name="os_tizen" translatable="false">Tizen</string>
+    <string name="os_fire_os" translatable="false">Fire OS</string>
     <string name="os_other">Another system</string>
 </resources>

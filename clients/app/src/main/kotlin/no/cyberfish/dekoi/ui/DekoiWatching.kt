@@ -12,14 +12,11 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalLocale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.collapse
-import androidx.compose.ui.semantics.expand
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.unit.IntSize
@@ -34,6 +31,7 @@ import no.cyberfish.dekoi.ui.components.InsetRow
 import no.cyberfish.dekoi.ui.components.InsetSection
 import no.cyberfish.dekoi.ui.components.KeyValueRow
 import no.cyberfish.dekoi.ui.components.Section
+import no.cyberfish.dekoi.ui.components.TechnicalDetailsRow
 import no.cyberfish.dekoi.watchList
 import java.text.NumberFormat
 import java.time.Instant
@@ -211,33 +209,7 @@ private fun SoftwareRow(
 @Composable
 private fun TechnicalRows(device: Device) {
     var open by rememberSaveable { mutableStateOf(false) }
-    InsetRow(
-        stringResource(R.string.event_details),
-        modifier =
-            Modifier.semantics {
-                if (open) {
-                    collapse {
-                        open = false
-                        true
-                    }
-                } else {
-                    expand {
-                        open = true
-                        true
-                    }
-                }
-            },
-        trailing = {
-            Icon(
-                painterResource(R.drawable.ic_expand_more),
-                contentDescription = null,
-                modifier = Modifier.rotate(if (open) 180f else 0f),
-                tint = MaterialTheme.colorScheme.outline,
-            )
-        },
-        onClick = { open = !open },
-        chevron = false,
-    )
+    TechnicalDetailsRow(open) { open = it }
     if (!open) return
     device.monitors.forEach { KeyValueRow(it.kindName, technicalValue(it)) }
     device.images.forEach { image ->
