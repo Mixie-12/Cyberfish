@@ -125,6 +125,7 @@ select results_eq(
       ('anon', 'device_hosts_v2'),
       ('anon', 'device_register_v1'),
       ('anon', 'device_wifi_v1'),
+      ('anon', 'self_check_v1'),
       ('authenticated', 'acknowledge_events_v1'),
       ('authenticated', 'check_request'),
       ('authenticated', 'claim_device_v1'),
