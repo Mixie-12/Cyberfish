@@ -1,0 +1,37 @@
+name: Scan an image
+description: >-
+  Fails on critical vulnerabilities that have a fix in the arm64 image, the
+  one devices run. Grype checks the database archive against the SHA-256 in
+  the listing it fetches over TLS, rehashes the database on start, refuses
+  one older than five days, and fails when it cannot check for an update.
+
+inputs:
+  image:
+    description: Image reference, by digest or tag.
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - name: Install Grype
+      shell: bash
+      env:
+        VERSION: 0.121.0
+        SHA256: 64e07133d3486115de647a66581461dccf5c732748a0a3119077395565f15519
+      run: |
+        archive="$RUNNER_TEMP/grype.tar.gz"
+        curl -fsSL -o "$archive" "https://github.com/anchore/grype/releases/download/v$VERSION/grype_${VERSION}_linux_amd64.tar.gz"
+        echo "$SHA256  $archive" | sha256sum -c -
+        mkdir -p "$RUNNER_TEMP/grype"
+        tar -xzf "$archive" -C "$RUNNER_TEMP/grype" grype
+    - name: Scan
+      shell: bash
+      env:
+        IMAGE: ${{ inputs.image }}
+        GRYPE_CHECK_FOR_APP_UPDATE: "false"
+        GRYPE_DB_REQUIRE_UPDATE_CHECK: "true"
+        GRYPE_DB_VALIDATE_BY_HASH_ON_START: "true"
+        GRYPE_DB_VALIDATE_AGE: "true"
+      run: >-
+        "$RUNNER_TEMP/grype/grype" "registry:$IMAGE" --platform linux/arm64
+        --only-fixed --fail-on critical
