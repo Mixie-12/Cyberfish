@@ -1,0 +1,75 @@
+name: device
+
+on:
+  push:
+    branches: [main]
+    paths: [device/**, backend/**, .github/workflows/device.yml, .hadolint.yaml]
+  pull_request:
+    paths: [device/**, backend/**, .github/workflows/device.yml, .hadolint.yaml]
+
+permissions:
+  contents: read
+
+jobs:
+  checks:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+      - name: Lint and format
+        working-directory: device
+        run: |
+          uvx ruff@0.17.4 check .
+          uvx ruff@0.17.4 format --check .
+      - name: Unit and consistency tests
+        working-directory: device
+        run: uvx --python 3.13 --from pytest==8.3.5 pytest -q
+      - name: Containerfiles
+        run: >-
+          docker run --rm -v "$PWD:/repo:ro" -w /repo
+          hadolint/hadolint@sha256:9a3944b7fddcb947d1ffd90829ac1a6e5c30479223358f249d8b96c7d0019e27
+          hadolint device/canary/Containerfile device/agent/Containerfile
+      - name: Firewall rules and Quadlet units on Debian Trixie
+        run: >-
+          docker run --rm --cap-add NET_ADMIN -v "$PWD/device/host:/host:ro"
+          debian@sha256:a72b4433de1cf7d6bae0c4cee74d0547f58601a643b3375f070c51600d63b6b2
+          sh -euc 'apt-get update -qq && apt-get install -y -qq --no-install-recommends nftables podman >/dev/null
+          && nft --check --file /host/etc/nftables.conf
+          && mkdir -p /etc/containers/systemd && cp /host/etc/containers/systemd/*.container /etc/containers/systemd/
+          && /usr/lib/systemd/system-generators/podman-system-generator --dryrun >/dev/null'
+
+  # The real Quadlet units and images on a throwaway machine, against a local
+  # Supabase (device/e2e/run.py describes what is and is not covered).
+  e2e:
+    needs: checks
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: supabase/setup-cli@689adcfb80d947100a1eab127289b97d1fb07b13 # v3.2.0
+        with:
+          version: 3.0.0
+      - name: Start the backend
+        working-directory: backend
+        run: |
+          supabase start -x imgproxy,logflare,vector,supavisor,mailpit,studio,edge-runtime,realtime,storage-api
+          supabase status -o json > "$RUNNER_TEMP/supabase.json"
+      - name: Prepare the host as first boot does
+        run: |
+          echo "containers:2147483647:2147483648" | sudo tee -a /etc/subuid /etc/subgid
+          sudo sysctl -w net.ipv4.ip_unprivileged_port_start=0
+          sudo install -D -m 0644 -t /etc/containers/systemd device/host/etc/containers/systemd/*.container
+          # Test only: the local backend has no TLS.
+          sudo sed -i '/^\[Container\]$/a Environment=DEKOI_ALLOW_HTTP=1' /etc/containers/systemd/dekoi-agent.container
+      - name: Build the images under their production names
+        run: |
+          key=$(jq -r .PUBLISHABLE_KEY "$RUNNER_TEMP/supabase.json")
+          sudo podman build -f device/canary/Containerfile -t ghcr.io/mixie-12/dekoi-canary:stable device
+          sudo podman build -f device/agent/Containerfile -t ghcr.io/mixie-12/dekoi-agent:stable \
+            --build-arg DEKOI_API_URL=http://127.0.0.1:54321 \
+            --build-arg DEKOI_API_KEY="$key" \
+            --build-arg DEKOI_AGENT_VERSION="e2e-${GITHUB_SHA::12}" device
+      - name: End-to-end test
+        run: sudo python3 device/e2e/run.py "$RUNNER_TEMP/supabase.json"
+      - name: Device logs
+        if: failure()
+        run: sudo journalctl --no-pager -u dekoi-canary -u dekoi-agent | tail -n 200
