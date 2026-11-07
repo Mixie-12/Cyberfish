@@ -11,9 +11,9 @@
     <string name="threat_unlikely">Probably harmless</string>
     <string name="threat_sign_in">Something tried passwords on your DeKoi. No ordinary device in a home does that.</string>
     <string name="threat_file">Someone opened one of the bait files on your DeKoi. Ordinary devices never do that by themselves.</string>
-    <string name="threat_impersonation">Ordinary devices never pretend to be another device. This is how someone gets between your devices and the internet.</string>
-    <string name="threat_dns">Your network gave wrong addresses for well-known websites. This is how someone sends your devices to fake copies of them.</string>
-    <string name="threat_wifi_copy">A Wi-Fi network nearby uses your network’s name with weaker security. This is how someone lures your devices onto their network.</string>
+    <string name="threat_impersonation">Ordinary devices never pretend to be another device or answer in its place.</string>
+    <string name="threat_dns">Your network gave different addresses for well-known websites than an independent check did. Home routers don’t do that on their own.</string>
+    <string name="threat_wifi_copy">A Wi-Fi network nearby uses your network’s name with weaker security. Your own Wi-Fi doesn’t lower its security by itself.</string>
     <string name="threat_probing">Some apps and network tools do this too. If you don’t recognise the device, treat it as an attack.</string>
     <string name="threat_known">It comes from a device you marked as known, so it is most likely you or one of your own tools.</string>
     <string name="threat_status">This is about your DeKoi itself, not an attack.</string>
@@ -26,17 +26,20 @@
     <string name="step_find_network_gear">Find the device. It looks like network equipment, such as a router, Wi-Fi extender or network switch.</string>
     <string name="step_find_unknown">Find the device. Your router’s app or settings page lists the connected devices by their hardware address.</string>
 
-    <!-- Disconnect steps: the table in docs/design.md, "Alerts", word for word. -->
-    <string name="step_disconnect_personal">Ask who in your home owns it. On it, turn off Wi-Fi.</string>
+    <!-- Disconnect steps: the table in docs/design.md, "Alerts", word for word, one action per step. -->
+    <string name="step_ask_owner">Ask who in your home owns it.</string>
+    <string name="step_disconnect_personal">On it, turn off Wi-Fi.</string>
     <string name="step_disconnect_computer">Unplug its network cable or turn off its Wi-Fi. Leave it switched on.</string>
     <string name="step_disconnect_power">Unplug it from power.</string>
-    <string name="step_disconnect_smart_home">Unplug it or take out its batteries. Reset it and update its software before using it again.</string>
-    <string name="step_disconnect_storage">Shut it down from its app or power button, then unplug its network cable, so no files are lost.</string>
+    <string name="step_disconnect_smart_home">Unplug it or take out its batteries.</string>
+    <string name="step_reset_smart_home">Reset it and update its software before using it again.</string>
+    <string name="step_shut_down_storage">Shut it down from its app or power button, so no files are lost.</string>
+    <string name="step_disconnect_storage">Then unplug its network cable.</string>
     <string name="step_disconnect_network_gear">If you have more than one, unplug the extra ones one at a time. If this is the box from your internet provider, restart it instead.</string>
     <string name="step_disconnect_unknown">If no one recognises it, block it in your router’s app or settings page by its hardware address.</string>
 
     <string name="step_change_wifi_password">Change your Wi-Fi password. Devices that don’t get the new password can no longer join.</string>
-    <string name="step_change_account_passwords">Change the passwords of your important accounts, such as email and banking, from a device you trust.</string>
+    <string name="step_change_account_passwords">Change the passwords of your important accounts, such as email and banking, on a phone or computer you know is safe.</string>
     <string name="step_restart_router">Restart your router, so every device gets its network settings from the router again.</string>
     <string name="step_check_power">Check that your DeKoi has power. Its light should be on.</string>
     <string name="step_check_cable">Check that its network cable is plugged in at both ends.</string>

@@ -103,7 +103,7 @@ fun timeline(
         .groupBy { it.end.atZone(zone).toLocalDate() }
 
 /**
- * The line under an incident's title: "14 events · 15:13–15:20", led by
+ * The line under an incident's title: "14 times · 15:13–15:20", led by
  * "Known device" when the owner knows the source. A single event says how
  * much happened instead, "60 times · 15:20". [clock] formats a time of
  * day; [string] and [plural] look up resources.
@@ -116,7 +116,7 @@ fun incidentSubtitle(
     plural: (Int, Int) -> String,
 ): String {
     val size = incident.events.size
-    val amount = if (size > 1) plural(R.plurals.alert_events, size) else amount(incident.lead)?.let { plural(it.words, it.count) }
+    val amount = if (size > 1) plural(R.plurals.alert_times, size) else amount(incident.lead)?.let { plural(it.words, it.count) }
     val start = clock(incident.start)
     val end = clock(incident.end)
     return listOfNotNull(

@@ -132,7 +132,6 @@ class IncidentsTest {
         id: Int,
         count: Int,
     ) = when (id) {
-        R.plurals.alert_events -> "$count events"
         R.plurals.alert_times -> "$count times"
         R.plurals.alert_openings -> "$count openings"
         else -> error("unexpected plural $id")
@@ -148,7 +147,7 @@ class IncidentsTest {
 
     @Test
     fun `the subtitle counts events and spans their times`() {
-        assertEquals("14 events · 15:13–15:19", subtitle(group(*Array(14) { event(it / 2L) }).single()))
+        assertEquals("14 times · 15:13–15:19", subtitle(group(*Array(14) { event(it / 2L) }).single()))
     }
 
     @Test
@@ -160,7 +159,7 @@ class IncidentsTest {
 
     @Test
     fun `a known device says so first`() {
-        assertEquals("Known device · 2 events · 15:13–15:14", subtitle(group(event(0), event(1)).single(), known = true))
+        assertEquals("Known device · 2 times · 15:13–15:14", subtitle(group(event(0), event(1)).single(), known = true))
     }
 
     @Test

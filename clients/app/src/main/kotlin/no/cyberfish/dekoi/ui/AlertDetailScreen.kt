@@ -167,7 +167,7 @@ fun AlertDetailScreen(
     }
 }
 
-/** "Today · 14 events · 15:13–15:20". */
+/** "Today · 14 times · 15:13–15:20". */
 @Composable
 private fun summary(
     incident: Incident,
@@ -407,7 +407,7 @@ private fun StepMark(
 }
 
 /**
- * "I know this device" after the steps; when the incident shows it could be
+ * "Mark as known" after the steps; when the incident shows it could be
  * attacking the whole network, [confirm] asks first.
  */
 @Composable
@@ -477,7 +477,7 @@ private fun WhatHappened(
             if (shown.size < events.size) {
                 TextButton(
                     onClick = { all = true },
-                ) { Text(pluralStringResource(R.plurals.alert_show_all_events, events.size, events.size)) }
+                ) { Text(pluralStringResource(R.plurals.alert_show_each_time, events.size, events.size)) }
             }
         }
     }

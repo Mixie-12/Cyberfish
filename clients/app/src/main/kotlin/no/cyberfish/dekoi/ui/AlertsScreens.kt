@@ -352,7 +352,7 @@ private fun DayHeader(label: String) {
 /**
  * One incident on the timeline, without a box: a dot on the hairline that
  * glows in the severity's colour until the incident is seen, the severity
- * glyph and word, the title and "14 events · 15:13–15:20". Seen incidents
+ * glyph and word, the title and "14 times · 15:13–15:20". Seen incidents
  * are grey and quieter; incidents from a device the owner knows are dimmed.
  */
 @Composable

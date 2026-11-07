@@ -23,29 +23,32 @@ class GuidanceTest {
     fun `every alert about another device starts with finding it and then disconnecting it`() {
         for (kind in deviceKinds) {
             for (source in HostKind.entries) {
+                val disconnect = disconnectSteps(source)
                 val steps = steps(kind, source)
                 assertEquals(findStep(source), steps[0], "$kind from $source")
-                assertEquals(disconnectStep(source), steps[1], "$kind from $source")
+                assertEquals(disconnect, steps.subList(1, 1 + disconnect.size), "$kind from $source")
             }
         }
     }
 
     @Test
-    fun `how to disconnect follows the table in the design, one row per group of kinds`() {
+    fun `how to disconnect follows the table in the design, one row per group of kinds, one action per step`() {
         val table =
             mapOf(
-                R.string.step_disconnect_personal to listOf(HostKind.PHONE, HostKind.TABLET, HostKind.WEARABLE),
-                R.string.step_disconnect_computer to listOf(HostKind.COMPUTER),
-                R.string.step_disconnect_power to
+                listOf(R.string.step_ask_owner, R.string.step_disconnect_personal) to
+                    listOf(HostKind.PHONE, HostKind.TABLET, HostKind.WEARABLE),
+                listOf(R.string.step_disconnect_computer) to listOf(HostKind.COMPUTER),
+                listOf(R.string.step_disconnect_power) to
                     listOf(HostKind.TV, HostKind.MEDIA_PLAYER, HostKind.SPEAKER, HostKind.GAME_CONSOLE, HostKind.PRINTER),
-                R.string.step_disconnect_smart_home to listOf(HostKind.CAMERA, HostKind.SMART_HOME),
-                R.string.step_disconnect_storage to listOf(HostKind.STORAGE, HostKind.SERVER),
-                R.string.step_disconnect_network_gear to listOf(HostKind.ROUTER, HostKind.ACCESS_POINT, HostKind.SWITCH),
-                R.string.step_disconnect_unknown to listOf(HostKind.UNKNOWN),
+                listOf(R.string.step_disconnect_smart_home, R.string.step_reset_smart_home) to
+                    listOf(HostKind.CAMERA, HostKind.SMART_HOME),
+                listOf(R.string.step_shut_down_storage, R.string.step_disconnect_storage) to listOf(HostKind.STORAGE, HostKind.SERVER),
+                listOf(R.string.step_disconnect_network_gear) to listOf(HostKind.ROUTER, HostKind.ACCESS_POINT, HostKind.SWITCH),
+                listOf(R.string.step_disconnect_unknown) to listOf(HostKind.UNKNOWN),
             )
         assertEquals(HostKind.entries.toSet(), table.values.flatten().toSet())
-        for ((step, kinds) in table) {
-            for (kind in kinds) assertEquals(step, disconnectStep(kind).text, "$kind")
+        for ((steps, kinds) in table) {
+            for (kind in kinds) assertEquals(steps, disconnectSteps(kind).map { it.text }, "$kind")
         }
     }
 
@@ -54,7 +57,7 @@ class GuidanceTest {
         for (kind in HostKind.entries) {
             val unknown = kind == HostKind.UNKNOWN
             assertEquals(unknown, findStep(kind).usesHardwareAddress, "$kind")
-            assertEquals(unknown, disconnectStep(kind).usesHardwareAddress, "$kind")
+            assertEquals(unknown, disconnectSteps(kind).any { it.usesHardwareAddress }, "$kind")
         }
     }
 
@@ -62,11 +65,11 @@ class GuidanceTest {
     fun `impersonation asks for a router restart, intrusion for new account passwords`() {
         assertEquals(
             listOf(R.string.step_restart_router, R.string.step_change_wifi_password),
-            steps("arp_spoof", HostKind.UNKNOWN).drop(2).map { it.text },
+            steps("arp_spoof", HostKind.UNKNOWN).takeLast(2).map { it.text },
         )
         assertEquals(
             listOf(R.string.step_change_wifi_password, R.string.step_change_account_passwords),
-            steps("login_attempt", HostKind.PHONE).drop(2).map { it.text },
+            steps("login_attempt", HostKind.PHONE).takeLast(2).map { it.text },
         )
     }
 

@@ -15,23 +15,23 @@
     <!-- Titles about another device take its subject (subject_* in strings_guidance.xml) and follow notify.ts. -->
     <string name="event_login_title">%1$s tried to sign in to your DeKoi</string>
     <string name="event_login_action">Tried to sign in</string>
-    <string name="event_login_consequence">Someone may be trying to break into the devices on your network.</string>
-    <string name="event_login_why">Nothing on your network has a reason to sign in to your DeKoi. Someone, or a program, is trying passwords on the devices it finds. That is how break-ins usually start.</string>
+    <string name="event_login_consequence">Someone may be trying to get into the devices on your network.</string>
+    <string name="event_login_why">Nothing on your network has a reason to sign in to your DeKoi. Someone, or a program, is trying passwords on the devices it finds.</string>
     <string name="event_connection_title">%1$s opened one of your decoys</string>
     <string name="event_connection_action">Opened a decoy</string>
     <string name="event_connection_why">Your DeKoi pretends to be a storage box. Ordinary devices leave it alone, so a visit means something on your network is looking around.</string>
     <string name="event_probe_consequence">Something on your network may be looking for a way in.</string>
     <string name="event_scan_title">%1$s searched your network for openings</string>
     <string name="event_scan_action">Searched for openings</string>
-    <string name="event_scan_why">Trying opening after opening to find a way in is one of the first things an intruder or a harmful program does after getting in.</string>
+    <string name="event_scan_why">It tried many openings on your DeKoi in a short time, looking for a way in. Network tools do this, and so do harmful programs.</string>
     <string name="event_host_scan_title">%1$s searched your whole network</string>
     <string name="event_host_scan_action">Searched the whole network</string>
     <string name="event_host_scan_consequence">Something on your network may be mapping your devices.</string>
-    <string name="event_host_scan_why">It asked for the addresses of many devices in a short time. Network tools do this, and so does an intruder mapping what to attack next.</string>
+    <string name="event_host_scan_why">It asked for the addresses of many devices in a short time. Network tools do this, and so do harmful programs looking for other devices.</string>
     <string name="event_arp_spoof_title">%1$s is pretending to be another device</string>
     <string name="event_arp_spoof_action">Pretended to be another device</string>
     <string name="event_arp_spoof_consequence">It could read or change your internet traffic.</string>
-    <string name="event_arp_spoof_why">It claimed an address that belongs to another device on your network. This is how an attacker puts itself between your devices and the internet to read or change your traffic.</string>
+    <string name="event_arp_spoof_why">It claimed an address that belongs to another device on your network, so traffic meant for that device can go to it instead.</string>
     <string name="event_rogue_dhcp_title">%1$s is handing out network settings</string>
     <string name="event_rogue_dhcp_action">Handed out network settings</string>
     <string name="event_rogue_dhcp_why">Normally only your router gives devices their network settings. Another device doing it can send your traffic through itself.</string>
@@ -76,18 +76,14 @@
         <item quantity="one">%1$d address</item>
         <item quantity="other">%1$d addresses</item>
     </plurals>
-    <plurals name="alert_events">
-        <item quantity="one">%1$d event</item>
-        <item quantity="other">%1$d events</item>
-    </plurals>
     <!-- From one time of day to another, as in 15:13–15:20. -->
     <string name="alert_time_range">%1$s–%2$s</string>
     <string name="alert_known">Known device</string>
 
     <string name="alerts_filter_all">All</string>
     <string name="alerts_filter_unread">Unread</string>
-    <string name="alerts_filter_severity">Severity</string>
-    <string name="alerts_filter_any_severity">Any severity</string>
+    <string name="alerts_filter_severity">How urgent</string>
+    <string name="alerts_filter_any_severity">Any</string>
     <string name="alerts_filter_device">From this device</string>
     <string name="alerts_filter_decoy">On the %1$s decoy</string>
     <string name="alerts_filter_remove">Remove filter</string>
@@ -95,7 +91,7 @@
     <string name="alerts_yesterday">Yesterday</string>
     <!-- TalkBack state of an incident on the timeline: its severity word, and whether it is unread. -->
     <string name="alerts_unread_state">%1$s, unread</string>
-    <string name="alerts_empty">No alerts yet. When something on your network touches your DeKoi, it shows up here.</string>
+    <string name="alerts_empty">No alerts yet. When your DeKoi notices something on your network, it shows up here.</string>
     <string name="alerts_empty_filtered">No alerts match these filters.</string>
     <string name="alerts_show_all">Show all alerts</string>
 
@@ -104,9 +100,9 @@
     <string name="event_advice">What to do</string>
     <string name="alert_nothing_to_do">Nothing to do.</string>
     <string name="alert_what_happened">What happened</string>
-    <plurals name="alert_show_all_events">
-        <item quantity="one">Show %1$d event</item>
-        <item quantity="other">Show all %1$d events</item>
+    <plurals name="alert_show_each_time">
+        <item quantity="one">Show each time (%1$d)</item>
+        <item quantity="other">Show each time (%1$d)</item>
     </plurals>
     <string name="alert_device">Which device</string>
     <string name="alert_device_network">Network</string>
@@ -115,18 +111,18 @@
     <string name="alert_device_unlisted">DeKoi has not listed this device yet.</string>
     <string name="alert_device_dekoi">Your DeKoi</string>
 
-    <string name="event_trust">I know this device</string>
-    <string name="event_trust_hint">If it is your own device running network tools, tell DeKoi you know it, and it stops warning you about it.</string>
+    <string name="event_trust">Mark as known</string>
+    <string name="event_trust_hint">If it is your own device running network tools, mark it as known and DeKoi stops warning you about it.</string>
     <string name="event_trusted">Marked as known. Activity from it no longer counts as a warning.</string>
-    <string name="event_untrust">Forget this device</string>
+    <string name="event_untrust">Remove from known devices</string>
     <string name="alert_trust_confirm_title">Mark this device as known?</string>
     <string name="alert_trust_confirm_body">Do this only if you set it up yourself, such as a second router or a Wi-Fi extender. A device doing this without your knowledge can see your traffic, and DeKoi would stop warning you about it.</string>
     <string name="alert_trust_confirm">Mark as known</string>
 
     <string name="event_details">Technical details</string>
     <string name="event_detail_time">When</string>
-    <string name="event_detail_started">Started</string>
-    <string name="event_detail_ended">Last event</string>
+    <string name="event_detail_started">First time</string>
+    <string name="event_detail_ended">Last time</string>
     <string name="event_detail_source">From</string>
     <string name="event_detail_mac">Hardware address</string>
     <string name="event_detail_vendor">Maker</string>

@@ -33,23 +33,36 @@ data class Step(
     val usesHardwareAddress: Boolean = false,
 )
 
-/** How to take a device of this kind off the network (the table in docs/design.md, "Alerts"). */
-fun disconnectStep(kind: HostKind): Step =
+/** How to take a device of this kind off the network, one action per step (the table in docs/design.md, "Alerts"). */
+fun disconnectSteps(kind: HostKind): List<Step> =
     when (kind) {
-        HostKind.PHONE, HostKind.TABLET, HostKind.WEARABLE -> Step(R.string.step_disconnect_personal)
+        HostKind.PHONE, HostKind.TABLET, HostKind.WEARABLE -> {
+            listOf(Step(R.string.step_ask_owner), Step(R.string.step_disconnect_personal))
+        }
 
-        HostKind.COMPUTER -> Step(R.string.step_disconnect_computer)
+        HostKind.COMPUTER -> {
+            listOf(Step(R.string.step_disconnect_computer))
+        }
 
-        HostKind.TV, HostKind.MEDIA_PLAYER, HostKind.SPEAKER, HostKind.GAME_CONSOLE, HostKind.PRINTER,
-        -> Step(R.string.step_disconnect_power)
+        HostKind.TV, HostKind.MEDIA_PLAYER, HostKind.SPEAKER, HostKind.GAME_CONSOLE, HostKind.PRINTER -> {
+            listOf(Step(R.string.step_disconnect_power))
+        }
 
-        HostKind.CAMERA, HostKind.SMART_HOME -> Step(R.string.step_disconnect_smart_home)
+        HostKind.CAMERA, HostKind.SMART_HOME -> {
+            listOf(Step(R.string.step_disconnect_smart_home), Step(R.string.step_reset_smart_home))
+        }
 
-        HostKind.STORAGE, HostKind.SERVER -> Step(R.string.step_disconnect_storage)
+        HostKind.STORAGE, HostKind.SERVER -> {
+            listOf(Step(R.string.step_shut_down_storage), Step(R.string.step_disconnect_storage))
+        }
 
-        HostKind.ROUTER, HostKind.ACCESS_POINT, HostKind.SWITCH -> Step(R.string.step_disconnect_network_gear)
+        HostKind.ROUTER, HostKind.ACCESS_POINT, HostKind.SWITCH -> {
+            listOf(Step(R.string.step_disconnect_network_gear))
+        }
 
-        HostKind.UNKNOWN -> Step(R.string.step_disconnect_unknown, usesHardwareAddress = true)
+        HostKind.UNKNOWN -> {
+            listOf(Step(R.string.step_disconnect_unknown, usesHardwareAddress = true))
+        }
     }
 
 /** Where to look for a device of this kind. */
@@ -66,8 +79,8 @@ fun findStep(kind: HostKind): Step =
 
 /**
  * The steps for an event whose source looks like [source]: find it,
- * disconnect it, then secure the network. "I know this device" is not a
- * step; the alert offers it after them.
+ * disconnect it, then secure the network. "Mark as known" is not a step;
+ * the alert offers it after them.
  */
 fun steps(
     kind: String,
@@ -75,21 +88,13 @@ fun steps(
 ): List<Step> =
     when (responseFor(kind)) {
         Response.INTRUSION -> {
-            listOf(
-                findStep(source),
-                disconnectStep(source),
-                Step(R.string.step_change_wifi_password),
-                Step(R.string.step_change_account_passwords),
-            )
+            listOf(findStep(source)) + disconnectSteps(source) +
+                listOf(Step(R.string.step_change_wifi_password), Step(R.string.step_change_account_passwords))
         }
 
         Response.IMPERSONATION -> {
-            listOf(
-                findStep(source),
-                disconnectStep(source),
-                Step(R.string.step_restart_router),
-                Step(R.string.step_change_wifi_password),
-            )
+            listOf(findStep(source)) + disconnectSteps(source) +
+                listOf(Step(R.string.step_restart_router), Step(R.string.step_change_wifi_password))
         }
 
         Response.OFFLINE -> {
@@ -106,7 +111,7 @@ fun steps(
 // a familiar device, so the app asks first.
 private val CONFIRM_TRUST = setOf("arp_spoof", "rogue_dhcp", "rogue_router", "name_poisoning")
 
-/** Whether "I know this device" asks for confirmation for an event of this kind. */
+/** Whether "Mark as known" asks for confirmation for an event of this kind. */
 fun trustNeedsConfirmation(kind: String): Boolean = kind in CONFIRM_TRUST
 
 enum class ThreatLevel { LIKELY, POSSIBLE, UNLIKELY }
