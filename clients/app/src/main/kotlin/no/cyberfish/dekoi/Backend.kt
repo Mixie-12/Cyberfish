@@ -15,6 +15,8 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
 import no.cyberfish.dekoi.shared.ClaimCode
+import java.time.Duration
+import java.time.Instant
 
 /**
  * Everything the app asks of the backend (docs/architecture.md, "App API").
@@ -108,7 +110,52 @@ class Backend(
         client.auth.signOut(SignOutScope.LOCAL)
     }
 
+    /** The last week of one DeKoi's network health, the ports open now, and its latest speed tests (ADR 0015). */
+    suspend fun insights(deviceId: String): NetworkInsights {
+        val weekAgo = Instant.now().minus(Duration.ofDays(INSIGHT_DAYS)).toString()
+        return NetworkInsights(
+            deviceId,
+            samples =
+                client
+                    .from("health_samples")
+                    .select {
+                        filter {
+                            eq("device_id", deviceId)
+                            gte("hour", weekAgo)
+                        }
+                        order("hour", Order.ASCENDING)
+                    }.decodeList(),
+            forwards =
+                client
+                    .from("port_forwards")
+                    .select {
+                        filter {
+                            eq("device_id", deviceId)
+                            eq("open", true)
+                        }
+                        order("internal_client", Order.ASCENDING)
+                    }.decodeList(),
+            speedTests =
+                client
+                    .from("speed_tests")
+                    .select {
+                        filter { eq("device_id", deviceId) }
+                        order("tested_at", Order.DESCENDING)
+                        limit(SPEED_TEST_LIMIT)
+                    }.decodeList(),
+        )
+    }
+
+    suspend fun setSpeedTest(
+        device: Device,
+        on: Boolean,
+    ) {
+        client.from("devices").update({ set("speed_test", on) }) { filter { eq("id", device.id) } }
+    }
+
     private companion object {
         const val EVENT_LIMIT = 200L
+        const val INSIGHT_DAYS = 7L
+        const val SPEED_TEST_LIMIT = 14L
     }
 }

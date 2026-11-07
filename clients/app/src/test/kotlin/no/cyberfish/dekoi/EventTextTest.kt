@@ -27,6 +27,8 @@ class EventTextTest {
                 "ids_alert",
                 "device_offline",
                 "device_online",
+                "dns_hijack",
+                "port_forward",
             )
         val titles = kinds.map { eventText(event(it)).title }
         assertEquals(kinds.size, titles.toSet().size)

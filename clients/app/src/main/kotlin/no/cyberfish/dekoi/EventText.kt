@@ -83,6 +83,19 @@ fun eventText(event: Event): EventText =
             EventText(R.string.event_online_title, null, R.string.event_online_why, R.string.event_online_advice)
         }
 
+        "dns_hijack" -> {
+            EventText(R.string.event_dns_hijack_title, null, R.string.event_dns_hijack_why, R.string.event_dns_hijack_advice)
+        }
+
+        "port_forward" -> {
+            EventText(
+                R.string.event_port_forward_title,
+                null,
+                R.string.event_port_forward_why,
+                R.string.event_port_forward_advice,
+            )
+        }
+
         else -> {
             EventText(R.string.event_other_title, null, R.string.event_other_why, R.string.event_intrusion_advice)
         }

@@ -12,6 +12,8 @@ enum class Response {
     INTRUSION,
     IMPERSONATION,
     OFFLINE,
+
+    /** No steps: the advice in the event's EventText says what to do. */
     NONE,
 }
 
@@ -19,7 +21,7 @@ fun responseFor(kind: String): Response =
     when (kind) {
         "arp_spoof", "rogue_dhcp", "rogue_router" -> Response.IMPERSONATION
         "device_offline" -> Response.OFFLINE
-        "device_online" -> Response.NONE
+        "device_online", "dns_hijack", "port_forward" -> Response.NONE
         else -> Response.INTRUSION
     }
 

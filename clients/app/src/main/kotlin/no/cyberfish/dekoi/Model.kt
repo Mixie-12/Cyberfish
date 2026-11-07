@@ -25,6 +25,13 @@ data class Device(
     @SerialName("registered_at") @Serializable(TimestampSerializer::class) val registeredAt: Instant? = null,
     @SerialName("last_seen_at") @Serializable(TimestampSerializer::class) val lastSeenAt: Instant? = null,
     @SerialName("created_at") @Serializable(TimestampSerializer::class) val createdAt: Instant,
+    @SerialName("speed_test") val speedTest: Boolean = false,
+    @SerialName("public_ip") val publicIp: String? = null,
+    @SerialName("public_country") val publicCountry: String? = null,
+    @SerialName("dns_check") val dnsCheck: String? = null,
+    @SerialName("dns_resolver") val dnsResolver: String? = null,
+    @SerialName("dns_checked_at") @Serializable(TimestampSerializer::class) val dnsCheckedAt: Instant? = null,
+    @SerialName("forwards_checked_at") @Serializable(TimestampSerializer::class) val forwardsCheckedAt: Instant? = null,
 )
 
 @Serializable
@@ -163,3 +170,40 @@ object TimestampSerializer : KSerializer<Instant> {
         value: Instant,
     ) = encoder.encodeString(value.toString())
 }
+
+/** One hour of one of a DeKoi's network probes (ADR 0015): gateway, internet or resolver. */
+@Serializable
+data class HealthSample(
+    @SerialName("device_id") val deviceId: String,
+    @Serializable(TimestampSerializer::class) val hour: Instant,
+    val target: String,
+    val probes: Int,
+    val lost: Int,
+    @SerialName("median_ms") val medianMs: Double? = null,
+    @SerialName("worst_ms") val worstMs: Double? = null,
+    @SerialName("outage_minutes") val outageMinutes: Int = 0,
+)
+
+/**
+ * A port the router opened to the internet through UPnP. Any device on the
+ * network can set [description]: it is attacker-controlled.
+ */
+@Serializable
+data class PortForward(
+    @SerialName("device_id") val deviceId: String,
+    val protocol: String,
+    @SerialName("external_port") val externalPort: Int,
+    @SerialName("internal_client") val internalClient: String,
+    @SerialName("internal_port") val internalPort: Int,
+    val description: String? = null,
+    val open: Boolean = true,
+    @SerialName("first_seen_at") @Serializable(TimestampSerializer::class) val firstSeenAt: Instant,
+    @SerialName("last_seen_at") @Serializable(TimestampSerializer::class) val lastSeenAt: Instant,
+)
+
+@Serializable
+data class SpeedTest(
+    @SerialName("device_id") val deviceId: String,
+    @SerialName("tested_at") @Serializable(TimestampSerializer::class) val testedAt: Instant,
+    @SerialName("download_mbps") val downloadMbps: Double,
+)

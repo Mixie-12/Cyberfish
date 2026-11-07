@@ -97,6 +97,11 @@ sealed interface Route {
     ) : Route
 
     @Serializable data object AddDekoi : Route
+
+    /** Network health, DNS, open ports and speed of one DeKoi (ADR 0015). */
+    @Serializable data class Insights(
+        val deviceId: String,
+    ) : Route
 }
 
 private enum class Tab(
@@ -259,6 +264,11 @@ private fun SignedIn(
             }
             composable<Route.AddDekoi> {
                 AddDekoiScreen(onClaim = viewModel::claim, onBack = back)
+            }
+            composable<Route.Insights> { entry ->
+                val insights by viewModel.insights.collectAsStateWithLifecycle()
+                val deviceId = entry.toRoute<Route.Insights>().deviceId
+                InsightsScreen(data, insights, now, deviceId, viewModel::loadInsights, viewModel::setSpeedTest, navigate, back)
             }
             composable<Route.Settings> {
                 SettingsScreen(

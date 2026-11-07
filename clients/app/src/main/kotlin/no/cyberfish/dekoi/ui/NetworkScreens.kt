@@ -74,6 +74,20 @@ fun NetworkScreen(
                     },
                     onClick = { onNavigate(Route.Networks) },
                 )
+                data.devices.forEach { device ->
+                    InsetRow(
+                        stringResource(R.string.insights_open),
+                        subtitle = if (data.devices.size > 1) device.name else stringResource(R.string.insights_open_subtitle),
+                        leading = {
+                            Icon(
+                                painterResource(R.drawable.ic_network_check),
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.primary,
+                            )
+                        },
+                        onClick = { onNavigate(Route.Insights(device.id)) },
+                    )
+                }
             }
         }
         if (data.loaded && data.hosts.isEmpty()) item { EmptyState(R.drawable.ic_lan, stringResource(R.string.network_empty)) }
