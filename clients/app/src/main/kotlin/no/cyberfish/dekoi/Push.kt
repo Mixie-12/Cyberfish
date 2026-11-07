@@ -7,6 +7,7 @@ import com.google.android.gms.tasks.Task
 import com.google.firebase.FirebaseOptions
 import kotlinx.coroutines.suspendCancellableCoroutine
 import no.cyberfish.dekoi.shared.DesignTokens
+import java.util.Locale
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 
@@ -29,6 +30,15 @@ fun notificationColor(channel: String): Int =
         UPDATES_CHANNEL -> DesignTokens.INFO.color
         else -> DesignTokens.WARNING.color
     }.toInt()
+
+/**
+ * The language notify words this phone's pushes in, one of
+ * private.push_languages (ADR 0024): Bokmål for any Norwegian locale, the
+ * macrolanguage and Nynorsk included, else English.
+ */
+fun pushLanguage(locale: Locale): String = if (locale.language in NORWEGIAN) "nb" else "en"
+
+private val NORWEGIAN = setOf("nb", "no", "nn")
 
 /** Must match the tag notify.ts sets, so opening an alert in the app can clear its notification. */
 fun notificationTag(eventId: Long): String = "event-$eventId"

@@ -2,6 +2,7 @@ package no.cyberfish.dekoi
 
 import no.cyberfish.dekoi.shared.DesignTokens
 import java.io.File
+import java.util.Locale
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -45,6 +46,31 @@ class PushTest {
                 .associate { it.groupValues[1] to it.groupValues[2] }
         val expected = listOf(URGENT_CHANNEL, ALERT_CHANNEL, UPDATES_CHANNEL).associateWith { "%06x".format(notificationColor(it) and RGB) }
         assertEquals(expected, sent)
+    }
+
+    @Test
+    fun aNorwegianPhoneAsksForBokmalAndEveryOtherForEnglish() {
+        for (tag in listOf("nb-NO", "nb", "no", "no-NO", "nn-NO", "nn")) {
+            assertEquals("nb", pushLanguage(Locale.forLanguageTag(tag)), tag)
+        }
+        for (tag in listOf("en-GB", "en-US", "sv-SE", "da-DK", "de", "se-NO")) {
+            assertEquals("en", pushLanguage(Locale.forLanguageTag(tag)), tag)
+        }
+        assertEquals("en", pushLanguage(Locale.ROOT))
+    }
+
+    @Test
+    fun theAppAsksOnlyForLanguagesTheBackendHasTemplatesFor() {
+        // Unit tests run in clients/app; the latest definition counts.
+        val sql =
+            checkNotNull(File("../../backend/supabase/migrations").listFiles { file -> file.name.endsWith(".sql") })
+                .sortedBy { it.name }
+                .joinToString("\n") { it.readText() }
+        val function = Regex("""function private\.push_languages\(\)[^$]*\$\$(.*?)\$\$""", RegexOption.DOT_MATCHES_ALL)
+        val backend = Regex("'([a-z]+)'").findAll(function.findAll(sql).last().groupValues[1]).map { it.groupValues[1] }.toSet()
+        assertEquals(setOf("en", "nb"), backend)
+        val asked = listOf("nb", "nn", "no", "en", "fr").map { pushLanguage(Locale.forLanguageTag(it)) }.toSet()
+        assertEquals(backend, asked)
     }
 
     @Test
