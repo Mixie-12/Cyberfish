@@ -56,6 +56,8 @@ dependencies {
 
 tasks.test {
     useJUnitPlatform()
+    // The tests check the English text, whatever the machine's language.
+    systemProperty("user.language", "en")
 }
 
 compose.desktop {

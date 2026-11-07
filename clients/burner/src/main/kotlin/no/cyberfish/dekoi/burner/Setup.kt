@@ -112,7 +112,7 @@ class Setup(
             state.value =
                 when (result) {
                     is WriteResult.Written -> Screen.Done(result.code, cable = network == Network.Cable)
-                    is WriteResult.Failed -> Screen.WriteFailed("Raspberry Pi Imager exit code ${result.exitCode}\n\n${result.log}")
+                    is WriteResult.Failed -> Screen.WriteFailed(text("write_failed_details", result.exitCode, result.log))
                 }
         }
     }
@@ -124,7 +124,7 @@ class Setup(
         return try {
             Screen.ChooseCard(WindowsDrives.list())
         } catch (e: Exception) {
-            Screen.ListFailed("Listing the cards failed: $e")
+            Screen.ListFailed(text("list_failed_details", e))
         }
     }
 }

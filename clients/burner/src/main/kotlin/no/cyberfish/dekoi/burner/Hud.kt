@@ -81,7 +81,7 @@ internal fun Lockup() {
     Row(verticalAlignment = Alignment.CenterVertically) {
         Mark(20.sp)
         Spacer(Modifier.width(9.dp))
-        Text("DeKoi Setup", style = Type.wordmark.copy(fontSize = 15.sp))
+        Text(text("app_name"), style = Type.wordmark.copy(fontSize = 15.sp))
     }
 }
 
@@ -139,7 +139,7 @@ internal fun StepLabel(step: Step) = Text(step.label, style = Type.label)
 @Composable
 internal fun StepRail(current: Step) {
     Row(
-        Modifier.semantics { contentDescription = "Step ${current.ordinal + 1} of ${Step.entries.size}" },
+        Modifier.semantics { contentDescription = text("step_rail", current.ordinal + 1, Step.entries.size) },
         horizontalArrangement = Arrangement.spacedBy(6.dp),
     ) {
         for (step in Step.entries) {
@@ -238,7 +238,7 @@ internal fun Lines(
 @Composable
 internal fun Details(text: String) {
     var open by remember { mutableStateOf(false) }
-    Action(if (open) "Hide technical details" else "Show technical details", onClick = { open = !open })
+    Action(if (open) text("details_hide") else text("details_show"), onClick = { open = !open })
     if (open) {
         SelectionContainer {
             Text(text, Modifier.fillMaxWidth().padding(horizontal = 20.dp), style = Type.secondary)

@@ -60,7 +60,7 @@ import java.util.Locale
 
 fun main() =
     application {
-        Window(onCloseRequest = ::exitApplication, title = "DeKoi Setup", state = rememberWindowState(width = 840.dp, height = 780.dp)) {
+        Window(onCloseRequest = ::exitApplication, title = text("app_name"), state = rememberWindowState(width = 840.dp, height = 780.dp)) {
             // AWT sizes are in the same scaled units as dp. The minimum fits
             // the content column and the QR code next to the claim code.
             LaunchedEffect(window) { window.minimumSize = Dimension(720, 560) }
@@ -117,12 +117,12 @@ private fun ColumnScope.SetupScreen(
         }
 
         Screen.Looking -> {
-            Waiting("Looking for memory cards")
+            Waiting(text("looking"))
         }
 
         Screen.NotWindows -> {
-            Heading("This needs a Windows PC")
-            Body("This version of DeKoi Setup can only write cards on a Windows PC.")
+            Heading(text("not_windows_heading"))
+            Body(text("not_windows_body"))
         }
 
         is Screen.NoImager -> {
@@ -130,7 +130,7 @@ private fun ColumnScope.SetupScreen(
         }
 
         Screen.Installing -> {
-            Waiting("Installing Raspberry Pi Imager", "Windows may ask for permission. Choose Yes.")
+            Waiting(text("installing_heading"), text("installing_body"))
         }
 
         is Screen.ChooseCard -> {
@@ -138,12 +138,7 @@ private fun ColumnScope.SetupScreen(
         }
 
         is Screen.ListFailed -> {
-            Failed(
-                "Could not look for cards",
-                "DeKoi Setup could not check which memory cards are connected. Try again in a moment.",
-                screen.details,
-                setup,
-            )
+            Failed(text("list_failed_heading"), text("list_failed_body"), screen.details, setup)
         }
 
         is Screen.ChooseNetwork -> {
@@ -155,20 +150,11 @@ private fun ColumnScope.SetupScreen(
         }
 
         Screen.Writing -> {
-            Waiting(
-                "Writing the card",
-                "This takes 10 to 20 minutes. Raspberry Pi Imager shows the details in its own window.",
-                "Leave the card in until DeKoi Setup says it is ready.",
-            )
+            Waiting(text("writing_heading"), text("writing_time"), text("writing_leave"))
         }
 
         is Screen.WriteFailed -> {
-            Failed(
-                "The card was not written",
-                "Check that the card is still in the reader, then try again. If Windows asked for permission, choose Yes next time.",
-                screen.details,
-                setup,
-            )
+            Failed(text("write_failed_heading"), text("write_failed_body"), screen.details, setup)
         }
 
         is Screen.Done -> {
@@ -180,10 +166,10 @@ private fun ColumnScope.SetupScreen(
 @Composable
 private fun ColumnScope.Welcome(setup: Setup) {
     Horizon(markSize = 64.sp, seaHeight = 72.dp, glow = true)
-    Text("DeKoi Setup", Modifier.align(Alignment.CenterHorizontally), style = Type.wordmark)
-    Body("DeKoi Setup prepares the memory card for your DeKoi.", TextAlign.Center)
-    Body("When it is done, it shows a code that links your DeKoi to the app on your phone.", TextAlign.Center)
-    Action("Start", setup::lookForCards, Modifier.align(Alignment.CenterHorizontally).padding(top = 12.dp), primary = true)
+    Text(text("app_name"), Modifier.align(Alignment.CenterHorizontally), style = Type.wordmark)
+    Body(text("welcome_purpose"), TextAlign.Center)
+    Body(text("welcome_code"), TextAlign.Center)
+    Action(text("action_start"), setup::lookForCards, Modifier.align(Alignment.CenterHorizontally).padding(top = 12.dp), primary = true)
 }
 
 @Composable
@@ -191,16 +177,16 @@ private fun NoImager(
     installFailed: Boolean,
     setup: Setup,
 ) {
-    Heading("One more program is needed")
-    Body("Raspberry Pi Imager writes the card. It is free and made by Raspberry Pi.")
+    Heading(text("no_imager_heading"))
+    Body(text("no_imager_body"))
     if (installFailed) {
         SelectionContainer {
-            Body("It was not installed. You can also download it from ${Imager.DOWNLOAD_PAGE} and then choose Look again.")
+            Body(text("no_imager_failed", Imager.DOWNLOAD_PAGE))
         }
     }
     Actions {
-        Action("Look again", setup::lookForCards)
-        Action("Install Raspberry Pi Imager", setup::installImager, primary = true)
+        Action(text("action_look_again"), setup::lookForCards)
+        Action(text("action_install_imager"), setup::installImager, primary = true)
     }
 }
 
@@ -210,11 +196,11 @@ private fun ChooseCard(
     setup: Setup,
 ) {
     if (drives.isEmpty()) {
-        Heading("Insert the memory card")
-        Body("No memory card was found. Put the card in the card reader, then choose Look again.")
+        Heading(text("no_card_heading"))
+        Body(text("no_card_body"))
     } else {
-        Heading("Which memory card?")
-        Body("Only memory cards and USB drives are listed, never the disks inside this computer. The card needs 8 GB or more.")
+        Heading(text("choose_card_heading"))
+        Body(text("choose_card_body"))
         Column(Modifier.fillMaxWidth().hudFrame()) {
             drives.forEachIndexed { index, drive ->
                 if (index > 0) Hairline()
@@ -222,7 +208,7 @@ private fun ChooseCard(
             }
         }
     }
-    Actions { Action("Look again", setup::lookForCards) }
+    Actions { Action(text("action_look_again"), setup::lookForCards) }
 }
 
 @Composable
@@ -238,7 +224,7 @@ private fun CardRow(
             Text(drive.label, style = Type.strong)
             Secondary(size(drive))
         }
-        Text("CHOOSE", style = Type.label)
+        Text(text("action_choose").uppercase(Locale.ROOT), style = Type.label)
     }
 }
 
@@ -255,19 +241,19 @@ private fun ChooseNetwork(
     var country by remember { mutableStateOf(entered?.country ?: Locale.getDefault().country.takeIf { it in countries } ?: "GB") }
     var problem by remember { mutableStateOf<String?>(null) }
 
-    Heading("How will it connect?")
-    Body("Your DeKoi needs the internet to reach the app on your phone.")
+    Heading(text("connect_heading"))
+    Body(text("connect_body"))
     Column(Modifier.selectableGroup()) {
-        Choice("Network cable (recommended)", "Plug your DeKoi into your router. This is the most reliable.", !wifi) { wifi = false }
-        Choice("Wi-Fi", "For when your DeKoi cannot be near the router.", wifi) { wifi = true }
+        Choice(text("cable_title"), text("cable_detail"), !wifi) { wifi = false }
+        Choice(text("wifi_title"), text("wifi_detail"), wifi) { wifi = true }
     }
     if (wifi) {
-        OutlinedTextField(name, { name = it }, Modifier.fillMaxWidth(), label = { Text("Wi-Fi name") }, singleLine = true)
+        OutlinedTextField(name, { name = it }, Modifier.fillMaxWidth(), label = { Text(text("wifi_name")) }, singleLine = true)
         OutlinedTextField(
             password,
             { password = it },
             Modifier.fillMaxWidth(),
-            label = { Text("Wi-Fi password") },
+            label = { Text(text("wifi_password")) },
             singleLine = true,
             visualTransformation = PasswordVisualTransformation(),
         )
@@ -277,8 +263,8 @@ private fun ChooseNetwork(
         Text(it, Modifier.semantics { liveRegion = LiveRegionMode.Polite }, style = Type.body.copy(color = Brand.critical))
     }
     Actions {
-        Action("Back", setup::lookForCards)
-        Action("Continue", primary = true, onClick = {
+        Action(text("action_back"), setup::lookForCards)
+        Action(text("action_continue"), primary = true, onClick = {
             try {
                 setup.confirm(drive, if (wifi) Network.WiFi(name, password, country) else Network.Cable)
             } catch (e: IllegalArgumentException) {
@@ -295,8 +281,8 @@ private fun CountryPicker(
 ) {
     var open by remember { mutableStateOf(false) }
     Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-        Label("Country")
-        Secondary("Sets the Wi-Fi rules for your country.")
+        Label(text("country"))
+        Secondary(text("country_detail"))
         Box {
             Action(countries.getValue(country), onClick = { open = true }, Modifier.border(1.dp, Brand.midGrey, ControlShape))
             DropdownMenu(open, onDismissRequest = { open = false }, Modifier.heightIn(max = 360.dp)) {
@@ -317,25 +303,25 @@ private fun Confirm(
     network: Network,
     setup: Setup,
 ) {
-    Heading("Erase this card?")
-    Body("Everything on this card will be erased and replaced with DeKoi.")
+    Heading(text("erase_heading"))
+    Body(text("erase_body"))
     Lines(
         listOf(
-            "Card" to "${drive.label}, ${size(drive)}",
-            "Network" to
+            text("erase_card") to "${drive.label}, ${size(drive)}",
+            text("erase_network") to
                 when (network) {
-                    Network.Cable -> "Network cable"
-                    is Network.WiFi -> "Wi-Fi \"${network.ssid}\""
+                    Network.Cable -> text("erase_cable")
+                    is Network.WiFi -> text("erase_wifi", network.ssid)
                 },
         ),
         labelWidth = 120.dp,
     )
-    Body("Next, Windows asks whether Raspberry Pi Imager may make changes to your device. Choose Yes.")
+    Body(text("erase_permission"))
     Actions {
-        Action("Back", { setup.choose(drive, network) })
-        Action("Erase and write", { setup.write(drive, network) }, primary = true)
+        Action(text("action_back"), { setup.choose(drive, network) })
+        Action(text("action_erase_and_write"), { setup.write(drive, network) }, primary = true)
     }
-    Details("Windows disk ${drive.device}")
+    Details(text("erase_disk", drive.device))
 }
 
 @Composable
@@ -347,7 +333,7 @@ private fun Failed(
 ) {
     Heading(heading)
     Body(advice)
-    Actions { Action("Try again", setup::lookForCards, primary = true) }
+    Actions { Action(text("action_try_again"), setup::lookForCards, primary = true) }
     Details(details)
 }
 
@@ -357,7 +343,7 @@ private fun Done(
     cable: Boolean,
     setup: Setup,
 ) {
-    Heading("Your card is ready")
+    Heading(text("done_heading"))
     Row(
         Modifier.fillMaxWidth().hudFrame().padding(16.dp),
         horizontalArrangement = Arrangement.spacedBy(28.dp),
@@ -365,17 +351,17 @@ private fun Done(
     ) {
         QrCode(code.qrPayload, Modifier.size(200.dp))
         Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-            Label("Name")
+            Label(text("done_name"))
             Text(code.shortName, style = Type.name)
             Spacer(Modifier.height(12.dp))
-            Label("Code")
+            Label(text("done_code"))
             SelectionContainer { Text(code.grouped, style = Type.code) }
         }
     }
-    Label("Next")
-    Lines(nextSteps(code, cable).mapIndexed { index, text -> "%02d".format(Locale.ROOT, index + 1) to text }, labelWidth = 56.dp)
-    Secondary("The first start takes up to 10 minutes. The app shows each step.")
-    Actions { Action("Prepare another card", setup::lookForCards) }
+    Label(text("done_next"))
+    Lines(nextSteps(code, cable).mapIndexed { index, step -> "%02d".format(Locale.ROOT, index + 1) to step }, labelWidth = 56.dp)
+    Secondary(text("done_first_start"))
+    Actions { Action(text("action_prepare_another"), setup::lookForCards) }
     Horizon(markSize = 24.sp, seaHeight = 56.dp, glow = false)
 }
 
@@ -385,14 +371,10 @@ internal fun nextSteps(
     cable: Boolean,
 ): List<String> =
     listOf(
-        "Open the DeKoi app on your phone and tap Add DeKoi.",
-        "Scan the code. The app then shows the same name, ${code.shortName}. If scanning does not work, type the code.",
-        "Put the card in your DeKoi.",
-        if (cable) {
-            "Connect the network cable to your router, then the power."
-        } else {
-            "Connect the power. Your DeKoi joins the Wi-Fi by itself."
-        },
+        text("done_open_app"),
+        text("done_scan", code.shortName),
+        text("done_insert"),
+        if (cable) text("done_cable") else text("done_wifi"),
     )
 
 /** Dark modules on white with a four-module quiet zone, so phones can read it on the dark screen. */
@@ -402,7 +384,7 @@ private fun QrCode(
     modifier: Modifier,
 ) {
     val modules = remember(payload) { qrModules(payload) }
-    Canvas(modifier.semantics { contentDescription = "QR code for the DeKoi app" }) {
+    Canvas(modifier.semantics { contentDescription = text("done_qr") }) {
         val cell = size.minDimension / (modules.width + 8)
         drawRect(Color.White)
         for (y in 0 until modules.height) {
@@ -425,7 +407,7 @@ private fun Waiting(
     for (text in body) Body(text)
 }
 
-private fun size(drive: Drive) = "%.1f GB".format(Locale.ROOT, drive.sizeBytes / 1e9)
+private fun size(drive: Drive) = text("card_size", drive.sizeBytes / 1e9)
 
 // Two-letter codes, as the Wi-Fi regulatory domain needs, with their names.
 private val countries: Map<String, String> =
