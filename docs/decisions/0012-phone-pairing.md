@@ -1,6 +1,6 @@
 # 0012: Linking a DeKoi from the phone
 
-Status: accepted, 2026-11-07
+Status: superseded by 0017, 2026-11-07
 
 ## Context
 

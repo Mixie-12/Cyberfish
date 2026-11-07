@@ -25,6 +25,7 @@ class EventTextTest {
                 "rogue_router",
                 "name_poisoning",
                 "ids_alert",
+                "new_host",
                 "device_offline",
                 "device_online",
             )

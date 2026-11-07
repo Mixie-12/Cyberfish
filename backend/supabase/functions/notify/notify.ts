@@ -1,10 +1,11 @@
-// Sends the push notifications for one event. Whether an event notifies, and
-// whom, is decided in SQL (notification_targets_v2); this file only sends.
+// Sends the push notifications for one event, or one owner's weekly summary.
+// Whether something notifies, and whom, is decided in SQL
+// (notification_targets_v2, weekly_summary_v1); this file only sends.
 // Notification text comes from fixed templates chosen by event kind, severity
 // and the source device's kind, all three fixed vocabularies checked by the
-// database (ADR 0010, 0011). The only other event field that reaches a
-// message is its id, so nothing an attacker typed or sent can ever appear on
-// a phone.
+// database (ADR 0010, 0011). The only other values that reach a message are
+// the event id and the summary's three whole numbers, so nothing an attacker
+// typed or sent can ever appear on a phone.
 
 export interface ServiceAccount {
   project_id: string;
@@ -36,6 +37,13 @@ export interface Target {
   host_kind: string | null;
 }
 
+export interface Summary {
+  token: string;
+  incidents: number;
+  new_devices: number;
+  uptime_percent: number;
+}
+
 // Channel ids must match the channels the app creates (Push.kt); each one
 // carries one severity (ADR 0011).
 const CHANNELS: Record<string, { channel: string; priority: string; prefix: string }> = {
@@ -49,38 +57,47 @@ const FCM_SCOPE = "https://www.googleapis.com/auth/firebase.messaging";
 const MIN_SECRET_LENGTH = 32;
 const ALERT_BODY = "Tap to see what happened and what to do.";
 
-// The source device as the subject of a title. Keys are the host kinds of
-// ADR 0010; anything else reads "A device".
-const SUBJECTS: Record<string, string> = {
-  router: "A router",
-  switch: "A network switch",
-  access_point: "A Wi-Fi access point",
-  computer: "A computer",
-  phone: "A phone",
-  tablet: "A tablet",
-  tv: "A TV",
-  media_player: "A streaming box",
-  speaker: "A speaker",
-  game_console: "A games console",
-  printer: "A printer",
-  camera: "A camera",
-  storage: "A storage box",
-  smart_home: "A smart home device",
-  wearable: "A watch",
-  server: "A server",
+// The source device as the noun of a title. Keys are the host kinds of ADR
+// 0010; anything else reads "device". Every noun starts with a consonant
+// sound, so titles say "A".
+const NOUNS: Record<string, string> = {
+  router: "router",
+  switch: "network switch",
+  access_point: "Wi-Fi access point",
+  computer: "computer",
+  phone: "phone",
+  tablet: "tablet",
+  tv: "TV",
+  media_player: "streaming box",
+  speaker: "speaker",
+  game_console: "games console",
+  printer: "printer",
+  camera: "camera",
+  storage: "storage box",
+  smart_home: "smart home device",
+  wearable: "watch",
+  server: "server",
 };
 
 // Wording follows the event titles in the app's string resources.
-const TEMPLATES: Record<string, (subject: string) => Template> = {
-  login_attempt: (s) => ({ title: `${s} tried to sign in to your DeKoi`, body: ALERT_BODY }),
-  connection: (s) => ({ title: `${s} opened one of your decoys`, body: ALERT_BODY }),
-  port_scan: (s) => ({ title: `${s} searched your network for openings`, body: ALERT_BODY }),
-  host_scan: (s) => ({ title: `${s} searched your whole network`, body: ALERT_BODY }),
-  arp_spoof: (s) => ({ title: `${s} is pretending to be another device`, body: ALERT_BODY }),
-  rogue_dhcp: (s) => ({ title: `${s} is handing out network settings`, body: ALERT_BODY }),
-  rogue_router: (s) => ({ title: `${s} announces itself as your router`, body: ALERT_BODY }),
-  name_poisoning: (s) => ({ title: `${s} answers questions it should not`, body: ALERT_BODY }),
-  ids_alert: (s) => ({ title: `${s} sent suspicious traffic to your DeKoi`, body: ALERT_BODY }),
+const TEMPLATES: Record<string, (noun: string) => Template> = {
+  login_attempt: (n) => ({ title: `A ${n} tried to sign in to your DeKoi`, body: ALERT_BODY }),
+  connection: (n) => ({ title: `A ${n} opened one of your decoys`, body: ALERT_BODY }),
+  port_scan: (n) => ({ title: `A ${n} searched your network for openings`, body: ALERT_BODY }),
+  host_scan: (n) => ({ title: `A ${n} searched your whole network`, body: ALERT_BODY }),
+  arp_spoof: (n) => ({ title: `A ${n} is pretending to be another device`, body: ALERT_BODY }),
+  rogue_dhcp: (n) => ({ title: `A ${n} is handing out network settings`, body: ALERT_BODY }),
+  rogue_router: (n) => ({ title: `A ${n} announces itself as your router`, body: ALERT_BODY }),
+  name_poisoning: (n) => ({ title: `A ${n} answers questions it should not`, body: ALERT_BODY }),
+  ids_alert: (n) => ({ title: `A ${n} sent suspicious traffic to your DeKoi`, body: ALERT_BODY }),
+  new_host: (n) => ({
+    title: `A new ${n} joined your network`,
+    body: "Tap to see what it looks like. If you know it, mark it as known.",
+  }),
+  // The source of a dns_hijack event is the resolver, not a device the
+  // inventory names.
+  dns_hijack: () => ({ title: "Some web addresses lead to the wrong place", body: ALERT_BODY }),
+  port_forward: (n) => ({ title: `A ${n} can now be reached from the internet`, body: ALERT_BODY }),
   device_offline: () => ({
     title: "Your DeKoi went offline",
     body:
@@ -91,34 +108,72 @@ const TEMPLATES: Record<string, (subject: string) => Template> = {
 const OTHER = (): Template => ({ title: "Activity on your DeKoi", body: ALERT_BODY });
 
 export function templateFor(key: string, hostKind: string | null = null): Template {
-  const subject = hostKind !== null && Object.hasOwn(SUBJECTS, hostKind)
-    ? SUBJECTS[hostKind]
-    : "A device";
-  return (Object.hasOwn(TEMPLATES, key) ? TEMPLATES[key] : OTHER)(subject);
+  const noun = hostKind !== null && Object.hasOwn(NOUNS, hostKind) ? NOUNS[hostKind] : "device";
+  return (Object.hasOwn(TEMPLATES, key) ? TEMPLATES[key] : OTHER)(noun);
 }
 
-export function fcmMessage(eventId: number, target: Target) {
-  const { title, body } = templateFor(target.template, target.host_kind);
-  const level = Object.hasOwn(CHANNELS, target.severity)
-    ? CHANNELS[target.severity]
-    : CHANNELS.warning;
+// "no alerts", "1 alert", "3 alerts".
+function counted(n: number, noun: string): string {
+  if (!Number.isSafeInteger(n) || n < 0) throw new Error("summary counts must be whole numbers");
+  if (n === 0) return `no ${noun}s`;
+  return `${n} ${noun}${n === 1 ? "" : "s"}`;
+}
+
+// Alerts are incidents as the app's Alerts tab groups them (ADR 0013).
+export function summaryTemplate(summary: Summary): Template {
+  const uptime = summary.uptime_percent;
+  if (!Number.isSafeInteger(uptime) || uptime < 0 || uptime > 100) {
+    throw new Error("uptime must be a whole percentage");
+  }
+  const counts = `${counted(summary.incidents, "alert")}, ${
+    counted(summary.new_devices, "new device")
+  }.`;
+  return {
+    title: "Your week with DeKoi",
+    body: `${counts[0].toUpperCase()}${counts.slice(1)} DeKoi was online ${uptime}% of the time.`,
+  };
+}
+
+function message(
+  token: string,
+  severity: string,
+  { title, body }: Template,
+  tag: string,
+  data: Record<string, string>,
+) {
+  const level = Object.hasOwn(CHANNELS, severity) ? CHANNELS[severity] : CHANNELS.warning;
   return {
     message: {
-      token: target.token,
+      token,
       notification: { title, body: level.prefix + body },
-      data: { event_id: String(eventId) },
+      data,
       android: {
         priority: level.channel === "updates" ? "NORMAL" : "HIGH",
         notification: {
           channel_id: level.channel,
           notification_priority: level.priority,
           visibility: "PRIVATE",
-          // Lets the app clear the notification once the alert is opened.
-          tag: `event-${eventId}`,
+          tag,
         },
       },
     },
   };
+}
+
+export function fcmMessage(eventId: number, target: Target) {
+  // The tag lets the app clear the notification once the alert is opened.
+  return message(
+    target.token,
+    target.severity,
+    templateFor(target.template, target.host_kind),
+    `event-${eventId}`,
+    { event_id: String(eventId) },
+  );
+}
+
+export function summaryMessage(summary: Summary) {
+  // One tag for every summary, so this week's replaces last week's.
+  return message(summary.token, "info", summaryTemplate(summary), "weekly-summary", {});
 }
 
 export function parseServiceAccount(json: string): ServiceAccount {
@@ -201,15 +256,26 @@ async function sameSecret(given: string, expected: string): Promise<boolean> {
   return difference === 0;
 }
 
-async function readEventId(request: Request): Promise<number | null> {
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
+
+// The events webhook posts {"event_id": <id>}; the weekly job posts
+// {"weekly_summary_for": "<user id>"} (migration 20261107193100).
+type Job = { eventId: number } | { userId: string };
+
+async function readJob(request: Request): Promise<Job | null> {
   let body: unknown;
   try {
     body = await request.json();
   } catch {
     return null;
   }
-  const id = (body as { event_id?: unknown } | null)?.event_id;
-  return Number.isSafeInteger(id) && (id as number) > 0 ? id as number : null;
+  const { event_id: id, weekly_summary_for: userId } = (body ?? {}) as {
+    event_id?: unknown;
+    weekly_summary_for?: unknown;
+  };
+  if (Number.isSafeInteger(id) && (id as number) > 0) return { eventId: id as number };
+  if (typeof userId === "string" && UUID.test(userId)) return { userId };
+  return null;
 }
 
 function isUnregistered(error: unknown): boolean {
@@ -236,6 +302,8 @@ export function createHandler(config: Config, fetchFn: typeof fetch = fetch) {
     if (!response.ok) throw new Error(`${name} failed with HTTP ${response.status}`);
     return response;
   };
+  const rows = async <T>(name: string, args: object): Promise<T[]> =>
+    await (await rpc(name, args)).json();
 
   return async (request: Request): Promise<Response> => {
     if (request.method !== "POST") return new Response(null, { status: 405 });
@@ -243,22 +311,24 @@ export function createHandler(config: Config, fetchFn: typeof fetch = fetch) {
     // Every secret is compared, so the time taken does not tell which matched.
     const matches = await Promise.all(secrets.map((s) => sameSecret(given, s)));
     if (!matches.includes(true)) return new Response(null, { status: 401 });
-    const eventId = await readEventId(request);
-    if (eventId === null) return new Response(null, { status: 400 });
+    const job = await readJob(request);
+    if (job === null) return new Response(null, { status: 400 });
 
-    const targets: Target[] = await (await rpc("notification_targets_v2", { event_id: eventId }))
-      .json();
-    if (targets.length === 0) return new Response(null, { status: 204 });
+    const messages = "eventId" in job
+      ? (await rows<Target>("notification_targets_v2", { event_id: job.eventId }))
+        .map((target) => fcmMessage(job.eventId, target))
+      : (await rows<Summary>("weekly_summary_v1", { user_id: job.userId })).map(summaryMessage);
+    if (messages.length === 0) return new Response(null, { status: 204 });
 
     const token = await accessToken(config.serviceAccount, fetchFn);
     const sendUrl =
       `${config.fcmBaseUrl}/v1/projects/${config.serviceAccount.project_id}/messages:send`;
     let failed = 0;
-    for (const target of targets) {
+    for (const outgoing of messages) {
       const response = await fetchFn(sendUrl, {
         method: "POST",
         headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-        body: JSON.stringify(fcmMessage(eventId, target)),
+        body: JSON.stringify(outgoing),
       });
       if (response.ok) {
         await response.body?.cancel();
@@ -266,7 +336,7 @@ export function createHandler(config: Config, fetchFn: typeof fetch = fetch) {
       }
       // A body that is not JSON is an error other than UNREGISTERED.
       if (isUnregistered(await response.json().catch(() => null))) {
-        await (await rpc("forget_push_token_v1", { token: target.token })).body?.cancel();
+        await (await rpc("forget_push_token_v1", { token: outgoing.message.token })).body?.cancel();
         continue;
       }
       // Status only: tokens and event data stay out of logs.

@@ -3,6 +3,7 @@
 import json
 import urllib.error
 import urllib.request
+from urllib.parse import urlsplit
 
 from .config import Config
 
@@ -25,6 +26,11 @@ class ApiError(Exception):
     def refused(self) -> bool:
         return self.status in (401, 403)
 
+    @property
+    def missing(self) -> bool:
+        """The backend has no such function: it is older than this agent."""
+        return self.status == 404
+
 
 def call(config: Config, function: str, arguments: dict) -> object:
     request = urllib.request.Request(  # noqa: S310 - URL scheme is checked in Config
@@ -41,3 +47,11 @@ def call(config: Config, function: str, arguments: dict) -> object:
     except OSError as error:
         raise ApiError(0, str(error)) from None
     return json.loads(body) if body else None
+
+
+def backend_address(config: Config) -> tuple[str, int]:
+    """Host and port of the backend, which the internet health probe connects to."""
+    parts = urlsplit(config.api_url)
+    if not parts.hostname:
+        raise ValueError("DEKOI_API_URL has no host")
+    return parts.hostname, parts.port or (443 if parts.scheme == "https" else 80)

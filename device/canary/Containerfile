@@ -15,10 +15,18 @@ RUN useradd --system --uid 10001 --no-create-home --shell /usr/sbin/nologin cana
 COPY --from=build /opt/venv /opt/venv
 COPY canary/opencanary.conf /etc/opencanaryd/opencanary.conf
 COPY agent/dekoi_agent/decoys.py /opt/dekoi/decoys.py
+# Release version (the same build argument for every image) and build time,
+# reported in the agent's heartbeat (ADR 0013).
+ARG DEKOI_AGENT_VERSION=dev
+RUN install -d /usr/share/dekoi \
+ && printf '%s %s\n' "$DEKOI_AGENT_VERSION" "$(date -u +%Y-%m-%dT%H:%M:%SZ)" > /usr/share/dekoi/image
 ENV PATH=/opt/venv/bin:$PATH \
     PYTHONDONTWRITEBYTECODE=1 \
     HOME=/tmp
 USER 10001
 WORKDIR /tmp
 # twistd directly: the opencanaryd wrapper needs sudo and a writable /var/run.
-ENTRYPOINT ["twistd", "--nodaemon", "--pidfile=", "--python=/opt/venv/bin/opencanary.tac"]
+# The image file is copied into the log volume first, the only place of this
+# container the agent can read. A failed copy is logged and never keeps the
+# decoys from starting; a link left in its place is replaced, not followed.
+ENTRYPOINT ["/bin/sh", "-c", "cp --remove-destination /usr/share/dekoi/image /var/log/opencanary/image || echo 'image file not copied' >&2; exec twistd --nodaemon --pidfile= --python=/opt/venv/bin/opencanary.tac"]

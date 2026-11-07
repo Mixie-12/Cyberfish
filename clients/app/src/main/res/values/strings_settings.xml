@@ -16,4 +16,6 @@
     <string name="settings_notifications_on">On</string>
     <string name="settings_notifications_off">Off</string>
     <string name="settings_about">About</string>
+    <string name="settings_weekly_summary">Weekly summary</string>
+    <string name="settings_weekly_summary_footer">Once a week, a short note: how many alerts and new devices your DeKoi saw, and how much of the time it was online.</string>
 </resources>

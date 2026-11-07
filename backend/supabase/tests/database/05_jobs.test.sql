@@ -56,7 +56,8 @@ select results_eq(
       ('dekoi-mark-offline', '*/5 * * * *'),
       ('dekoi-pending-setups', '37 3 * * *'),
       ('dekoi-rate-counters', '*/10 * * * *'),
-      ('dekoi-retention', '17 3 * * *')
+      ('dekoi-retention', '17 3 * * *'),
+      ('dekoi-weekly-summary', '0 17 * * 0')
   $$,
   'every job is scheduled'
 );
