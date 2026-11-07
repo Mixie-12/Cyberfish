@@ -38,6 +38,7 @@ import no.cyberfish.dekoi.isIntrusion
 import no.cyberfish.dekoi.isOnline
 import no.cyberfish.dekoi.protection
 import no.cyberfish.dekoi.recentIntrusions
+import no.cyberfish.dekoi.status
 import no.cyberfish.dekoi.ui.components.Bar
 import no.cyberfish.dekoi.ui.components.BrandTile
 import no.cyberfish.dekoi.ui.components.ErrorBanner
@@ -170,7 +171,7 @@ private fun Tiles(
                     detail =
                         lastCheckIn?.let { seen -> stringResource(R.string.device_checked_in, relativeTime(seen, now)) }
                             ?: stringResource(R.string.device_never_checked_in),
-                ) { Text(stringResource(statusWord(dekoi, now)), style = MaterialTheme.typography.headlineSmall) }
+                ) { Text(stringResource(statusWord(dekoi.status(now))), style = MaterialTheme.typography.headlineSmall) }
             },
             {
                 StatTile(
@@ -239,7 +240,7 @@ private fun YourDekoi(
         devices.forEach { device ->
             InsetRow(
                 device.name,
-                subtitle = stringResource(statusWord(device, now)),
+                subtitle = stringResource(statusWord(device.status(now))),
                 leading = { BrandTile() },
                 onClick = { onNavigate(Route.Dekoi(device.id)) },
             )

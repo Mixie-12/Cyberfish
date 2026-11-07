@@ -13,19 +13,60 @@
     <string name="device_name">Name</string>
     <string name="device_version">Software version</string>
     <string name="device_address">Address on your network</string>
-    <string name="device_decoys">Decoy services running</string>
     <string name="device_remove">Remove this DeKoi</string>
     <string name="device_remove_confirm_title">Remove this DeKoi?</string>
     <string name="device_remove_confirm_body">It will stop sending alerts to this account. To use it again, prepare its memory card with DeKoi Setup.</string>
     <string name="device_checked_in">Checked in %1$s</string>
     <string name="device_never_checked_in">Not checked in yet</string>
     <string name="dekoi_setup">Setup</string>
+    <string name="dekoi_step_done">Done</string>
+    <string name="dekoi_step_current">In progress</string>
+    <string name="dekoi_step_pending">Not yet</string>
     <plurals name="dekoi_uptime_summary">
         <item quantity="one">Online for %1$d of the last %2$d hour</item>
         <item quantity="other">Online for %1$d of the last %2$d hours</item>
     </plurals>
     <string name="dekoi_uptime_none">No history yet</string>
+    <string name="dekoi_uptime_start">7 days ago</string>
+    <string name="dekoi_uptime_end">Now</string>
+    <string name="dekoi_uptime_unknown">Not known</string>
+    <string name="dekoi_watching">What DeKoi is watching</string>
+    <plurals name="dekoi_watch_decoys">
+        <item quantity="one">%1$d decoy running</item>
+        <item quantity="other">%1$d decoys running</item>
+    </plurals>
+    <string name="dekoi_watch_port_scan">Watching for devices searching for openings</string>
+    <string name="dekoi_watch_arp">Watching for devices pretending to be others</string>
+    <string name="dekoi_watch_dhcp">Watching for a second device handing out network settings</string>
+    <string name="dekoi_watch_router">Watching for devices posing as your router</string>
+    <string name="dekoi_watch_name_poisoning">Watching for devices answering questions they should not</string>
+    <plurals name="dekoi_watch_ids">
+        <item quantity="one">Checking traffic against %1$s known attack pattern</item>
+        <item quantity="other">Checking traffic against %1$s known attack patterns</item>
+    </plurals>
+    <string name="dekoi_watch_ids_plain">Checking traffic against known attack patterns</string>
+    <string name="dekoi_watch_ids_updated">Patterns updated %1$s</string>
+    <plurals name="dekoi_watch_inventory">
+        <item quantity="one">Keeping a list of %1$d device</item>
+        <item quantity="other">Keeping a list of %1$d devices</item>
+    </plurals>
+    <string name="dekoi_watch_inventory_plain">Keeping a list of the devices on your network</string>
+    <string name="dekoi_watch_other">Another protection</string>
+    <string name="dekoi_state_on">On</string>
+    <string name="dekoi_state_starting">Starting</string>
+    <string name="dekoi_state_off">Turned off</string>
+    <string name="dekoi_state_unknown">Status not known</string>
+    <string name="dekoi_state_failed">Not working right now</string>
+    <string name="dekoi_watching_older">More detail after the next automatic update.</string>
+    <string name="dekoi_watching_offline">Paused while your DeKoi is offline.</string>
+    <string name="dekoi_decoys_footer">Fake services that look worth breaking into. Nothing on your network has a reason to touch them.</string>
+    <plurals name="dekoi_touched">
+        <item quantity="one">Touched %1$d time this week</item>
+        <item quantity="other">Touched %1$d times this week</item>
+    </plurals>
+    <string name="dekoi_not_touched">Not touched this week</string>
     <string name="dekoi_details">Details</string>
+    <string name="dekoi_rename">Rename</string>
     <string name="dekoi_linked_since">Linked since</string>
     <string name="dekoi_missing">This DeKoi is no longer linked to your account.</string>
 </resources>
