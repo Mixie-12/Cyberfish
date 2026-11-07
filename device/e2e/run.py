@@ -254,6 +254,30 @@ def main() -> None:
         "the Wi-Fi watch state, reported through device_wifi_v1",
         lambda: device_field("wifi_watch") == "no_name",
     )
+
+    def monitoring() -> bool:
+        """The heartbeat_v2 report (ADR 0013), well inside the startup time,
+        so no monitor may have failed yet."""
+        (row,) = backend.as_user(
+            token, "GET", "/rest/v1/devices?select=agent_version,monitors,images"
+        )
+        monitors = {m["name"]: m for m in row["monitors"]}
+        ids = monitors.get("ids", {}).get("detail", {})
+        images = {i["name"]: i["version"] for i in row["images"]}
+        return (
+            len(monitors) == 8
+            and all(m["state"] != "failed" for m in monitors.values())
+            and monitors["decoys"]["state"] == "ok"
+            and monitors["decoys"]["detail"] == {"decoys": len(DECOYS)}
+            and monitors["ids"]["state"] == "ok"
+            and ids.get("rules", 0) > 0
+            and "ruleset_date" in ids
+            and monitors["inventory"]["state"] == "ok"
+            and sorted(images) == ["agent", "canary", "ids"]
+            and images["agent"] == row["agent_version"]
+        )
+
+    wait_for("monitoring report: decoys, IDS rules and ruleset, inventory, images", monitoring)
     print("end-to-end test passed")
 
 

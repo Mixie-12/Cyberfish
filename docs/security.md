@@ -37,14 +37,14 @@ The data flow and every contract are in `docs/architecture.md`.
 
 | #  | Abuse case                                                       | Control                                                     | Evidence |
 | -- | ---------------------------------------------------------------- | ----------------------------------------------------------- | -------- |
-| 1  | User A reads or changes user B's data                            | RLS on every table, column grants, ownership checks in RPCs | tested: `backend/supabase/tests/database/03_isolation.test.sql`, `00_hardening`, `08_device_identification`, `10_new_host`, `11_weekly_summary` |
+| 1  | User A reads or changes user B's data                            | RLS on every table, column grants, ownership checks in RPCs | tested: `backend/supabase/tests/database/03_isolation.test.sql`, `00_hardening`, `08_device_identification`, `10_incidents_rooms_monitoring`, `10_new_host`, `11_weekly_summary` |
 | 2  | Anonymous caller reads any table                                 | default privileges revoked, explicit grants only            | tested: `00_hardening`, `03_isolation`, `08_device_identification`, `11_weekly_summary` |
 | 3  | Claim code guessing, reuse, probing, flooding                    | 128-bit codes, hashed, single use per side, generic errors, 5 pending per user | tested: `01_claim_register` |
-| 4  | Device impersonation, writing another device's rows              | 256-bit secret per device, hashed, rows scoped to the secret's device | tested: `02_device_api`, `08_device_identification` |
-| 5  | Oversized or malformed input, control characters, HTML           | size and shape checks in RPCs, field allowlist, bounded strings without control characters, fixed vocabularies; on the device, a kernel filter and bounded parsers for discovery traffic | tested: `02_device_api`, `06_network_detection`, `08_device_identification`, agent `test_sources`, `test_identify` (including a seeded fuzz test) |
+| 4  | Device impersonation, writing another device's rows              | 256-bit secret per device, hashed, rows scoped to the secret's device | tested: `02_device_api`, `08_device_identification`, `10_incidents_rooms_monitoring` |
+| 5  | Oversized or malformed input, control characters, HTML           | size and shape checks in RPCs, field allowlist, bounded strings without control characters, fixed vocabularies; on the device, a kernel filter and bounded parsers for discovery traffic | tested: `02_device_api`, `06_network_detection`, `08_device_identification`, `10_incidents_rooms_monitoring` (monitoring report, names and rooms), agent `test_sources`, `test_identify` (including a seeded fuzz test), `test_monitors` |
 | 6  | Code execution inside the canary or the announcer (OpenCanary, Samba, avahi, wsdd2) | own user namespace, no capabilities, read-only root, no secrets; the canary writes only its log volume, the announcer mounts nothing | tested (lockdown starts under real Podman): `device/e2e/run.py`; config review: `dekoi-canary.container`, `dekoi-announce.container` |
 | 7  | Unsigned, foreign or edge image pushed to the registry           | Podman `policy.json`: only the three release repositories, signed with a key on the card; edge images unsigned in separate repositories | tested: `device/tests/signatures.sh` with the image library of Debian trixie, the card's release (`signatures` job), `test_host_config` |
-| 8  | Attacker-controlled strings in notifications                     | fixed templates by event kind; the phone's language, from a fixed list, only picks the template table (ADR 0025); payload carries the event id only; the weekly summary is a fixed template with three whole numbers and no payload | tested with Phase 5 (`notify` function tests) |
+| 8  | Attacker-controlled strings in notifications                     | fixed templates by event kind; the phone's language, from a fixed list, only picks the template table (ADR 0025); payload carries the event id only; the names and rooms owners give hosts are not returned by `notification_targets_v3`; the weekly summary is a fixed template with three whole numbers and no payload | tested with Phase 5 (`notify` function tests) |
 | 9  | Anything beyond the intended surface on the project URL          | public schema only, GraphQL dropped, no buckets, no publications | verified 2026-11-07 against production: anonymous reads 401, private schema and GraphQL not exposed, no buckets, notify refuses requests without the secret |
 | 10 | Secrets in git history                                           | secrets only in GitHub environments, Cloud KMS and 1Password; push protection | tested: gitleaks over the whole history on every push (`repo.yml`) |
 | 11 | A hostile router or resolver feeds the agent crafted UPnP or DNS answers | requests to the gateway's own address only, read-only UPnP action, bodies bounded in size and time, XML parsed as UTF-8 and refused with a document type (no entity expansion), every value validated; DNS replies matched to the query and parsed by the bounded discovery parser | tested: agent `test_upnp`, `test_dns_check`, `test_health` |
@@ -132,7 +132,7 @@ public address and country (from request headers) for its owner only.
 | A05 Injection                          | Static SQL only, typed RPC arguments, attacker text stored as data and rendered as plain text |
 | A06 Insecure design                    | Threat model above; decoys isolated from secrets; device API versioned          |
 | A07 Authentication failures            | Supabase Auth with Google ID tokens and nonce; device secrets 256-bit           |
-| A08 Software or data integrity failures| Signing key in an HSM, used only after the owner approves a release; signature verified before tag move (CI) and before run (device); rollback on failed update |
+| A08 Software or data integrity failures| Signing key in an HSM, used only after the owner approves a release; signature verified before tag move (CI) and before run (device); rollback on failed update, and an agent image counts as started only once the backend accepted its heartbeat |
 | A09 Logging and alerting failures      | Offline detection, push alerts, CI on every change; devices keep journals in memory only |
 | A10 Mishandling of exceptional conditions | Fail closed: refused credentials back off, malformed batches dropped, no catch-all handlers |
 
@@ -142,7 +142,7 @@ Object-level and function-level authorization (API1, API5): RLS and exact
 function grants, tested. Authentication (API2): Supabase Auth, device secrets.
 Property-level authorization (API3): column grants (only `name`,
 `speed_test`, `wifi_name`, `trusted`, `label`, `room` and `weekly_summary`
-are writable), tested. Resource consumption (API4): batch limits, pending-claim
+are writable; read state only through `acknowledge_events_v1`), tested. Resource consumption (API4): batch limits, pending-claim
 limit, bounded fields, write limits per address and per user, storage
 limits per account and device, a cap on notify calls (ADR 0016), tested;
 reads are bounded by statement timeouts and `max_rows`, with aggregates and

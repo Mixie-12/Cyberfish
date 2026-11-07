@@ -29,7 +29,10 @@ Notify=true
 [Service]
 Restart=always
 RestartSec=10
-# The first start pulls the image.
+# The first start pulls the image; the device is not registered yet, so the
+# agent is ready as soon as it runs. Later starts are ready once the backend
+# has accepted a heartbeat: 15 minutes leave room for four attempts, after
+# which podman auto-update rolls back an image that cannot reach the backend.
 TimeoutStartSec=900
 
 [Install]

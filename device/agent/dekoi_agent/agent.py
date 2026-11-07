@@ -92,6 +92,10 @@ class Agent:
         self.health_schedule = Schedule(HEALTH_SECONDS)
         self.wifi = wifi.Watch(config.state_path.with_name("wifi.json"))
         self.wifi_schedule = Schedule(wifi.CHECK_SECONDS)
+        # Ready for systemd once the backend has accepted a heartbeat, so
+        # podman auto-update rolls back an image that cannot reach it. A
+        # device still waiting to be claimed has nothing to prove yet.
+        self.ready = state.device_id is None
 
     def tick(self) -> None:
         at = self.clock()
@@ -311,6 +315,7 @@ class Agent:
             self._failed(self.heartbeat_schedule, at, error)
             return
         self.heartbeat_schedule.succeeded(at)
+        self.ready = True
 
     def _send_heartbeat(self, arguments: dict, report: dict) -> None:
         """Version 2 with the monitoring report. Version 1 when the backend
