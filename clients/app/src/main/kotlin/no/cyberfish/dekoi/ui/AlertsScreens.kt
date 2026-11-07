@@ -44,6 +44,7 @@ import no.cyberfish.dekoi.hostDisplayName
 import no.cyberfish.dekoi.isIntrusion
 import no.cyberfish.dekoi.looksLike
 import no.cyberfish.dekoi.steps
+import no.cyberfish.dekoi.subject
 import no.cyberfish.dekoi.ui.components.CopyableRow
 import no.cyberfish.dekoi.ui.components.EmptyState
 import no.cyberfish.dekoi.ui.components.InsetRow
@@ -63,12 +64,15 @@ import java.time.format.FormatStyle
 private const val KNOWN_ALPHA = 0.6f
 private const val SEPARATOR = " · "
 
-/** The event's title in the owner's words. */
+/** The event's title in the owner's words; an event about another device names what [source] looks like. */
 @Composable
-fun eventTitle(event: Event): String {
+fun eventTitle(
+    event: Event,
+    source: NetworkHost?,
+): String {
     val text = eventText(event)
-    val service = text.service?.let { stringResource(it) }
-    return if (service != null) stringResource(text.title, service) else stringResource(text.title)
+    if (!text.aboutSource) return stringResource(text.title)
+    return stringResource(text.title, stringResource(subject(source?.kind ?: HostKind.UNKNOWN)))
 }
 
 /** One alert in a list: severity tile, title, what the source looks like, how often and when. */
@@ -88,7 +92,7 @@ fun AlertRow(
             relativeTime(event.occurredAt, now),
         ).joinToString(SEPARATOR)
     InsetRow(
-        eventTitle(event),
+        eventTitle(event, host),
         modifier = if (known) Modifier.alpha(KNOWN_ALPHA) else Modifier,
         subtitle = subtitle,
         leading = { SeverityTile(event.severity) },
@@ -151,7 +155,7 @@ fun AlertDetailScreen(
     }
     val host = data.hostFor(event.srcMac)
     Screen(
-        eventTitle(event),
+        eventTitle(event, host),
         onBack = onBack,
         subtitle = {
             Row(
@@ -208,7 +212,7 @@ private fun WhatToDo(
     val steps = steps(event.kind, host?.kind ?: HostKind.UNKNOWN)
     InsetSection(title = stringResource(R.string.event_advice)) {
         Column(Modifier.padding(Dimens.spaceL), verticalArrangement = Arrangement.spacedBy(Dimens.spaceM)) {
-            if (steps.isEmpty()) Text(stringResource(eventText(event).advice), style = MaterialTheme.typography.bodyLarge)
+            if (steps.isEmpty()) Text(stringResource(R.string.alert_nothing_to_do), style = MaterialTheme.typography.bodyLarge)
             steps.forEachIndexed { index, step ->
                 Row(horizontalArrangement = Arrangement.spacedBy(Dimens.spaceM)) {
                     Text("${index + 1}.", style = MaterialTheme.typography.bodyLarge.tabular(), color = MaterialTheme.colorScheme.primary)
