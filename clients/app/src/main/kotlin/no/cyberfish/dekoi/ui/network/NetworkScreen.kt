@@ -105,7 +105,7 @@ fun NetworkScreen(
         if (entries.isNotEmpty()) {
             item { Text(summary, style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant) }
         }
-        item { NetworksRow(data.networks.size) { onNavigate(Route.Networks) } }
+        item { Links(data.networks.size, onNavigate) }
         if (entries.isEmpty()) {
             item { EmptyState(R.drawable.ic_lan, stringResource(R.string.network_empty)) }
             return@Screen
@@ -160,24 +160,31 @@ private fun summary(entries: List<HostEntry>): String {
     ).joinToString(" · ")
 }
 
+/** Networks, and Add DeKoi where an owner looking at devices finds it; both show before any device does. */
 @Composable
-private fun NetworksRow(
-    count: Int,
-    onClick: () -> Unit,
+private fun Links(
+    networks: Int,
+    onNavigate: (Route) -> Unit,
 ) {
     InsetSection {
         InsetRow(
             stringResource(R.string.networks_title),
             subtitle =
-                if (count > 0) {
-                    pluralStringResource(R.plurals.networks_count, count, count)
+                if (networks > 0) {
+                    pluralStringResource(R.plurals.networks_count, networks, networks)
                 } else {
                     stringResource(R.string.networks_not_reported)
                 },
             leading = {
                 Icon(painterResource(R.drawable.ic_wifi), contentDescription = null, tint = MaterialTheme.colorScheme.primary)
             },
-            onClick = onClick,
+            onClick = { onNavigate(Route.Networks) },
+        )
+        InsetRow(
+            stringResource(R.string.action_add_dekoi),
+            titleColor = MaterialTheme.colorScheme.primary,
+            leading = { Icon(painterResource(R.drawable.ic_add), contentDescription = null, tint = MaterialTheme.colorScheme.primary) },
+            onClick = { onNavigate(Route.AddDekoi) },
         )
     }
 }
