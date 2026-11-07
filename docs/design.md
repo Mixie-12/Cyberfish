@@ -29,10 +29,11 @@ Four tabs, M3 `NavigationBar`, Material Symbols, filled when selected: Home
 incidents not from known devices), Network (`lan`), Settings (`settings`).
 
 Pushed screens: Alert detail, Device detail (a host), Networks, Insights,
-Your DeKoi, Add DeKoi. Type-safe Navigation Compose routes (`@Serializable`
-objects). Each tab keeps its back stack; back at a non-Home tab root goes Home;
-reselecting a tab pops to its root and scrolls to top. Predictive back from
-Navigation. A notification opens Alert detail over the Alerts tab.
+Your DeKoi, Add DeKoi, Place your devices. Type-safe Navigation Compose
+routes (`@Serializable` objects). Each tab keeps its back stack; back at a
+non-Home tab root goes Home; reselecting a tab pops to its root and scrolls
+to top. Predictive back from Navigation. A notification opens Alert detail
+over the Alerts tab.
 
 Cross-links: Alert to Device; Device to Alerts filtered to it; decoy tile to
 Alerts filtered to that service; Home tiles to their tabs.
@@ -97,8 +98,9 @@ address, network, online status; opens Device detail). (6) Technical
 details collapsed (`animateContentSize`, monospace, copyable).
 
 **Network.** Header "38 devices · 3 new this week · 1 needs attention", a
-"Networks" row and an "Insights" row per DeKoi. Map | List segmented
-control, choice saved; List is the default with TalkBack on.
+"Networks" row, an "Insights" row per DeKoi and an "Add DeKoi" row (also
+before any device shows). Map | Rooms | List segmented control, choice
+saved; List is the default with TalkBack on.
 - Map: a radar in the HUD frame (ADR 0020). Gateway at the centre; ring 1
   infrastructure (switches, access points, DeKoi with the brand mark); ring
   2 everything else clustered by kind, or by room once any device has one
@@ -111,6 +113,26 @@ control, choice saved; List is the default with TalkBack on.
   fits. Footer: "Shows the devices your DeKoi can see, not how they are
   connected." For TalkBack the map is one node with a summary and a "Show
   as list" action.
+- Rooms: a plan of the home from the rooms the owner sets (ADR 0023), from
+  `roomAreas()` and `floorPlan()` in `Rooms.kt`. One HUD-framed area per
+  room in use: the suggested rooms in their order (Living room, Kitchen,
+  Bedroom, Office, Hallway, Garage, Other), then the owner's own
+  alphabetically, matched whatever their case. Two areas to a row, a row
+  sharing the height of the tallest; a room with more than four devices
+  takes a whole row, and one column above font scale 1.5. Each area: its
+  name as a label, the count in blue, the devices as 40 dp kind tiles in
+  kind order with status dot and alert halo, the name under each. Then
+  "Not placed yet" under a hairline, with "Place your devices". Before
+  any room is set, one sentence says what the view becomes. Footer: "You
+  choose the rooms. Your DeKoi does not know where a device is." Nothing
+  moves. TalkBack reads each area as a heading ("Living room, 3 devices")
+  and each device with its status and any alert.
+- Place your devices: the devices without a room when it opens, one at a
+  time: the hero in the HUD frame (kind tile, name, maker, "Looks like a
+  TV"), "Which room is it in?" with the rooms as chips in the plan's order,
+  and Skip. A pick saves the room at once and keeps the name. "3 of 7"
+  under the title; a polite live region reads the progress and each
+  device. Ends with how many devices now have a room and "See your rooms".
 - List: search, sort (name, last seen, kind); sections Needs attention, New
   this week, Online, Not seen recently, or By room once any device has one.
   Row: tile with status dot, name, "Looks like a TV · LG · 192.168.1.23",
@@ -120,9 +142,10 @@ control, choice saved; List is the default with TalkBack on.
   use `network_private`.
 
 **Device detail.** (1) Hero in the HUD frame: 96 dp kind tile with its idle
-animation, shared element from list or map; name, "Looks like a TV", room,
-status ("Online now" or "Last seen 2 h ago"), Known device or New tag. (2)
-Attention card if it caused an alert in 24 h, linking to that alert. (3)
+animation, shared element from the list, map or rooms; name, "Looks like a
+TV", room, status ("Online now" or "Last seen 2 h ago"), Known device or New
+tag. (2) Attention card if it caused an alert in 24 h, linking to that
+alert. (3)
 14-day sparkline and "See all alerts from this device". (4) About: maker,
 model, system (`os`), announced name, service labels as plain tags. (5)
 Connection: address, network, hardware address (copyable), private-address
