@@ -113,6 +113,7 @@ fun SettingsScreen(
         item {
             InsetSection(title = stringResource(R.string.settings_about)) {
                 KeyValueRow(stringResource(R.string.settings_version), BuildConfig.VERSION_NAME)
+                InsetRow(stringResource(R.string.features_title), onClick = { onNavigate(Route.Features()) })
                 InsetRow(stringResource(R.string.learn_title), onClick = { onNavigate(Route.Learn) })
                 InsetRow(stringResource(R.string.action_take_tour), onClick = { onNavigate(Route.Onboarding) })
                 InsetRow(stringResource(R.string.licences_title), onClick = { onNavigate(Route.Licences) })

@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="features_title">Funksjoner</string>
+    <string name="features_see_all">Se alle funksjonene</string>
+    <string name="features_intro">Alt din DeKoi gjør, hvordan hver del fungerer nå, og hva den sist fant.</string>
+    <plurals name="features_all_on">
+        <item quantity="one">%1$d funksjon er på.</item>
+        <item quantity="other">Alle %1$d funksjonene er på.</item>
+    </plurals>
+    <plurals name="features_some_on">
+        <item quantity="one">%1$d av %2$d funksjon er på.</item>
+        <item quantity="other">%1$d av %2$d funksjoner er på.</item>
+    </plurals>
+    <string name="features_no_dekoi">Legg til en DeKoi for å slå dem på.</string>
+
+    <string name="features_state_learning">På, lærer hva som er normalt</string>
+    <string name="features_state_wifi_name">Trenger navnet på Wi-Fi-nettet ditt</string>
+    <string name="features_state_update">Etter neste automatiske oppdatering</string>
+    <string name="features_last_found">Sist funnet %1$s</string>
+    <string name="features_try">Prøv selv</string>
+    <string name="features_add_wifi_name">Legg inn Wi-Fi-navnet</string>
+    <string name="features_open_map">Åpne kartet</string>
+    <string name="features_see_devices">Se enhetene dine</string>
+    <string name="features_open_insights">Åpne Innsikt</string>
+    <string name="features_open_settings">Endre i Innstillinger</string>
+    <plurals name="features_ids_rules">
+        <item quantity="one">%1$s angrepsmønster</item>
+        <item quantity="other">%1$s angrepsmønstre</item>
+    </plurals>
+    <string name="features_new_learning">Varslene starter når din DeKoi har kjent enhetene dine i ett døgn.</string>
+    <string name="features_ports_no_list">Ruteren din deler ikke hvilke porter som er åpne.</string>
+
+    <string name="features_decoy">Filserver som lokkedue</string>
+    <string name="features_decoy_promise">En falsk lagringsboks på nettverket ditt som varsler deg når noen åpner den.</string>
+    <string name="features_decoy_name">Vises på nettverket ditt som %1$s</string>
+    <string name="features_ids">Angrepsgjenkjenning</string>
+    <string name="features_ids_promise">Sjekker det som når din DeKoi, mot kjente angrepsmønstre.</string>
+    <string name="features_scans">Oppdager søk</string>
+    <string name="features_scans_promise">Legger merke til en enhet som søker gjennom nettverket ditt etter enheter eller åpninger.</string>
+    <string name="features_arp">ARP-vakt</string>
+    <string name="features_arp_promise">Legger merke til en enhet som utgir seg for å være en annen, for eksempel ruteren din.</string>
+    <string name="features_router">Rutervakt</string>
+    <string name="features_router_promise">Legger merke til en ekstra enhet som deler ut nettverksinnstillinger eller melder seg som ruteren din.</string>
+    <string name="features_names">Navnefelle</string>
+    <string name="features_names_promise">Spør etter navn som ikke finnes, for å fange en enhet som svarer likevel.</string>
+    <string name="features_wifi_promise">Legger merke til en kopi av Wi-Fi-nettet ditt i nærheten.</string>
+    <string name="features_map">Nettverkskart</string>
+    <string name="features_map_promise">Viser enhetene på nettverket ditt og hva hver av dem ser ut som.</string>
+    <string name="features_new">Varsel om nye enheter</string>
+    <string name="features_new_promise">Sier fra når en enhet kobler seg til nettverket ditt for første gang.</string>
+    <string name="features_internet">Internettsjekk</string>
+    <string name="features_internet_promise">Sjekker internett hvert minutt, og at nettadresser fører dit de skal.</string>
+    <string name="features_ports_promise">Viser hva ruteren din har åpnet mot internett, og sier fra om nye åpninger.</string>
+    <string name="features_summary_promise">En kort melding én gang i uken: varsler, nye enheter og tid tilkoblet.</string>
+</resources>

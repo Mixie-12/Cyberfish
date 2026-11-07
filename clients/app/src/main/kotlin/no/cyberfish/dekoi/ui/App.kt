@@ -58,6 +58,7 @@ import no.cyberfish.dekoi.alertBadgeCount
 import no.cyberfish.dekoi.isSetUp
 import no.cyberfish.dekoi.shared.DesignTokens
 import no.cyberfish.dekoi.ui.components.Screen
+import no.cyberfish.dekoi.ui.features.FeaturesScreen
 import no.cyberfish.dekoi.ui.learn.LearnScreen
 import no.cyberfish.dekoi.ui.learn.LearnTopicScreen
 import no.cyberfish.dekoi.ui.motion.Direction
@@ -125,6 +126,11 @@ sealed interface Route {
     /** Network health, DNS, open ports and speed of one DeKoi (ADR 0015). */
     @Serializable data class Insights(
         val deviceId: String,
+    ) : Route
+
+    /** Everything DeKoi does and how each part is doing on one DeKoi; null means the one Home speaks for. */
+    @Serializable data class Features(
+        val deviceId: String? = null,
     ) : Route
 }
 
@@ -305,6 +311,23 @@ private fun SignedIn(
                     onLoad = viewModel::loadInsights,
                     onSpeedTest = viewModel::setSpeedTest,
                     onNavigate = navigate,
+                    onBack = back,
+                )
+            }
+            screen<Route.Features> { entry ->
+                val settings by viewModel.settings.collectAsStateWithLifecycle()
+                LaunchedEffect(Unit) { viewModel.loadSettings() }
+                FeaturesScreen(
+                    data,
+                    now,
+                    entry.toRoute<Route.Features>().deviceId,
+                    settings?.weeklySummary,
+                    onNavigate = navigate,
+                    // Wi-Fi Guard and the weekly summary are near the top of Settings.
+                    onOpenSettings = {
+                        navigate(Route.Settings)
+                        listStates.getValue(Tab.SETTINGS).requestScrollToItem(0)
+                    },
                     onBack = back,
                 )
             }

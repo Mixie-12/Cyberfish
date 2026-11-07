@@ -368,7 +368,7 @@ private fun Tiles(
                         }
                     }
                 },
-                { tile -> ChecksTile(dekoi, now, { onNavigate(Route.Dekoi(dekoi.id)) }, tile) },
+                { tile -> ChecksTile(dekoi, now, { onNavigate(Route.Features(dekoi.id)) }, tile) },
             ),
         )
     }
@@ -376,7 +376,7 @@ private fun Tiles(
 
 /**
  * "All 8 checks on", or as much as the DeKoi reports, marked like the
- * worst of them; opens Your DeKoi. Older software reports only its decoys.
+ * worst of them; opens Features. Older software reports only its decoys.
  */
 @Composable
 private fun ChecksTile(

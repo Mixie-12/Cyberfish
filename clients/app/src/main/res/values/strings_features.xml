@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Features and the feature tour (ui/features). -->
+<resources>
+    <string name="features_title">Features</string>
+    <string name="features_see_all">See all features</string>
+    <string name="features_intro">Everything your DeKoi does, how each part is doing now and what it last found.</string>
+    <plurals name="features_all_on">
+        <item quantity="one">%1$d feature is on.</item>
+        <item quantity="other">All %1$d features are on.</item>
+    </plurals>
+    <plurals name="features_some_on">
+        <item quantity="one">%1$d of %2$d feature is on.</item>
+        <item quantity="other">%1$d of %2$d features are on.</item>
+    </plurals>
+    <string name="features_no_dekoi">Add a DeKoi to turn these on.</string>
+
+    <string name="features_state_learning">On, learning what is normal</string>
+    <string name="features_state_wifi_name">Needs your Wi-Fi name</string>
+    <string name="features_state_update">After the next automatic update</string>
+    <string name="features_last_found">Last found %1$s</string>
+    <string name="features_try">Try it</string>
+    <string name="features_add_wifi_name">Add your Wi-Fi name</string>
+    <string name="features_open_map">Open the map</string>
+    <string name="features_see_devices">See your devices</string>
+    <string name="features_open_insights">Open Insights</string>
+    <string name="features_open_settings">Change in Settings</string>
+    <plurals name="features_ids_rules">
+        <item quantity="one">%1$s attack pattern</item>
+        <item quantity="other">%1$s attack patterns</item>
+    </plurals>
+    <string name="features_new_learning">Alerts start once your DeKoi has known your devices for a day.</string>
+    <string name="features_ports_no_list">Your router does not share which ports are open.</string>
+
+    <string name="features_decoy">Decoy file server</string>
+    <string name="features_decoy_promise">A fake storage box on your network that sends you an alert when someone opens it.</string>
+    <string name="features_decoy_name">Shows up on your network as %1$s</string>
+    <string name="features_ids">Intrusion detection</string>
+    <string name="features_ids_promise">Checks what reaches your DeKoi against known attack patterns.</string>
+    <string name="features_scans">Scan detection</string>
+    <string name="features_scans_promise">Notices a device searching your network for devices or openings.</string>
+    <string name="features_arp">ARP Guard</string>
+    <string name="features_arp_promise">Notices a device pretending to be another, such as your router.</string>
+    <string name="features_router">Router Guard</string>
+    <string name="features_router_promise">Notices a second device handing out network settings or announcing itself as your router.</string>
+    <string name="features_names">Name trap</string>
+    <string name="features_names_promise">Asks for names that do not exist, to catch a device that answers anyway.</string>
+    <string name="features_wifi_promise">Notices a copy of your Wi-Fi nearby.</string>
+    <string name="features_map">Network map</string>
+    <string name="features_map_promise">Shows the devices on your network and what each one looks like.</string>
+    <string name="features_new">New device alerts</string>
+    <string name="features_new_promise">Tells you when a device joins your network for the first time.</string>
+    <string name="features_internet">Internet check</string>
+    <string name="features_internet_promise">Checks your internet every minute, and that web addresses lead where they should.</string>
+    <string name="features_ports_promise">Lists what your router has opened to the internet, and tells you about new openings.</string>
+    <string name="features_summary_promise">A short note once a week: alerts, new devices and time online.</string>
+</resources>
