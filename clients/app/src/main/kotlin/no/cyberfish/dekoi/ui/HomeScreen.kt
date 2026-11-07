@@ -58,6 +58,7 @@ import no.cyberfish.dekoi.NetworkHost
 import no.cyberfish.dekoi.Protection
 import no.cyberfish.dekoi.R
 import no.cyberfish.dekoi.Severity
+import no.cyberfish.dekoi.checksOn
 import no.cyberfish.dekoi.dekoiToShow
 import no.cyberfish.dekoi.eventsPerDay
 import no.cyberfish.dekoi.highestSeverity
@@ -66,7 +67,6 @@ import no.cyberfish.dekoi.isIntrusion
 import no.cyberfish.dekoi.isNew
 import no.cyberfish.dekoi.needsAttention
 import no.cyberfish.dekoi.protection
-import no.cyberfish.dekoi.protectionsOn
 import no.cyberfish.dekoi.recentIntrusions
 import no.cyberfish.dekoi.severityLabel
 import no.cyberfish.dekoi.status
@@ -386,18 +386,18 @@ private fun Tiles(
                         }
                     }
                 },
-                { tile -> ProtectionsTile(dekoi, now, { onNavigate(Route.Dekoi(dekoi.id)) }, tile) },
+                { tile -> ChecksTile(dekoi, now, { onNavigate(Route.Dekoi(dekoi.id)) }, tile) },
             ),
         )
     }
 }
 
 /**
- * "All 8 protections on", or as much as the DeKoi reports, marked like the
+ * "All 8 checks on", or as much as the DeKoi reports, marked like the
  * worst of them; opens Your DeKoi. Older software reports only its decoys.
  */
 @Composable
-private fun ProtectionsTile(
+private fun ChecksTile(
     dekoi: Device,
     now: Instant,
     onClick: () -> Unit,
@@ -405,18 +405,18 @@ private fun ProtectionsTile(
 ) {
     val status = dekoi.status(now)
     val total = dekoi.monitors.size
-    val on = dekoi.protectionsOn
+    val on = dekoi.checksOn
     val decoys = dekoi.services.size
     val summary =
         when {
             status == DekoiStatus.SETTING_UP -> stringResource(R.string.device_setting_up)
-            status == DekoiStatus.OFFLINE -> stringResource(R.string.home_protections_paused)
+            status == DekoiStatus.OFFLINE -> stringResource(R.string.home_checks_paused)
             total == 0 -> pluralStringResource(R.plurals.dekoi_watch_decoys, decoys, decoys)
-            on == total -> pluralStringResource(R.plurals.home_protections_all, total, total)
-            else -> pluralStringResource(R.plurals.home_protections_some, total, on, total)
+            on == total -> pluralStringResource(R.plurals.home_checks_all, total, total)
+            else -> pluralStringResource(R.plurals.home_checks_some, total, on, total)
         }
     val (glyph, tint) = monitorMark(dekoi.watchList.maxOfOrNull { it.state }.takeIf { status == DekoiStatus.ONLINE })
-    StatTile(stringResource(R.string.home_protections), onClick, modifier) {
+    StatTile(stringResource(R.string.home_checks), onClick, modifier) {
         Row(horizontalArrangement = Arrangement.spacedBy(Dimens.spaceS)) {
             Icon(painterResource(glyph), contentDescription = null, modifier = Modifier.size(ACTION_ICON), tint = tint)
             Text(summary, style = MaterialTheme.typography.titleMedium)

@@ -28,15 +28,15 @@ fun Device.status(now: Instant): DekoiStatus =
 
 /**
  * The DeKoi Home speaks for: the first one that is offline, else setting
- * up, else one with a protection that is not on, else the first one.
+ * up, else one with a check that is not on, else the first one.
  */
 fun dekoiToShow(
     devices: List<Device>,
     now: Instant,
-): Device? = devices.minWithOrNull(compareBy<Device> { it.status(now) }.thenBy { it.protectionsOn == it.monitors.size })
+): Device? = devices.minWithOrNull(compareBy<Device> { it.status(now) }.thenBy { it.checksOn == it.monitors.size })
 
 /** Monitors that report they are working. */
-val Device.protectionsOn: Int get() = monitors.count { it.state == MonitorState.OK }
+val Device.checksOn: Int get() = monitors.count { it.state == MonitorState.OK }
 
 /**
  * "What DeKoi is watching", in the same order on every DeKoi. Software from

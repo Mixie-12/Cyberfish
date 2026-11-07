@@ -30,7 +30,7 @@
     <string name="dekoi_uptime_start">7 days ago</string>
     <string name="dekoi_uptime_end">Now</string>
     <string name="dekoi_uptime_unknown">Not known</string>
-    <string name="dekoi_watching">What DeKoi is watching</string>
+    <string name="dekoi_watching">What DeKoi watches</string>
     <plurals name="dekoi_watch_decoys">
         <item quantity="one">%1$d decoy running</item>
         <item quantity="other">%1$d decoys running</item>
@@ -50,7 +50,7 @@
         <item quantity="other">Keeping a list of %1$d devices</item>
     </plurals>
     <string name="dekoi_watch_inventory_plain">Keeping a list of the devices on your network</string>
-    <string name="dekoi_watch_other">Another protection</string>
+    <string name="dekoi_watch_other">Another check</string>
     <string name="dekoi_state_on">On</string>
     <string name="dekoi_state_starting">Starting</string>
     <string name="dekoi_state_off">Turned off</string>
@@ -60,6 +60,7 @@
     <string name="dekoi_watching_offline">Paused while your DeKoi is offline.</string>
     <string name="dekoi_software">Software %1$s</string>
     <string name="dekoi_software_auto">Updates by itself</string>
+    <string name="dekoi_decoys">Decoys</string>
     <string name="dekoi_decoys_footer">Fake services that look worth breaking into. Nothing on your network has a reason to touch them.</string>
     <plurals name="dekoi_touched">
         <item quantity="one">Touched %1$d time this week</item>

@@ -73,7 +73,7 @@ private fun watchTitle(
             if (working && decoys > 0) {
                 pluralStringResource(R.plurals.dekoi_watch_decoys, decoys, decoys)
             } else {
-                stringResource(R.string.stat_decoys)
+                stringResource(R.string.dekoi_decoys)
             }
         }
 
@@ -124,7 +124,7 @@ private fun stateWord(state: MonitorState): Int =
     }
 
 /**
- * One row per protection, then the software, then, collapsed, the names
+ * One row per check, then the software, then, collapsed, the names
  * the DeKoi reports them by. States hold only while the DeKoi is online;
  * while it is not, every row is grey and the footer says why. Older
  * software reports less: the rows show what it does report, and the

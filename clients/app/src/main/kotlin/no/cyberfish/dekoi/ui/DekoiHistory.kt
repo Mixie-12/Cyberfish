@@ -122,7 +122,7 @@ fun Decoys(
                 )
             }
         }
-    Section(number, stringResource(R.string.stat_decoys), modifier) {
+    Section(number, stringResource(R.string.dekoi_decoys), modifier) {
         TileGrid(tiles)
         Text(
             stringResource(R.string.dekoi_decoys_footer),

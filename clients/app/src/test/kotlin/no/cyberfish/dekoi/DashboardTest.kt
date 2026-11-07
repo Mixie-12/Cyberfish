@@ -81,11 +81,11 @@ class DashboardTest {
     }
 
     @Test
-    fun `among DeKois that are online, Home speaks for one with a protection that is not on`() {
+    fun `among DeKois that are online, Home speaks for one with a check that is not on`() {
         val allOn = device("all").copy(monitors = listOf(Monitor("ids", "ok"), Monitor("arp_watch", "ok")))
         val oneOff = device("one").copy(monitors = listOf(Monitor("ids", "failed"), Monitor("arp_watch", "ok")))
         assertEquals(oneOff, dekoiToShow(listOf(allOn, oneOff), now))
-        assertEquals(1, oneOff.protectionsOn)
+        assertEquals(1, oneOff.checksOn)
     }
 
     @Test
