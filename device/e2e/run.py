@@ -101,13 +101,14 @@ def wait_for(description: str, check) -> object:
 
 def attack(password: str) -> None:
     script = (
-        "apk add -q --no-progress openssh-client sshpass curl >/dev/null"
+        "apk add -q --no-progress openssh-client sshpass curl arp-scan >/dev/null"
         f" && (sshpass -p '{password}' ssh -o StrictHostKeyChecking=no"
         " -o UserKnownHostsFile=/dev/null -o PreferredAuthentications=password"
         " -o PubkeyAuthentication=no -o ConnectTimeout=10"
         " admin@host.containers.internal true || true)"
         f" && (curl -s -o /dev/null --max-time 10 -d 'username=admin&password={password}'"
         " http://host.containers.internal/index.html || true)"
+        " && (timeout 20 arp-scan --localnet --interface=eth0 >/dev/null || true)"
     )
     run("podman", "run", "--rm", ATTACKER_IMAGE, "sh", "-c", script)
 
@@ -144,8 +145,17 @@ def main() -> None:
     SCAN_LOG.parent.mkdir(parents=True, exist_ok=True)
     SCAN_LOG.touch(mode=0o644)
     run("systemctl", "daemon-reload")
-    run("systemctl", "start", "dekoi-canary.service", "dekoi-agent.service")
+    run("systemctl", "start", "dekoi-canary.service", "dekoi-agent.service", "dekoi-ids.service")
     print("ok: units started (canary healthy, agent ready)")
+
+    def ids_running() -> bool:
+        journal = run("journalctl", "--no-pager", "-u", "dekoi-ids.service")
+        active = subprocess.run(
+            ["systemctl", "is-active", "--quiet", "dekoi-ids.service"], check=False
+        )
+        return active.returncode == 0 and "engine started" in journal
+
+    wait_for("IDS loaded its rules and is capturing, locked down", ids_running)
 
     def device() -> dict:
         (row,) = backend.as_user(
@@ -175,6 +185,7 @@ def main() -> None:
     wait_for("SSH login attempt", lambda: seen("login_attempt", "ssh"))
     wait_for("HTTP login attempt", lambda: seen("login_attempt", "http"))
     wait_for("port scan", lambda: seen("port_scan"))
+    wait_for("network sweep seen in ARP traffic", lambda: seen("host_scan"))
 
     rows = events()
     logins = [e for e in rows if e["kind"] == "login_attempt"]

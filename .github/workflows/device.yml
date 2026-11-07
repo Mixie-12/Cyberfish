@@ -28,7 +28,7 @@ jobs:
         run: >-
           docker run --rm -v "$PWD:/repo:ro" -w /repo
           hadolint/hadolint@sha256:9a3944b7fddcb947d1ffd90829ac1a6e5c30479223358f249d8b96c7d0019e27
-          hadolint device/canary/Containerfile device/agent/Containerfile
+          hadolint device/canary/Containerfile device/agent/Containerfile device/ids/Containerfile
       - name: Firewall rules and Quadlet units on Debian Trixie
         run: >-
           docker run --rm --cap-add NET_ADMIN -v "$PWD/device/host:/host:ro"
@@ -111,6 +111,7 @@ jobs:
         run: |
           key=$(jq -r .PUBLISHABLE_KEY "$RUNNER_TEMP/supabase.json")
           sudo podman build -f device/canary/Containerfile -t ghcr.io/mixie-12/dekoi-canary:stable device
+          sudo podman build -f device/ids/Containerfile -t ghcr.io/mixie-12/dekoi-ids:stable device
           sudo podman build -f device/agent/Containerfile -t ghcr.io/mixie-12/dekoi-agent:stable \
             --build-arg DEKOI_API_URL=http://127.0.0.1:54321 \
             --build-arg DEKOI_API_KEY="$key" \
@@ -122,4 +123,5 @@ jobs:
         run: |
           sudo journalctl --no-pager -u dekoi-agent -n 100
           sudo journalctl --no-pager -u dekoi-canary -n 60
+          sudo journalctl --no-pager -u dekoi-ids -n 40
           sudo ss -ltnp
