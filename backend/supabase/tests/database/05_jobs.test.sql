@@ -1,7 +1,7 @@
 -- Offline detection and retention.
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(6);
+select plan(7);
 
 insert into auth.users (id, email) values ('00000000-0000-0000-0000-00000000000a', 'a@test.invalid');
 
@@ -25,6 +25,10 @@ insert into public.network_hosts (device_id, mac, ip, last_seen_at) values
   ('00000000-0000-0000-0000-0000000000a2', '3c:22:fb:00:00:01', '192.168.1.10', now() - interval '91 days'),
   ('00000000-0000-0000-0000-0000000000a2', '3c:22:fb:00:00:02', '192.168.1.11', now());
 
+insert into public.networks (device_id, cidr, source, last_seen_at) values
+  ('00000000-0000-0000-0000-0000000000a2', '10.0.0.0/24', 'observed', now() - interval '91 days'),
+  ('00000000-0000-0000-0000-0000000000a2', '192.168.1.0/24', 'interface', now());
+
 select private.apply_retention();
 
 select is(
@@ -37,6 +41,12 @@ select results_eq(
   'select mac::text from public.network_hosts',
   $$ values ('3c:22:fb:00:00:02') $$,
   'hosts not seen for 90 days are removed, recent ones stay'
+);
+
+select results_eq(
+  'select cidr::text from public.networks',
+  $$ values ('192.168.1.0/24') $$,
+  'networks not seen for 90 days are removed, recent ones stay'
 );
 
 select results_eq(

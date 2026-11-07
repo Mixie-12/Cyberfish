@@ -6,7 +6,7 @@ import subprocess
 import time
 from collections.abc import Callable
 
-from . import api, inventory, lan
+from . import api, identify, inventory, lan
 from .config import Config
 from .decoys import listening_ports, load_decoys, running_services
 from .detect import Collapser, ScanDetector
@@ -63,6 +63,8 @@ class Agent:
         self.arp = lan.ArpMonitor(lan.own_macs(), lan.default_gateway())
         self.detector = ScanDetector()
         self.collapser = Collapser()
+        self.identities = identify.Identities()
+        self.networks = inventory.SeenNetworks()
         self.register_schedule = Schedule(REGISTER_SECONDS)
         self.send_schedule = Schedule(0)
         self.heartbeat_schedule = Schedule(HEARTBEAT_SECONDS)
@@ -86,6 +88,7 @@ class Agent:
             self.probe(at)
 
     def collect(self, at: float) -> None:
+        self._identify()
         events = self.collapser.flush(at) + self._keep(at, self._observe(at))
         followers = {"canary": self.canary, "scan": self.scans}
         positions = {
@@ -113,9 +116,22 @@ class Agent:
             if arp:
                 found += self.arp.observe(at, arp)
         advertisements = self.listeners.router_advertisements()
+        for router, _, prefixes in advertisements:
+            for prefix in prefixes:
+                self.networks.advertised(prefix, router)
         if advertisements:
-            found += self._rogue_routers(at, advertisements)
+            found += self._rogue_routers(at, [(ip, mac) for ip, mac, _ in advertisements])
         return found
+
+    def _identify(self) -> None:
+        """Records what discovery traffic says about its senders."""
+        for frame in self.listeners.discovery_frames():
+            found = identify.parse_frame(frame)
+            if found is None or found[0] in self.arp.own_macs:
+                continue
+            mac, address, facts = found
+            self.identities.observe(mac, facts)
+            self.networks.source_address(address)
 
     def _rogue_routers(self, at: float, advertisements: list[tuple[str, str]]) -> list[dict]:
         known, new = lan.newcomers(self.state.routers, {mac for _, mac in advertisements}, None)
@@ -138,6 +154,7 @@ class Agent:
         """Adds the hardware address where the kernel knows it, then collapses repeats."""
         kept = []
         for event in found:
+            self.networks.source_address(event.get("src_ip"))
             if "src_mac" not in event and "src_ip" in event:
                 mac = inventory.mac_for(event["src_ip"])
                 if mac:
@@ -242,9 +259,22 @@ class Agent:
         self.heartbeat_schedule.succeeded(at)
 
     def inventory(self, at: float) -> None:
+        """Hosts with what they say about themselves, and networks (ADR 0010).
+
+        The service searches go out before the scan, so most answers have
+        arrived when it ends."""
+        try:
+            lan.ask_for_services()
+        except OSError as error:
+            log.warning("service discovery search failed: %s", error)
         try:
             hosts = inventory.scan_hosts()
-            api.call(self.config, "device_hosts_v1", self._auth() | {"hosts": hosts})
+            self._identify()
+            arguments = self._auth() | {
+                "hosts": [self.identities.describe(host) for host in hosts],
+                "networks": self.networks.report(inventory.routed_networks()),
+            }
+            api.call(self.config, "device_hosts_v2", arguments)
         except api.ApiError as error:
             self._failed(self.inventory_schedule, at, error)
             return

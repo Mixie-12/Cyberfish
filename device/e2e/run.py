@@ -199,8 +199,16 @@ def main() -> None:
     print("ok: events are correct and contain no passwords")
 
     wait_for(
-        "network inventory from arp-scan",
-        lambda: backend.as_user(token, "GET", "/rest/v1/network_hosts?select=mac"),
+        "network inventory from arp-scan, with identification columns",
+        lambda: backend.as_user(token, "GET", "/rest/v1/network_hosts?select=mac,kind,services"),
+    )
+    wait_for(
+        "the device's own subnet, reported through device_hosts_v2",
+        lambda: [
+            network
+            for network in backend.as_user(token, "GET", "/rest/v1/networks?select=cidr,source")
+            if network["source"] == "interface"
+        ],
     )
     print("end-to-end test passed")
 

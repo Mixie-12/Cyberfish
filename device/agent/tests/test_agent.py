@@ -1,4 +1,5 @@
 import json
+import struct
 from pathlib import Path
 
 import pytest
@@ -11,6 +12,8 @@ from dekoi_agent.state import State
 
 CANARY_CONFIG = Path(__file__).parents[2] / "canary" / "opencanary.conf"
 CLAIM_CODE = "C" + "0" * 24 + "1"
+HOME_NETWORK = {"cidr": "192.168.1.0/24", "source": "interface", "gateway": "192.168.1.1"}
+PHONE_MAC = "62:1f:9a:00:00:01"
 
 
 class FakeBackend:
@@ -39,13 +42,18 @@ class FakeListeners:
 
     def __init__(self) -> None:
         self.frames: list[bytes] = []
-        self.advertisements: list[tuple[str, str]] = []
+        self.discovery: list[bytes] = []
+        self.advertisements: list[tuple[str, str, list[str]]] = []
 
     def arp_frames(self) -> list[bytes]:
         frames, self.frames = self.frames, []
         return frames
 
-    def router_advertisements(self) -> list[tuple[str, str]]:
+    def discovery_frames(self) -> list[bytes]:
+        frames, self.discovery = self.discovery, []
+        return frames
+
+    def router_advertisements(self) -> list[tuple[str, str, list[str]]]:
         found, self.advertisements = self.advertisements, []
         return found
 
@@ -91,6 +99,8 @@ def backend(monkeypatch: pytest.MonkeyPatch) -> FakeBackend:
     monkeypatch.setattr(agent_module.lan, "interface_mac", lambda interface: "dc:a6:32:00:00:01")
     monkeypatch.setattr(agent_module.lan, "probe_name_poisoning", lambda: fake.poisoners)
     monkeypatch.setattr(agent_module.lan, "probe_dhcp_servers", lambda mac: fake.dhcp_servers)
+    monkeypatch.setattr(agent_module.lan, "ask_for_services", lambda: None)
+    monkeypatch.setattr(agent_module.inventory, "routed_networks", lambda: [dict(HOME_NETWORK)])
     return fake
 
 
@@ -183,13 +193,13 @@ def test_network_findings_are_delivered(config: Config, backend: FakeBackend) ->
     agent.tick()
     assert agent.state.dhcp_servers == ["192.168.1.1"], "the first DHCP server is learned"
 
-    listeners.advertisements = [("fe80::1", "aa:bb:cc:00:00:01")]
+    listeners.advertisements = [("fe80::1", "aa:bb:cc:00:00:01", [])]
     agent.tick()
     assert agent.state.routers == ["aa:bb:cc:00:00:01"], "the first router is learned"
 
     backend.poisoners = [("192.168.1.66", "llmnr")]
     backend.dhcp_servers = {"192.168.1.1", "192.168.1.66"}
-    listeners.advertisements = [("fe80::66", "3c:22:fb:00:00:66")]
+    listeners.advertisements = [("fe80::66", "3c:22:fb:00:00:66", [])]
     clock.now += 15 * 60
     agent.tick()
     clock.now += 1
@@ -197,3 +207,53 @@ def test_network_findings_are_delivered(config: Config, backend: FakeBackend) ->
 
     kinds = [e["kind"] for call in backend.called("device_events_v1") for e in call["events"]]
     assert sorted(kinds) == ["name_poisoning", "rogue_dhcp", "rogue_router"]
+
+
+def dhcp_request_frame(mac: str, host_name: bytes) -> bytes:
+    raw_mac = bytes.fromhex(mac.replace(":", ""))
+    bootp = struct.pack("!BBBBIHH", 1, 1, 6, 0, 7, 0, 0) + b"\x00" * 16
+    bootp += raw_mac.ljust(16, b"\x00") + b"\x00" * 192 + b"\x63\x82\x53\x63"
+    bootp += bytes([53, 1, 3, 12, len(host_name)]) + host_name + b"\xff"
+    udp = struct.pack("!HHHH", 68, 67, 8 + len(bootp), 0) + bootp
+    ip = struct.pack(
+        "!BBHHHBBH4s4s", 0x45, 0, 20 + len(udp), 0, 0, 64, 17, 0, b"\0" * 4, b"\xff" * 4
+    )
+    return b"\xff" * 6 + raw_mac + b"\x08\x00" + ip + udp
+
+
+def test_inventory_reports_identified_hosts_and_networks(
+    config: Config, backend: FakeBackend, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    listeners = FakeListeners()
+    listeners.discovery = [
+        dhcp_request_frame(PHONE_MAC, b"Karis-iPhone"),
+        dhcp_request_frame("dc:a6:32:00:00:01", b"our-own-probe"),
+    ]
+    listeners.advertisements = [("fe80::1", "aa:bb:cc:00:00:01", ["2001:db8:1:2::/64"])]
+    monkeypatch.setattr(
+        agent_module.inventory,
+        "scan_hosts",
+        lambda: [
+            {"mac": PHONE_MAC, "ip": "192.168.1.60"},
+            {"mac": "dc:a6:32:00:00:01", "ip": "192.168.1.20"},
+        ],
+    )
+    agent = Agent(config, State(device_id="device-1", secret="a" * 64), Clock(), listeners)
+    agent.tick()
+
+    (call,) = backend.called("device_hosts_v2")
+    assert call["hosts"] == [
+        {
+            "mac": PHONE_MAC,
+            "ip": "192.168.1.60",
+            "kind": "phone",
+            "os": "ios",
+            "hostname": "Karis-iPhone",
+        },
+        {"mac": "dc:a6:32:00:00:01", "ip": "192.168.1.20", "kind": "unknown"},
+    ]
+    assert call["networks"] == [
+        HOME_NETWORK,
+        {"cidr": "2001:db8:1:2::/64", "source": "router_advertisement", "gateway": "fe80::1"},
+    ]
+    assert backend.called("device_hosts_v1") == []

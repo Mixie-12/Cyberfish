@@ -60,7 +60,8 @@ select results_eq(
       ('devices', 'delete'),
       ('devices', 'select'),
       ('events', 'select'),
-      ('network_hosts', 'select')
+      ('network_hosts', 'select'),
+      ('networks', 'select')
   $$,
   'authenticated holds exactly the expected table privileges'
 );
@@ -97,6 +98,7 @@ select results_eq(
       ('anon', 'device_events_v1'),
       ('anon', 'device_heartbeat_v1'),
       ('anon', 'device_hosts_v1'),
+      ('anon', 'device_hosts_v2'),
       ('anon', 'device_register_v1'),
       ('authenticated', 'claim_device_v1'),
       ('authenticated', 'delete_account_v1'),
