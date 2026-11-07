@@ -79,8 +79,8 @@ select results_eq(
       and has_column_privilege('authenticated', c.oid, a.attnum, 'update')
     order by 1
   $$,
-  $$ values ('devices.name'), ('network_hosts.trusted') $$,
-  'authenticated may update only device names and host trust'
+  $$ values ('devices.name'), ('devices.wifi_name'), ('network_hosts.trusted') $$,
+  'authenticated may update only device names, Wi-Fi names and host trust'
 );
 
 select results_eq(
@@ -100,6 +100,7 @@ select results_eq(
       ('anon', 'device_hosts_v1'),
       ('anon', 'device_hosts_v2'),
       ('anon', 'device_register_v1'),
+      ('anon', 'device_wifi_v1'),
       ('authenticated', 'claim_device_v1'),
       ('authenticated', 'delete_account_v1'),
       ('authenticated', 'register_push_token_v1'),
