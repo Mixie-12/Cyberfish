@@ -13,6 +13,8 @@ import unicodedata
 from datetime import UTC, datetime
 from pathlib import Path
 
+from .decoys import FILE_SHARE_PORT, FILE_SHARE_SERVICE
+
 MAX_READ_BYTES = 1 << 20
 MAX_LINE_BYTES = 1 << 16
 MAX_TEXT = 256
@@ -41,6 +43,12 @@ CANARY_DETAIL = {
     "REMOTEVERSION": "client_version",
     "CMD": "command",
 }
+
+# Samba's audit log (canary/persona/smb.conf). A full_audit record is
+# "client|share|share path|operation|result|argument". Clients list the
+# shares through IPC$, which is browsing and never an event.
+SAMBA_FILE_READS = {"pread", "pread_recv"}
+SAMBA_SHARE_LIST = "IPC$"
 
 SCAN_PREFIX = "dekoi-scan"
 
@@ -114,6 +122,88 @@ def parse_canary(line: str, decoys: dict[int, str], now: float) -> dict | None:
         "detail": detail,
     }
     return {key: value for key, value in event.items() if value is not None}
+
+
+def parse_samba(line: str, now: float) -> dict | None:
+    """Turn one line of Samba's audit log into an event, or None to ignore it.
+
+    A JSON authentication record is a sign-in attempt, unless the client sent
+    no password at all: that is a client looking for anonymous access while
+    browsing. Connecting to a share means listing its contents, and a read
+    means someone opened a file. Samba logs the user name, never the password.
+    """
+    text = line.strip()
+    if text.startswith("{"):
+        return _samba_sign_in(text, now)
+    return _samba_file_audit(text, now)
+
+
+def _samba_sign_in(text: str, now: float) -> dict | None:
+    try:
+        record = json.loads(text)
+    except ValueError:
+        return None
+    auth = record.get("Authentication") if isinstance(record, dict) else None
+    if not isinstance(auth, dict) or auth.get("passwordType") == "No-Password":
+        return None
+    src_ip = _samba_address(auth.get("remoteAddress"))
+    if src_ip is None:
+        return None
+    account = auth.get("clientAccount")
+    return _samba_event(
+        _samba_time(record.get("timestamp"), now),
+        "login_attempt",
+        src_ip,
+        {"username": account},
+    )
+
+
+def _samba_file_audit(text: str, now: float) -> dict | None:
+    fields = text.split("|", 5)
+    if len(fields) != 6:
+        return None
+    client, share, share_path, operation, result, argument = fields
+    src_ip = valid_ip(client)
+    if src_ip is None or result != "ok":
+        return None
+    if operation == "connect" and argument != SAMBA_SHARE_LIST:
+        return _samba_event(iso_time(now), "connection", src_ip, {"share": argument})
+    if operation in SAMBA_FILE_READS:
+        detail = {"share": share, "file": argument.removeprefix(share_path + "/")}
+        return _samba_event(iso_time(now), "file_access", src_ip, detail)
+    return None
+
+
+def _samba_event(occurred_at: str, kind: str, src_ip: str, fields: dict[str, object]) -> dict:
+    detail = {}
+    for key, value in fields.items():
+        text = clean_text(value) if isinstance(value, str) else ""
+        if text:
+            detail[key] = text
+    return {
+        "occurred_at": occurred_at,
+        "kind": kind,
+        "service": FILE_SHARE_SERVICE,
+        "src_ip": src_ip,
+        "dst_port": FILE_SHARE_PORT,
+        "detail": detail,
+    }
+
+
+def _samba_address(value: object) -> str | None:
+    """The IP address in a Samba address such as "ipv4:192.168.1.5:51234"."""
+    if not isinstance(value, str):
+        return None
+    family, _, rest = value.partition(":")
+    host = rest.rpartition(":")[0].partition("%")[0]
+    return valid_ip(host) if family in ("ipv4", "ipv6") else None
+
+
+def _samba_time(value: object, now: float) -> str:
+    try:
+        return datetime.strptime(str(value), "%Y-%m-%dT%H:%M:%S.%f%z").isoformat()
+    except ValueError:
+        return iso_time(now)
 
 
 def parse_scan(line: str) -> tuple[float, str, str | None, int] | None:

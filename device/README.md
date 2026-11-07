@@ -4,13 +4,10 @@ Everything that runs on the Raspberry Pi.
 
 | Path          | What it is                                                         |
 | ------------- | ------------------------------------------------------------------ |
-| `image.json`  | Pinned Raspberry Pi OS image (URL, SHA-256)                        |
-| `cloud-init/` | First-boot template rendered by DeKoi Setup                        |
-| `host/`       | Files first boot installs: Quadlet units, firewall, policies, the Wi-Fi scan |
 | `image.json`  | Pinned Raspberry Pi OS image (URL, sizes, SHA-256)                 |
 | `cloud-init/` | First-boot template rendered by DeKoi Setup and the app            |
-| `host/`       | Files first boot installs: Quadlet units, firewall, policies       |
-| `canary/`     | `dekoi-canary` image: OpenCanary decoys                            |
+| `host/`       | Files first boot installs: Quadlet units, firewall, policies, the Wi-Fi scan |
+| `canary/`     | `dekoi-canary` image: OpenCanary, the Samba file share and their announcements (mDNS, WS-Discovery, NetBIOS); `persona/` is the decoy's identity |
 | `ids/`        | `dekoi-ids` image: Suricata with the ET Open ruleset               |
 | `agent/`      | `dekoi-agent` image: the agent, standard-library Python            |
 | `e2e/`        | End-to-end test (CI runs it on a throwaway machine)                |
@@ -31,6 +28,13 @@ The end-to-end test needs root, systemd and Podman; see the `e2e` job in
 The host's Wi-Fi scan script and units are checked in Debian trixie by the
 `checks` job (shellcheck, `systemd-analyze verify`); on Windows run that
 step's commands in the same Debian image with Docker.
+
+The canary image runs as two containers (ADR 0018): `dekoi-canary`
+(`supervise.py canary`: OpenCanary and smbd) and `dekoi-announce`
+(`supervise.py announce`: nmbd, avahi-daemon and wsdd2). To change the
+decoy's name, model, firmware, shares or bait files, edit `canary/persona/`;
+`persona.json` is filled into the templates when the image is built, and
+the host name in `cloud-init/user-data.yaml` must match it (a test checks).
 
 ## Wi-Fi watch
 

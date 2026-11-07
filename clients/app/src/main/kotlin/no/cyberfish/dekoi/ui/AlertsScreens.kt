@@ -295,6 +295,8 @@ private fun TechnicalDetails(
         event.detail.serverIp?.let { KeyValueRow(stringResource(R.string.event_detail_server), it) }
         event.detail.protocol?.let { KeyValueRow(stringResource(R.string.event_detail_protocol), it.uppercase()) }
         event.detail.targets?.let { KeyValueRow(stringResource(R.string.event_detail_targets), it.toString()) }
+        event.detail.share?.let { KeyValueRow(stringResource(R.string.event_detail_share), it) }
+        event.detail.file?.let { KeyValueRow(stringResource(R.string.event_detail_file), it) }
         if (event.detail.ports.isNotEmpty()) KeyValueRow(stringResource(R.string.event_detail_ports), event.detail.ports.joinToString(", "))
     }
 }

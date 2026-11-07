@@ -1,0 +1,32 @@
+# What makes the decoys visible on the network (ADR 0018): NetBIOS names
+# (nmbd), mDNS (avahi-daemon) and WS-Discovery (wsdd2), from the canary image.
+# Locked down like the canary: its own user namespace, no capabilities, a
+# read-only root filesystem, and no volumes at all, so it holds no secrets and
+# cannot write events. It runs as the avahi user because avahi-daemon cannot
+# switch users without privileges and refuses any other.
+[Unit]
+Description=DeKoi decoy announcements
+Wants=network-online.target
+After=network-online.target nftables.service dekoi-canary.service
+
+[Container]
+ContainerName=dekoi-announce
+Image=ghcr.io/mixie-12/dekoi-canary:stable
+AutoUpdate=registry
+Network=host
+UserNS=auto
+User=avahi
+ReadOnly=true
+NoNewPrivileges=true
+DropCapability=all
+Tmpfs=/tmp
+Exec=announce
+
+[Service]
+Restart=always
+RestartSec=10
+# The first start pulls the image.
+TimeoutStartSec=900
+
+[Install]
+WantedBy=multi-user.target

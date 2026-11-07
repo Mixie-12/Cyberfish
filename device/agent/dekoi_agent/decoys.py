@@ -11,11 +11,19 @@ from pathlib import Path
 
 TCP_LISTEN = "0A"
 
+# The file share is Samba's smbd (canary/persona/smb.conf), not an OpenCanary
+# module; it runs in the same container.
+FILE_SHARE_PORT = 445
+FILE_SHARE_SERVICE = "smb"
+
 
 def load_decoys(config_path: Path) -> dict[int, str]:
-    """Map port to service name for every enabled decoy in an OpenCanary config."""
+    """Map port to service name for every decoy.
+
+    The decoys are the services enabled in an OpenCanary config, and the file share.
+    """
     config = json.loads(Path(config_path).read_text())
-    decoys = {}
+    decoys = {FILE_SHARE_PORT: FILE_SHARE_SERVICE}
     for key, value in config.items():
         name, _, field = key.partition(".")
         port = config.get(f"{name}.port")

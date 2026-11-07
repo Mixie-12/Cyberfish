@@ -8,6 +8,7 @@
     <string name="service_database">database</string>
     <string name="service_rdp">remote desktop</string>
     <string name="service_vnc">screen sharing</string>
+    <string name="service_file_share">file share</string>
     <string name="service_other">service</string>
     <string name="event_login_title">Someone tried to sign in to the decoy %1$s</string>
     <string name="event_login_why">Nothing on your network has a reason to sign in to your DeKoi. Someone, or a program, is trying passwords on the devices it finds. That is how break-ins usually start.</string>
@@ -39,6 +40,9 @@
     <string name="event_new_access_point_title">A new access point uses your Wi-Fi name</string>
     <string name="event_new_access_point_why">Your DeKoi saw a new Wi-Fi access point with your network’s name and the same protection. That is normal when you add a mesh point or replace your router. It can also be someone copying your network who knows the password.</string>
     <string name="event_new_access_point_advice">If you added or replaced Wi-Fi equipment, there is nothing to do. If not, check which network your phones and computers are on, and change your Wi-Fi password on your router.</string>
+    <string name="event_file_access_title">Someone opened a file on your decoy %1$s</string>
+    <string name="event_file_access_why">Your DeKoi shows a shared folder with tempting file names, and nothing real is in them. Nobody in your home needs these files, so opening one means someone on your network is looking for passwords, money or personal papers.</string>
+    <string name="event_file_access_advice">Find the device in the details below. If you don’t recognise it, disconnect it from your network, change your Wi-Fi password, and change the passwords of your important accounts. If you opened the file yourself to try your DeKoi, there is nothing to do.</string>
     <string name="event_offline_title">Your DeKoi went offline</string>
     <string name="event_offline_why">While it is offline, your DeKoi can’t warn you. Usually it is a power cut, an unplugged cable or a router restart.</string>
     <string name="event_offline_advice">Check that your DeKoi has power and that its network cable is plugged in. It reconnects by itself.</string>
@@ -67,6 +71,8 @@
     <string name="event_detail_server">Server</string>
     <string name="event_detail_protocol">Method</string>
     <string name="event_detail_targets">Addresses asked for</string>
+    <string name="event_detail_share">Shared folder</string>
+    <string name="event_detail_file">File opened</string>
     <plurals name="event_repeated">
         <item quantity="one">Happened once</item>
         <item quantity="other">Happened %1$d times</item>

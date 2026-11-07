@@ -10,7 +10,9 @@
 # and generic. Everything likely to change lives in the container images,
 # which update themselves.
 
-hostname: backup-nas
+# The persona's name (device/canary/persona/persona.json; a test keeps them
+# equal), so the router's device list and local DNS show the decoy too.
+hostname: family-nas
 manage_etc_hosts: true
 
 # One locked account with no shell, so Raspberry Pi OS does not wait for a
@@ -71,6 +73,10 @@ write_files:
     permissions: "0644"
     defer: true
     content: !file host/etc/containers/systemd/dekoi-canary.container
+  - path: /etc/containers/systemd/dekoi-announce.container
+    permissions: "0644"
+    defer: true
+    content: !file host/etc/containers/systemd/dekoi-announce.container
   - path: /etc/containers/systemd/dekoi-agent.container
     permissions: "0644"
     defer: true
@@ -139,5 +145,5 @@ runcmd:
   - [systemctl, enable, --now, podman-auto-update.timer]
   # The agent mounts these directories, so they exist before it starts.
   - [systemd-tmpfiles, --create, /etc/tmpfiles.d/dekoi-wifi.conf]
-  - [systemctl, start, dekoi-canary.service, dekoi-agent.service, dekoi-ids.service]
+  - [systemctl, start, dekoi-canary.service, dekoi-announce.service, dekoi-agent.service, dekoi-ids.service]
   - [systemctl, enable, --now, dekoi-wifi-scan.timer]

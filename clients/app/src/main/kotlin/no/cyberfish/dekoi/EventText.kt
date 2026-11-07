@@ -24,6 +24,7 @@ fun serviceName(service: String?): Int =
         "mysql", "redis" -> R.string.service_database
         "rdp" -> R.string.service_rdp
         "vnc" -> R.string.service_vnc
+        "smb" -> R.string.service_file_share
         else -> R.string.service_other
     }
 
@@ -89,6 +90,15 @@ fun eventText(event: Event): EventText =
                 null,
                 R.string.event_new_access_point_why,
                 R.string.event_new_access_point_advice,
+            )
+        }
+
+        "file_access" -> {
+            EventText(
+                R.string.event_file_access_title,
+                serviceName(event.service),
+                R.string.event_file_access_why,
+                R.string.event_file_access_advice,
             )
         }
 
