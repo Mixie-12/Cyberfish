@@ -15,12 +15,9 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -29,11 +26,10 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -45,18 +41,13 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
-import androidx.compose.ui.semantics.clearAndSetSemantics
-import androidx.compose.ui.semantics.collapse
-import androidx.compose.ui.semantics.expand
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
@@ -69,22 +60,14 @@ import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import no.cyberfish.dekoi.DekoiStatus
 import no.cyberfish.dekoi.Device
-import no.cyberfish.dekoi.Event
-import no.cyberfish.dekoi.Monitor
-import no.cyberfish.dekoi.MonitorKind
-import no.cyberfish.dekoi.MonitorState
 import no.cyberfish.dekoi.R
 import no.cyberfish.dekoi.SetupStep
-import no.cyberfish.dekoi.Uptime
 import no.cyberfish.dekoi.cleanName
 import no.cyberfish.dekoi.hasDone
-import no.cyberfish.dekoi.hourlyUptime
 import no.cyberfish.dekoi.nameToSave
 import no.cyberfish.dekoi.needsSetupHelp
-import no.cyberfish.dekoi.serviceName
 import no.cyberfish.dekoi.softwareUpdatedAt
 import no.cyberfish.dekoi.status
-import no.cyberfish.dekoi.touchesPerDay
 import no.cyberfish.dekoi.ui.components.BrandTile
 import no.cyberfish.dekoi.ui.components.ConfirmDialog
 import no.cyberfish.dekoi.ui.components.InsetRow
@@ -92,15 +75,9 @@ import no.cyberfish.dekoi.ui.components.InsetSection
 import no.cyberfish.dekoi.ui.components.KeyValueRow
 import no.cyberfish.dekoi.ui.components.MissingScreen
 import no.cyberfish.dekoi.ui.components.Screen
-import no.cyberfish.dekoi.ui.components.Sparkline
 import no.cyberfish.dekoi.ui.components.StaleLabel
-import no.cyberfish.dekoi.ui.components.UptimeStrip
 import no.cyberfish.dekoi.watchList
-import java.text.NumberFormat
 import java.time.Instant
-import java.time.ZoneId
-import java.time.format.DateTimeFormatter
-import java.time.format.FormatStyle
 
 private const val PULSE_MS = 2000
 private const val PULSE_ALPHA = 0.3f
@@ -182,16 +159,22 @@ fun DekoiScreen(
     var confirming by rememberSaveable { mutableStateOf(false) }
     Screen(stringResource(R.string.home_your_dekoi), onBack = onBack, subtitle = { StaleLabel(data.updatedAt, now) }) {
         item(key = "hero") { Hero(device, status, now, Modifier.itemMotion(this, still)) }
+        var section = 0
         if (status == DekoiStatus.SETTING_UP) {
-            item(key = "setup") { SetupChecklist(device, now, Modifier.itemMotion(this, still)) }
+            val number = ++section
+            item(key = "setup") { SetupChecklist(number, device, now, Modifier.itemMotion(this, still)) }
         } else if (device.watchList.isNotEmpty()) {
-            item(key = "watching") { Watching(device, status, Modifier.itemMotion(this, still)) }
+            val number = ++section
+            item(key = "watching") { Watching(number, device, status, Modifier.itemMotion(this, still)) }
         }
-        item(key = "uptime") { UptimeCard(device, data.events, now, Modifier.itemMotion(this, still)) }
+        val uptime = ++section
+        item(key = "uptime") { UptimeCard(uptime, device, data.events, now, Modifier.itemMotion(this, still)) }
         if (device.services.isNotEmpty()) {
-            item(key = "decoys") { Decoys(device, data.events, now, onNavigate, Modifier.itemMotion(this, still)) }
+            val number = ++section
+            item(key = "decoys") { Decoys(number, device, data.events, now, onNavigate, Modifier.itemMotion(this, still)) }
         }
-        item(key = "details") { Details(device, now, onRename, Modifier.itemMotion(this, still)) }
+        val details = ++section
+        item(key = "details") { Details(details, device, now, onRename, Modifier.itemMotion(this, still)) }
         if (device.monitors.isNotEmpty() || device.images.isNotEmpty()) {
             item(key = "technical") { TechnicalDetails(device, Modifier.itemMotion(this, still)) }
         }
@@ -235,10 +218,7 @@ private fun Hero(
         BrandTile(hero = true)
         Text(device.name, style = MaterialTheme.typography.headlineMedium, textAlign = TextAlign.Center)
         Row(
-            Modifier
-                .background(MaterialTheme.colorScheme.surface, CircleShape)
-                .padding(horizontal = Dimens.spaceM, vertical = Dimens.spaceS)
-                .semantics(mergeDescendants = true) { liveRegion = LiveRegionMode.Polite },
+            Modifier.semantics(mergeDescendants = true) { liveRegion = LiveRegionMode.Polite },
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(Dimens.spaceS),
         ) {
@@ -263,29 +243,25 @@ private fun label(step: SetupStep): Int =
         SetupStep.WATCHING -> R.string.setup_protecting
     }
 
+/** The steps as a line down the screen, and help once setup takes longer than it should. */
 @Composable
 private fun SetupChecklist(
+    number: Int,
     device: Device,
     now: Instant,
     modifier: Modifier = Modifier,
 ) {
     val current = SetupStep.entries.firstOrNull { !device.hasDone(it) }
-    Column(modifier, verticalArrangement = Arrangement.spacedBy(Dimens.section)) {
-        InsetSection(title = stringResource(R.string.dekoi_setup)) {
-            Column(Modifier.padding(Dimens.spaceL)) {
-                SetupStep.entries.forEach { step ->
-                    SetupStepRow(step, device.hasDone(step), current = step == current, last = step == SetupStep.entries.last())
-                }
+    Section(number, stringResource(R.string.dekoi_setup), modifier) {
+        Column {
+            SetupStep.entries.forEach { step ->
+                SetupStepRow(step, device.hasDone(step), current = step == current, last = step == SetupStep.entries.last())
             }
         }
         if (device.needsSetupHelp(now)) {
-            InsetSection(title = stringResource(R.string.setup_help_title)) {
-                Text(
-                    stringResource(R.string.setup_help_body),
-                    style = MaterialTheme.typography.bodyLarge,
-                    modifier = Modifier.padding(Dimens.spaceL),
-                )
-            }
+            Hairline()
+            Text(stringResource(R.string.setup_help_title), style = MaterialTheme.typography.titleMedium)
+            Text(stringResource(R.string.setup_help_body), style = MaterialTheme.typography.bodyLarge)
         }
     }
 }
@@ -324,7 +300,7 @@ private fun SetupStepRow(
     }
 }
 
-/** A hollow circle; the current step has a dot in it, and a finished one fills with a tick that grows in as it happens. */
+/** A hollow circle; the current step has a dot in it, and a finished one turns green with a tick that grows in as it happens. */
 @Composable
 private fun StepMark(
     done: Boolean,
@@ -334,49 +310,53 @@ private fun StepMark(
     val tint = MaterialTheme.colorScheme.primary
     val tick by animateFloatAsState(if (done) 1f else 0f, if (LocalReduceMotion.current) snap() else expandSpring(), label = "tick")
     Box(Modifier.size(STEP_MARK), contentAlignment = Alignment.Center) {
-        Box(Modifier.matchParentSize().border(STEP_BORDER, if (current) tint else MaterialTheme.colorScheme.outlineVariant, CircleShape))
+        val ring =
+            if (done) {
+                safe
+            } else if (current) {
+                tint
+            } else {
+                MaterialTheme.colorScheme.outlineVariant
+            }
+        Box(Modifier.matchParentSize().border(STEP_BORDER, ring, CircleShape))
         if (current) Box(Modifier.size(STEP_DOT).background(tint, CircleShape))
-        Box(
-            Modifier
-                .matchParentSize()
-                .graphicsLayer {
-                    scaleX = tick
-                    scaleY = tick
-                    alpha = tick
-                }.background(safe, CircleShape),
-            contentAlignment = Alignment.Center,
-        ) {
-            Icon(
-                painterResource(R.drawable.ic_check),
-                contentDescription = null,
-                Modifier.size(STEP_TICK),
-                tint = MaterialTheme.colorScheme.surface,
-            )
-        }
+        Icon(
+            painterResource(R.drawable.ic_check),
+            contentDescription = null,
+            Modifier.size(STEP_TICK).graphicsLayer {
+                scaleX = tick
+                scaleY = tick
+                alpha = tick
+            },
+            tint = safe,
+        )
     }
 }
 
 @Composable
 private fun Details(
+    number: Int,
     device: Device,
     now: Instant,
     onRename: (Device, String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val spec = if (LocalReduceMotion.current) snap() else expandSpring<IntSize>()
-    InsetSection(modifier.animateContentSize(spec), title = stringResource(R.string.dekoi_details)) {
-        NameRow(device, onRename)
-        device.agentVersion?.let { version ->
-            InsetRow(
-                stringResource(R.string.device_version),
-                subtitle = device.softwareUpdatedAt?.let { stringResource(R.string.updated_ago, relativeTime(it, now)) },
-                trailing = {
-                    Text(version, style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                },
-            )
+    Section(number, stringResource(R.string.dekoi_details), modifier) {
+        InsetSection(Modifier.animateContentSize(spec)) {
+            NameRow(device, onRename)
+            device.agentVersion?.let { version ->
+                InsetRow(
+                    stringResource(R.string.device_version),
+                    subtitle = device.softwareUpdatedAt?.let { stringResource(R.string.updated_ago, relativeTime(it, now)) },
+                    trailing = {
+                        Text(version, style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    },
+                )
+            }
+            device.localIp?.let { KeyValueRow(stringResource(R.string.device_address), it) }
+            KeyValueRow(stringResource(R.string.dekoi_linked_since), absoluteTime(device.createdAt))
         }
-        device.localIp?.let { KeyValueRow(stringResource(R.string.device_address), it) }
-        KeyValueRow(stringResource(R.string.dekoi_linked_since), absoluteTime(device.createdAt))
     }
 }
 
@@ -435,7 +415,7 @@ private fun NameEditor(
         )
         Row(Modifier.align(Alignment.End), horizontalArrangement = Arrangement.spacedBy(Dimens.spaceS)) {
             TextButton(onClick = onDone) { Text(stringResource(R.string.action_cancel)) }
-            Button(onClick = save, enabled = name != null) { Text(stringResource(R.string.action_save)) }
+            OutlinedButton(onClick = save, enabled = name != null) { Text(stringResource(R.string.action_save)) }
         }
     }
 }

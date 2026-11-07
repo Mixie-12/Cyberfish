@@ -2,103 +2,40 @@ package no.cyberfish.dekoi.ui
 
 import androidx.annotation.StringRes
 import androidx.compose.animation.animateContentSize
-import androidx.compose.animation.core.LinearOutSlowInEasing
-import androidx.compose.animation.core.animateFloat
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.snap
-import androidx.compose.animation.core.tween
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.FlowRow
-import androidx.compose.foundation.layout.IntrinsicSize
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.text.KeyboardActions
-import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
-import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.LiveRegionMode
-import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.collapse
 import androidx.compose.ui.semantics.expand
-import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
-import androidx.compose.ui.text.TextRange
-import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.text.input.KeyboardCapitalization
-import androidx.compose.ui.text.input.TextFieldValue
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.IntSize
-import androidx.compose.ui.unit.dp
 import no.cyberfish.dekoi.DekoiStatus
 import no.cyberfish.dekoi.Device
-import no.cyberfish.dekoi.Event
 import no.cyberfish.dekoi.Monitor
 import no.cyberfish.dekoi.MonitorKind
 import no.cyberfish.dekoi.MonitorState
 import no.cyberfish.dekoi.R
-import no.cyberfish.dekoi.SetupStep
-import no.cyberfish.dekoi.Uptime
-import no.cyberfish.dekoi.cleanName
-import no.cyberfish.dekoi.hasDone
-import no.cyberfish.dekoi.hourlyUptime
-import no.cyberfish.dekoi.nameToSave
-import no.cyberfish.dekoi.needsSetupHelp
-import no.cyberfish.dekoi.serviceName
-import no.cyberfish.dekoi.softwareUpdatedAt
 import no.cyberfish.dekoi.status
-import no.cyberfish.dekoi.touchesPerDay
-import no.cyberfish.dekoi.ui.components.BrandTile
-import no.cyberfish.dekoi.ui.components.ConfirmDialog
 import no.cyberfish.dekoi.ui.components.InsetRow
 import no.cyberfish.dekoi.ui.components.InsetSection
 import no.cyberfish.dekoi.ui.components.KeyValueRow
-import no.cyberfish.dekoi.ui.components.MissingScreen
-import no.cyberfish.dekoi.ui.components.Screen
-import no.cyberfish.dekoi.ui.components.Sparkline
-import no.cyberfish.dekoi.ui.components.StaleLabel
-import no.cyberfish.dekoi.ui.components.UptimeStrip
 import no.cyberfish.dekoi.watchList
 import java.text.NumberFormat
-import java.time.Instant
-import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
 
@@ -190,6 +127,7 @@ private fun stateWord(state: MonitorState): Int =
  */
 @Composable
 fun Watching(
+    number: Int,
     device: Device,
     status: DekoiStatus,
     modifier: Modifier = Modifier,
@@ -201,16 +139,18 @@ fun Watching(
             device.monitors.isEmpty() -> stringResource(R.string.dekoi_watching_older)
             else -> null
         }
-    InsetSection(modifier, title = stringResource(R.string.dekoi_watching), footer = footer) {
-        device.watchList.forEach { monitor ->
-            val state = monitor.state.takeIf { live }
-            val on = stringResource(R.string.dekoi_state_on)
-            InsetRow(
-                watchTitle(monitor, device, working = state == MonitorState.OK),
-                Modifier.semantics(mergeDescendants = true) { if (state == MonitorState.OK) stateDescription = on },
-                subtitle = watchDetail(monitor, state),
-                leading = { MarkTile(state) },
-            )
+    Section(number, stringResource(R.string.dekoi_watching), modifier) {
+        InsetSection(footer = footer) {
+            device.watchList.forEach { monitor ->
+                val state = monitor.state.takeIf { live }
+                val on = stringResource(R.string.dekoi_state_on)
+                InsetRow(
+                    watchTitle(monitor, device, working = state == MonitorState.OK),
+                    Modifier.semantics(mergeDescendants = true) { if (state == MonitorState.OK) stateDescription = on },
+                    subtitle = watchDetail(monitor, state),
+                    leading = { MarkTile(state) },
+                )
+            }
         }
     }
 }
