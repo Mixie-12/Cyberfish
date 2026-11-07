@@ -6,9 +6,7 @@ import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.SpringSpec
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.LocalTonalElevationEnabled
 import androidx.compose.material3.MaterialTheme
@@ -16,7 +14,6 @@ import androidx.compose.material3.Shapes
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Typography
 import androidx.compose.material3.darkColorScheme
-import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.Immutable
@@ -32,7 +29,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import no.cyberfish.dekoi.Protection
@@ -68,8 +64,6 @@ val LocalSeverityColors = staticCompositionLocalOf<SeverityColors> { error("Seve
 
 /** True when the owner turned animations off (animation scale 0): no idle loops, draw-ins or rolling numbers. */
 val LocalReduceMotion = staticCompositionLocalOf { false }
-
-private val LocalRaisedBorder = staticCompositionLocalOf<Color?> { null }
 
 /**
  * The status hero's colour. [highest] is the most serious recent alert; it
@@ -122,86 +116,76 @@ private val shapes =
         extraLarge = RoundedCornerShape(Dimens.heroRadius),
     )
 
+private fun tone(tone: DesignTokens.Tone) = Tone(Color(tone.color), Color(tone.container), Color(tone.onContainer))
+
+private val severityColors =
+    SeverityColors(
+        critical = tone(DesignTokens.CRITICAL),
+        warning = tone(DesignTokens.WARNING),
+        info = tone(DesignTokens.INFO),
+        safe = tone(DesignTokens.SAFE),
+        offline = Color(DesignTokens.OFFLINE),
+    )
+
+private val background = Color(DesignTokens.BACKGROUND)
+private val navy = Color(DesignTokens.NAVY)
+private val blue = Color(DesignTokens.BLUE)
+private val white = Color(DesignTokens.WHITE)
+
 // Every M3 role that components read is set, so no baseline purple shows
-// through. Secondary and tertiary are the tint: the app has one accent.
-private fun colorScheme(
-    palette: DesignTokens.Palette,
-    inverse: DesignTokens.Palette,
-    dark: Boolean,
-): ColorScheme {
-    val tint = Color(palette.tint.color)
-    val onTint = Color(palette.onTint)
-    val tintContainer = Color(palette.tint.container)
-    val onTintContainer = Color(palette.tint.onContainer)
-    val surface = Color(palette.surface)
-    val background = Color(palette.background)
-    val raised = Color(palette.raised)
-    return (if (dark) darkColorScheme() else lightColorScheme()).copy(
-        primary = tint,
-        onPrimary = onTint,
-        primaryContainer = tintContainer,
-        onPrimaryContainer = onTintContainer,
-        inversePrimary = Color(inverse.tint.color),
-        secondary = tint,
-        onSecondary = onTint,
-        secondaryContainer = tintContainer,
-        onSecondaryContainer = onTintContainer,
-        tertiary = tint,
-        onTertiary = onTint,
-        tertiaryContainer = tintContainer,
-        onTertiaryContainer = onTintContainer,
+// through. Blue is the one accent; secondary and tertiary repeat it. Pages
+// are the background with hairlines; only what floats (menus, dialogs,
+// snackbars) and tracks take navy.
+private val colorScheme =
+    darkColorScheme(
+        primary = blue,
+        onPrimary = background,
+        primaryContainer = navy,
+        onPrimaryContainer = white,
+        inversePrimary = blue,
+        secondary = blue,
+        onSecondary = background,
+        secondaryContainer = navy,
+        onSecondaryContainer = white,
+        tertiary = blue,
+        onTertiary = background,
+        tertiaryContainer = navy,
+        onTertiaryContainer = white,
         background = background,
-        onBackground = Color(palette.text),
-        surface = surface,
-        onSurface = Color(palette.text),
-        surfaceVariant = background,
-        onSurfaceVariant = Color(palette.textSecondary),
-        surfaceTint = tint,
-        inverseSurface = Color(inverse.raised),
-        inverseOnSurface = Color(inverse.text),
-        // Critical and tint are both saturated mid-tones; on tint reads on either.
-        error = Color(palette.critical.color),
-        onError = onTint,
-        errorContainer = Color(palette.critical.container),
-        onErrorContainer = Color(palette.critical.onContainer),
-        outline = Color(palette.textTertiary),
-        outlineVariant = Color(palette.separator),
-        surfaceBright = surface,
+        onBackground = Color(DesignTokens.TEXT),
+        surface = background,
+        onSurface = Color(DesignTokens.TEXT),
+        surfaceVariant = navy,
+        onSurfaceVariant = Color(DesignTokens.MID_GREY),
+        surfaceTint = blue,
+        // Snackbars and tooltips stay dark instead of inverting to a light fill.
+        inverseSurface = navy,
+        inverseOnSurface = white,
+        error = severityColors.critical.color,
+        onError = background,
+        errorContainer = severityColors.critical.container,
+        onErrorContainer = severityColors.critical.onContainer,
+        // Text field and control borders need 3:1, which dim grey does not reach.
+        outline = Color(DesignTokens.MID_GREY),
+        outlineVariant = Color(DesignTokens.HAIRLINE),
+        surfaceBright = navy,
         surfaceDim = background,
-        surfaceContainerLowest = surface,
-        surfaceContainerLow = surface,
-        // Menus and dialogs float, so they take the raised colour.
-        surfaceContainer = raised,
-        surfaceContainerHigh = raised,
-        // Tracks and filled fields: a step away from the surface they sit on.
-        surfaceContainerHighest = background,
+        surfaceContainerLowest = background,
+        surfaceContainerLow = background,
+        surfaceContainer = navy,
+        surfaceContainerHigh = navy,
+        surfaceContainerHighest = navy,
     )
-}
 
-private fun severityColors(palette: DesignTokens.Palette): SeverityColors {
-    fun tone(tone: DesignTokens.Tone) = Tone(Color(tone.color), Color(tone.container), Color(tone.onContainer))
-    return SeverityColors(
-        critical = tone(palette.critical),
-        warning = tone(palette.warning),
-        info = tone(palette.info),
-        safe = tone(palette.safe),
-        offline = Color(palette.offline),
-    )
-}
-
-/** No dynamic colour: the palette carries meaning (ADR 0011). */
+/** Dark only, no dynamic colour: the palette carries the brand and the meaning (ADR 0020). */
 @Composable
 fun DekoiTheme(content: @Composable () -> Unit) {
-    val dark = isSystemInDarkTheme()
-    val palette = if (dark) DesignTokens.Dark else DesignTokens.Light
-    val inverse = if (dark) DesignTokens.Light else DesignTokens.Dark
     CompositionLocalProvider(
-        LocalSeverityColors provides severityColors(palette),
-        LocalRaisedBorder provides palette.raisedBorder?.let { Color(it) },
+        LocalSeverityColors provides severityColors,
         LocalReduceMotion provides rememberReduceMotion(),
         LocalTonalElevationEnabled provides false,
     ) {
-        MaterialTheme(colorScheme = colorScheme(palette, inverse, dark), typography = typography, shapes = shapes) {
+        MaterialTheme(colorScheme = colorScheme, typography = typography, shapes = shapes) {
             // Text outside a Material surface would otherwise default to
             // black, which is unreadable on the dark background.
             CompositionLocalProvider(LocalContentColor provides MaterialTheme.colorScheme.onBackground, content = content)
@@ -209,20 +193,18 @@ fun DekoiTheme(content: @Composable () -> Unit) {
     }
 }
 
-/** A floating element: a shadow in light mode, a hairline border in dark mode, where shadows do not show. */
+/** A floating element: navy with a hairline border, since shadows do not show on a dark background. */
 @Composable
 fun RaisedSurface(
     shape: Shape,
     modifier: Modifier = Modifier,
     content: @Composable () -> Unit,
 ) {
-    val border = LocalRaisedBorder.current
     Surface(
         modifier = modifier,
         shape = shape,
         color = MaterialTheme.colorScheme.surfaceContainerHigh,
-        shadowElevation = if (border == null) Dimens.raisedShadow else 0.dp,
-        border = border?.let { BorderStroke(Dimens.hairline, it) },
+        border = BorderStroke(Dimens.hairline, MaterialTheme.colorScheme.outlineVariant),
         content = content,
     )
 }

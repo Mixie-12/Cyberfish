@@ -26,5 +26,4 @@ object Dimens {
     val heroRadius = 28.dp
 
     val hairline = 1.dp
-    val raisedShadow = 3.dp
 }
