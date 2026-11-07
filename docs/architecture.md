@@ -53,10 +53,25 @@ a `_v1` function never changes; new behaviour goes into `_v2`.
 | `device_hosts_v1`     | `device_id`, `secret`, `hosts` (array, up to 1024)          | rows written  |
 
 Event object: `agent_event_id` (device-unique integer), `occurred_at`,
-`kind` (`login_attempt`, `connection`, `port_scan`), `service`, `src_ip`,
-`src_mac`, `dst_port`, `count`, `detail`. `detail` accepts only `username`,
-`path`, `user_agent`, `client_version`, `command` (strings up to 256
-characters, no control characters) and `ports` (up to 64 numbers).
+`kind`, `service`, `src_ip`, `src_mac`, `dst_port`, `count`, `detail`.
+
+Kinds a device may report (`private.device_event_kinds()`):
+
+| Kind             | Source                                   | Typical detail                      |
+| ---------------- | ---------------------------------------- | ----------------------------------- |
+| `login_attempt`  | decoy                                    | `username`, `path`, `client_version` |
+| `connection`     | decoy                                    | `path`, `user_agent`, `command`     |
+| `port_scan`      | firewall log, closed ports on the box    | `ports`                             |
+| `host_scan`      | ARP watcher, one host asking for many    | `targets`                           |
+| `arp_spoof`      | ARP watcher, an address claimed twice    | `claimed_ip`, `previous_mac`        |
+| `rogue_dhcp`     | DHCP probe                               | `server_ip`, `protocol`             |
+| `rogue_router`   | IPv6 router advertisement watcher        | `protocol`                          |
+| `name_poisoning` | LLMNR, NBT-NS and mDNS probes            | `protocol`                          |
+| `ids_alert`      | Suricata                                 | `signature`, `category`, `severity`, `signature_id` |
+
+`detail` accepts only these fields: strings up to 256 characters without
+control characters; `targets`, `severity` and `signature_id` as non-negative
+integers; `ports` as up to 64 numbers. Payload excerpts are never accepted.
 
 Host object: `mac`, `ip`, `vendor`.
 
