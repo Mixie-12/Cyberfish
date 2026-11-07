@@ -247,6 +247,32 @@ def test_heartbeat_outage_is_retried_later(config: Config, backend: FakeBackend)
     assert agent.heartbeat_schedule.delay > agent_module.HEARTBEAT_SECONDS
 
 
+@pytest.mark.parametrize("error", [api.ApiError(0, "unreachable"), api.ApiError(401, "bad key")])
+def test_a_registered_agent_is_ready_only_after_a_heartbeat(
+    config: Config, backend: FakeBackend, error: api.ApiError
+) -> None:
+    """An updated image that cannot reach the backend never reports ready,
+    so podman auto-update rolls it back."""
+    clock = Clock()
+    backend.outcomes["device_heartbeat_v2"] = [error]
+    agent = Agent(config, State(device_id="device-1", secret="a" * 64), clock, FakeListeners())
+    agent.tick()
+    assert not agent.ready
+
+    clock.now += agent.heartbeat_schedule.delay
+    agent.tick()
+    assert agent.ready
+
+
+def test_an_agent_waiting_to_be_claimed_is_ready_at_once(
+    config: Config, backend: FakeBackend
+) -> None:
+    backend.outcomes["device_register_v1"] = [api.ApiError(403, "refused")]
+    agent = Agent(config, State(), Clock(), FakeListeners())
+    agent.tick()
+    assert agent.ready
+
+
 def test_monitors_start_again_when_the_device_registers(
     config: Config, backend: FakeBackend
 ) -> None:
