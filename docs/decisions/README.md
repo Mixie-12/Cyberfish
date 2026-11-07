@@ -20,3 +20,4 @@ them.
 | 0012 | [Linking a DeKoi from the phone](0012-phone-pairing.md) | accepted |
 | 0013 | [Incidents, device names and rooms, monitoring status](0013-incidents-rooms-monitoring.md) | accepted |
 | 0014 | [Writing the card from the phone](0014-phone-writes-card.md) | accepted |
+| 0015 | [Network health, exposure checks and new-device alerts](0015-network-health-and-insights.md) | accepted |
