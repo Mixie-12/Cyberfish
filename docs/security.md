@@ -112,6 +112,41 @@ permission so CI owns the setting.
 | Auth audit logs in the database | off: the rows hold addresses and are not deleted with the account | dashboard only: Authentication, Audit Logs, "Write audit logs to the database" |
 | Auth IP address forwarding (`Sb-Forwarded-For`) | off (the default for new projects): otherwise a caller with a secret key chooses the address Auth counts | dashboard only: Authentication, Rate Limits |
 
+## Personal data
+
+What the backend stores about people, for the privacy policy. The jobs
+that delete it are in `docs/architecture.md`, "Scheduled jobs".
+
+| Data | About | Where | Kept |
+| ---- | ----- | ----- | ---- |
+| Google account: email address, name, picture URL, Google account ID, sign-in times | the owner | Supabase Auth (`auth.users`, `auth.identities`) | until the account is deleted |
+| Sessions: address and user agent of each sign-in and refresh | the owner | `auth.sessions`, `auth.refresh_tokens` | until sign-out or account deletion; the Free plan has no session expiry |
+| Push tokens | the owner's phones | `private.push_tokens` | until sign-out, until FCM reports the app removed, beyond the 10 newest, or account deletion |
+| DeKoi names, local address, versions, decoys, online state | the owner | `public.devices` | until the DeKoi or the account is removed; a setup never started is removed after 30 days |
+| Events: source IP and hardware address, user names and paths typed into decoys, user agents, IDS signatures | people and devices on the owner's network | `public.events` | 90 days |
+| Network inventory: hardware and IP addresses, maker, host names (often a person's name), model, kind, system, services, trust | devices on the owner's network | `public.network_hosts`, `public.networks` | 90 days after last seen |
+| Source of the last push per DeKoi | devices on the owner's network | `private.notified_sources` | 1 day |
+| Client address (IPv6 by its /64) or user ID with a request count | anyone writing to the API | `private.rate_counters` | at most 70 minutes |
+| API, Auth and function logs with client addresses | anyone calling the API | Supabase's log store | 1 day on the Free plan |
+| Encrypted backups of all of the above | everyone above | GitHub Actions artifacts | 30 days (`docs/runbooks/restore-backup.md`) |
+
+Never stored: passwords typed into decoys (they never leave the device),
+traffic contents, precise location. Planned additions belong in this table
+when they land: each DeKoi's public address and country (ADR 0015), the
+owner's names and rooms for devices (ADR 0013), the home Wi-Fi name and the
+access points that carry it (ADR 0019).
+
+Deleting the account (`delete_account_v1`) deletes the Auth user, and every
+other table refers to `auth.users` or to such a table with
+`on delete cascade`. `04_account` checks both: the deletion itself, and that
+every table in `public` and `private` is reached that way, so a table added
+later cannot be forgotten. What remains afterwards: rate counts for up to
+70 minutes, platform logs for a day, backups for 30 days.
+
+Processors: Supabase (database, Auth, functions; EU, Stockholm), Google
+(sign-in; FCM receives the push token, a fixed notification text and the
+event id), GitHub (encrypted backups, which it cannot read).
+
 ## Known limitations
 
 See `docs/STATUS.md`, "Known limitations".
