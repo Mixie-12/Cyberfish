@@ -93,6 +93,10 @@ const TEMPLATES: Record<string, (noun: string) => Template> = {
   // inventory names.
   dns_hijack: () => ({ title: "Some web addresses lead to the wrong place", body: ALERT_BODY }),
   port_forward: (n) => ({ title: `A ${n} can now be reached from the internet`, body: ALERT_BODY }),
+  file_access: (n) => ({
+    title: `A ${n} opened a file on your decoy file share`,
+    body: ALERT_BODY,
+  }),
   device_offline: () => ({
     title: "Your DeKoi went offline",
     body:

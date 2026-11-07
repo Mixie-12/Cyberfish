@@ -116,6 +116,7 @@ Deno.test("every event kind has its own template; anything else gets the generic
     "new_host",
     "dns_hijack",
     "port_forward",
+    "file_access",
     "device_offline",
   ];
   const generic = templateFor("something_new");
