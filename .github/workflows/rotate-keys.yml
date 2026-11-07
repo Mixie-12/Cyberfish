@@ -1,0 +1,142 @@
+name: rotate keys
+
+# Replaces, every month, the two secrets the notify function holds, without
+# storing them in GitHub or showing them to anyone (ADR 0022): the webhook
+# secret that Vault sends and notify checks, and the key notify uses to send
+# through FCM. Google trusts this workflow only from main in the production
+# environment (infra/google/github.tf). Secrets travel in request bodies and
+# headers read from files or pipes, never on a command line.
+
+on:
+  schedule:
+    - cron: "37 3 1 * *"
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  notify-secret:
+    if: vars.SUPABASE_PROJECT_REF != ''
+    runs-on: ubuntu-24.04
+    environment: production
+    permissions:
+      contents: read
+    concurrency:
+      group: rotate-notify-secret
+      cancel-in-progress: false
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      PROJECT_REF: ${{ vars.SUPABASE_PROJECT_REF }}
+      NOTIFY_URL: https://${{ vars.SUPABASE_PROJECT_REF }}.supabase.co/functions/v1/notify
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          sparse-checkout: backend/supabase/functions/notify
+      # The deploy follows main. Without the previous secret, notify would
+      # refuse every event until Vault sends the new one.
+      - name: Check that notify accepts the previous secret
+        run: |
+          if ! grep -q NOTIFY_SECRET_PREVIOUS backend/supabase/functions/notify/index.ts; then
+            echo "::error::notify does not read NOTIFY_SECRET_PREVIOUS; rotating now would drop events"
+            exit 1
+          fi
+      - name: Rotate the webhook secret
+        run: |
+          # Supabase Management API: method, path under the project, JSON body on stdin.
+          api() {
+            curl -fsS -X "$1" "https://api.supabase.com/v1/projects/$PROJECT_REF/$2" \
+              -H @<(printf 'Authorization: Bearer %s\n' "$SUPABASE_ACCESS_TOKEN") \
+              -H "Content-Type: application/json" --data-binary @-
+          }
+          # Static SQL whose only parameter is stdin.
+          sql() { jq -Rs --arg sql "$1" '{query: $sql, parameters: [.]}' | api POST database/query; }
+          # notify answers 400 to a body without an event when it accepts the secret, 401 when not.
+          answer() {
+            printf 'X-Notify-Secret: %s\n' "$1" | curl -sS -o /dev/null -w '%{http_code}' -X POST -H @- \
+              -H "Content-Type: application/json" -d '{}' "$NOTIFY_URL"
+          }
+          read_secret="select decrypted_secret from vault.decrypted_secrets where name = \$1"
+          old="$(printf notify_secret | sql "$read_secret" | jq -r '.[0].decrypted_secret // ""')"
+          new="$(openssl rand -hex 32)"
+          echo "::add-mask::$new"
+          if [ -n "$old" ]; then echo "::add-mask::$old"; fi
+
+          echo "notify accepts the new and the current secret"
+          NEW="$new" OLD="$old" jq -n '[{name: "NOTIFY_SECRET", value: env.NEW}]
+            + if env.OLD == "" then [] else [{name: "NOTIFY_SECRET_PREVIOUS", value: env.OLD}] end' |
+            api POST secrets > /dev/null
+          # Function workers keep the environment they started with and live
+          # at most 400 s (Edge Functions limits).
+          sleep 420
+          status="$(answer "$new")"
+          if [ "$status" != 400 ]; then
+            echo "::error::notify answered $status to the new secret; Vault still sends the current one"
+            exit 1
+          fi
+
+          echo "The webhook sends the new secret"
+          if [ -n "$old" ]; then
+            printf %s "$new" | sql "select vault.update_secret(id, \$1) from vault.secrets where name = 'notify_secret'" > /dev/null
+          else
+            printf %s "$new" | sql "select vault.create_secret(\$1, 'notify_secret')" > /dev/null
+          fi
+          [ "$(printf notify_secret | sql "$read_secret" | jq -r '.[0].decrypted_secret')" = "$new" ]
+
+          # pg_net sends what it queued with the old secret within seconds.
+          sleep 60
+          if [ -n "$old" ]; then
+            echo "notify stops accepting the old secret"
+            echo '["NOTIFY_SECRET_PREVIOUS"]' | api DELETE secrets > /dev/null
+          fi
+
+  fcm-key:
+    if: vars.SUPABASE_PROJECT_REF != '' && vars.GOOGLE_WIF_ROTATION_PROVIDER != ''
+    runs-on: ubuntu-24.04
+    environment: production
+    permissions:
+      id-token: write
+    concurrency:
+      group: rotate-fcm-key
+      cancel-in-progress: false
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      PROJECT_REF: ${{ vars.SUPABASE_PROJECT_REF }}
+      FCM_SENDER: ${{ vars.FCM_SENDER }}
+    steps:
+      - uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3.0.0
+        with:
+          workload_identity_provider: ${{ vars.GOOGLE_WIF_ROTATION_PROVIDER }}
+          service_account: ${{ vars.GOOGLE_FCM_KEY_ROTATOR }}
+      - name: Create a key, prove it, give it to notify, delete the older keys
+        run: |
+          api() {
+            curl -fsS -X "$1" "https://api.supabase.com/v1/projects/$PROJECT_REF/$2" \
+              -H @<(printf 'Authorization: Bearer %s\n' "$SUPABASE_ACCESS_TOKEN") \
+              -H "Content-Type: application/json" --data-binary @-
+          }
+          umask 077
+          key="$RUNNER_TEMP/fcm-sender.json"
+          trap 'rm -rf "$key" "$RUNNER_TEMP/gcloud-check"' EXIT
+          gcloud iam service-accounts keys create "$key" --iam-account "$FCM_SENDER" --quiet
+          new_id="$(jq -r .private_key_id "$key")"
+
+          # Google may take a minute to accept a new key. Mint a token with it,
+          # outside the CI identity, before anything depends on it.
+          sleep 60
+          check=(env -u CLOUDSDK_AUTH_CREDENTIAL_FILE_OVERRIDE -u GOOGLE_APPLICATION_CREDENTIALS
+            CLOUDSDK_CONFIG="$RUNNER_TEMP/gcloud-check")
+          "${check[@]}" gcloud auth activate-service-account --key-file "$key" --quiet
+          "${check[@]}" gcloud auth print-access-token > /dev/null
+
+          jq -c '[{name: "FCM_SERVICE_ACCOUNT", value: tojson}]' "$key" | api POST secrets > /dev/null
+          rm -f "$key"
+          # Function workers keep the environment they started with and live
+          # at most 400 s (Edge Functions limits).
+          sleep 420
+          gcloud iam service-accounts keys list --iam-account "$FCM_SENDER" --managed-by user \
+            --format 'value(name.basename())' | while read -r id; do
+            if [ "$id" != "$new_id" ]; then
+              gcloud iam service-accounts keys delete "$id" --iam-account "$FCM_SENDER" --quiet
+            fi
+          done
