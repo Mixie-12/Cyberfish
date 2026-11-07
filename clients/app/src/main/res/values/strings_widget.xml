@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Home-screen widget (widget/DekoiWidget.kt). -->
+<resources>
+    <string name="widget_description">Shows whether your network is protected and how many alerts there are to look at.</string>
+    <!-- The CyberFish mark: a fish. -->
+    <string name="widget_mark" translatable="false">&gt;&lt;&gt;</string>
+    <string name="widget_label">Your network</string>
+    <string name="widget_protected">Protected</string>
+    <string name="widget_attention">Needs a look</string>
+    <string name="widget_offline">DeKoi is offline</string>
+    <string name="widget_setting_up">Setting up</string>
+    <string name="widget_no_device">Add your DeKoi</string>
+    <string name="widget_no_alerts">No new alerts</string>
+    <string name="widget_signed_out">Open DeKoi to see how your network is doing.</string>
+</resources>

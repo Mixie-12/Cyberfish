@@ -85,6 +85,7 @@ dependencies {
     implementation(libs.lifecycle.viewmodel.compose)
     implementation(libs.lifecycle.runtime.compose)
     implementation(libs.navigation.compose)
+    implementation(libs.glance.appwidget)
 
     implementation(platform(libs.supabase.bom))
     implementation(libs.supabase.auth)

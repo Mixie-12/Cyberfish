@@ -34,6 +34,19 @@
             </intent-filter>
         </service>
 
+        <!-- The home-screen widget. The system sends the update broadcasts, so
+             it is exported; any update only redraws from the stored snapshot. -->
+        <receiver
+            android:name=".widget.DekoiWidgetReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/dekoi_widget_info" />
+        </receiver>
+
         <!-- Notifications the system shows while the app is in the background. -->
         <meta-data
             android:name="com.google.firebase.messaging.default_notification_icon"
