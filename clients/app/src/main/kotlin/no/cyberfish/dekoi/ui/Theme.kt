@@ -2,6 +2,9 @@ package no.cyberfish.dekoi.ui
 
 import android.content.ContentResolver
 import android.provider.Settings
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.SpringSpec
+import androidx.compose.animation.core.spring
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -84,6 +87,10 @@ fun protectionColor(
         Protection.SETTING_UP, Protection.NO_DEVICE -> MaterialTheme.colorScheme.primary
     }
 }
+
+/** Expanding, collapsing and sliding into place (docs/design.md, "Tokens"). */
+fun <T> expandSpring(visibilityThreshold: T? = null): SpringSpec<T> =
+    spring(Spring.DampingRatioNoBouncy, Spring.StiffnessMediumLow, visibilityThreshold)
 
 /** Digits of equal width, so counts and times do not jitter when they change. */
 fun TextStyle.tabular(): TextStyle = copy(fontFeatureSettings = "tnum")

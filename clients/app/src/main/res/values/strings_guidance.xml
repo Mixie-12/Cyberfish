@@ -43,4 +43,7 @@
     <string name="kind_wearable">Watch or wearable</string>
     <string name="kind_server">Server</string>
     <string name="kind_unknown">Unknown device</string>
+
+    <!-- A host's maker and kind, as in "LG TV" (HostName.kt). -->
+    <string name="host_maker_kind">%1$s %2$s</string>
 </resources>
