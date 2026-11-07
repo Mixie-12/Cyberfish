@@ -14,8 +14,11 @@ import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.glance.ColorFilter
 import androidx.glance.GlanceId
 import androidx.glance.GlanceModifier
+import androidx.glance.Image
+import androidx.glance.ImageProvider
 import androidx.glance.LocalContext
 import androidx.glance.LocalSize
 import androidx.glance.action.clickable
@@ -29,14 +32,17 @@ import androidx.glance.appwidget.cornerRadius
 import androidx.glance.appwidget.provideContent
 import androidx.glance.appwidget.updateAll
 import androidx.glance.background
+import androidx.glance.layout.Alignment
 import androidx.glance.layout.Box
 import androidx.glance.layout.Column
 import androidx.glance.layout.ColumnScope
+import androidx.glance.layout.Row
 import androidx.glance.layout.Spacer
 import androidx.glance.layout.fillMaxSize
 import androidx.glance.layout.fillMaxWidth
 import androidx.glance.layout.height
 import androidx.glance.layout.padding
+import androidx.glance.layout.width
 import androidx.glance.layout.wrapContentHeight
 import androidx.glance.text.FontFamily
 import androidx.glance.text.FontWeight
@@ -57,7 +63,7 @@ import java.time.Instant
 
 private val BACKGROUND = Color(DesignTokens.BACKGROUND)
 private val BLUE = Color(DesignTokens.BLUE)
-private val WHITE = Color(DesignTokens.WHITE)
+private val MARK = Color(DesignTokens.MARK_FILL)
 private val TEXT = Color(DesignTokens.TEXT)
 private val MID_GREY = Color(DesignTokens.MID_GREY)
 
@@ -114,8 +120,12 @@ private fun Content(
             .padding(14.dp)
             .clickable(actionStartActivity(openIntent(context, snapshot?.latestEventId))),
     ) {
-        // Without a size the frame Glance puts around RemoteViews fills the column.
-        AndroidRemoteViews(header(context), GlanceModifier.fillMaxWidth().wrapContentHeight())
+        Row(GlanceModifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+            Image(ImageProvider(R.drawable.ic_mark), contentDescription = null, colorFilter = ColorFilter.tint(ColorProvider(MARK)))
+            Spacer(GlanceModifier.width(8.dp))
+            // Without a size the frame Glance puts around RemoteViews fills the row.
+            AndroidRemoteViews(label(context), GlanceModifier.defaultWeight().wrapContentHeight())
+        }
         Spacer(GlanceModifier.height(8.dp))
         Box(GlanceModifier.fillMaxWidth().height(1.dp).background(BLUE.copy(alpha = HAIRLINE_ALPHA))) {}
         Spacer(GlanceModifier.height(10.dp))
@@ -162,10 +172,9 @@ private fun Line(
     Text(text, style = TextStyle(ColorProvider(color), size, weight, fontFamily = FontFamily.Monospace), maxLines = maxLines)
 }
 
-/** The mark and the label: Glance text has no letter spacing, a platform TextView does. */
-private fun header(context: Context): RemoteViews =
-    RemoteViews(context.packageName, R.layout.widget_header).apply {
-        setTextColor(R.id.widget_mark, WHITE.toArgb())
+/** The label beside the mark: Glance text has no letter spacing, a platform TextView does. */
+private fun label(context: Context): RemoteViews =
+    RemoteViews(context.packageName, R.layout.widget_label).apply {
         setTextColor(R.id.widget_label, BLUE.toArgb())
     }
 

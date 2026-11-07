@@ -35,3 +35,4 @@ them.
 | 0027 | [Daily read-only checks of production](0027-production-monitoring.md) | accepted |
 | 0028 | [A sound with the alarm of a very likely attack](0028-alarm-sound.md) | accepted |
 | 0029 | [The card reader driver carries libaums' unreleased fix](0029-card-reader-driver.md) | accepted |
+| 0030 | [The mark drawn from the app icon](0030-mark-from-app-icon.md) | accepted |

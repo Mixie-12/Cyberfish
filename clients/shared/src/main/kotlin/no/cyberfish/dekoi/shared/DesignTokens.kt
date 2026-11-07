@@ -49,4 +49,20 @@ object DesignTokens {
     val WARNING = Tone(0xFFFFB547, 0xFF29221B, 0xFFFFD99E)
     val INFO = Tone(0xFFA9B8D4, 0xFF1D222F, 0xFFD5DDEC)
     val SAFE = Tone(0xFF4ED18B, 0xFF102625, 0xFFA6EBC2)
+
+    /**
+     * The `><>` mark as Images/cyberfish-app-icon.svg draws it, in the units
+     * of its outline (239 tall): a fill, a [BLUE] edge [MARK_EDGE] wide on
+     * the outline with round joins and, for the glow version, blurred copies
+     * beneath, widest first (that one at 55 %). The artwork's own colours.
+     */
+    const val MARK_FILL = 0xFFF4FBFF
+    const val MARK_EDGE = 3.5f
+    val MARK_GLOW = listOf(Blur(68f, 0x8C2EA8FF), Blur(34f, BLUE), Blur(17f, BLUE), Blur(7f, BLUE), Blur(2f, 0xFFFFFFFF))
+
+    /** A copy of the mark under a Gaussian blur of [sigma] outline units, in [color]. */
+    class Blur(
+        val sigma: Float,
+        val color: Long,
+    )
 }

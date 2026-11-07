@@ -37,69 +37,98 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Shadow
+import androidx.compose.ui.graphics.Matrix
+import androidx.compose.ui.graphics.Paint
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.scale
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.graphics.skiaPaint
 import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import no.cyberfish.dekoi.shared.DesignTokens
+import org.jetbrains.skia.FilterBlurMode
+import org.jetbrains.skia.MaskFilter
 import java.util.Locale
 
-/** The `><>` mark: white with a blue outline, and a blue glow at hero size only. */
+/**
+ * The `><>` mark as the app icon draws it: its outline filled, with a thin
+ * blue edge, and its glow at hero size only. [height] is the height of its
+ * ink.
+ */
 @Composable
 internal fun Mark(
-    size: TextUnit,
+    height: Dp,
     modifier: Modifier = Modifier,
     glow: Boolean = false,
 ) {
-    val style = Type.mark.copy(fontSize = size, lineHeight = size)
-    val outline = with(LocalDensity.current) { size.toPx() / 40 }
-    Box(modifier.clearAndSetSemantics {}) {
-        Text(MARK, style = style.copy(color = Brand.white, shadow = if (glow) Shadow(Brand.blue, blurRadius = size.value / 2) else null))
-        Text(MARK, style = style.copy(color = Brand.blue, drawStyle = Stroke(outline)))
-    }
+    val bounds = markOutline.getBounds()
+    Spacer(
+        modifier.size(height * (bounds.width / bounds.height), height).drawWithCache {
+            // Drawn in pixels, so that the blurs are in pixels too.
+            val unit = size.height / bounds.height
+            val mark =
+                Path().apply {
+                    addPath(markOutline, -bounds.topLeft)
+                    transform(Matrix().apply { scale(unit, unit) })
+                }
+            val blurs = if (glow) DesignTokens.MARK_GLOW.map { blurPaint(it.sigma * unit, Color(it.color)) } else emptyList()
+            val edge = Stroke(DesignTokens.MARK_EDGE * unit, join = StrokeJoin.Round)
+            onDrawBehind {
+                blurs.forEach { drawContext.canvas.drawPath(mark, it) }
+                drawPath(mark, Color(DesignTokens.MARK_FILL))
+                drawPath(mark, Brand.blue, style = edge)
+            }
+        },
+    )
 }
 
-private const val MARK = "><>"
+private fun blurPaint(
+    sigma: Float,
+    color: Color,
+) = Paint().also {
+    it.color = color
+    it.skiaPaint.maskFilter = MaskFilter.makeBlur(FilterBlurMode.NORMAL, sigma)
+}
 
 /** The mark at the cap height of "DeKoi Setup", 0.6 em before it. */
 @Composable
 internal fun Lockup() {
-    Row(verticalAlignment = Alignment.CenterVertically) {
-        Mark(20.sp)
+    Row {
+        // Michroma's capitals are 0.75 em tall: 11.25 at 15 sp.
+        Mark(11.25.dp, Modifier.alignBy { it.measuredHeight })
         Spacer(Modifier.width(9.dp))
-        Text(text("app_name"), style = Type.wordmark.copy(fontSize = 15.sp))
+        Text(text("app_name"), Modifier.alignByBaseline(), style = Type.wordmark.copy(fontSize = 15.sp))
     }
 }
 
 /** A glowing horizon with the mark floating above it, its reflection below, and a dark sea. */
 @Composable
 internal fun Horizon(
-    markSize: TextUnit,
+    markHeight: Dp,
     seaHeight: Dp,
     glow: Boolean,
 ) {
-    val gap = 12.dp
+    val gap = markHeight + 12.dp
     Column(
-        Modifier.fillMaxWidth().drawBehind { horizon(lineY = markSize.toPx() + gap.toPx() / 2) },
+        Modifier.fillMaxWidth().drawBehind { horizon(lineY = markHeight.toPx() + gap.toPx() / 2) },
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Mark(markSize, glow = glow)
+        Mark(markHeight, glow = glow)
         Spacer(Modifier.height(gap))
-        Mark(markSize, Modifier.graphicsLayer(scaleY = -1f, alpha = 0.18f))
+        Mark(markHeight, Modifier.graphicsLayer(scaleY = -1f, alpha = 0.18f))
         Spacer(Modifier.height(seaHeight))
     }
 }

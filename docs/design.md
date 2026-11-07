@@ -314,7 +314,8 @@ italic. Michroma for display, headline and title styles: white, tracking
 0.02 em, upper case through `headingCase()`, which keeps `DeKoi` as written.
 JetBrains Mono 400 and 500 for body and label styles; its digits are
 tabular by design (Michroma has no tabular figures; its digits differ by at
-most 5 %). ExtraBold is for the mark only.
+most 5 %). The `><>` mark is not set in type: it is drawn from the app
+icon's outline (ADR 0030).
 
 | Style | Font, sp | Use |
 | ----- | -------- | --- |
@@ -370,9 +371,11 @@ stiffness 400).
   below that spread out towards the bottom, like a dark sea. A shimmer
   drifts along the line every 16 s; still when animations are off. For
   sign-in, onboarding and empty states.
-- `FishMark(height, modifier)`: the `><>` mark in JetBrains Mono ExtraBold,
-  white with a blue stroke; [height] is the ink's height. Glows from 48 dp,
-  flat below. `BrandTile` is the mark on navy.
+- `FishMark(height, modifier)`: the `><>` mark as the app icon draws it
+  (`Images/cyberfish-app-icon.svg`, ADR 0030): its outline, filled #F4FBFF
+  with a thin blue edge; [height] is the ink's height. Glows from 48 dp
+  with the icon's five blurs, flat below. `BrandTile` is the mark on navy,
+  as large in the tile as in the icon.
 - `Wordmark(height, modifier)`: the mark at the cap height of Michroma
   "DeKoi", 0.6 em apart; [height] is the cap height.
 - `SectionLabel(number, text, modifier)`: "01 / NETWORK", number in blue,

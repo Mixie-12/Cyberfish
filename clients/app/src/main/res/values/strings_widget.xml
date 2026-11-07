@@ -2,8 +2,6 @@
 <!-- Home-screen widget (widget/DekoiWidget.kt). -->
 <resources>
     <string name="widget_description">Shows how your network is doing and how many alerts there are to look at.</string>
-    <!-- The CyberFish mark: a fish. -->
-    <string name="widget_mark" translatable="false">&gt;&lt;&gt;</string>
     <string name="widget_label">Your network</string>
     <string name="widget_protected">All clear</string>
     <string name="widget_attention">Needs a look</string>

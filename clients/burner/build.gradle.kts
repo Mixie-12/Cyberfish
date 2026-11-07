@@ -30,7 +30,7 @@ val brandFonts =
             rename("OFL.txt", "Michroma-OFL.txt")
         }
         from(fonts.resolve("JetBrains_Mono/static")) {
-            include("JetBrainsMono-Regular.ttf", "JetBrainsMono-Medium.ttf", "JetBrainsMono-ExtraBold.ttf")
+            include("JetBrainsMono-Regular.ttf", "JetBrainsMono-Medium.ttf")
         }
         from(fonts.resolve("JetBrains_Mono")) {
             include("OFL.txt")
@@ -39,8 +39,19 @@ val brandFonts =
         into(layout.buildDirectory.dir("generated/fonts/fonts"))
     }
 
+// The owner's CyberFish app icon: the window's icon, and the mark's outline
+// (ADR 0030).
+val brandIcon =
+    tasks.register<Sync>("brandIcon") {
+        from(rootDir.resolve("../Images")) {
+            include("cyberfish-app-icon.svg")
+        }
+        into(layout.buildDirectory.dir("generated/icon/brand"))
+    }
+
 sourceSets.main {
     resources.srcDir(brandFonts.map { it.destinationDir.parentFile })
+    resources.srcDir(brandIcon.map { it.destinationDir.parentFile })
 }
 
 dependencies {

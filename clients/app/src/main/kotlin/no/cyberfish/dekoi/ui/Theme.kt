@@ -104,11 +104,8 @@ fun TextStyle.tabular(): TextStyle = copy(fontFeatureSettings = "tnum")
 /** Headings: wordmarks, titles and section numbers. One weight, wide. */
 internal val michroma = FontFamily(Font(R.font.michroma_regular))
 
-/** Everything else. Only these two weights, so no text falls back to the logo's ExtraBold. */
+/** Everything else, in the two weights the guide gives text. */
 private val jetBrainsMono = FontFamily(Font(R.font.jetbrains_mono_regular), Font(R.font.jetbrains_mono_medium, FontWeight.Medium))
-
-/** The `><>` mark's face, and nothing else (UX/UI/CyberFish-aesthetic.md, "Logo"). */
-internal val markFont = FontFamily(Font(R.font.jetbrains_mono_extrabold, FontWeight.ExtraBold))
 
 // Michroma is wide: at 20 sp the longest screen title, NETWORKS, takes 309
 // of the 320 dp a 360 dp phone has at 200 % font scale. Headings are white
