@@ -15,7 +15,8 @@ Release builds need the public backend settings as Gradle properties:
 `-Pdekoi.supabaseUrl=... -Pdekoi.supabaseKey=... -Pdekoi.googleWebClientId=...`
 
 DeKoi Setup bundles `device/image.json`, `device/cloud-init/` and
-`device/host/` at build time. After `:burner:test`, check the rendered
+`device/host/` at build time, and the CyberFish fonts from `UX/UI/` with
+their OFL-1.1 licence texts. After `:burner:test`, check the rendered
 cloud-init files with cloud-init itself (from the repository root):
 
 ```

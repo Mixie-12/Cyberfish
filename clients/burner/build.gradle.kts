@@ -30,8 +30,28 @@ val deviceFiles =
         into(layout.buildDirectory.dir("generated/device/device"))
     }
 
+// The CyberFish fonts (ADR 0020) with their OFL-1.1 licence texts, taken from
+// the brand guide's directory so that there is one copy of each font.
+val brandFonts =
+    tasks.register<Sync>("brandFonts") {
+        val fonts = rootDir.resolve("../UX/UI")
+        from(fonts.resolve("Michroma")) {
+            include("Michroma-Regular.ttf", "OFL.txt")
+            rename("OFL.txt", "Michroma-OFL.txt")
+        }
+        from(fonts.resolve("JetBrains_Mono/static")) {
+            include("JetBrainsMono-Regular.ttf", "JetBrainsMono-Medium.ttf", "JetBrainsMono-ExtraBold.ttf")
+        }
+        from(fonts.resolve("JetBrains_Mono")) {
+            include("OFL.txt")
+            rename("OFL.txt", "JetBrainsMono-OFL.txt")
+        }
+        into(layout.buildDirectory.dir("generated/fonts/fonts"))
+    }
+
 sourceSets.main {
     resources.srcDir(deviceFiles.map { it.destinationDir.parentFile })
+    resources.srcDir(brandFonts.map { it.destinationDir.parentFile })
 }
 
 dependencies {
