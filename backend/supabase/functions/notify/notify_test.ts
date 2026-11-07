@@ -1,14 +1,16 @@
-import { deepStrictEqual, equal, notEqual, ok } from "node:assert/strict";
+import { deepStrictEqual, equal, notEqual, ok, throws } from "node:assert/strict";
 import {
   accessToken,
   createHandler,
   fcmMessage,
   type ServiceAccount,
+  summaryTemplate,
   type Target,
   templateFor,
 } from "./notify.ts";
 
 const SECRET = "test-shared-secret";
+const OWNER = "00000000-0000-4000-8000-00000000000a";
 const SUPABASE = "http://supabase.test";
 const FCM = "http://fcm.test";
 const TOKEN_URI = "http://oauth.test/token";
@@ -45,13 +47,17 @@ interface Call {
 }
 
 // Stands in for PostgREST, Google OAuth and FCM, and records every request.
-function fakeFetch(targets: unknown[], fcmStatus = 200, fcmBody: unknown = {}) {
+// Both decision functions answer with `rows`.
+function fakeFetch(rows: unknown[], fcmStatus = 200, fcmBody: unknown = {}) {
   const calls: Call[] = [];
   const fetchFn = (input: string | URL | Request, init?: RequestInit) => {
     const url = String(input);
     calls.push({ url, body: String(init?.body ?? "") });
-    if (url === `${SUPABASE}/rest/v1/rpc/notification_targets_v2`) {
-      return Promise.resolve(Response.json(targets));
+    if (
+      url === `${SUPABASE}/rest/v1/rpc/notification_targets_v2` ||
+      url === `${SUPABASE}/rest/v1/rpc/weekly_summary_v1`
+    ) {
+      return Promise.resolve(Response.json(rows));
     }
     if (url === `${SUPABASE}/rest/v1/rpc/forget_push_token_v1`) {
       return Promise.resolve(new Response(null, { status: 204 }));
@@ -107,6 +113,7 @@ Deno.test("every event kind has its own template; anything else gets the generic
     "rogue_router",
     "name_poisoning",
     "ids_alert",
+    "new_host",
     "device_offline",
   ];
   const generic = templateFor("something_new");
@@ -123,6 +130,20 @@ Deno.test("titles name the device kind from the fixed list, nothing else", () =>
   equal(templateFor("port_scan", null).title, "A device searched your network for openings");
   equal(templateFor("port_scan", "<b>evil</b>").title, templateFor("port_scan").title);
   equal(templateFor("port_scan", "__proto__").title, templateFor("port_scan").title);
+});
+
+Deno.test("a new device is named by its kind and goes to the updates channel", () => {
+  equal(templateFor("new_host").title, "A new device joined your network");
+  equal(templateFor("new_host", "phone").title, "A new phone joined your network");
+  equal(templateFor("new_host", "<b>evil</b>").title, "A new device joined your network");
+  const { message } = fcmMessage(9, target("t", "new_host", "info", "tv"));
+  equal(message.notification.title, "A new TV joined your network");
+  equal(
+    message.notification.body,
+    "Tap to see what it looks like. If you know it, mark it as known.",
+  );
+  equal(message.android.notification.channel_id, "updates");
+  equal(message.android.priority, "NORMAL");
 });
 
 Deno.test("severity picks the channel; anything unexpected is an ordinary alert", () => {
@@ -143,13 +164,91 @@ Deno.test("a wrong or missing secret is refused before anything else happens", a
   equal(calls.length, 0);
 });
 
-Deno.test("a body without a positive integer event id is rejected", async () => {
+Deno.test("a body without a positive integer event id or an owner id is rejected", async () => {
   const { calls, fetchFn } = fakeFetch([]);
   const handle = await handler(fetchFn);
-  for (const body of [{}, { event_id: "1" }, { event_id: 1.5 }, { event_id: -1 }, null]) {
+  const bodies = [
+    {},
+    { event_id: "1" },
+    { event_id: 1.5 },
+    { event_id: -1 },
+    null,
+    { weekly_summary_for: "a" },
+    { weekly_summary_for: 7 },
+    { weekly_summary_for: `${OWNER}; drop table events` },
+  ];
+  for (const body of bodies) {
     equal((await handle(webhook(body))).status, 400);
   }
   equal(calls.length, 0);
+});
+
+Deno.test("the weekly summary counts in words, from no alerts to many", () => {
+  const summary = (incidents: number, newDevices: number, uptime: number) =>
+    summaryTemplate({
+      token: "t",
+      incidents,
+      new_devices: newDevices,
+      uptime_percent: uptime,
+    });
+  deepStrictEqual(summary(0, 0, 100), {
+    title: "Your week with DeKoi",
+    body: "No alerts, no new devices. DeKoi was online 100% of the time.",
+  });
+  equal(summary(1, 1, 99).body, "1 alert, 1 new device. DeKoi was online 99% of the time.");
+  equal(summary(12, 3, 0).body, "12 alerts, 3 new devices. DeKoi was online 0% of the time.");
+});
+
+Deno.test("a summary with anything but whole numbers is not sent", () => {
+  const bad = [
+    { incidents: -1, new_devices: 0, uptime_percent: 100 },
+    { incidents: 1.5, new_devices: 0, uptime_percent: 100 },
+    { incidents: 0, new_devices: "<b>2</b>" as unknown as number, uptime_percent: 100 },
+    { incidents: 0, new_devices: 0, uptime_percent: 101 },
+    { incidents: 0, new_devices: 0, uptime_percent: null as unknown as number },
+  ];
+  for (const counts of bad) {
+    throws(() => summaryTemplate({ token: "t", ...counts }));
+  }
+});
+
+Deno.test("the weekly summary goes to the owner's phones on the updates channel", async () => {
+  const { calls, fetchFn } = fakeFetch([
+    { token: "phone-1", incidents: 2, new_devices: 1, uptime_percent: 97 },
+  ]);
+  const handle = await handler(fetchFn);
+  equal((await handle(webhook({ weekly_summary_for: OWNER }))).status, 204);
+
+  const ask = calls.find((c) => c.url === `${SUPABASE}/rest/v1/rpc/weekly_summary_v1`);
+  deepStrictEqual(JSON.parse(ask?.body ?? "null"), { user_id: OWNER });
+  const sends = calls.filter((c) => c.url.startsWith(FCM));
+  equal(sends.length, 1);
+  deepStrictEqual(JSON.parse(sends[0].body), {
+    message: {
+      token: "phone-1",
+      notification: {
+        title: "Your week with DeKoi",
+        body: "2 alerts, 1 new device. DeKoi was online 97% of the time.",
+      },
+      data: {},
+      android: {
+        priority: "NORMAL",
+        notification: {
+          channel_id: "updates",
+          notification_priority: "PRIORITY_LOW",
+          visibility: "PRIVATE",
+          tag: "weekly-summary",
+        },
+      },
+    },
+  });
+});
+
+Deno.test("no summary due means no token request and no message", async () => {
+  const { calls, fetchFn } = fakeFetch([]);
+  const handle = await handler(fetchFn);
+  equal((await handle(webhook({ weekly_summary_for: OWNER }))).status, 204);
+  deepStrictEqual(calls.map((c) => c.url), [`${SUPABASE}/rest/v1/rpc/weekly_summary_v1`]);
 });
 
 Deno.test("no targets means no token request and no message", async () => {

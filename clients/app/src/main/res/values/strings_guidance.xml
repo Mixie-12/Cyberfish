@@ -21,6 +21,8 @@
     <string name="step_change_wifi_password">Change your Wi-Fi password. Devices that don’t get the new password can no longer join.</string>
     <string name="step_change_account_passwords">Change the passwords of your important accounts, such as email and banking, from a device you trust.</string>
     <string name="step_mark_known">If it is your own device running network tools, mark it as known so it no longer alerts you.</string>
+    <string name="step_mark_known_newcomer">If it belongs to you or a guest, mark it as known. Nothing else to do.</string>
+    <string name="step_change_wifi_password_newcomer">Then change your Wi-Fi password, so it can’t join again.</string>
     <string name="step_restart_router">Restart your router, so every device gets its network settings from the router again.</string>
     <string name="step_check_power">Check that your DeKoi has power. Its light should be on.</string>
     <string name="step_check_cable">Check that its network cable is plugged in at both ends.</string>
