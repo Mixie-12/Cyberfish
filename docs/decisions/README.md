@@ -16,3 +16,4 @@ them.
 | 0008 | [Writing cards through the Raspberry Pi Imager CLI](0008-imager-cli.md) | accepted |
 | 0009 | [Google Cloud and Firebase as code](0009-google-infrastructure-as-code.md) | accepted |
 | 0010 | [Device identification, networks and severity](0010-device-identification.md) | accepted |
+| 0011 | [App design system and notifications](0011-app-design.md) | accepted |
