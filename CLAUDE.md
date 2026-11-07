@@ -9,7 +9,7 @@ tool (DeKoi Setup), an Android app, and a Supabase backend.
 - Why things are the way they are: `docs/decisions/`
 - Security model and evidence: `docs/security.md`
 
-Component map: `backend/` Supabase project and homelab deployment. `device/`
+Component map: `backend/` Supabase project (hosted on Supabase Cloud). `device/`
 everything that runs on the Pi. `clients/` Gradle root with `shared/`, `app/`
 (Android) and `burner/` (DeKoi Setup). Each component README has its build,
 test and run commands.
