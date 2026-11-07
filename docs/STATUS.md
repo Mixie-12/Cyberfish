@@ -79,27 +79,24 @@ needs elevation, and reports only an exit code on Windows.
 
 ## Owner actions open
 
-1. Supabase bootstrap: `docs/runbooks/deploy-backend.md`, steps 1 to 6.
-   Gives CI `SUPABASE_PROJECT_REF`, `SUPABASE_PUBLISHABLE_KEY` (variables) and
-   `SUPABASE_ACCESS_TOKEN`, `SUPABASE_DB_PASSWORD` (secrets).
-2. Make the GHCR packages public once each exists: `dekoi-canary` now,
-   `dekoi-agent` and `dekoi-ids` after their first publish.
-3. Google and Firebase (one Google Cloud project, used for nothing else):
-   - OAuth consent screen (external, app name DeKoi).
-   - OAuth client "Web application": its client ID becomes the repository
-     variable `GOOGLE_WEB_CLIENT_ID`, its secret the secret
-     `GOOGLE_WEB_CLIENT_SECRET`.
-   - OAuth client "Android": package `no.cyberfish.dekoi`, SHA-256 from the
-     table above. No secret.
-   - Firebase project on the same Google Cloud project, Android app
-     `no.cyberfish.dekoi`. Its public values become the repository
-     variables `FIREBASE_PROJECT_ID`, `FIREBASE_APP_ID`, `FIREBASE_API_KEY`,
-     `FIREBASE_SENDER_ID`. A service account key (Project settings, Service
-     accounts, Generate new private key) becomes the secret
-     `FCM_SERVICE_ACCOUNT`: `gh secret set FCM_SERVICE_ACCOUNT < key.json`,
-     then delete the file.
+1. Replace the Supabase token `github-ci-dekoi` with one that also has
+   "Add-ons: Read" (`docs/runbooks/deploy-backend.md`, step 4), and store it with
+   `gh secret set SUPABASE_ACCESS_TOKEN --repo Mixie-12/Cyberfish`. The first
+   deploy already applied all migrations and the notify function; only the
+   configuration push (Google sign-in, exposed schemas) waits for this.
+2. Google sign-in clients in the console (`docs/runbooks/google-firebase.md`,
+   "Sign-in clients"): consent screen, publish, one web and two Android
+   clients, then `GOOGLE_WEB_CLIENT_ID` and `GOOGLE_WEB_CLIENT_SECRET`.
+3. Make the GHCR packages `dekoi-canary`, `dekoi-agent` and `dekoi-ids` public
+   (github.com/Mixie-12?tab=packages, each package, Package settings, Change
+   visibility, Public). All three are published and signed.
 4. Phase 7 session: a Raspberry Pi 4 or 5, a memory card, a card reader, a
    network cable, an Android phone; about one hour.
+
+Done 2026-11-07: Supabase project `rmllpietnopviodbdkky` deployed by CI;
+Google Cloud project `dekoi-cyberfish` with Firebase, the Android app and the
+FCM sender created with OpenTofu (ADR 0009); Firebase variables and
+`FCM_SERVICE_ACCOUNT` set in GitHub; images published to GHCR as `:edge`.
 
 ## Known limitations (MVP)
 
