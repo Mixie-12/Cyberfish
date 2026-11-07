@@ -1,5 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Write a card with this phone (CardReader.kt). -->
+<!-- Write a card with this phone (WriteCardService.kt, CardReader.kt). -->
 <resources>
     <string name="write_reader_unnamed">USB card reader</string>
+
+    <string name="write_notification_title">Memory card for your DeKoi</string>
+    <string name="write_notification_writing">Writing the card. Keep the reader connected.</string>
+    <string name="write_notification_written">The card is ready. Open DeKoi to link it.</string>
+    <string name="write_notification_failed">The card is not ready. Open DeKoi to see why.</string>
 </resources>
