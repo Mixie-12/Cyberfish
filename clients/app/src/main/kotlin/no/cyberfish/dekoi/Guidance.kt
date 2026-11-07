@@ -189,6 +189,12 @@ fun threat(
         else -> Threat(ThreatLevel.POSSIBLE, R.string.threat_probing)
     }
 
+/** A critical alert that is very likely an attack: the only one that opens with the alarm (docs/design.md). */
+fun isAlarm(
+    severity: Severity,
+    threat: ThreatLevel,
+): Boolean = severity == Severity.CRITICAL && threat == ThreatLevel.LIKELY
+
 @StringRes
 fun threatLabel(level: ThreatLevel): Int =
     when (level) {

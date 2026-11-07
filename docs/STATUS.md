@@ -115,7 +115,8 @@ records why.
   repositories; Grype, OSV-Scanner and advisors; monthly key rotation;
   expiry issues; nightly encrypted backups; repository settings as code.
 - First-run tour, Learn topics for every event kind, home-screen widget,
-  motion and haptics (`docs/design.md`, "Motion").
+  motion and haptics (`docs/design.md`, "Motion"); the alarm sound of a
+  very likely attack (ADR 0028).
 - Pushes in the phone's language, English or Bokmål, through
   `register_push_token_v2` and `notification_targets_v3` (ADR 0025); the
   severity colour on every notification; "Mark all as read" on Alerts.

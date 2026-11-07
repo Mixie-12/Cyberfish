@@ -10,6 +10,8 @@
     <string name="settings_notifications_on">På</string>
     <string name="settings_notifications_off">Av</string>
     <string name="settings_notifications_footer">Trykk på en type varsling for å endre den i innstillingene på telefonen.</string>
+    <string name="settings_alarm_sound">Lyd når et varsel haster</string>
+    <string name="settings_alarm_sound_footer">Når du åpner et varsel som haster, spiller DeKoi en kort lyd. Ikke når telefonen er satt til lydløs eller vibrering.</string>
 
     <string name="settings_weekly_summary">Ukesoppsummering</string>
     <string name="settings_weekly_summary_footer">En kort melding én gang i uken: hvor mange varsler og nye enheter din DeKoi så, og hvor mye av tiden den var tilkoblet.</string>

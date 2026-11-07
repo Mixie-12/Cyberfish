@@ -75,6 +75,7 @@ import no.cyberfish.dekoi.facts
 import no.cyberfish.dekoi.hostDisplayName
 import no.cyberfish.dekoi.incidentSubtitle
 import no.cyberfish.dekoi.incidents
+import no.cyberfish.dekoi.isAlarm
 import no.cyberfish.dekoi.looksLike
 import no.cyberfish.dekoi.serviceName
 import no.cyberfish.dekoi.severityLabel
@@ -151,11 +152,12 @@ fun AlertDetailScreen(
     }
     val host = data.hostFor(incident.mac)
     val threat = threat(incident.kinds, knownSource = host?.trusted == true)
-    val alarm = incident.severity == Severity.CRITICAL && threat.level == ThreatLevel.LIKELY
+    val alarm = isAlarm(incident.severity, threat.level)
     val zone = ZoneId.systemDefault()
     val clock = rememberClock(zone)
     val gateways = data.networks.filter { it.deviceId == incident.lead.deviceId }.mapNotNullTo(mutableSetOf()) { it.gateway }
     CriticalAlertHaptic(alarm)
+    CriticalAlertSound(alarm)
     val detail = Route.AlertDetail(eventId)
     Screen(title = null, onBack = onBack) {
         item { if (alarm) AlarmHero(incident, host, now, clock, detail) else Band(incident, host, now, clock, detail) }

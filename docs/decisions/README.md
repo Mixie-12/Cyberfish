@@ -33,3 +33,4 @@ them.
 | 0025 | [Push text in the phone's language](0025-push-language.md) | accepted |
 | 0026 | [Languages: Bokmål and English](0026-languages.md) | accepted |
 | 0027 | [Daily read-only checks of production](0027-production-monitoring.md) | accepted |
+| 0028 | [A sound with the alarm of a very likely attack](0028-alarm-sound.md) | accepted |

@@ -85,7 +85,9 @@ above 20 unread alerts; a cross-linked list does not offer it.
 incident that is very likely an attack opens with the alarm hero inside a
 HUD frame (ADR 0020): the source's kind tile at the centre of rings that
 pulse outwards in the critical colour for 3 s, then a steady glow (static
-without animations). Everything else opens with a still, unboxed header:
+without animations), and the alarm sound once per opening (ADR 0028): not
+on silent or vibrate, not when the owner turned it off in Settings.
+Everything else opens with a still, unboxed header:
 warnings never move, info stays grey. Both carry glyph and severity word
 in the severity colour, title, one consequence sentence, day, count and
 time span. (2) "Is this a real threat?" from `threat()` in `Guidance.kt`:
@@ -249,7 +251,8 @@ and, while the DeKoi is online, "Try it" with its addresses.
 **Settings.** Inset grouped list: Account (email, Sign out); Your DeKoi
 devices; Add DeKoi; Wi-Fi Guard (each DeKoi's home Wi-Fi name and what
 Wi-Fi Guard is doing, ADR 0019); Notifications (channel state, opens system
-channel settings); the weekly summary; Privacy; About (version, Features,
+channel settings); the alarm sound switch (on by default, kept on the
+phone); the weekly summary; Privacy; About (version, Features,
 Learn, the tour, open-source licences); Delete account last, in red, with
 confirmation.
 
