@@ -1,0 +1,4 @@
+ignored:
+  # Debian package versions are not pinned: the images are rebuilt weekly to
+  # pick up Debian security fixes, and the image digest records what shipped.
+  - DL3008

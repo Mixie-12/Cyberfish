@@ -1,0 +1,24 @@
+# dekoi-canary: the OpenCanary decoys. Build context: device/
+FROM docker.io/library/python:3.13-slim-trixie@sha256:09a17cad02668ae61ece136b4fd36ac3849e14f670ebedb637ea3e15580525bc AS build
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends build-essential \
+ && rm -rf /var/lib/apt/lists/*
+COPY canary/requirements.txt /tmp/requirements.txt
+RUN python -m venv /opt/venv \
+ && /opt/venv/bin/pip install --no-cache-dir --disable-pip-version-check --require-hashes \
+    -r /tmp/requirements.txt
+
+FROM docker.io/library/python:3.13-slim-trixie@sha256:09a17cad02668ae61ece136b4fd36ac3849e14f670ebedb637ea3e15580525bc
+RUN useradd --system --uid 10001 --no-create-home --shell /usr/sbin/nologin canary \
+ && install -d -o canary -g canary -m 0755 /var/log/opencanary \
+ && install -d -o canary -g canary -m 0700 /var/lib/opencanary
+COPY --from=build /opt/venv /opt/venv
+COPY canary/opencanary.conf /etc/opencanaryd/opencanary.conf
+COPY agent/dekoi_agent/decoys.py /opt/dekoi/decoys.py
+ENV PATH=/opt/venv/bin:$PATH \
+    PYTHONDONTWRITEBYTECODE=1 \
+    HOME=/tmp
+USER 10001
+WORKDIR /tmp
+# twistd directly: the opencanaryd wrapper needs sudo and a writable /var/run.
+ENTRYPOINT ["twistd", "--nodaemon", "--pidfile=", "--python=/opt/venv/bin/opencanary.tac"]
