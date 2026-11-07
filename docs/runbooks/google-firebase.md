@@ -18,8 +18,17 @@ tofu apply
 op document edit "DeKoi OpenTofu state (infra/google)" terraform.tfstate --vault Encryption
 ```
 
-Rotate the FCM sender key with `./publish.sh --new-fcm-key`, then delete the
-older key in the console (IAM, Service accounts, fcm-sender, Keys).
+`publish.sh` also publishes the workload identity providers and service
+accounts that GitHub Actions uses instead of keys (ADR 0016). The FCM sender
+key is created, handed to the `notify` function and replaced every month by
+the `rotate-keys` workflow; it never passes through GitHub or this machine.
+Run that workflow once after the first apply (`docs/runbooks/rotate-keys.md`).
+
+Cloud KMS (the image signing key, `signing.tf`) needs a billing account.
+Once the owner has decided to pay for it (about 1 USD a month), commit the
+billing account ID (not a secret) as the default of `billing_account` in
+`signing.tf`, then `tofu apply` and `./publish.sh`. Removing it later would
+plan to destroy the key; `prevent_destroy` stops that plan.
 
 ## Sign-in clients (console, one time)
 
