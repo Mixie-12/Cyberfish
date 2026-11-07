@@ -170,12 +170,13 @@ create trigger devices_limit
   for each row
   execute function private.limit_devices();
 
--- Events that devices report, per account and hour. A household under a
--- real attack stays far below: the agent folds repeats from one source into
--- one event a minute. The backend's own events (device_offline,
--- device_online) carry no agent_event_id and do not count, so the offline
--- job never fails on a busy account.
-create function private.limit_reported_events()
+-- Events per account and hour: those a device reports and those the
+-- backend writes from what a device sends (new hosts, port forwards, DNS
+-- results, coming online). A household under a real attack stays far below:
+-- the agent folds repeats from one source into one event a minute.
+-- device_offline comes from the backend's own job and never counts, so the
+-- job cannot fail on a busy account.
+create function private.limit_events()
   returns trigger
   language plpgsql
   set search_path = ''
@@ -187,7 +188,7 @@ begin
       select d.owner_id, count(*)::integer as reported
       from new_events as e
       join public.devices as d on d.id = e.device_id
-      where e.agent_event_id is not null
+      where e.kind <> 'device_offline'
       group by d.owner_id
     ) as r
     where private.count_hits('events ' || r.owner_id, interval '1 hour', r.reported) > 3600
@@ -202,9 +203,11 @@ create trigger events_limit
   after insert on public.events
   referencing new table as new_events
   for each statement
-  execute function private.limit_reported_events();
+  execute function private.limit_events();
 
--- Hosts and networks per device. Upserts of known rows always pass.
+-- Hosts, networks and port forwards per device. Upserts of known rows
+-- always pass. Hosts are checked before new_host events are written
+-- (triggers fire in name order).
 create function private.limit_network_hosts()
   returns trigger
   language plpgsql
@@ -250,6 +253,29 @@ create trigger networks_limit
   referencing new table as new_networks
   for each statement
   execute function private.limit_networks();
+
+create function private.limit_port_forwards()
+  returns trigger
+  language plpgsql
+  set search_path = ''
+as $$
+begin
+  if exists (
+    select 1
+    from (select distinct n.device_id from new_forwards as n) as x
+    where (select count(*) from public.port_forwards as p where p.device_id = x.device_id) > 256
+  ) then
+    raise exception 'too many port forwards' using errcode = 'PT429';
+  end if;
+  return null;
+end;
+$$;
+
+create trigger port_forwards_limit
+  after insert on public.port_forwards
+  referencing new table as new_forwards
+  for each statement
+  execute function private.limit_port_forwards();
 
 -- The ten phones of an account that registered most recently receive
 -- pushes; older tokens are dropped, so registering cannot grow the table.

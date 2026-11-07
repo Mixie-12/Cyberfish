@@ -33,10 +33,12 @@ much it could store.
   reads it.
 - Storage limits are triggers, so they hold for every function that
   writes, later versions included: 10 devices per account (setups waiting
-  for their DeKoi included, at most 5 of those as before); 3,600 reported
-  events per account and hour; 4,096 hosts and 256 networks per device; the
-  10 most recently registered push tokens per account, older ones dropped.
-  A setup whose DeKoi has not registered after 30 days is removed.
+  for their DeKoi included, at most 5 of those as before); 3,600 events per
+  account and hour, counting those the backend writes from what a device
+  sends (new hosts, port forwards, DNS results) and not the offline job's;
+  4,096 hosts, 256 networks and 256 port forwards per device; the 10 most
+  recently registered push tokens per account, older ones dropped. A setup
+  whose DeKoi has not registered after 30 days is removed.
 - The events webhook calls `notify` only while the account has made fewer
   than 120 calls and all accounts together fewer than 600 in the hour
   (446,400 in a 31-day month). Events beyond that are stored and shown in
@@ -73,7 +75,9 @@ much it could store.
   size is the alarm; a paid plan and a custom domain with a firewall are
   the next steps.
 - Every table a device or user can grow needs a per-device or per-account
-  limit and a retention when it is added.
+  limit and a retention when it is added. Health samples and speed tests
+  are bounded by time (one row per hour and target, one test per 20
+  hours) and need none.
 - Rejected: an Edge Function proxy (more code and a function call per
   request), counting failed requests with sequences (one per bucket,
   dynamic SQL), and Cloudflare in front (needs the paid custom domain).

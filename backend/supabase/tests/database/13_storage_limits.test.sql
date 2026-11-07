@@ -1,7 +1,7 @@
 -- Storage limits and the notify gate (ADR 0016).
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(21);
+select plan(24);
 
 insert into auth.users (id, email) values
   ('00000000-0000-0000-0000-00000000000a', 'a@test.invalid'),
@@ -85,6 +85,12 @@ select lives_ok(
   'the backend''s own events are never refused'
 );
 
+select throws_ok(
+  $$ insert into public.events (device_id, occurred_at, kind) values ('00000000-0000-0000-0000-0000000000a1', now(), 'device_online') $$,
+  'PT429', 'too many events',
+  'events the backend writes from what a device sends count too'
+);
+
 select lives_ok(
   $$ insert into public.events (device_id, agent_event_id, occurred_at, kind) values ('00000000-0000-0000-0000-0000000000b1', 1, now(), 'port_scan') $$,
   'another account reports on'
@@ -136,6 +142,24 @@ select throws_ok(
   $$ insert into public.networks (device_id, cidr, source) values ('00000000-0000-0000-0000-0000000000a1', '192.168.0.0/24', 'observed') $$,
   'PT429', 'too many networks',
   'a 257th network is refused'
+);
+
+select lives_ok(
+  $$
+    insert into public.port_forwards (device_id, protocol, external_port, internal_client, internal_port)
+    select '00000000-0000-0000-0000-0000000000a1', 'tcp', n, '192.168.1.20', n
+    from generate_series(1, 256) as n
+  $$,
+  'a device may store 256 port forwards'
+);
+
+select throws_ok(
+  $$
+    insert into public.port_forwards (device_id, protocol, external_port, internal_client, internal_port)
+    values ('00000000-0000-0000-0000-0000000000a1', 'udp', 1, '192.168.1.20', 1)
+  $$,
+  'PT429', 'too many port forwards',
+  'a 257th port forward is refused'
 );
 
 -- Devices per account.
