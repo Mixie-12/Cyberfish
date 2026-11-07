@@ -152,9 +152,12 @@ Per language:
    is exposed, what is duplicated, what can be deleted.
 5. End of phase: full test suite, security review of trust-boundary changes,
    `docs/STATUS.md` updated, push.
-6. A deviation from the architecture in `docs/PROMPT.md` needs an ADR in
-   `docs/decisions/NNNN-title.md` (context, decision, consequences; one page at
-   most) and a note to the owner.
+6. Record every significant decision when it is made, not afterwards: an ADR
+   in `docs/decisions/NNNN-title.md` (context, decision, consequences; one page
+   at most) and a line in `docs/decisions/README.md`. Significant means anything
+   a future reader would otherwise have to rediscover: a choice between
+   alternatives, a constraint found by testing, a trade-off accepted. A
+   deviation from `docs/PROMPT.md` also needs a note to the owner.
 
 Ask the owner before spending money, creating external accounts, doing anything
 irreversible (deleting data, publishing, rotating production keys), installing

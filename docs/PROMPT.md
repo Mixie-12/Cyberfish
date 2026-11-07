@@ -26,6 +26,11 @@ network is probing: an intruder, a compromised device, or malware spreading.
 When that happens, the owner's phone gets an alert that explains in plain
 language what happened and what to do.
 
+Beyond the decoys, DeKoi watches everything that reaches it: an IDS
+(Suricata) inspects all traffic to the box, and LAN watchers detect network
+sweeps, ARP spoofing, rogue DHCP servers, rogue IPv6 routers and name
+poisoning (ADR 0003). The app says plainly what DeKoi can and cannot see.
+
 The target user is not technical. They never see a terminal, an IP
 configuration, or a password for the Pi.
 
@@ -259,6 +264,17 @@ signed .deb is a roadmap item.
 - sd_notify ready and watchdog pings.
 - Everything the canary logs is attacker-controlled: bound its length, strip
   control characters, never interpret it.
+
+Network detection (ADR 0003):
+- `dekoi-ids` image: Suricata with the Emerging Threats Open ruleset, updated
+  daily by `suricata-update` inside the container, on the host interface.
+  Writes EVE JSON alerts to a shared volume the agent reads, like the canary
+  log. Only rule metadata (signature, category, severity) leaves the device,
+  never payload excerpts.
+- Agent LAN watchers: ARP sweeps and spoofing from a raw packet socket;
+  periodic probes for rogue DHCP servers, rogue IPv6 router advertisements,
+  and LLMNR, NBT-NS and mDNS poisoning.
+- New event kinds are added to the device API additively.
 
 ### 3.3 DeKoi Setup (SD-card tool)
 
