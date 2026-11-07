@@ -1,0 +1,104 @@
+package no.cyberfish.dekoi
+
+import io.github.jan.supabase.auth.Auth
+import io.github.jan.supabase.auth.SignOutScope
+import io.github.jan.supabase.auth.auth
+import io.github.jan.supabase.auth.providers.Google
+import io.github.jan.supabase.auth.providers.builtin.IDToken
+import io.github.jan.supabase.auth.status.SessionStatus
+import io.github.jan.supabase.createSupabaseClient
+import io.github.jan.supabase.postgrest.Postgrest
+import io.github.jan.supabase.postgrest.from
+import io.github.jan.supabase.postgrest.postgrest
+import io.github.jan.supabase.postgrest.query.Order
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.put
+import no.cyberfish.dekoi.shared.ClaimCode
+
+/**
+ * Everything the app asks of the backend (docs/architecture.md, "App API").
+ * Reads go through RLS; the only writes are the column grants and the _v1
+ * functions the backend publishes.
+ */
+class Backend(
+    url: String,
+    publishableKey: String,
+) {
+    private val client =
+        createSupabaseClient(url, publishableKey) {
+            install(Auth)
+            install(Postgrest)
+        }
+
+    val session: StateFlow<SessionStatus> get() = client.auth.sessionStatus
+
+    suspend fun signInWithGoogle(
+        idToken: String,
+        rawNonce: String,
+    ) {
+        client.auth.signInWith(IDToken) {
+            this.idToken = idToken
+            provider = Google
+            nonce = rawNonce
+        }
+    }
+
+    suspend fun signOut() = client.auth.signOut()
+
+    /** Returns the device id. */
+    suspend fun claim(code: ClaimCode): String =
+        client.postgrest
+            .rpc(
+                "claim_device_v1",
+                buildJsonObject {
+                    put("claim_code", code.value)
+                    put("name", code.shortName)
+                },
+            ).decodeAs()
+
+    suspend fun devices(): List<Device> = client.from("devices").select { order("created_at", Order.ASCENDING) }.decodeList()
+
+    suspend fun events(): List<Event> =
+        client
+            .from("events")
+            .select {
+                order("occurred_at", Order.DESCENDING)
+                limit(EVENT_LIMIT)
+            }.decodeList()
+
+    suspend fun hosts(): List<NetworkHost> = client.from("network_hosts").select { order("first_seen_at", Order.DESCENDING) }.decodeList()
+
+    suspend fun rename(
+        device: Device,
+        name: String,
+    ) {
+        client.from("devices").update({ set("name", name) }) { filter { eq("id", device.id) } }
+    }
+
+    suspend fun remove(device: Device) {
+        client.from("devices").delete { filter { eq("id", device.id) } }
+    }
+
+    suspend fun setTrusted(
+        host: NetworkHost,
+        trusted: Boolean,
+    ) {
+        client.from("network_hosts").update({ set("trusted", trusted) }) {
+            filter {
+                eq("device_id", host.deviceId)
+                eq("mac", host.mac)
+            }
+        }
+    }
+
+    /** Deletes the account and everything in it, then forgets the session here. */
+    suspend fun deleteAccount() {
+        client.postgrest.rpc("delete_account_v1")
+        client.auth.signOut(SignOutScope.LOCAL)
+    }
+
+    private companion object {
+        const val EVENT_LIMIT = 200L
+    }
+}

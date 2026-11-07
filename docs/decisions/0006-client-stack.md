@@ -14,8 +14,9 @@ Decisions for the Android app and DeKoi Setup made in Phase 4.
   tokens as raw values). AGP 9 no longer allows the Kotlin Multiplatform plugin
   together with an Android application module, and the shared code needs no UI
   types.
-- `compileSdk` 37, because current AndroidX libraries require it; `targetSdk`
-  36 until the app has been tested against API 37 behaviour. `minSdk` 29.
+- `compileSdk` and `targetSdk` 37: current AndroidX libraries require 37 to
+  compile against, and a new app has no older behaviour to preserve. `minSdk`
+  29. Behaviour on API 37 is verified on a real phone in Phase 7.
 - No Material icon libraries: they are deprecated and frozen. The few icons are
   vector drawables in the app.
 - One ViewModel for the signed-in session and manual wiring instead of a
@@ -32,4 +33,4 @@ Decisions for the Android app and DeKoi Setup made in Phase 4.
 ## Consequences
 
 - Moving to AGP 10 should need no Kotlin plugin changes.
-- Raising `targetSdk` to 37 is a separate, tested change.
+- Each future `targetSdk` raise is its own tested change.

@@ -16,4 +16,4 @@ dependencyResolutionManagement {
 
 rootProject.name = "dekoi"
 
-include(":shared")
+include(":shared", ":app")
