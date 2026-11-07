@@ -69,6 +69,7 @@ jobs:
         run: |
           sed -e "s|ghcr.io/mixie-12|$REGISTRY|" -e "s|/etc/dekoi/cosign.pub|$RUNNER_TEMP/cosign.pub|" \
             device/host/etc/containers/policy.json | sudo tee /etc/containers/policy.json
+          sudo install -d /etc/containers/registries.d
           sed -e "s|ghcr.io/mixie-12|$REGISTRY|" device/host/etc/containers/registries.d/dekoi.yaml \
             | sudo tee /etc/containers/registries.d/dekoi.yaml
           sudo podman rmi --force "$REGISTRY/signed:stable" "$REGISTRY/unsigned:stable" "$ALPINE"
