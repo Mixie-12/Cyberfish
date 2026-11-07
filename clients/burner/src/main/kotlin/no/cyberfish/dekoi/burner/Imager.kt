@@ -1,5 +1,6 @@
 package no.cyberfish.dekoi.burner
 
+import no.cyberfish.dekoi.shared.Image
 import java.nio.file.Files
 import java.nio.file.Path
 

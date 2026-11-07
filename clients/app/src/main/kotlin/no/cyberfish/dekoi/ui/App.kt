@@ -97,6 +97,9 @@ sealed interface Route {
     ) : Route
 
     @Serializable data object AddDekoi : Route
+
+    /** Writing a DeKoi card with this phone (ADR 0014, 0017). */
+    @Serializable data object WriteCard : Route
 }
 
 private enum class Tab(
@@ -258,7 +261,10 @@ private fun SignedIn(
                 )
             }
             composable<Route.AddDekoi> {
-                AddDekoiScreen(onClaim = viewModel::claim, onBack = back)
+                AddDekoiScreen(onClaim = viewModel::claim, onWriteCard = { navigate(Route.WriteCard) }, onBack = back)
+            }
+            composable<Route.WriteCard> {
+                WriteCardScreen(onClaim = viewModel::claim, onBack = back)
             }
             composable<Route.Settings> {
                 val settings by viewModel.settings.collectAsStateWithLifecycle()

@@ -7,6 +7,9 @@ Everything that runs on the Raspberry Pi.
 | `image.json`  | Pinned Raspberry Pi OS image (URL, SHA-256)                        |
 | `cloud-init/` | First-boot template rendered by DeKoi Setup                        |
 | `host/`       | Files first boot installs: Quadlet units, firewall, policies, the Wi-Fi scan |
+| `image.json`  | Pinned Raspberry Pi OS image (URL, sizes, SHA-256)                 |
+| `cloud-init/` | First-boot template rendered by DeKoi Setup and the app            |
+| `host/`       | Files first boot installs: Quadlet units, firewall, policies       |
 | `canary/`     | `dekoi-canary` image: OpenCanary decoys                            |
 | `ids/`        | `dekoi-ids` image: Suricata with the ET Open ruleset               |
 | `agent/`      | `dekoi-agent` image: the agent, standard-library Python            |
