@@ -3,6 +3,7 @@ package no.cyberfish.dekoi.ui
 import android.content.Context
 import android.content.Intent
 import android.text.format.Formatter
+import android.util.Log
 import androidx.activity.compose.BackHandler
 import androidx.annotation.StringRes
 import androidx.compose.animation.core.animateFloatAsState
@@ -55,6 +56,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import no.cyberfish.dekoi.CARD_LOG_TAG
 import no.cyberfish.dekoi.DekoiApplication
 import no.cyberfish.dekoi.R
 import no.cyberfish.dekoi.Reader
@@ -121,6 +123,7 @@ fun WriteCardScreen(
                 try {
                     writing.opened(openCard(context, reader))
                 } catch (error: WriteFailed) {
+                    Log.w(CARD_LOG_TAG, "Opening the card failed", error)
                     writing.failed(error.failure)
                 }
             }

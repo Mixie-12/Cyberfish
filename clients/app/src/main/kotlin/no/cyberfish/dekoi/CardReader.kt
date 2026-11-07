@@ -12,9 +12,7 @@ import android.hardware.usb.UsbManager
 import androidx.core.content.ContextCompat
 import kotlinx.coroutines.suspendCancellableCoroutine
 import me.jahnen.libaums.core.driver.BlockDeviceDriver
-import me.jahnen.libaums.core.driver.BlockDeviceDriverFactory
 import me.jahnen.libaums.core.driver.scsi.commands.sense.MediaNotInserted
-import me.jahnen.libaums.core.driver.scsi.commands.sense.UnitAttention
 import me.jahnen.libaums.core.fs.FileSystem
 import me.jahnen.libaums.core.fs.UsbFile
 import me.jahnen.libaums.core.partition.Partition
@@ -118,7 +116,7 @@ fun openCard(
         if (luns !in 0..MAX_LUN) throw WriteFailed(WriteFailure.CARD_ERROR)
         val cards =
             (0..luns).mapNotNull { lun ->
-                onCard { inserted(BlockDeviceDriverFactory.createBlockDevice(connection, lun.toByte())) }
+                onCard { inserted(ScsiBlockDevice(connection, lun.toByte())) }
             }
         val card = cards.singleOrNull() ?: throw WriteFailed(if (cards.isEmpty()) WriteFailure.NO_CARD else WriteFailure.SEVERAL_CARDS)
         opened = OpenCard(reader.name, card, connection)
@@ -129,21 +127,12 @@ fun openCard(
 }
 
 /** The card in [device], or null when its slot is empty. */
-private fun inserted(device: BlockDeviceDriver): BlockDeviceDriver? =
+internal fun inserted(device: BlockDeviceDriver): BlockDeviceDriver? =
     try {
-        initialise(device)
+        device.init()
         device
     } catch (_: MediaNotInserted) {
         null
-    }
-
-// A reader reports a card put in since its last command once, as unit
-// attention; libaums 0.10.0 does not retry it. A second one is an error.
-private fun initialise(device: BlockDeviceDriver) =
-    try {
-        device.init()
-    } catch (_: UnitAttention) {
-        device.init()
     }
 
 /** A text file from the card's boot partition, such as cmdline.txt. */

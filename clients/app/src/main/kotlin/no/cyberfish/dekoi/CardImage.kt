@@ -24,6 +24,9 @@ enum class WriteFailure {
     NOT_VERIFIED,
 }
 
+/** Logcat tag for why writing stopped: readers differ, and the cause is not shown to the owner. */
+const val CARD_LOG_TAG = "DeKoiCard"
+
 /** Writing stopped; the card is not usable and the owner is told [failure]. */
 class WriteFailed(
     val failure: WriteFailure,
@@ -32,8 +35,12 @@ class WriteFailed(
 
 /**
  * Runs a card operation. Its errors become [WriteFailed], so that a reader
- * error is never taken for a network error. libaums reports a misbehaving
- * device with IllegalStateException as well as IOException.
+ * error is never taken for a network error. The reader is a device DeKoi
+ * does not control, and libaums parses its answers with runtime exceptions
+ * on its error paths (IllegalStateException for an unknown status,
+ * IllegalArgumentException and BufferUnderflowException for a short or
+ * oversized answer). Any of them stops the write, which leaves the card
+ * without a partition table; none of them closes the app.
  */
 internal inline fun <T> onCard(operation: () -> T): T =
     try {
@@ -44,7 +51,7 @@ internal inline fun <T> onCard(operation: () -> T): T =
         throw WriteFailed(WriteFailure.LOCKED, error)
     } catch (error: IOException) {
         throw WriteFailed(WriteFailure.CARD_ERROR, error)
-    } catch (error: IllegalStateException) {
+    } catch (error: RuntimeException) {
         throw WriteFailed(WriteFailure.CARD_ERROR, error)
     }
 

@@ -8,6 +8,7 @@ import android.content.Intent
 import android.content.pm.ServiceInfo
 import android.os.IBinder
 import android.os.PowerManager
+import android.util.Log
 import androidx.annotation.StringRes
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -92,6 +93,7 @@ class WriteCardService : Service() {
             writing.written(writeCard(card, CardContent.image, writing))
             finish(R.string.write_notification_written)
         } catch (error: IOException) {
+            Log.w(CARD_LOG_TAG, "Writing the card failed", error)
             writing.failed(downloadFailure(error))
             finish(R.string.write_notification_failed)
         } finally {

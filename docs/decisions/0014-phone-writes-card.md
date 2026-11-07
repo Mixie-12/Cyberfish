@@ -49,7 +49,8 @@ driver (no root), as EtchDroid does.
   partition table it knows. It reports the last block address as the block
   count (sizes one block short, which only makes the gate stricter), and
   does not retry UNIT ATTENTION after a card is inserted (the app retries
-  once).
+  once). Its REQUEST SENSE always fails, so the app carries the fixed
+  SCSI block device (ADR 0029).
 - Its two JNI helpers (`liberrno-lib.so`, `libusb-lib.so`) are built for
   4 KB pages; Android lint warns (`Aligned16KB`). On a phone with 16 KB
   pages, Android 16 and later run the whole app in page-size compatibility
