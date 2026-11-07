@@ -48,11 +48,17 @@ fun recentIntrusions(
     now: Instant,
 ): List<Event> = events.filter { it.isIntrusion && it.srcMac !in trustedMacs && Duration.between(it.occurredAt, now) < ATTENTION_WINDOW }
 
-/** The Alerts tab badge: unseen critical and warning incidents not from a device the owner knows (ADR 0013). */
+/** Alerts to look at, newest first: unseen critical and warning incidents not from a device the owner knows (ADR 0013). */
+fun alertsToLookAt(
+    events: List<Event>,
+    trustedMacs: Set<String>,
+): List<Incident> = incidents(events).filter { !it.seen && it.severity != Severity.INFO && it.mac !in trustedMacs }
+
+/** The Alerts tab badge. */
 fun alertBadgeCount(
     events: List<Event>,
     trustedMacs: Set<String>,
-): Int = incidents(events).count { !it.seen && it.severity != Severity.INFO && it.mac !in trustedMacs }
+): Int = alertsToLookAt(events, trustedMacs).size
 
 /** The most serious of these events (Severity lists the most serious first), or null when there are none. */
 fun highestSeverity(events: List<Event>): Severity? = events.minOfOrNull { it.severity }

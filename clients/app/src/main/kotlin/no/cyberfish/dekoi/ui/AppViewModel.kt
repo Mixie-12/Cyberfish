@@ -10,6 +10,10 @@ import io.ktor.client.plugins.HttpRequestTimeoutException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.filterIsInstance
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.launch
 import no.cyberfish.dekoi.Backend
 import no.cyberfish.dekoi.Device
@@ -42,11 +46,19 @@ data class OwnerData(
 class AppViewModel(
     private val backend: Backend,
     private val pushToken: suspend () -> String?,
+    private val publishWidget: suspend (OwnerData) -> Unit,
 ) : ViewModel() {
     val session: StateFlow<SessionStatus> get() = backend.session
 
     private val owner = MutableStateFlow(OwnerData())
     val data: StateFlow<OwnerData> = owner.asStateFlow()
+
+    // The home-screen widget shows the data last loaded, and nothing once
+    // signed out. One collector, so the writes keep their order.
+    init {
+        val signedOut = session.filterIsInstance<SessionStatus.NotAuthenticated>().map { OwnerData() }
+        viewModelScope.launch { merge(owner.filter { it.loaded }, signedOut).collect { publishWidget(it) } }
+    }
 
     private val messages = MutableStateFlow<Int?>(null)
 

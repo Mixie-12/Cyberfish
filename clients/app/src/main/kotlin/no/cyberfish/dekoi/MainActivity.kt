@@ -13,11 +13,12 @@ import androidx.lifecycle.viewmodel.viewModelFactory
 import no.cyberfish.dekoi.ui.AppViewModel
 import no.cyberfish.dekoi.ui.DekoiApp
 import no.cyberfish.dekoi.ui.DekoiTheme
+import no.cyberfish.dekoi.widget.publishWidget
 
 class MainActivity : ComponentActivity() {
     private val viewModel: AppViewModel by viewModels {
         val app = application as DekoiApplication
-        viewModelFactory { initializer { AppViewModel(app.backend, app::pushToken) } }
+        viewModelFactory { initializer { AppViewModel(app.backend, app::pushToken) { publishWidget(app, it) } } }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
