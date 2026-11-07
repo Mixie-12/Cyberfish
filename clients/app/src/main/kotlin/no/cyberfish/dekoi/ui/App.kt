@@ -209,7 +209,7 @@ private fun SignedIn(
         Transitions(with(LocalDensity.current) { PUSH_DISTANCE.roundToPx() }, LocalLayoutDirection.current, reduceMotion, tabSwitch)
 
     Scaffold(
-        bottomBar = { TabBar(currentTab, alertBadgeCount(data.events, data.trustedMacs, now), ::selectTab) },
+        bottomBar = { TabBar(currentTab, alertBadgeCount(data.events, data.trustedMacs), ::selectTab) },
         snackbarHost = { SnackbarHost(snackbar) },
         containerColor = MaterialTheme.colorScheme.background,
     ) { padding ->

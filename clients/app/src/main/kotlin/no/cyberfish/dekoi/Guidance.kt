@@ -120,7 +120,6 @@ data class Threat(
 // A device that impersonates another or answers for a name. rogue_router
 // is not here: Thread border routers send router advertisements legitimately.
 private val IMPERSONATION_KINDS = setOf("arp_spoof", "rogue_dhcp", "name_poisoning")
-private val DEKOI_STATUS_KINDS = setOf("device_offline", "device_online")
 
 /**
  * How likely an incident with events of these [kinds] is a real attack. A
