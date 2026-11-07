@@ -65,6 +65,7 @@ import no.cyberfish.dekoi.ui.motion.SharedElementHost
 import no.cyberfish.dekoi.ui.motion.rememberNavTransitions
 import no.cyberfish.dekoi.ui.motion.screen
 import no.cyberfish.dekoi.ui.network.HostDetailScreen
+import no.cyberfish.dekoi.ui.network.InsightsScreen
 import no.cyberfish.dekoi.ui.network.NetworkScreen
 import no.cyberfish.dekoi.ui.network.NetworksScreen
 import no.cyberfish.dekoi.ui.onboarding.OnboardingOnce
@@ -120,6 +121,11 @@ sealed interface Route {
     /** A Learn topic by its stable id (ui/learn/LearnTopic.kt). */
     @Serializable data class LearnTopic(
         val id: String,
+    ) : Route
+
+    /** Network health, DNS, open ports and speed of one DeKoi (ADR 0015). */
+    @Serializable data class Insights(
+        val deviceId: String,
     ) : Route
 }
 
@@ -297,6 +303,19 @@ private fun SignedIn(
             }
             screen<Route.Networks> {
                 NetworksScreen(data, back)
+            }
+            screen<Route.Insights> { entry ->
+                val insights by viewModel.insights.collectAsStateWithLifecycle()
+                InsightsScreen(
+                    data,
+                    insights,
+                    now,
+                    entry.toRoute<Route.Insights>().deviceId,
+                    onLoad = viewModel::loadInsights,
+                    onSpeedTest = viewModel::setSpeedTest,
+                    onNavigate = navigate,
+                    onBack = back,
+                )
             }
             screen<Route.Dekoi> { entry ->
                 DekoiScreen(
