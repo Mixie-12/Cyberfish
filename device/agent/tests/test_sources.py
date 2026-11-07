@@ -7,6 +7,7 @@ from dekoi_agent.sources import (
     FileFollower,
     clean_text,
     parse_canary,
+    parse_samba,
     parse_scan,
     parse_suricata,
 )
@@ -70,6 +71,82 @@ def test_unparseable_time_falls_back_to_now() -> None:
     event = parse_canary(canary_line(4000, {}, utc_time="garbage"), DECOYS, NOW)
     assert event is not None
     assert event["occurred_at"] == "2027-01-15T08:00:00+00:00"
+
+
+# Lines as Samba 4.22.11 wrote them in the canary image (canary/persona/
+# smb.conf) for smbclient -L -N, smbclient -U admin%... and smbclient -N get.
+# The typed password appears nowhere in the log.
+SAMBA_SIGN_IN = (
+    '  {"timestamp": "2026-11-07T18:06:46.281521+0000", "type": "Authentication", '
+    '"Authentication": {"version": {"major": 1, "minor": 3}, "eventId": 4625, "logonId": "0", '
+    '"logonType": 3, "status": "NT_STATUS_NO_SUCH_USER", '
+    '"localAddress": "ipv4:172.30.0.2:445", "remoteAddress": "ipv4:172.30.0.3:37230", '
+    '"serviceDescription": "SMB2", "authDescription": null, "clientDomain": "WORKGROUP", '
+    '"clientAccount": "admin", "workstation": "957BFF6FB34A", "becameAccount": null, '
+    '"becameDomain": null, "becameSid": null, "mappedAccount": "admin", '
+    '"mappedDomain": "WORKGROUP", "netlogonComputer": null, "netlogonTrustAccount": null, '
+    '"netlogonNegotiateFlags": "0x00000000", "netlogonSecureChannelType": 0, '
+    '"netlogonTrustAccountSid": null, "passwordType": "NTLMv2", '
+    '"clientPolicyAccessCheck": null, "serverPolicyAccessCheck": null, "duration": 10020}}'
+)
+# smbclient -N first tries the local user name without any password.
+SAMBA_ANONYMOUS = SAMBA_SIGN_IN.replace('"admin"', '"root"').replace("NTLMv2", "No-Password")
+SAMBA_HEADER = "[2026/11/07 18:06:46.517369,  1] source3/modules/vfs_full_audit.c:637(do_log)"
+SAMBA_SHARE_LIST = "  172.30.0.3|IPC_|/tmp|connect|ok|IPC$"
+SAMBA_CONNECT = "  172.30.0.3|Public|/srv/decoy/Public|connect|ok|Public"
+SAMBA_READ = (
+    "  172.30.0.3|Public|/srv/decoy/Public|pread_recv|ok|/srv/decoy/Public/scans/passport.pdf"
+)
+
+
+def test_samba_sign_in_keeps_the_user_name() -> None:
+    assert parse_samba(SAMBA_SIGN_IN, NOW) == {
+        "occurred_at": "2026-11-07T18:06:46.281521+00:00",
+        "kind": "login_attempt",
+        "service": "smb",
+        "src_ip": "172.30.0.3",
+        "dst_port": 445,
+        "detail": {"username": "admin"},
+    }
+
+
+def test_samba_share_connection_and_file_read() -> None:
+    connection = parse_samba(SAMBA_CONNECT, NOW)
+    assert connection == {
+        "occurred_at": "2027-01-15T08:00:00+00:00",
+        "kind": "connection",
+        "service": "smb",
+        "src_ip": "172.30.0.3",
+        "dst_port": 445,
+        "detail": {"share": "Public"},
+    }
+    read = parse_samba(SAMBA_READ, NOW)
+    assert read is not None
+    assert read["kind"] == "file_access"
+    assert read["detail"] == {"share": "Public", "file": "scans/passport.pdf"}
+
+
+def test_samba_browsing_is_not_an_event() -> None:
+    for line in (SAMBA_ANONYMOUS, SAMBA_SHARE_LIST, SAMBA_HEADER, "", "  not|enough|fields"):
+        assert parse_samba(line, NOW) is None, line
+    failed = SAMBA_CONNECT.replace("|ok|", "|fail|")
+    assert parse_samba(failed, NOW) is None
+
+
+def test_samba_fields_are_bounded_and_cleaned() -> None:
+    hostile = SAMBA_SIGN_IN.replace('"admin"', json.dumps("a\x1b[31m\u202e" + "x" * 300))
+    event = parse_samba(hostile, NOW)
+    assert event is not None
+    assert event["detail"]["username"] == "a[31m" + "x" * 251
+    file_name = SAMBA_READ.replace("passport.pdf", "pass|port\u200b.pdf")
+    event = parse_samba(file_name, NOW)
+    assert event is not None
+    assert event["detail"]["file"] == "scans/pass|port.pdf"
+    assert parse_samba(SAMBA_READ.replace("172.30.0.3", "not-an-ip"), NOW) is None
+    ipv6 = SAMBA_SIGN_IN.replace("ipv4:172.30.0.3:37230", "ipv6:fe80::1%eth0:37230")
+    event = parse_samba(ipv6, NOW)
+    assert event is not None
+    assert event["src_ip"] == "fe80::1"
 
 
 def test_clean_text_removes_control_and_formatting_characters() -> None:

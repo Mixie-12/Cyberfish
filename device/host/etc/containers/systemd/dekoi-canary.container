@@ -1,6 +1,8 @@
-# The decoys. Unprivileged in every way that matters: its own user namespace
-# (an unprivileged host uid), no capabilities, read-only root filesystem, no
-# credentials, and no access to the agent's state.
+# The decoys: OpenCanary and the Samba file share (ADR 0018). Unprivileged in
+# every way that matters: its own user namespace (an unprivileged host uid),
+# no capabilities, read-only root filesystem, no credentials, and no access to
+# the agent's state. Cards written before the file share run this unit as it
+# was then, so the image must keep working with exactly these settings.
 [Unit]
 Description=DeKoi decoy services
 Wants=network-online.target

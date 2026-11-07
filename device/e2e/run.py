@@ -16,6 +16,7 @@ import base64
 import hashlib
 import hmac
 import json
+import re
 import secrets
 import subprocess
 import sys
@@ -28,7 +29,9 @@ ATTACKER_IMAGE = (
     "3f4d6b32e26703c6082839234f43769d5046b3ac7c910033911d1e71d8cd630a"
 )
 CROCKFORD = "0123456789ABCDEFGHJKMNPQRSTVWXYZ"
-DECOYS = ["ftp", "http", "mysql", "rdp", "redis", "ssh", "telnet", "vnc"]
+BAIT_FILE = "wallet-seed-backup.txt"
+DECOYS = ["ftp", "http", "mysql", "rdp", "redis", "smb", "ssh", "telnet", "vnc"]
+PERSONA = json.loads((Path(__file__).parents[1] / "canary/persona/persona.json").read_text())
 SCANNER_IP = "192.0.2.10"
 SCAN_LOG = Path("/var/log/ulog/dekoi-scan.json")
 TIMEOUT_SECONDS = 240
@@ -101,17 +104,36 @@ def wait_for(description: str, check) -> object:
 
 def attack(password: str) -> None:
     script = (
-        "apk add -q --no-progress openssh-client sshpass curl arp-scan >/dev/null"
+        "apk add -q --no-progress openssh-client sshpass curl arp-scan samba-client >/dev/null"
         f" && (sshpass -p '{password}' ssh -o StrictHostKeyChecking=no"
         " -o UserKnownHostsFile=/dev/null -o PreferredAuthentications=password"
         " -o PubkeyAuthentication=no -o ConnectTimeout=10"
         " admin@host.containers.internal true || true)"
         f" && (curl -s -o /dev/null --max-time 10 -d 'username=admin&password={password}'"
         " http://host.containers.internal/index.html || true)"
+        # Browsing the shares is not an event; signing in and opening a file are.
+        " && (smbclient -L //host.containers.internal -N >/dev/null || true)"
+        f" && (smbclient //host.containers.internal/Finance -U 'admin%{password}' -c ls"
+        " >/dev/null || true)"
+        f" && smbclient //host.containers.internal/Public -N -c 'get {BAIT_FILE} /dev/null'"
+        " && curl -sf --max-time 10 http://host.containers.internal/index.html"
+        f" | grep -qF '<title>{PERSONA['name']}</title>'"
         " && (timeout 20 arp-scan --localnet --interface=eth0 >/dev/null || true)"
     )
     # Podman, unlike Docker, does not grant NET_RAW by default; arp-scan needs it.
     run("podman", "run", "--rm", "--cap-add", "NET_RAW", ATTACKER_IMAGE, "sh", "-c", script)
+
+
+def ids_running() -> bool:
+    journal = run("journalctl", "--no-pager", "-u", "dekoi-ids.service")
+    active = subprocess.run(["systemctl", "is-active", "--quiet", "dekoi-ids.service"], check=False)
+    return active.returncode == 0 and "engine started" in journal.lower()
+
+
+def announcing() -> bool:
+    udp, tcp = run("ss", "-Hlun"), run("ss", "-Hltn")
+    bound = [re.search(rf":{port}\s", udp) for port in (137, 138, 3702, 5353)]
+    return all(bound) and re.search(r":3702\s", tcp) is not None
 
 
 def feed_port_scan() -> None:
@@ -146,17 +168,13 @@ def main() -> None:
     SCAN_LOG.parent.mkdir(parents=True, exist_ok=True)
     SCAN_LOG.touch(mode=0o644)
     run("systemctl", "daemon-reload")
-    run("systemctl", "start", "dekoi-canary.service", "dekoi-agent.service", "dekoi-ids.service")
+    units = ["dekoi-canary", "dekoi-announce", "dekoi-agent", "dekoi-ids"]
+    run("systemctl", "start", *(unit + ".service" for unit in units))
     print("ok: units started (canary healthy, agent ready)")
 
-    def ids_running() -> bool:
-        journal = run("journalctl", "--no-pager", "-u", "dekoi-ids.service")
-        active = subprocess.run(
-            ["systemctl", "is-active", "--quiet", "dekoi-ids.service"], check=False
-        )
-        return active.returncode == 0 and "engine started" in journal.lower()
-
     wait_for("IDS loaded its rules and is capturing, locked down", ids_running)
+
+    wait_for("NetBIOS, mDNS and WS-Discovery announcing, locked down", announcing)
 
     def device() -> dict:
         (row,) = backend.as_user(
@@ -189,6 +207,10 @@ def main() -> None:
 
     wait_for("SSH login attempt", lambda: seen("login_attempt", "ssh"))
     wait_for("HTTP login attempt", lambda: seen("login_attempt", "http"))
+    wait_for("web page fetched", lambda: seen("connection", "http"))
+    wait_for("file share sign-in attempt", lambda: seen("login_attempt", "smb"))
+    wait_for("file share opened", lambda: seen("connection", "smb"))
+    wait_for("bait file opened", lambda: seen("file_access", "smb"))
     wait_for("port scan", lambda: seen("port_scan"))
     wait_for("network sweep seen in ARP traffic", lambda: seen("host_scan"))
 
@@ -196,6 +218,9 @@ def main() -> None:
     logins = [e for e in rows if e["kind"] == "login_attempt"]
     assert all(e["detail"].get("username") == "admin" for e in logins), logins
     assert password not in json.dumps(rows), "a typed password reached the backend"
+    opened = [e for e in rows if e["kind"] == "file_access"]
+    expected = {"share": "Public", "file": BAIT_FILE}
+    assert all(e["detail"] == expected and e["severity"] == "critical" for e in opened), opened
     (scan,) = [e for e in rows if e["kind"] == "port_scan"]
     assert scan["src_ip"] == SCANNER_IP and scan["detail"]["ports"] == [25, 110, 139, 443, 445], (
         scan

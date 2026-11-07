@@ -46,3 +46,26 @@ the owner. The owner asked for a decoy that is the first thing anyone sees.
 - Existing cards keep their old host name and firewall until rewritten; the
   canary image change reaches them through updates, but the new firewall
   ports do not.
+
+## As built (2026-11-07)
+
+Found while building and testing; the decision above stands.
+
+- Persona `family-nas`, `device/canary/persona/`. Debian 13 ships `wsdd2`,
+  not `wsdd`: WS-Discovery metadata is on TCP 3702, not 5357; its LLMNR
+  responder is off.
+- Two containers from the canary image. `dekoi-canary` runs OpenCanary and
+  `smbd`, which must share the log volume: Podman gives it to the user of one
+  user namespace. `dekoi-announce` runs `nmbd`, `avahi-daemon` and `wsdd2`
+  with no volume at all, as the avahi user, because avahi-daemon refuses a
+  runtime directory of any other user and cannot switch users without
+  privileges. A small supervisor stops a container when one of its daemons
+  exits. Old cards run only the canary command, so nothing announces itself
+  behind their old firewall.
+- Port 5000 is a kernel redirect to the web decoy; OpenCanary's web module
+  listens on one port.
+- Failed sign-ins never become guest sessions, so Windows asks for a
+  password (a sign-in alert) instead of refusing a guest session. Clients
+  probing without any password are browsing, not signing in. A share
+  listing is a connection to a share other than `IPC$`; opening a file is a
+  read of its content.

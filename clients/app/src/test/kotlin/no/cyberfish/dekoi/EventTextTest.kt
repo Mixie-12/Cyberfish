@@ -28,6 +28,7 @@ class EventTextTest {
                 "new_host",
                 "evil_twin",
                 "new_access_point",
+                "file_access",
                 "device_offline",
                 "device_online",
             )
@@ -38,7 +39,7 @@ class EventTextTest {
 
     @Test
     fun `every decoy the device runs has a plain name`() {
-        val decoys = listOf("ftp", "http", "mysql", "rdp", "redis", "ssh", "telnet", "vnc")
+        val decoys = listOf("ftp", "http", "mysql", "rdp", "redis", "smb", "ssh", "telnet", "vnc")
         for (decoy in decoys) {
             assertNotEquals(R.string.service_other, serviceName(decoy), decoy)
         }
@@ -47,6 +48,7 @@ class EventTextTest {
     @Test
     fun `decoy events name the decoy and device events do not`() {
         assertEquals(R.string.service_ssh, eventText(event("login_attempt", "ssh")).service)
+        assertEquals(R.string.service_file_share, eventText(event("file_access", "smb")).service)
         assertNull(eventText(event("device_offline")).service)
         assertNull(eventText(event("port_scan")).service)
     }
