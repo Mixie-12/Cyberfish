@@ -138,6 +138,11 @@ Needs hardware, not verified: the card writer with a real USB card reader;
 the decoy in Windows Explorer and Finder on the owner's LAN; the Wi-Fi
 watch against a real evil twin; the Pi running the new images after its
 nightly update (after v0.2.0); the ARP sweep from a wired PC.
+The card writer needs a phone: on macOS the emulator (37.2.13) cannot take
+a USB card reader from the system driver. `-qemu -device usb-host,...`
+fails with "Service authorization failed", because the emulator lacks the
+`com.apple.vm.device-access` entitlement; `-usb-passthrough` is accepted
+but does nothing (tested 2026-11-07, Genesys 05e3:0749).
 
 ## Owner actions, in order
 
