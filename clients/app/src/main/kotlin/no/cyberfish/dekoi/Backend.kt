@@ -69,6 +69,8 @@ class Backend(
 
     suspend fun hosts(): List<NetworkHost> = client.from("network_hosts").select { order("first_seen_at", Order.DESCENDING) }.decodeList()
 
+    suspend fun networks(): List<Network> = client.from("networks").select { order("cidr", Order.ASCENDING) }.decodeList()
+
     suspend fun rename(
         device: Device,
         name: String,

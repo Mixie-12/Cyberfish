@@ -15,6 +15,7 @@ import no.cyberfish.dekoi.Backend
 import no.cyberfish.dekoi.Device
 import no.cyberfish.dekoi.Event
 import no.cyberfish.dekoi.GoogleIdToken
+import no.cyberfish.dekoi.Network
 import no.cyberfish.dekoi.NetworkHost
 import no.cyberfish.dekoi.R
 import no.cyberfish.dekoi.shared.ClaimCode
@@ -24,6 +25,7 @@ data class OwnerData(
     val devices: List<Device> = emptyList(),
     val events: List<Event> = emptyList(),
     val hosts: List<NetworkHost> = emptyList(),
+    val networks: List<Network> = emptyList(),
     val loaded: Boolean = false,
 ) {
     val trustedMacs: Set<String> get() = hosts.filter { it.trusted }.map { it.mac }.toSet()
@@ -70,13 +72,13 @@ class AppViewModel(
 
     fun refresh() =
         run {
-            owner.value = OwnerData(backend.devices(), backend.events(), backend.hosts(), loaded = true)
+            owner.value = load()
         }
 
     fun signIn(token: GoogleIdToken) =
         run {
             backend.signInWithGoogle(token.idToken, token.rawNonce)
-            owner.value = OwnerData(backend.devices(), backend.events(), backend.hosts(), loaded = true)
+            owner.value = load()
         }
 
     /** Claims the code; onDone receives the message to show. */
@@ -112,7 +114,7 @@ class AppViewModel(
     fun remove(device: Device) =
         run {
             backend.remove(device)
-            owner.value = OwnerData(backend.devices(), backend.events(), backend.hosts(), loaded = true)
+            owner.value = load()
         }
 
     fun setTrusted(
@@ -136,6 +138,8 @@ class AppViewModel(
             backend.deleteAccount()
             owner.value = OwnerData()
         }
+
+    private suspend fun load() = OwnerData(backend.devices(), backend.events(), backend.hosts(), backend.networks(), loaded = true)
 
     private fun run(block: suspend () -> Unit) {
         viewModelScope.launch {
