@@ -17,6 +17,7 @@ DropCapability=all
 AddCapability=NET_RAW
 Tmpfs=/tmp
 Volume=dekoi-agent-state:/var/lib/dekoi-agent:U
+Volume=dekoi-ids-socket:/run/dekoi-ids:U
 Volume=dekoi-canary-log:/var/log/opencanary:ro
 Volume=/var/log/ulog:/var/log/ulog:ro
 Volume=/etc/dekoi/claim-code:/etc/dekoi/claim-code:ro

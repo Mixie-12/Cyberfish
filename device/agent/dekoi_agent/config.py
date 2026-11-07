@@ -13,6 +13,7 @@ class Config:
     claim_code_path: Path
     canary_log: Path
     scan_log: Path
+    ids_socket: Path
     decoy_config: Path
 
     @classmethod
@@ -38,5 +39,6 @@ class Config:
             claim_code_path=Path(env.get("DEKOI_CLAIM_CODE", "/etc/dekoi/claim-code")),
             canary_log=Path(env.get("DEKOI_CANARY_LOG", "/var/log/opencanary/opencanary.log")),
             scan_log=Path(env.get("DEKOI_SCAN_LOG", "/var/log/ulog/dekoi-scan.json")),
+            ids_socket=Path(env.get("DEKOI_IDS_SOCKET", "/run/dekoi-ids/eve.sock")),
             decoy_config=Path(env.get("DEKOI_DECOY_CONFIG", "/usr/share/dekoi/opencanary.conf")),
         )

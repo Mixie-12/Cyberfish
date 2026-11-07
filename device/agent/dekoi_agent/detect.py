@@ -7,6 +7,10 @@ SCAN_MIN_PORTS = 5
 MAX_REPORTED_PORTS = 64
 MAX_TRACKED_SOURCES = 4096
 COLLAPSE_SECONDS = 60
+# Conditions that persist rather than happen once: one alert, then an hourly
+# count while they continue.
+LONG_COLLAPSE_SECONDS = 60 * 60
+PERSISTENT_KINDS = {"arp_spoof", "rogue_dhcp", "rogue_router", "name_poisoning"}
 
 
 class ScanDetector:
@@ -58,7 +62,10 @@ class Collapser:
         key = (event["kind"], event.get("service"), event.get("src_ip"))
         window = self._windows.get(key)
         if window is None:
-            self._windows[key] = {"until": at + COLLAPSE_SECONDS, "repeats": 0, "event": event}
+            length = (
+                LONG_COLLAPSE_SECONDS if event["kind"] in PERSISTENT_KINDS else COLLAPSE_SECONDS
+            )
+            self._windows[key] = {"until": at + length, "repeats": 0, "event": event}
             return event
         window["repeats"] += event.get("count", 1)
         return None

@@ -7,6 +7,8 @@ captured passwords are never read.
 
 import ipaddress
 import json
+import os
+import socket
 import unicodedata
 from datetime import UTC, datetime
 from pathlib import Path
@@ -41,6 +43,10 @@ CANARY_DETAIL = {
 }
 
 SCAN_PREFIX = "dekoi-scan"
+
+# Suricata severity: 1 high, 2 medium, 3 low. Low-severity alerts are mostly
+# informational and stay on the device.
+MAX_IDS_SEVERITY = 2
 
 # Unicode categories removed from attacker text: control, format (zero-width,
 # bidirectional overrides), surrogate, private use, unassigned, and line and
@@ -128,6 +134,79 @@ def parse_scan(line: str) -> tuple[float, str, str | None, int] | None:
         return None
     mac = record.get("mac.saddr.str")
     return float(at), src_ip, mac if isinstance(mac, str) else None, port
+
+
+def parse_suricata(line: str, own_ips: set[str]) -> dict | None:
+    """Turn one Suricata EVE JSON line into an ids_alert event, or None.
+
+    Only rule metadata is kept (written by the ruleset authors); payload
+    excerpts never leave the device. Alerts caused by DeKoi itself are
+    ignored.
+    """
+    try:
+        record = json.loads(line)
+    except ValueError:
+        return None
+    if not isinstance(record, dict) or record.get("event_type") != "alert":
+        return None
+    alert = record.get("alert")
+    src_ip = valid_ip(record.get("src_ip"))
+    if not isinstance(alert, dict) or src_ip is None or src_ip in own_ips:
+        return None
+    severity = alert.get("severity")
+    signature_id = alert.get("signature_id")
+    if not isinstance(severity, int) or not 1 <= severity <= MAX_IDS_SEVERITY:
+        return None
+    detail = {"severity": severity}
+    if isinstance(signature_id, int) and 0 <= signature_id < 10**10:
+        detail["signature_id"] = signature_id
+    for field in ("signature", "category"):
+        value = alert.get(field)
+        text = clean_text(value) if isinstance(value, str) else ""
+        if text:
+            detail[field] = text
+    event = {
+        "occurred_at": _suricata_time(record.get("timestamp")),
+        "kind": "ids_alert",
+        "src_ip": src_ip,
+        "dst_port": valid_port(record.get("dest_port")),
+        "detail": detail,
+    }
+    return {key: value for key, value in event.items() if value is not None}
+
+
+def _suricata_time(value: object) -> str | None:
+    try:
+        return datetime.strptime(str(value), "%Y-%m-%dT%H:%M:%S.%f%z").isoformat()
+    except ValueError:
+        return None
+
+
+class DatagramInbox:
+    """A Unix datagram socket that Suricata sends its EVE records to.
+
+    Suricata connects to it and reconnects when it reappears, so alerts
+    need no log file and nothing has to be rotated. Records that arrive
+    while the agent restarts are lost.
+    """
+
+    def __init__(self, path: Path) -> None:
+        path.unlink(missing_ok=True)
+        self.sock = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)
+        self.sock.bind(str(path))
+        # Suricata runs as another unprivileged user and only needs to write.
+        # Only the agent and IDS containers mount this volume.
+        os.chmod(path, 0o622)  # noqa: S103
+        self.sock.setblocking(False)
+
+    def read_lines(self, limit: int = 1000) -> list[str]:
+        lines = []
+        for _ in range(limit):
+            try:
+                lines.append(self.sock.recv(MAX_LINE_BYTES).decode("utf-8", "replace"))
+            except BlockingIOError:
+                break
+        return lines
 
 
 class FileFollower:

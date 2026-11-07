@@ -1,7 +1,15 @@
 import json
+import socket
 from pathlib import Path
 
-from dekoi_agent.sources import FileFollower, clean_text, parse_canary, parse_scan
+from dekoi_agent.sources import (
+    DatagramInbox,
+    FileFollower,
+    clean_text,
+    parse_canary,
+    parse_scan,
+    parse_suricata,
+)
 
 DECOYS = {22: "ssh", 80: "http"}
 NOW = 1_800_000_000.0
@@ -113,3 +121,61 @@ def test_follower_handles_rotation_and_truncation(tmp_path: Path) -> None:
 def test_follower_waits_for_a_missing_file(tmp_path: Path) -> None:
     follower = FileFollower(tmp_path / "missing.log", None)
     assert follower.read_lines() == []
+
+
+def suricata_line(severity: int = 2, src_ip: str = "192.168.1.66", **alert: object) -> str:
+    record = {
+        "timestamp": "2026-11-07T10:00:00.123456+0000",
+        "event_type": "alert",
+        "src_ip": src_ip,
+        "src_port": 51234,
+        "dest_ip": "192.168.1.20",
+        "dest_port": 445,
+        "payload_printable": "secret payload",
+        "alert": {
+            "signature_id": 2010937,
+            "signature": "ET SCAN Suspicious inbound to mySQL port 3306",
+            "category": "Potentially Bad Traffic",
+            "severity": severity,
+        }
+        | alert,
+    }
+    return json.dumps(record)
+
+
+def test_suricata_alert_keeps_rule_metadata_only() -> None:
+    event = parse_suricata(suricata_line(), {"192.168.1.20"})
+    assert event == {
+        "occurred_at": "2026-11-07T10:00:00.123456+00:00",
+        "kind": "ids_alert",
+        "src_ip": "192.168.1.66",
+        "dst_port": 445,
+        "detail": {
+            "severity": 2,
+            "signature_id": 2010937,
+            "signature": "ET SCAN Suspicious inbound to mySQL port 3306",
+            "category": "Potentially Bad Traffic",
+        },
+    }
+    assert "secret payload" not in json.dumps(event)
+
+
+def test_suricata_low_severity_own_traffic_and_other_records_are_ignored() -> None:
+    assert parse_suricata(suricata_line(severity=3), set()) is None
+    assert parse_suricata(suricata_line(src_ip="192.168.1.20"), {"192.168.1.20"}) is None
+    assert (
+        parse_suricata(json.dumps({"event_type": "flow", "src_ip": "192.168.1.66"}), set()) is None
+    )
+    assert parse_suricata("not json", set()) is None
+
+
+def test_datagram_inbox_receives_what_suricata_sends(tmp_path: Path) -> None:
+    path = tmp_path / "eve.sock"
+    inbox = DatagramInbox(path)
+    assert inbox.read_lines() == []
+    with socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM) as sender:
+        sender.connect(str(path))
+        sender.send(b'{"event_type": "alert"}')
+        sender.send(b'{"event_type": "flow"}')
+    assert inbox.read_lines() == ['{"event_type": "alert"}', '{"event_type": "flow"}']
+    assert path.stat().st_mode & 0o777 == 0o622

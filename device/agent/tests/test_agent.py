@@ -19,6 +19,8 @@ class FakeBackend:
     def __init__(self) -> None:
         self.calls: list[tuple[str, dict]] = []
         self.outcomes: dict[str, list[object]] = {}
+        self.poisoners: list[tuple[str, str]] = []
+        self.dhcp_servers: set[str] = {"192.168.1.1"}
 
     def __call__(self, config: Config, function: str, arguments: dict) -> object:
         self.calls.append((function, arguments))
@@ -30,6 +32,22 @@ class FakeBackend:
 
     def called(self, function: str) -> list[dict]:
         return [arguments for name, arguments in self.calls if name == function]
+
+
+class FakeListeners:
+    """Raw sockets need privileges; the tests feed frames directly."""
+
+    def __init__(self) -> None:
+        self.frames: list[bytes] = []
+        self.advertisements: list[tuple[str, str]] = []
+
+    def arp_frames(self) -> list[bytes]:
+        frames, self.frames = self.frames, []
+        return frames
+
+    def router_advertisements(self) -> list[tuple[str, str]]:
+        found, self.advertisements = self.advertisements, []
+        return found
 
 
 class Clock:
@@ -52,6 +70,7 @@ def config(tmp_path: Path) -> Config:
         claim_code_path=tmp_path / "claim-code",
         canary_log=tmp_path / "canary.log",
         scan_log=tmp_path / "scan.json",
+        ids_socket=tmp_path / "eve.sock",
         decoy_config=CANARY_CONFIG,
     )
 
@@ -64,6 +83,14 @@ def backend(monkeypatch: pytest.MonkeyPatch) -> FakeBackend:
     monkeypatch.setattr(agent_module.inventory, "local_ip", lambda: "192.168.1.20")
     monkeypatch.setattr(agent_module.inventory, "mac_for", lambda ip: None)
     monkeypatch.setattr(agent_module.inventory, "scan_hosts", lambda: [])
+    monkeypatch.setattr(
+        agent_module.inventory, "scan_target", lambda address: ("eth0", "192.168.1.0/24")
+    )
+    monkeypatch.setattr(agent_module.lan, "own_macs", lambda: {"dc:a6:32:00:00:01"})
+    monkeypatch.setattr(agent_module.lan, "default_gateway", lambda: "192.168.1.1")
+    monkeypatch.setattr(agent_module.lan, "interface_mac", lambda interface: "dc:a6:32:00:00:01")
+    monkeypatch.setattr(agent_module.lan, "probe_name_poisoning", lambda: fake.poisoners)
+    monkeypatch.setattr(agent_module.lan, "probe_dhcp_servers", lambda mac: fake.dhcp_servers)
     return fake
 
 
@@ -84,7 +111,7 @@ def test_registration_waits_for_the_claim_and_keeps_its_secret(
 ) -> None:
     clock = Clock()
     backend.outcomes["device_register_v1"] = [api.ApiError(403, "refused"), "device-1"]
-    agent = Agent(config, State(), clock)
+    agent = Agent(config, State(), clock, FakeListeners())
 
     agent.tick()
     assert agent.state.device_id is None
@@ -103,7 +130,7 @@ def test_registration_waits_for_the_claim_and_keeps_its_secret(
 
 
 def test_events_are_delivered_without_passwords(config: Config, backend: FakeBackend) -> None:
-    agent = Agent(config, State(device_id="device-1", secret="a" * 64), Clock())
+    agent = Agent(config, State(device_id="device-1", secret="a" * 64), Clock(), FakeListeners())
     agent.tick()
     config.canary_log.write_text(ssh_attempt() + "\n")
     agent.tick()
@@ -122,7 +149,7 @@ def test_backend_outage_keeps_events_and_malformed_batches_are_dropped(
 ) -> None:
     clock = Clock()
     backend.outcomes["device_events_v1"] = [api.ApiError(503, "down"), api.ApiError(400, "bad")]
-    agent = Agent(config, State(device_id="device-1", secret="a" * 64), clock)
+    agent = Agent(config, State(device_id="device-1", secret="a" * 64), clock, FakeListeners())
     agent.tick()
     config.canary_log.write_text(ssh_attempt() + "\n")
 
@@ -137,7 +164,7 @@ def test_backend_outage_keeps_events_and_malformed_batches_are_dropped(
 
 
 def test_heartbeat_reports_running_decoys(config: Config, backend: FakeBackend) -> None:
-    agent = Agent(config, State(device_id="device-1", secret="a" * 64), Clock())
+    agent = Agent(config, State(device_id="device-1", secret="a" * 64), Clock(), FakeListeners())
     agent.tick()
     (heartbeat,) = backend.called("device_heartbeat_v1")
     assert heartbeat == {
@@ -147,3 +174,26 @@ def test_heartbeat_reports_running_decoys(config: Config, backend: FakeBackend) 
         "services": ["http", "ssh"],
         "local_ip": "192.168.1.20",
     }
+
+
+def test_network_findings_are_delivered(config: Config, backend: FakeBackend) -> None:
+    listeners = FakeListeners()
+    clock = Clock()
+    agent = Agent(config, State(device_id="device-1", secret="a" * 64), clock, listeners)
+    agent.tick()
+    assert agent.state.dhcp_servers == ["192.168.1.1"], "the first DHCP server is learned"
+
+    listeners.advertisements = [("fe80::1", "aa:bb:cc:00:00:01")]
+    agent.tick()
+    assert agent.state.routers == ["aa:bb:cc:00:00:01"], "the first router is learned"
+
+    backend.poisoners = [("192.168.1.66", "llmnr")]
+    backend.dhcp_servers = {"192.168.1.1", "192.168.1.66"}
+    listeners.advertisements = [("fe80::66", "3c:22:fb:00:00:66")]
+    clock.now += 15 * 60
+    agent.tick()
+    clock.now += 1
+    agent.tick()
+
+    kinds = [e["kind"] for call in backend.called("device_events_v1") for e in call["events"]]
+    assert sorted(kinds) == ["name_poisoning", "rogue_dhcp", "rogue_router"]

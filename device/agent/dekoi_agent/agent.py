@@ -6,11 +6,11 @@ import subprocess
 import time
 from collections.abc import Callable
 
-from . import api, inventory
+from . import api, inventory, lan
 from .config import Config
 from .decoys import listening_ports, load_decoys, running_services
 from .detect import Collapser, ScanDetector
-from .sources import FileFollower, parse_canary, parse_scan
+from .sources import DatagramInbox, FileFollower, iso_time, parse_canary, parse_scan, parse_suricata
 from .state import State
 
 log = logging.getLogger(__name__)
@@ -18,6 +18,7 @@ log = logging.getLogger(__name__)
 BATCH_SIZE = 200
 HEARTBEAT_SECONDS = 60
 INVENTORY_SECONDS = 15 * 60
+PROBE_SECONDS = 15 * 60
 REGISTER_SECONDS = 30
 MAX_BACKOFF_SECONDS = 5 * 60
 REMOVED_BACKOFF_SECONDS = 60 * 60
@@ -44,19 +45,29 @@ class Schedule:
 
 
 class Agent:
-    def __init__(self, config: Config, state: State, clock: Callable[[], float] = time.time):
+    def __init__(
+        self,
+        config: Config,
+        state: State,
+        clock: Callable[[], float] = time.time,
+        listeners: lan.Listeners | None = None,
+    ):
         self.config = config
         self.state = state
         self.clock = clock
         self.decoys = load_decoys(config.decoy_config)
         self.canary = FileFollower(config.canary_log, _position(state, "canary"))
         self.scans = FileFollower(config.scan_log, _position(state, "scan"))
+        self.ids = DatagramInbox(config.ids_socket)
+        self.listeners = listeners or lan.Listeners()
+        self.arp = lan.ArpMonitor(lan.own_macs(), lan.default_gateway())
         self.detector = ScanDetector()
         self.collapser = Collapser()
         self.register_schedule = Schedule(REGISTER_SECONDS)
         self.send_schedule = Schedule(0)
         self.heartbeat_schedule = Schedule(HEARTBEAT_SECONDS)
         self.inventory_schedule = Schedule(INVENTORY_SECONDS)
+        self.probe_schedule = Schedule(PROBE_SECONDS)
 
     def tick(self) -> None:
         at = self.clock()
@@ -71,32 +82,108 @@ class Agent:
             self.heartbeat(at)
         if self.inventory_schedule.ready(at):
             self.inventory(at)
+        if self.probe_schedule.ready(at):
+            self.probe(at)
 
     def collect(self, at: float) -> None:
-        events = self.collapser.flush(at)
-        for line in self.canary.read_lines():
-            event = parse_canary(line, self.decoys, at)
-            if event and "src_mac" not in event:
-                mac = inventory.mac_for(event["src_ip"])
-                if mac:
-                    event["src_mac"] = mac
-            if event and (kept := self.collapser.observe(at, event)):
-                events.append(kept)
-        for line in self.scans.read_lines():
-            probe = parse_scan(line)
-            event = self.detector.observe(*probe) if probe else None
-            if event and (kept := self.collapser.observe(at, event)):
-                events.append(kept)
-        self.detector.expire(at)
-        positions = {"canary": self.canary.position, "scan": self.scans.position}
-        positions = {name: list(p) for name, p in positions.items() if p is not None}
+        events = self.collapser.flush(at) + self._keep(at, self._observe(at))
+        followers = {"canary": self.canary, "scan": self.scans}
+        positions = {
+            name: list(f.position) for name, f in followers.items() if f.position is not None
+        }
         if not events and positions == self.state.positions:
             return
         self.state.positions = positions
+        self._enqueue(events)
+
+    def _observe(self, at: float) -> list[dict]:
+        """Everything the passive sources noticed since the last tick."""
+        found = [
+            e for line in self.canary.read_lines() if (e := parse_canary(line, self.decoys, at))
+        ]
+        for line in self.scans.read_lines():
+            probe = parse_scan(line)
+            if probe and (event := self.detector.observe(*probe)):
+                found.append(event)
+        self.detector.expire(at)
+        own_ips = {address for address in [inventory.local_ip()] if address}
+        found += [e for line in self.ids.read_lines() if (e := parse_suricata(line, own_ips))]
+        for frame in self.listeners.arp_frames():
+            arp = lan.parse_arp(frame)
+            if arp:
+                found += self.arp.observe(at, arp)
+        advertisements = self.listeners.router_advertisements()
+        if advertisements:
+            found += self._rogue_routers(at, advertisements)
+        return found
+
+    def _rogue_routers(self, at: float, advertisements: list[tuple[str, str]]) -> list[dict]:
+        known, new = lan.newcomers(self.state.routers, {mac for _, mac in advertisements}, None)
+        if known != self.state.routers:
+            self.state.routers = known
+            self.save()
+        return [
+            {
+                "occurred_at": iso_time(at),
+                "kind": "rogue_router",
+                "src_ip": ip,
+                "src_mac": mac,
+                "detail": {"protocol": "ra"},
+            }
+            for ip, mac in advertisements
+            if mac in new
+        ]
+
+    def _keep(self, at: float, found: list[dict]) -> list[dict]:
+        """Adds the hardware address where the kernel knows it, then collapses repeats."""
+        kept = []
+        for event in found:
+            if "src_mac" not in event and "src_ip" in event:
+                mac = inventory.mac_for(event["src_ip"])
+                if mac:
+                    event["src_mac"] = mac
+            if first := self.collapser.observe(at, event):
+                kept.append(first)
+        return kept
+
+    def _enqueue(self, events: list[dict]) -> None:
         dropped = self.state.enqueue(events)
         if dropped:
             log.warning("queue full, dropped %d oldest events", dropped)
         self.save()
+
+    def probe(self, at: float) -> None:
+        """Active checks: name poisoning and rogue DHCP servers."""
+        found = []
+        try:
+            found += [
+                {
+                    "occurred_at": iso_time(at),
+                    "kind": "name_poisoning",
+                    "src_ip": ip,
+                    "detail": {"protocol": protocol},
+                }
+                for ip, protocol in lan.probe_name_poisoning()
+            ]
+            address = inventory.local_ip()
+            target = inventory.scan_target(address) if address else None
+            if target:
+                servers = lan.probe_dhcp_servers(lan.interface_mac(target[0]))
+                known, new = lan.newcomers(self.state.dhcp_servers, servers, lan.default_gateway())
+                self.state.dhcp_servers = known
+                found += [
+                    {
+                        "occurred_at": iso_time(at),
+                        "kind": "rogue_dhcp",
+                        "src_ip": server,
+                        "detail": {"server_ip": server, "protocol": "dhcp"},
+                    }
+                    for server in new
+                ]
+        except OSError as error:
+            log.warning("network probe failed: %s", error)
+        self.probe_schedule.succeeded(at)
+        self._enqueue(self._keep(at, found))
 
     def register(self, at: float) -> None:
         try:

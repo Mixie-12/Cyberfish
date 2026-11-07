@@ -15,6 +15,9 @@ class State:
     next_event_id: int = 1
     positions: dict[str, list[int]] = field(default_factory=dict)
     queue: list[dict] = field(default_factory=list)
+    # Learned legitimate infrastructure (lan.newcomers).
+    dhcp_servers: list[str] = field(default_factory=list)
+    routers: list[str] = field(default_factory=list)
 
     @classmethod
     def load(cls, path: Path) -> "State":

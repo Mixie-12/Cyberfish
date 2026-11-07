@@ -31,3 +31,6 @@ Thumbs.db
 
 # JVM heap dumps
 *.hprof
+
+# Claude Code agent worktrees
+.claude/worktrees/
