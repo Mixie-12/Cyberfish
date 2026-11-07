@@ -74,6 +74,11 @@ jobs:
         working-directory: backend
     env:
       SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      # Until the access token has the Database read-write permission
+      # (docs/runbooks/rotate-keys.md), the CLI cannot create its temporary
+      # login role and connects with the password. Remove this line and the
+      # secret together once the new token is set.
+      SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
       SUPABASE_ENV: production
       PROJECT_REF: ${{ vars.SUPABASE_PROJECT_REF }}
       # Written to Vault by `supabase db push` ([db.vault] in config.toml).
