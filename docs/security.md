@@ -81,8 +81,10 @@ validates first.
 Storage: no backups or device transfers of app data; session in app-private
 storage. Crypto: platform TLS, system CAs only. Auth: Credential Manager with
 nonce. Network: cleartext forbidden in release. Platform: no exported components
-except the launcher; no WebView. Code: R8 in release, lint clean, dependencies
-pinned. Resilience: out of MVP scope.
+except the launcher; no WebView; confirmations that delete data hide other
+apps' overlays (Android 12+) and ignore touches through them (**pending**).
+Code: R8 in release, lint clean, dependencies pinned. Resilience: out of MVP
+scope.
 
 ## Known limitations
 
