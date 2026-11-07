@@ -10,7 +10,7 @@ from dekoi_agent.lan import (
     nbns_has_answer,
     newcomers,
     parse_arp,
-    router_advertisement_mac,
+    parse_router_advertisement,
 )
 
 T = 1_800_000_000.0
@@ -87,13 +87,27 @@ def test_an_address_reused_after_its_owner_left_is_not_spoofing() -> None:
     assert monitor.observe(T + 10 * 60 + 1, (2, "aa:bb:cc:00:00:03", "192.168.1.50", GATEWAY)) == []
 
 
-def test_router_advertisement_source_address() -> None:
+def prefix_option(prefix: str, length: int, valid: int = 86400) -> bytes:
+    header = struct.pack("!BBBBIII", 3, 4, length, 0xC0, valid, valid // 2, 0)
+    return header + socket.inet_pton(socket.AF_INET6, prefix)
+
+
+def test_router_advertisement_source_address_and_prefixes() -> None:
     advertisement = bytes([134, 0, 0, 0, 64, 0, 0x07, 0x08]) + b"\x00" * 8
     advertisement += bytes([5, 1, 0, 0, 0, 0, 0x05, 0xDC])
     advertisement += bytes([1, 1]) + mac_bytes(GATEWAY_MAC)
-    assert router_advertisement_mac(advertisement) == GATEWAY_MAC
-    assert router_advertisement_mac(bytes([135]) + advertisement[1:]) is None
-    assert router_advertisement_mac(advertisement[:16] + bytes([1, 0])) is None
+    advertisement += prefix_option("2001:db8:1:2::", 64)
+    advertisement += prefix_option("fd12:3456:789a:1::", 64)
+    advertisement += prefix_option("2001:db8:dead::", 64, valid=0)
+    advertisement += prefix_option("fe80::", 64)
+    assert parse_router_advertisement(advertisement) == (
+        GATEWAY_MAC,
+        ["2001:db8:1:2::/64", "fd12:3456:789a:1::/64"],
+    )
+    assert parse_router_advertisement(bytes([135]) + advertisement[1:]) is None
+    assert parse_router_advertisement(advertisement[:16] + bytes([1, 0])) is None
+    assert parse_router_advertisement(advertisement[:16] + prefix_option("2001:db8::", 64)) is None
+    assert parse_router_advertisement(advertisement[:-4]) is None, "truncated option"
 
 
 def test_dhcp_offer_server_identifier() -> None:
@@ -107,7 +121,7 @@ def test_dhcp_offer_server_identifier() -> None:
 
 
 def test_poisoning_answers_are_recognised() -> None:
-    query = _dns_query("backup-1234", 0x4242)
+    query = _dns_query("backup-1234", 0x4242, 1)
     assert len(query) == 12 + 1 + len("backup-1234") + 1 + 4
     answer = struct.pack("!HHHHHH", 0x4242, 0x8000, 1, 1, 0, 0) + query[12:]
     assert dns_has_answer(answer, 0x4242)
