@@ -21,12 +21,23 @@ plug-and-play.
 Three layers, each off the shelf where something exists:
 
 1. Decoys: OpenCanary (ADR 0001). Any touch is a strong signal.
-2. IDS: Suricata in its own container, with the Emerging Threats Open ruleset
-   updated by `suricata-update`, on the host interface. It inspects everything
-   that reaches the box: scans of every kind, exploit attempts against the
-   decoys, known malware behaviour. Its EVE JSON alerts become events. If the
-   owner later connects DeKoi to a mirror port, the same setup inspects the
-   whole network; that is a later option, not the default.
+2. IDS: Suricata in its own container (`dekoi-ids`) on the host interface,
+   with the Emerging Threats Open ruleset. It inspects everything that
+   reaches the box: scans of every kind, exploit attempts against the
+   decoys, known malware behaviour. If the owner later connects DeKoi to a
+   mirror port, the same setup inspects the whole network; that is a later
+   option, not the default.
+   - The ruleset is fetched and tested with `suricata -T` at image build
+     time, so rules reach devices through the signed image (ADR 0004) and
+     roll back like any update. The weekly rebuild keeps them current.
+   - Alerts go to a Unix datagram socket the agent owns, not to a file:
+     no SD-card wear and nothing to rotate. Suricata reconnects by itself.
+   - Runs as uid 10003 with only CAP_NET_RAW and CAP_NET_ADMIN, read-only
+     root, 1 GB memory limit. Only alerts of high and medium severity become
+     events, and only rule metadata, never payload.
+   - Modbus and DNP3 rules are disabled: their parsers are off, those
+     protocols do not occur on home networks, and enabling them would only
+     add attack surface.
 3. LAN watchers in the agent, for attacks Suricata does not cover, using a raw
    packet socket the agent already has (CAP_NET_RAW) and plain sockets:
    - ARP: network sweeps (one host asking for many addresses), spoofing (an
@@ -45,8 +56,10 @@ device API accepts the new kinds additively; old agents are unaffected.
 ## Consequences
 
 - Suricata needs memory: Raspberry Pi 4 with 2 GB is the minimum, 4 GB
-  recommended. The ruleset updates daily from inside the container, so it does
-  not wait for an image release.
+  recommended. Rules are at most a week old.
+- The end-to-end test covers the IDS starting locked down under real Podman
+  and the ARP sweep detector; alert delivery over the socket is covered by
+  unit tests. A live alert is verified on hardware.
 - Suricata alerts carry rule text written by the ruleset authors, not by the
   attacker; payload excerpts are never sent to the backend.
 - Routers that sweep their own network for discovery will trigger the sweep

@@ -71,6 +71,10 @@ write_files:
     permissions: "0644"
     defer: true
     content: !file host/etc/containers/systemd/dekoi-agent.container
+  - path: /etc/containers/systemd/dekoi-ids.container
+    permissions: "0644"
+    defer: true
+    content: !file host/etc/containers/systemd/dekoi-ids.container
   - path: /etc/nftables.conf
     permissions: "0755"
     defer: true
@@ -113,4 +117,4 @@ runcmd:
   - [systemctl, restart, ulogd2.service, systemd-journald.service]
   - [systemctl, enable, systemd-time-wait-sync.service]
   - [systemctl, enable, --now, podman-auto-update.timer]
-  - [systemctl, start, dekoi-canary.service, dekoi-agent.service]
+  - [systemctl, start, dekoi-canary.service, dekoi-agent.service, dekoi-ids.service]

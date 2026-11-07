@@ -1,0 +1,30 @@
+# Suricata (ADR 0003). Captures with CAP_NET_RAW and CAP_NET_ADMIN on the host
+# network and nothing else; runs as uid 10003 with a read-only root, writes no
+# files, and sends alerts to the agent's socket.
+[Unit]
+Description=DeKoi intrusion detection
+Wants=network-online.target
+After=network-online.target dekoi-agent.service
+
+[Container]
+ContainerName=dekoi-ids
+Image=ghcr.io/mixie-12/dekoi-ids:stable
+AutoUpdate=registry
+Network=host
+ReadOnly=true
+NoNewPrivileges=true
+DropCapability=all
+AddCapability=NET_RAW NET_ADMIN
+Tmpfs=/tmp
+Volume=dekoi-ids-socket:/run/dekoi-ids
+# Leave memory for the decoys and the agent on a 2 GB board.
+PodmanArgs=--memory=1g
+
+[Service]
+Restart=always
+RestartSec=30
+# The first start pulls the image; loading the ruleset takes a minute.
+TimeoutStartSec=900
+
+[Install]
+WantedBy=multi-user.target
