@@ -134,7 +134,7 @@ def parse_mdns(message: bytes, source: bytes) -> list[Fact]:
     if not flags & 0x8000:
         return []
     try:
-        records = _dns_records(message, questions, answers + authority + additional)
+        records = dns_records(message, questions, answers + authority + additional)
         facts = [fact for record in records for fact in _mdns_facts(message, *record)]
     except ValueError:
         return []
@@ -143,7 +143,7 @@ def parse_mdns(message: bytes, source: bytes) -> list[Fact]:
     return facts
 
 
-def _dns_records(message: bytes, questions: int, count: int) -> list[tuple[str, int, int, int]]:
+def dns_records(message: bytes, questions: int, count: int) -> list[tuple[str, int, int, int]]:
     """(owner, type, data start, data end) of each resource record."""
     offset = 12
     for _ in range(min(questions, MAX_DNS_RECORDS)):
@@ -236,9 +236,9 @@ def _txt_models(data: bytes) -> list[str]:
 
 
 def parse_ssdp(message: bytes) -> list[Fact]:
-    """Device and service types and the server string of SSDP announcements
-    and search responses. Searches by others say what they look for, not
-    what they are, and are ignored."""
+    """Device and service types, the server string and the description URL
+    of SSDP announcements and search responses. Searches by others say what
+    they look for, not what they are, and are ignored."""
     lines = message.decode("utf-8", "replace").split("\r\n")[:MAX_SSDP_LINES]
     if not lines[0].startswith(("NOTIFY * ", "HTTP/1.1 200")):
         return []
@@ -248,6 +248,8 @@ def parse_ssdp(message: bytes) -> list[Fact]:
         name, value = name.strip().upper(), value.strip()
         if (name in ("NT", "ST") and value.lower().startswith("urn:")) or name == "SERVER":
             facts.append(("upnp", value))
+        elif name == "LOCATION":
+            facts.append(("location", value))
     return facts
 
 

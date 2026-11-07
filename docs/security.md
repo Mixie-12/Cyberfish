@@ -18,6 +18,7 @@ date recorded in `docs/STATUS.md`), **pending** (not yet shown).
 | Actor                         | Can reach                                  | Must never reach                         |
 | ----------------------------- | ------------------------------------------ | ---------------------------------------- |
 | Anyone on the customer LAN    | decoys, the firewall, broadcast traffic    | the agent, its secret, the host          |
+| A compromised router          | answers to the agent's own requests        | the agent's secret, any change on the router made by DeKoi |
 | A compromised decoy process   | its own container, write-only log volume   | secrets, the backend, the host           |
 | Any internet client           | the Data API with the publishable key      | any row, any function except device RPCs |
 | A signed-in owner             | their own rows through RLS                 | other owners' rows, device credentials   |
@@ -40,6 +41,8 @@ The data flow and every contract are in `docs/architecture.md`.
 | 8  | Attacker-controlled strings in notifications                     | fixed templates by event kind; payload carries the event id only; the weekly summary is a fixed template with three whole numbers and no payload | tested with Phase 5 (`notify` function tests) |
 | 9  | Anything beyond the intended surface on the project URL          | public schema only, GraphQL dropped, no buckets, no publications | verified 2026-11-07 against production: anonymous reads 401, private schema and GraphQL not exposed, no buckets, notify refuses requests without the secret |
 | 10 | Secrets in git history                                           | secrets only in GitHub secrets and 1Password                | tested: `gitleaks` on every push |
+| 11 | A hostile router or resolver feeds the agent crafted UPnP or DNS answers | requests to the gateway's own address only, read-only UPnP action, bodies bounded in size and time, XML parsed as UTF-8 and refused with a document type (no entity expansion), every value validated; DNS replies matched to the query and parsed by the bounded discovery parser | tested: agent `test_upnp`, `test_dns_check`, `test_health` |
+| 12 | A device reports forged network health                           | secret-checked RPC, bounded arrays, repeated keys refused, table constraints; the public address is taken from the request, never from the device | tested: `10_network_health` |
 
 Further: typed passwords never leave the device (tested: agent `test_sources`,
 end-to-end assertion that the attacker's password is absent from the backend).
@@ -47,6 +50,26 @@ end-to-end assertion that the attacker's password is absent from the backend).
 Hardware (verified 2026-11-07, `docs/STATUS.md` Phase 7): from the LAN only
 the eight decoy ports answer and port 22 is the decoy, not the host's SSH;
 the login alert arrived about 1 s after the attempt with the fixed template.
+
+## Outbound traffic from the device
+
+Everything the agent sends besides the decoys' answers. Nothing listens for
+it: every answer belongs to a connection or query the agent opened, so the
+firewall needs no new rule.
+
+| To                                   | What                                               | When                         | Protection |
+| ------------------------------------ | -------------------------------------------------- | ---------------------------- | ---------- |
+| The backend (Supabase), port 443     | device RPCs; a TCP connection with no data as the internet probe | events as they occur, heartbeat and probe every minute, inventory every 15 min, health report hourly | TLS, system CAs |
+| The default gateway                  | ICMP echo                                          | every minute                 | none needed: carries nothing |
+| The default gateway, its UPnP port   | HTTP: the IGD description and `GetGenericPortMappingEntry` | hourly, if it announced an IGD | read-only; cleartext because UPnP has no TLS, carries no secret, answers treated as hostile |
+| The LAN name server, UDP 53          | one A lookup of the backend's name; 6 lookups of fixed public names | every minute; hourly | cleartext as DNS on a LAN is; answers matched by random ID on a connected socket |
+| 1.1.1.1, port 443 (Cloudflare)       | DNS over HTTPS: 6 lookups of fixed public names    | hourly                       | TLS, certificate checked against the address |
+| speed.cloudflare.com, port 443       | one download of at most 25 MB and 30 s             | at night, only while the owner has the speed test on | TLS, system CAs |
+| LAN multicast and broadcast          | discovery searches and name poisoning and DHCP probes (ADR 0003, 0010) | every 15 min | send only |
+
+No request carries owner data. The DNS over HTTPS and speed test endpoints
+are fixed in `device/agent/dekoi_agent/`; the backend stores the device's
+public address and country (from request headers) for its owner only.
 
 ## OWASP Top 10 (2025)
 
@@ -69,6 +92,7 @@ Object-level and function-level authorization (API1, API5): RLS and exact
 function grants, tested. Authentication (API2): Supabase Auth, device secrets.
 Property-level authorization (API3): column grants (only `name`, `trusted`
 and `weekly_summary` are writable), tested. Resource consumption (API4): batch limits, pending-claim
+and `speed_test` are writable), tested. Resource consumption (API4): batch limits, pending-claim
 limit, bounded fields; no edge rate limit without a custom domain (ADR 0001).
 Business flows (API6): single-use pairing. SSRF (API7): the only outbound call
 from the backend goes to a fixed FCM URL. Misconfiguration (API8): see A02.

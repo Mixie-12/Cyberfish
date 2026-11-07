@@ -25,3 +25,4 @@ them.
 | 0018 | [A decoy that is easy to find](0018-visible-decoy.md) | accepted |
 | 0019 | [Watching the Wi-Fi for copies of the home network](0019-wifi-watch.md) | accepted |
 | 0020 | [The CyberFish brand in the apps](0020-cyberfish-brand.md) | accepted |
+| 0021 | [Endpoints and rules of the network checks](0021-network-check-endpoints.md) | accepted |

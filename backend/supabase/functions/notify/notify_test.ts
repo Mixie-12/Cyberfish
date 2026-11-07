@@ -114,6 +114,8 @@ Deno.test("every event kind has its own template; anything else gets the generic
     "name_poisoning",
     "ids_alert",
     "new_host",
+    "dns_hijack",
+    "port_forward",
     "device_offline",
   ];
   const generic = templateFor("something_new");
@@ -130,6 +132,10 @@ Deno.test("titles name the device kind from the fixed list, nothing else", () =>
   equal(templateFor("port_scan", null).title, "A device searched your network for openings");
   equal(templateFor("port_scan", "<b>evil</b>").title, templateFor("port_scan").title);
   equal(templateFor("port_scan", "__proto__").title, templateFor("port_scan").title);
+  equal(
+    templateFor("port_forward", "game_console").title,
+    "A games console can now be reached from the internet",
+  );
 });
 
 Deno.test("a new device is named by its kind and goes to the updates channel", () => {

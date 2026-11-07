@@ -89,6 +89,10 @@ const TEMPLATES: Record<string, (noun: string) => Template> = {
     title: `A new ${n} joined your network`,
     body: "Tap to see what it looks like. If you know it, mark it as known.",
   }),
+  // The source of a dns_hijack event is the resolver, not a device the
+  // inventory names.
+  dns_hijack: () => ({ title: "Some web addresses lead to the wrong place", body: ALERT_BODY }),
+  port_forward: (n) => ({ title: `A ${n} can now be reached from the internet`, body: ALERT_BODY }),
   device_offline: () => ({
     title: "Your DeKoi went offline",
     body:

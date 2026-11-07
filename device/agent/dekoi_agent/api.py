@@ -3,6 +3,7 @@
 import json
 import urllib.error
 import urllib.request
+from urllib.parse import urlsplit
 
 from .config import Config
 
@@ -46,3 +47,11 @@ def call(config: Config, function: str, arguments: dict) -> object:
     except OSError as error:
         raise ApiError(0, str(error)) from None
     return json.loads(body) if body else None
+
+
+def backend_address(config: Config) -> tuple[str, int]:
+    """Host and port of the backend, which the internet health probe connects to."""
+    parts = urlsplit(config.api_url)
+    if not parts.hostname:
+        raise ValueError("DEKOI_API_URL has no host")
+    return parts.hostname, parts.port or (443 if parts.scheme == "https" else 80)
