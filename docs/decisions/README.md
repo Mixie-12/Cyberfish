@@ -13,3 +13,4 @@ them.
 | 0005 | [Device runtime choices](0005-device-runtime.md) | accepted |
 | 0006 | [Client stack](0006-client-stack.md)            | accepted |
 | 0007 | [Push notifications](0007-push-notifications.md)    | accepted |
+| 0008 | [Writing cards through the Raspberry Pi Imager CLI](0008-imager-cli.md) | accepted |
