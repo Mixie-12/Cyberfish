@@ -88,6 +88,8 @@
         <item>Bedroom</item>
         <item>Office</item>
         <item>Hallway</item>
+        <item>Garage</item>
+        <item>Other</item>
     </string-array>
     <string name="host_missing">Your DeKoi no longer lists this device.</string>
 
