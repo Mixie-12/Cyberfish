@@ -186,6 +186,22 @@ class AppViewModel(
         messages.value = message
     }
 
+    fun setLabel(
+        host: NetworkHost,
+        label: String?,
+    ) = run {
+        backend.setLabel(host, label)
+        owner.value = owner.value.copy(hosts = backend.hosts())
+    }
+
+    fun setRoom(
+        host: NetworkHost,
+        room: String?,
+    ) = run {
+        backend.setRoom(host, room)
+        owner.value = owner.value.copy(hosts = backend.hosts())
+    }
+
     private companion object {
         const val TOO_MANY_REQUESTS = 429
     }

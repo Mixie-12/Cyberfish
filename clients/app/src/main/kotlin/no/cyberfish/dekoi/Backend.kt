@@ -108,6 +108,32 @@ class Backend(
         client.auth.signOut(SignOutScope.LOCAL)
     }
 
+    /** The owner's name for a host; null clears it (ADR 0013). */
+    suspend fun setLabel(
+        host: NetworkHost,
+        label: String?,
+    ) {
+        client.from("network_hosts").update({ set("label", label) }) {
+            filter {
+                eq("device_id", host.deviceId)
+                eq("mac", host.mac)
+            }
+        }
+    }
+
+    /** The room a host is in; null clears it (ADR 0013). */
+    suspend fun setRoom(
+        host: NetworkHost,
+        room: String?,
+    ) {
+        client.from("network_hosts").update({ set("room", room) }) {
+            filter {
+                eq("device_id", host.deviceId)
+                eq("mac", host.mac)
+            }
+        }
+    }
+
     private companion object {
         const val EVENT_LIMIT = 200L
     }

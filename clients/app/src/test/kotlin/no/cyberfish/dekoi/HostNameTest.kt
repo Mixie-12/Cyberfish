@@ -14,6 +14,7 @@ class HostNameTest {
         )
 
     private fun name(
+        label: String? = null,
         hostname: String? = null,
         model: String? = null,
         vendor: String? = null,
@@ -33,8 +34,15 @@ class HostNameTest {
                 hostname = hostname,
                 model = model,
                 kindName = kind,
+                label = label,
             )
         return hostDisplayName(host) { strings.getValue(it) }
+    }
+
+    @Test
+    fun `the owner's name wins over everything the host says`() {
+        assertEquals("Kari's TV", name(label = "Kari's TV", hostname = "living-room", model = "OLED55C3", vendor = "LG", kind = "tv"))
+        assertEquals("living-room", name(label = "", hostname = "living-room"))
     }
 
     @Test

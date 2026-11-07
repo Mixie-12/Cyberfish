@@ -136,6 +136,9 @@ data class NetworkHost(
     @SerialName("kind") val kindName: String? = null,
     @SerialName("os") val osName: String? = null,
     val services: List<String> = emptyList(),
+    /** The owner's name for the host and the room it is in (ADR 0013). Owner text: plain text only. */
+    val label: String? = null,
+    val room: String? = null,
 ) {
     val kind: HostKind get() = HostKind.of(kindName)
     val os: HostOs? get() = HostOs.of(osName)
