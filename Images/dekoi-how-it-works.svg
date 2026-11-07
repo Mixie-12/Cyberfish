@@ -1,0 +1,262 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="1000" height="1180" viewBox="0 0 1000 1180" role="img" aria-labelledby="title desc">
+  <title id="title">How DeKoi works</title>
+  <desc id="desc">On the home network, a firewall on the Raspberry Pi lets Eve reach only the decoys. The decoys and the IDS write logs that the agent reads one way. The agent drops typed passwords and sends events to the Supabase cloud over HTTPS, outbound only. The device API checks the device secret and every field, Postgres row-level security keeps each owner's data separate, and the notify function sends a fixed message with the event id through Firebase Cloud Messaging to Alice's phone. DeKoi Setup writes the SD card and shows a one-time pairing code; the Pi runs only signed images.</desc>
+  <defs>
+    <style>
+      text { font-family: "Segoe UI", -apple-system, BlinkMacSystemFont, "Helvetica Neue", Helvetica, Arial, sans-serif; fill: #A9BBD3; font-size: 13px; }
+      .eyebrow { font-size: 12px; font-weight: 600; letter-spacing: 2.4px; fill: #2EA8FF; }
+      .label { font-size: 11px; font-weight: 600; letter-spacing: 2px; fill: #6F84A3; }
+      .title { font-size: 28px; font-weight: 600; fill: #F4FBFF; }
+      .sub { font-size: 15px; }
+      .name { font-size: 16px; font-weight: 600; fill: #F4FBFF; }
+      .h { font-size: 14px; font-weight: 600; fill: #F4FBFF; }
+      .mono { font-family: "Cascadia Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+      .small { font-size: 12px; }
+      .dim { fill: #6F84A3; }
+      .chip { font-size: 11px; fill: #C9D6E8; }
+      .pill { font-size: 12.5px; fill: #C9D6E8; }
+      .c { text-anchor: middle; }
+      .r { text-anchor: end; }
+    </style>
+    <radialGradient id="bgGlow" cx="0.55" cy="0.25" r="0.5">
+      <stop offset="0" stop-color="#2EA8FF" stop-opacity="0.08"/>
+      <stop offset="1" stop-color="#2EA8FF" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="glow" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="12"/></filter>
+    <filter id="glowSm" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="4"/></filter>
+    <clipPath id="avatar"><circle r="33"/></clipPath>
+    <marker id="arRed" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto"><path d="M0 0L10 5L0 10L3 5Z" fill="#FF5C70"/></marker>
+    <marker id="arBlue" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto-start-reverse"><path d="M0 0L10 5L0 10L3 5Z" fill="#2EA8FF"/></marker>
+    <marker id="arDim" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto"><path d="M0 0L10 5L0 10L3 5Z" fill="#6F84A3"/></marker>
+    <symbol id="fish" viewBox="176 386 672 252">
+      <path d="M183.47 631.47V573.44L301.23 521.81Q309.76 517.97 319.15 515.41Q328.53 512.85 334.08 512Q328.53 511.15 319.15 508.8Q309.76 506.45 301.23 502.61L183.47 450.99V392.53L379.73 481.28V542.29Z M610.13 631.47 413.87 542.72V481.71L610.13 392.53V450.56L492.37 502.19Q483.84 506.03 474.45 508.59Q465.07 511.15 459.52 512Q465.07 512.85 474.45 515.2Q483.84 517.55 492.37 521.39L610.13 573.01Z M644.27 631.47V573.44L762.03 521.81Q770.56 517.97 779.95 515.41Q789.33 512.85 794.88 512Q789.33 511.15 779.95 508.8Q770.56 506.45 762.03 502.61L644.27 450.99V392.53L840.53 481.28V542.29Z"/>
+    </symbol>
+    <symbol id="ic-target" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.2"/></symbol>
+    <symbol id="ic-eye" viewBox="0 0 24 24"><path d="M2 12S5.6 5 12 5S22 12 22 12S18.4 19 12 19S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></symbol>
+    <symbol id="ic-cpu" viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="2"/><path d="M9 2V6M15 2V6M9 18V22M15 18V22M2 9H6M2 15H6M18 9H22M18 15H22"/></symbol>
+    <symbol id="ic-db" viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5V19C4 20.7 7.6 22 12 22S20 20.7 20 19V5"/><path d="M4 12C4 13.7 7.6 15 12 15S20 13.7 20 12"/></symbol>
+    <symbol id="ic-bell" viewBox="0 0 24 24"><path d="M6 16V11A6 6 0 0 1 18 11V16L20 18H4Z"/><path d="M10 21H14"/></symbol>
+    <symbol id="ic-key" viewBox="0 0 24 24"><circle cx="8" cy="15" r="4"/><path d="M11 12L20 3M17 6L20 9M14 9L16 11"/></symbol>
+    <symbol id="ic-send" viewBox="0 0 24 24"><path d="M22 2L11 13"/><path d="M22 2L15 22L11 13L2 9Z"/></symbol>
+    <symbol id="ic-lock" viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7A4 4 0 0 1 16 7V11"/></symbol>
+  </defs>
+
+  <rect width="1000" height="1180" rx="24" fill="#040A15"/>
+  <rect width="1000" height="1180" rx="24" fill="url(#bgGlow)"/>
+
+  <use href="#fish" xlink:href="#fish" x="886" y="42" width="72" height="27" fill="#2EA8FF" filter="url(#glowSm)"/>
+  <use href="#fish" xlink:href="#fish" x="886" y="42" width="72" height="27" fill="#F4FBFF"/>
+  <text class="eyebrow" x="40" y="56">HOW IT WORKS</text>
+  <text class="title" x="40" y="90">Built to be attacked, safely</text>
+  <text class="sub" x="40" y="118">The Pi only opens connections outward, over HTTPS. The decoys are sealed off from everything that matters.</text>
+
+  <rect x="24" y="150" width="952" height="360" rx="18" fill="#081221" stroke="#17263D"/>
+  <text class="label" x="46" y="180">ALICE'S HOME NETWORK</text>
+
+  <g transform="translate(100 340)">
+    <circle r="34" fill="#2A0E16" stroke="#FF5C70" stroke-width="1.5"/>
+    <g clip-path="url(#avatar)">
+      <path d="M0 -24C-14 -24 -21 -13 -21 -1V8C-25 14 -27 24 -27 34H27C27 24 25 14 21 8V-1C21 -13 14 -24 0 -24Z" fill="#FF5C70"/>
+      <ellipse cy="0" rx="10" ry="12.5" fill="#1A070C"/>
+      <ellipse cx="-4" cy="-1" rx="2.3" ry="1.4" fill="#FF5C70"/>
+      <ellipse cx="4" cy="-1" rx="2.3" ry="1.4" fill="#FF5C70"/>
+    </g>
+  </g>
+  <text class="name c" x="100" y="398">Eve</text>
+  <text class="c" x="100" y="417">or anything else</text>
+  <text class="c" x="100" y="434">on the network</text>
+
+  <rect x="186" y="198" width="768" height="294" rx="16" fill="#2EA8FF" opacity="0.14" filter="url(#glow)"/>
+  <rect x="186" y="198" width="768" height="294" rx="16" fill="#0A1828" stroke="#2EA8FF" stroke-opacity="0.8" stroke-width="1.5"/>
+  <use href="#fish" xlink:href="#fish" x="206" y="214" width="40" height="15" fill="#2EA8FF"/>
+  <text class="name" x="256" y="227">DeKoi on a Raspberry Pi</text>
+  <use href="#ic-lock" xlink:href="#ic-lock" x="674" y="215" width="15" height="15" fill="none" stroke="#2EA8FF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="694" y="227" style="font-size:12.5px">No SSH, no passwords, no web interface</text>
+
+  <rect x="206" y="244" width="140" height="232" rx="12" fill="#0E1D33" stroke="#22395A"/>
+  <g fill="#2EA8FF" fill-opacity="0.85">
+    <rect x="258" y="282" width="17" height="7" rx="1.5"/><rect x="277" y="282" width="17" height="7" rx="1.5"/>
+    <rect x="258" y="291" width="8" height="7" rx="1.5"/><rect x="268" y="291" width="17" height="7" rx="1.5"/><rect x="287" y="291" width="7" height="7" rx="1.5"/>
+    <rect x="258" y="300" width="17" height="7" rx="1.5"/><rect x="277" y="300" width="17" height="7" rx="1.5"/>
+  </g>
+  <text class="h c" x="276" y="332">Firewall</text>
+  <text class="small dim mono c" x="276" y="349">nftables</text>
+  <text class="c" x="276" y="377">Only the decoy</text>
+  <text class="c" x="276" y="394">ports are open.</text>
+  <text class="c" x="276" y="421">Anything else is</text>
+  <text class="c" x="276" y="438">dropped and</text>
+  <text class="c" x="276" y="455">logged as a scan.</text>
+
+  <path d="M134 320C160 292 176 266 200 266H378" fill="none" stroke="#FF5C70" stroke-width="2" stroke-dasharray="7 6" marker-end="url(#arRed)"/>
+  <text class="small c" x="276" y="259" style="fill:#FF8A9A">decoy ports</text>
+  <path d="M134 360C160 400 176 430 197 430" fill="none" stroke="#FF5C70" stroke-width="2" stroke-dasharray="7 6"/>
+  <circle cx="206" cy="430" r="9" fill="#0E1D33" stroke="#FF5C70" stroke-width="2"/>
+  <path d="M199.6 436.4L212.4 423.6" stroke="#FF5C70" stroke-width="2" stroke-linecap="round"/>
+
+  <rect x="380" y="244" width="260" height="112" rx="12" fill="#0E1D33" stroke="#22395A"/>
+  <use href="#ic-target" xlink:href="#ic-target" x="396" y="253" width="18" height="18" fill="none" stroke="#2EA8FF" stroke-width="2"/>
+  <text class="h mono" x="420" y="267">dekoi-canary</text>
+  <text class="small dim r" x="624" y="267">OpenCanary</text>
+  <g>
+    <rect x="396" y="280" width="52" height="20" rx="6" fill="#16243A" stroke="#2A3F5F"/>
+    <rect x="454" y="280" width="52" height="20" rx="6" fill="#16243A" stroke="#2A3F5F"/>
+    <rect x="512" y="280" width="52" height="20" rx="6" fill="#16243A" stroke="#2A3F5F"/>
+    <rect x="570" y="280" width="52" height="20" rx="6" fill="#16243A" stroke="#2A3F5F"/>
+    <rect x="396" y="306" width="52" height="20" rx="6" fill="#16243A" stroke="#2A3F5F"/>
+    <rect x="454" y="306" width="52" height="20" rx="6" fill="#16243A" stroke="#2A3F5F"/>
+    <rect x="512" y="306" width="52" height="20" rx="6" fill="#16243A" stroke="#2A3F5F"/>
+    <rect x="570" y="306" width="52" height="20" rx="6" fill="#16243A" stroke="#2A3F5F"/>
+    <text class="chip c" x="422" y="294">SSH</text>
+    <text class="chip c" x="480" y="294">FTP</text>
+    <text class="chip c" x="538" y="294">HTTP</text>
+    <text class="chip c" x="596" y="294">Telnet</text>
+    <text class="chip c" x="422" y="320">MySQL</text>
+    <text class="chip c" x="480" y="320">RDP</text>
+    <text class="chip c" x="538" y="320">VNC</text>
+    <text class="chip c" x="596" y="320">Redis</text>
+  </g>
+  <use href="#ic-lock" xlink:href="#ic-lock" x="396" y="335" width="13" height="13" fill="none" stroke="#2EA8FF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <text class="small" x="414" y="346">no root, read-only, no secrets</text>
+
+  <rect x="380" y="370" width="260" height="106" rx="12" fill="#0E1D33" stroke="#22395A"/>
+  <use href="#ic-eye" xlink:href="#ic-eye" x="396" y="379" width="18" height="18" fill="none" stroke="#2EA8FF" stroke-width="2" stroke-linejoin="round"/>
+  <text class="h mono" x="420" y="393">dekoi-ids</text>
+  <text class="small dim r" x="624" y="393">Suricata</text>
+  <text x="396" y="418">Inspects all traffic to the box.</text>
+  <text x="396" y="436">Rules updated daily.</text>
+  <use href="#ic-lock" xlink:href="#ic-lock" x="396" y="451" width="13" height="13" fill="none" stroke="#2EA8FF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <text class="small" x="414" y="462">sends rule names, never traffic</text>
+
+  <line x1="640" y1="300" x2="698" y2="300" stroke="#6F84A3" stroke-width="1.6" stroke-dasharray="3 4" marker-end="url(#arDim)"/>
+  <text class="small dim c" x="669" y="291">one way</text>
+  <line x1="640" y1="423" x2="698" y2="423" stroke="#6F84A3" stroke-width="1.6" stroke-dasharray="3 4" marker-end="url(#arDim)"/>
+  <text class="small dim c" x="669" y="414">one way</text>
+
+  <rect x="700" y="244" width="234" height="232" rx="12" fill="#0E1D33" stroke="#22395A"/>
+  <use href="#ic-cpu" xlink:href="#ic-cpu" x="716" y="253" width="18" height="18" fill="none" stroke="#2EA8FF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <text class="h mono" x="740" y="267">dekoi-agent</text>
+  <text class="small dim" x="716" y="288">Python, standard library only</text>
+  <g fill="#2EA8FF">
+    <circle cx="720" cy="313" r="2.5"/>
+    <circle cx="720" cy="357" r="2.5"/>
+    <circle cx="720" cy="419" r="2.5"/>
+  </g>
+  <text x="730" y="317">Drops typed passwords</text>
+  <text x="730" y="335">before anything leaves</text>
+  <text x="730" y="361">Watches the LAN: sweeps,</text>
+  <text x="730" y="379">ARP spoofing, rogue DHCP</text>
+  <text x="730" y="397">and routers, name poisoning</text>
+  <text x="730" y="423">Heartbeat every 60 s; keeps</text>
+  <text x="730" y="441">events through outages</text>
+
+  <line x1="817" y1="476" x2="817" y2="614" stroke="#2EA8FF" stroke-width="2.5" marker-end="url(#arBlue)"/>
+  <circle cx="817" cy="540" r="14" fill="#040A15" stroke="#2EA8FF" stroke-width="2"/>
+  <use href="#ic-lock" xlink:href="#ic-lock" x="809" y="532" width="16" height="16" fill="none" stroke="#2EA8FF" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+  <text class="h r" x="795" y="536">HTTPS, outbound only</text>
+  <text class="r" x="795" y="555">The Pi makes every connection itself. The cloud never connects in.</text>
+
+  <rect x="24" y="570" width="952" height="200" rx="18" fill="#081221" stroke="#17263D"/>
+  <text class="label" x="46" y="600">SUPABASE CLOUD, EU REGION</text>
+
+  <rect x="700" y="616" width="234" height="134" rx="12" fill="#0E1D33" stroke="#22395A"/>
+  <use href="#ic-key" xlink:href="#ic-key" x="716" y="628" width="18" height="18" fill="none" stroke="#2EA8FF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <text class="h" x="740" y="642">Device API</text>
+  <text class="small dim mono r" x="918" y="642">v1</text>
+  <text x="716" y="666">Checks each device's 256-bit</text>
+  <text x="716" y="684">secret, stored only as a hash.</text>
+  <text x="716" y="708">Checks every field: size, type,</text>
+  <text x="716" y="726">no control characters.</text>
+
+  <line x1="700" y1="683" x2="642" y2="683" stroke="#2EA8FF" stroke-width="2" marker-end="url(#arBlue)"/>
+
+  <rect x="380" y="616" width="260" height="134" rx="12" fill="#0E1D33" stroke="#22395A"/>
+  <use href="#ic-db" xlink:href="#ic-db" x="396" y="628" width="18" height="18" fill="none" stroke="#2EA8FF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <text class="h" x="420" y="642">Postgres</text>
+  <text x="396" y="666">Row-level security: every owner</text>
+  <text x="396" y="684">reads only their own rows.</text>
+  <text x="396" y="708">Offline check every 5 minutes.</text>
+  <text x="396" y="726">Data kept 90 days.</text>
+
+  <line x1="380" y1="683" x2="348" y2="683" stroke="#2EA8FF" stroke-width="2" marker-end="url(#arBlue)"/>
+
+  <rect x="46" y="616" width="300" height="134" rx="12" fill="#0E1D33" stroke="#22395A"/>
+  <use href="#ic-bell" xlink:href="#ic-bell" x="62" y="628" width="18" height="18" fill="none" stroke="#2EA8FF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <text class="h mono" x="86" y="642">notify</text>
+  <text class="small dim r" x="330" y="642">Edge Function</text>
+  <text x="62" y="666">Runs on every new event.</text>
+  <text x="62" y="684">Sends a fixed message per event</text>
+  <text x="62" y="702">type and the event id, never</text>
+  <text x="62" y="720">text from the attacker.</text>
+
+  <line x1="196" y1="750" x2="196" y2="878" stroke="#2EA8FF" stroke-width="2" marker-end="url(#arBlue)"/>
+  <text class="small" x="210" y="812">fixed text + event id</text>
+
+  <rect x="46" y="880" width="300" height="70" rx="12" fill="#0E1D33" stroke="#22395A"/>
+  <use href="#ic-send" xlink:href="#ic-send" x="62" y="892" width="18" height="18" fill="none" stroke="#2EA8FF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <text class="h" x="86" y="906">Firebase Cloud Messaging</text>
+  <text class="small dim" x="62" y="932">Google's push service</text>
+
+  <line x1="346" y1="915" x2="450" y2="915" stroke="#2EA8FF" stroke-width="2" marker-end="url(#arBlue)"/>
+  <text class="small c" x="398" y="905">push</text>
+
+  <line x1="512" y1="752" x2="512" y2="828" stroke="#2EA8FF" stroke-width="2" marker-start="url(#arBlue)" marker-end="url(#arBlue)"/>
+  <text class="small" x="526" y="796">HTTPS, Google sign-in,</text>
+  <text class="small" x="526" y="813">row-level security</text>
+
+  <rect x="452" y="830" width="120" height="170" rx="20" fill="#0A1424" stroke="#2C4466" stroke-width="2"/>
+  <rect x="494" y="838" width="36" height="6" rx="3" fill="#1A2B44"/>
+  <rect x="460" y="854" width="104" height="80" rx="10" fill="#2EA8FF" opacity="0.25" filter="url(#glowSm)"/>
+  <rect x="460" y="854" width="104" height="80" rx="10" fill="#11223A" stroke="#2EA8FF" stroke-opacity="0.7"/>
+  <use href="#fish" xlink:href="#fish" x="468" y="863" width="18" height="6.8" fill="#2EA8FF"/>
+  <text x="491" y="870" style="font-size:9.5px;fill:#6F84A3">DeKoi · now</text>
+  <text x="468" y="888" style="font-size:11px;font-weight:600;fill:#F4FBFF">Someone tried</text>
+  <text x="468" y="902" style="font-size:11px;font-weight:600;fill:#F4FBFF">to sign in to</text>
+  <text x="468" y="916" style="font-size:11px;font-weight:600;fill:#F4FBFF">your DeKoi</text>
+  <rect x="460" y="946" width="104" height="7" rx="3.5" fill="#16243A"/>
+  <rect x="460" y="960" width="76" height="7" rx="3.5" fill="#16243A"/>
+  <rect x="492" y="986" width="40" height="4" rx="2" fill="#2C4466"/>
+
+  <g transform="translate(634 872) scale(0.9)">
+    <circle r="34" fill="#1D1638" stroke="#A78BFA" stroke-width="1.6"/>
+    <g clip-path="url(#avatar)">
+      <path d="M-15 -5C-16 -19 -8 -23 0 -23S16 -19 15 -5C15 1 14 5 12 7H-12C-14 5 -15 1 -15 -5Z" fill="#7C5CE0"/>
+      <circle cy="-8" r="10.5" fill="#A78BFA"/>
+      <path d="M-24 34C-24 15-13 7 0 7S24 15 24 34Z" fill="#A78BFA"/>
+    </g>
+  </g>
+  <text class="name" x="676" y="867">Alice's phone</text>
+  <text class="small dim" x="676" y="886">DeKoi app for Android</text>
+  <g fill="#A78BFA">
+    <circle cx="608" cy="926" r="2.5"/>
+    <circle cx="608" cy="948" r="2.5"/>
+    <circle cx="608" cy="970" r="2.5"/>
+  </g>
+  <text x="618" y="930">Signs in with Google.</text>
+  <text x="618" y="952">Sees only her own devices and events.</text>
+  <text x="618" y="974">Shows anything from Eve as plain text.</text>
+
+  <rect x="24" y="1026" width="952" height="130" rx="18" fill="#081221" stroke="#17263D"/>
+  <text class="label" x="46" y="1056">SETUP AND UPDATES</text>
+
+  <rect x="46" y="1072" width="128" height="30" rx="15" fill="#0E1D33" stroke="#22395A"/>
+  <text class="pill c" x="110" y="1091.5">DeKoi Setup (PC)</text>
+  <line x1="178" y1="1087" x2="198" y2="1087" stroke="#6F84A3" stroke-width="1.6" marker-end="url(#arDim)"/>
+  <rect x="202" y="1072" width="128" height="30" rx="15" fill="#0E1D33" stroke="#22395A"/>
+  <text class="pill c" x="266" y="1091.5">SD card, QR code</text>
+  <line x1="334" y1="1087" x2="354" y2="1087" stroke="#6F84A3" stroke-width="1.6" marker-end="url(#arDim)"/>
+  <rect x="358" y="1072" width="136" height="30" rx="15" fill="#0E1D33" stroke="#22395A"/>
+  <text class="pill c" x="426" y="1091.5">Alice scans to pair</text>
+  <text x="46" y="1128">The card carries the Wi-Fi details and a one-time code.</text>
+  <text x="46" y="1146">The same code pairs the Pi: 128 bits, usable once.</text>
+
+  <rect x="520" y="1072" width="88" height="30" rx="15" fill="#0E1D33" stroke="#22395A"/>
+  <text class="pill c" x="564" y="1091.5">GitHub CI</text>
+  <line x1="612" y1="1087" x2="632" y2="1087" stroke="#6F84A3" stroke-width="1.6" marker-end="url(#arDim)"/>
+  <rect x="636" y="1072" width="116" height="30" rx="15" fill="#0E1D33" stroke="#22395A"/>
+  <text class="pill c" x="694" y="1091.5">Signed images</text>
+  <line x1="756" y1="1087" x2="776" y2="1087" stroke="#6F84A3" stroke-width="1.6" marker-end="url(#arDim)"/>
+  <rect x="780" y="1072" width="174" height="30" rx="15" fill="#0E1D33" stroke="#22395A"/>
+  <text class="pill c" x="867" y="1091.5">Pi checks the signature</text>
+  <text x="520" y="1128">The Pi runs only images signed with DeKoi's key,</text>
+  <text x="520" y="1146">and rolls back an update that fails.</text>
+</svg>
