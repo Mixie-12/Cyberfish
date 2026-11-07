@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Add DeKoi (AddDekoiScreen.kt). -->
+<resources>
+    <string name="add_title">Add a DeKoi</string>
+    <string name="add_body">On your computer, DeKoi Setup shows a code once the memory card is ready.</string>
+    <string name="add_scan">Scan the code</string>
+    <string name="add_scan_failed">The scanner did not work. Type the code shown under the square code in DeKoi Setup instead.</string>
+    <string name="add_manual_label">Or type the code</string>
+    <string name="add_manual_button">Add</string>
+    <string name="add_invalid">That is not a DeKoi code. Check it and try again.</string>
+    <string name="add_refused">This code can’t be used. Prepare the card again with DeKoi Setup to get a new one.</string>
+    <string name="add_too_many">Finish setting up your other DeKoi first.</string>
+    <string name="add_done">%1$s is linked to your account. Put the card in your DeKoi and plug it in.</string>
+</resources>

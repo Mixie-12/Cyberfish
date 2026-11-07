@@ -119,3 +119,26 @@ fun kindName(kind: HostKind): Int =
         HostKind.SERVER -> R.string.kind_server
         HostKind.UNKNOWN -> R.string.kind_unknown
     }
+
+/** What a host appears to be, as in "Looks like a TV": DeKoi infers the kind, so it never says "is". */
+@StringRes
+fun looksLike(kind: HostKind): Int =
+    when (kind) {
+        HostKind.ROUTER -> R.string.looks_like_router
+        HostKind.SWITCH -> R.string.looks_like_switch
+        HostKind.ACCESS_POINT -> R.string.looks_like_access_point
+        HostKind.COMPUTER -> R.string.looks_like_computer
+        HostKind.PHONE -> R.string.looks_like_phone
+        HostKind.TABLET -> R.string.looks_like_tablet
+        HostKind.TV -> R.string.looks_like_tv
+        HostKind.MEDIA_PLAYER -> R.string.looks_like_media_player
+        HostKind.SPEAKER -> R.string.looks_like_speaker
+        HostKind.GAME_CONSOLE -> R.string.looks_like_game_console
+        HostKind.PRINTER -> R.string.looks_like_printer
+        HostKind.CAMERA -> R.string.looks_like_camera
+        HostKind.STORAGE -> R.string.looks_like_storage
+        HostKind.SMART_HOME -> R.string.looks_like_smart_home
+        HostKind.WEARABLE -> R.string.looks_like_wearable
+        HostKind.SERVER -> R.string.looks_like_server
+        HostKind.UNKNOWN -> R.string.looks_like_unknown
+    }

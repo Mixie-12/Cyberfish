@@ -20,14 +20,20 @@ import no.cyberfish.dekoi.NetworkHost
 import no.cyberfish.dekoi.R
 import no.cyberfish.dekoi.shared.ClaimCode
 import java.io.IOException
+import java.time.Instant
 
 data class OwnerData(
     val devices: List<Device> = emptyList(),
     val events: List<Event> = emptyList(),
     val hosts: List<NetworkHost> = emptyList(),
     val networks: List<Network> = emptyList(),
-    val loaded: Boolean = false,
+    /** When the last refresh succeeded; null until the first one has. */
+    val updatedAt: Instant? = null,
+    /** Why the last refresh failed, shown above the data the app still has. */
+    @param:StringRes val problem: Int? = null,
 ) {
+    val loaded: Boolean get() = updatedAt != null
+
     val trustedMacs: Set<String> get() = hosts.filter { it.trusted }.map { it.mac }.toSet()
 
     fun hostFor(mac: String?): NetworkHost? = mac?.let { hosts.firstOrNull { host -> host.mac == it } }
@@ -70,10 +76,21 @@ class AppViewModel(
             pushToken()?.let { backend.registerPushToken(it) }
         }
 
-    fun refresh() =
-        run {
-            owner.value = load()
+    private val refreshes = MutableStateFlow(false)
+
+    /** True while a refresh the owner asked for is running. */
+    val refreshing: StateFlow<Boolean> = refreshes.asStateFlow()
+
+    fun refresh() {
+        refreshes.value = true
+        run(onFailure = { owner.value = owner.value.copy(problem = it) }) {
+            try {
+                owner.value = load()
+            } finally {
+                refreshes.value = false
+            }
         }
+    }
 
     fun signIn(token: GoogleIdToken) =
         run {
@@ -139,21 +156,26 @@ class AppViewModel(
             owner.value = OwnerData()
         }
 
-    private suspend fun load() = OwnerData(backend.devices(), backend.events(), backend.hosts(), backend.networks(), loaded = true)
+    private suspend fun load() =
+        OwnerData(backend.devices(), backend.events(), backend.hosts(), backend.networks(), updatedAt = Instant.now())
 
-    private fun run(block: suspend () -> Unit) {
+    /** Runs [block]; a failure goes to [onFailure], by default a snackbar. */
+    private fun run(
+        onFailure: (Int) -> Unit = ::show,
+        block: suspend () -> Unit,
+    ) {
         viewModelScope.launch {
             try {
                 block()
             } catch (_: RestException) {
-                show(R.string.error_generic)
+                onFailure(R.string.error_generic)
             } catch (_: HttpRequestException) {
-                show(R.string.error_network)
+                onFailure(R.string.error_network)
             } catch (_: HttpRequestTimeoutException) {
-                show(R.string.error_network)
+                onFailure(R.string.error_network)
             } catch (_: IOException) {
                 // FCM could not hand out a token, usually for want of a connection.
-                show(R.string.error_network)
+                onFailure(R.string.error_network)
             }
         }
     }

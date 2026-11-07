@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Home tab (HomeScreen.kt). -->
+<resources>
+    <string name="status_protected_title">You’re protected</string>
+    <string name="status_protected_body">Your DeKoi is watching your network. Nothing has touched it in the last 24 hours.</string>
+    <string name="status_attention_title">Activity on your network</string>
+    <string name="status_attention_body">Something on your network touched your DeKoi in the last 24 hours. Have a look below.</string>
+    <string name="status_offline_title">Your DeKoi is offline</string>
+    <string name="status_offline_body">It can’t warn you until it’s back. Check that it has power and that its cable is plugged in.</string>
+    <string name="status_setting_up_title">Setting up your DeKoi</string>
+    <string name="status_setting_up_body">The first start can take up to 10 minutes. You can leave this screen.</string>
+    <string name="status_no_device_title">Add your DeKoi</string>
+    <string name="status_no_device_body">Prepare the memory card with DeKoi Setup on a computer, then scan the code it shows.</string>
+    <string name="stat_decoys">Decoy services</string>
+    <string name="stat_devices_seen">Devices on your network</string>
+    <string name="home_latest_activity">Latest activity</string>
+    <string name="home_no_activity">Nothing has touched your decoys yet. That is how it should be.</string>
+    <string name="home_your_dekoi">Your DeKoi</string>
+    <plurals name="stat_new_this_week">
+        <item quantity="one">%1$d new this week</item>
+        <item quantity="other">%1$d new this week</item>
+    </plurals>
+    <string name="stat_alerts">Alerts in 7 days</string>
+    <plurals name="home_alerts_count">
+        <item quantity="one">%1$d alert</item>
+        <item quantity="other">%1$d alerts</item>
+    </plurals>
+    <string name="home_chart_bar">%1$s: %2$s</string>
+</resources>

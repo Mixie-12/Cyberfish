@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Sign-in (SignInScreen.kt). -->
+<resources>
+    <string name="signin_tagline">A quiet guard for your home network.</string>
+    <string name="signin_body">DeKoi looks like a storage box on your network. Nothing should ever touch it, so when something does, you will know.</string>
+    <string name="signin_button">Continue with Google</string>
+    <string name="signin_no_account">Add a Google account to this phone in its settings, then try again.</string>
+    <string name="signin_error">Sign-in did not work. Check your connection and try again.</string>
+</resources>

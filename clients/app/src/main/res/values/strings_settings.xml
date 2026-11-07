@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Settings tab (SettingsScreens.kt). -->
+<resources>
+    <string name="settings_account">Signed in</string>
+    <string name="settings_sign_out">Sign out</string>
+    <string name="settings_delete">Delete account</string>
+    <string name="settings_delete_confirm_title">Delete your account?</string>
+    <string name="settings_delete_confirm_body">This removes your account, your DeKoi devices and all their history. It can’t be undone.</string>
+    <string name="settings_privacy_title">Privacy</string>
+    <string name="settings_privacy_body">Your DeKoi reports activity on its decoys and the devices it sees on your network. It never collects passwords people type. History is deleted after 90 days.</string>
+    <string name="settings_version">Version %1$s</string>
+    <string name="settings_account_title">Account</string>
+    <string name="settings_devices">Your DeKoi devices</string>
+    <string name="settings_notifications">Notifications</string>
+    <string name="settings_notifications_row">Alerts on this phone</string>
+    <string name="settings_notifications_on">On</string>
+    <string name="settings_notifications_off">Off</string>
+    <string name="settings_about">About</string>
+</resources>

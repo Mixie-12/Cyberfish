@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Network tab, device detail and networks (NetworkScreens.kt). -->
+<resources>
+    <string name="network_body">Devices your DeKoi has seen on your network. New ones are marked.</string>
+    <string name="network_new">New</string>
+    <string name="network_known">Known</string>
+    <string name="network_private">Phone or tablet with a private address</string>
+    <string name="network_unknown_maker">Unknown maker</string>
+    <string name="network_empty">Your DeKoi lists the devices on your network here within 15 minutes of starting.</string>
+    <string name="networks_title">Networks</string>
+    <plurals name="networks_count">
+        <item quantity="one">%1$d network</item>
+        <item quantity="other">%1$d networks</item>
+    </plurals>
+    <string name="networks_home">Your home network</string>
+    <string name="networks_other">Another network</string>
+    <string name="networks_addresses">Addresses</string>
+    <string name="networks_found">How DeKoi knows it</string>
+    <string name="networks_source_interface">DeKoi is connected to it</string>
+    <string name="networks_source_router_advertisement">Announced by a router</string>
+    <string name="networks_source_dhcp_route">Reached through a router</string>
+    <string name="networks_source_observed">Seen in traffic</string>
+    <string name="networks_gateway">Router address</string>
+    <string name="networks_devices">Devices</string>
+    <string name="networks_footer">DeKoi watches only the network it is plugged into.</string>
+    <string name="networks_empty">DeKoi lists the networks it can see here once it has started.</string>
+
+    <string name="host_see_alerts">See all alerts from this device</string>
+    <string name="host_about">About</string>
+    <string name="host_connection">Connection</string>
+    <string name="host_model">Model</string>
+    <string name="host_announced_name">Announced name</string>
+    <string name="host_services">Services it announces</string>
+    <string name="host_address">Address</string>
+    <string name="host_first_seen">First seen</string>
+    <string name="host_last_seen">Last seen</string>
+    <string name="host_last_seen_ago">Last seen %1$s</string>
+    <string name="host_private_note">This device uses a private hardware address, which hides its maker. Phones and tablets do this to protect their owners’ privacy.</string>
+    <string name="host_known">I know this device</string>
+    <string name="host_missing">DeKoi no longer lists this device.</string>
+</resources>

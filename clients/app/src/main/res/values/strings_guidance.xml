@@ -44,6 +44,24 @@
     <string name="kind_server">Server</string>
     <string name="kind_unknown">Unknown device</string>
 
+    <string name="looks_like_router">Looks like a router</string>
+    <string name="looks_like_switch">Looks like a network switch</string>
+    <string name="looks_like_access_point">Looks like a Wi-Fi access point</string>
+    <string name="looks_like_computer">Looks like a computer</string>
+    <string name="looks_like_phone">Looks like a phone</string>
+    <string name="looks_like_tablet">Looks like a tablet</string>
+    <string name="looks_like_tv">Looks like a TV</string>
+    <string name="looks_like_media_player">Looks like a streaming box</string>
+    <string name="looks_like_speaker">Looks like a speaker</string>
+    <string name="looks_like_game_console">Looks like a games console</string>
+    <string name="looks_like_printer">Looks like a printer</string>
+    <string name="looks_like_camera">Looks like a camera</string>
+    <string name="looks_like_storage">Looks like a storage box</string>
+    <string name="looks_like_smart_home">Looks like a smart home device</string>
+    <string name="looks_like_wearable">Looks like a watch or wearable</string>
+    <string name="looks_like_server">Looks like a server</string>
+    <string name="looks_like_unknown">DeKoi can’t tell what this is yet</string>
+
     <!-- A host's maker and kind, as in "LG TV" (HostName.kt). -->
     <string name="host_maker_kind">%1$s %2$s</string>
 </resources>

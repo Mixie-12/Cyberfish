@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Your DeKoi and its setup (DekoiScreens.kt). -->
+<resources>
+    <string name="setup_linked">Linked to your account</string>
+    <string name="setup_first_start">First start</string>
+    <string name="setup_online">Online</string>
+    <string name="setup_protecting">Watching your network</string>
+    <string name="setup_help_title">Still waiting?</string>
+    <string name="setup_help_body">Check that the memory card is in your DeKoi, that it has power, and that the network cable is plugged into your router. If you chose Wi-Fi, check the network name and password. If it still does not appear, prepare the card again with DeKoi Setup.</string>
+    <string name="device_online">Online</string>
+    <string name="device_offline">Offline</string>
+    <string name="device_setting_up">Setting up</string>
+    <string name="device_name">Name</string>
+    <string name="device_version">Software version</string>
+    <string name="device_address">Address on your network</string>
+    <string name="device_decoys">Decoy services running</string>
+    <string name="device_remove">Remove this DeKoi</string>
+    <string name="device_remove_confirm_title">Remove this DeKoi?</string>
+    <string name="device_remove_confirm_body">It will stop sending alerts to this account. To use it again, prepare its memory card with DeKoi Setup.</string>
+    <string name="device_checked_in">Checked in %1$s</string>
+    <string name="device_never_checked_in">Not checked in yet</string>
+    <string name="dekoi_setup">Setup</string>
+    <plurals name="dekoi_uptime_summary">
+        <item quantity="one">Online for %1$d of the last %2$d hour</item>
+        <item quantity="other">Online for %1$d of the last %2$d hours</item>
+    </plurals>
+    <string name="dekoi_uptime_none">No history yet</string>
+    <string name="dekoi_details">Details</string>
+    <string name="dekoi_linked_since">Linked since</string>
+    <string name="dekoi_missing">This DeKoi is no longer linked to your account.</string>
+</resources>

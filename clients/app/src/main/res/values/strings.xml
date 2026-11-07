@@ -3,38 +3,15 @@
     <string name="app_name">DeKoi</string>
 
     <string name="tab_home">Home</string>
-    <string name="tab_activity">Activity</string>
+    <string name="tab_alerts">Alerts</string>
     <string name="tab_network">Network</string>
     <string name="tab_settings">Settings</string>
+    <plurals name="tab_alerts_badge">
+        <item quantity="one">%1$d alert to look at</item>
+        <item quantity="other">%1$d alerts to look at</item>
+    </plurals>
 
-    <string name="signin_tagline">A quiet guard for your home network.</string>
-    <string name="signin_body">DeKoi looks like a storage box on your network. Nothing should ever touch it, so when something does, you will know.</string>
-    <string name="signin_button">Continue with Google</string>
-    <string name="signin_no_account">Add a Google account to this phone in its settings, then try again.</string>
-    <string name="signin_error">Sign-in did not work. Check your connection and try again.</string>
-
-    <string name="status_protected_title">You’re protected</string>
-    <string name="status_protected_body">Your DeKoi is watching your network. Nothing has touched it in the last 24 hours.</string>
-    <string name="status_attention_title">Activity on your network</string>
-    <string name="status_attention_body">Something on your network touched your DeKoi in the last 24 hours. Have a look below.</string>
-    <string name="status_offline_title">Your DeKoi is offline</string>
-    <string name="status_offline_body">It can’t warn you until it’s back. Check that it has power and that its cable is plugged in.</string>
-    <string name="status_setting_up_title">Setting up your DeKoi</string>
-    <string name="status_setting_up_body">The first start can take up to 10 minutes. You can leave this screen.</string>
-    <string name="status_no_device_title">Add your DeKoi</string>
-    <string name="status_no_device_body">Prepare the memory card with DeKoi Setup on a computer, then scan the code it shows.</string>
-
-    <string name="stat_decoys">Decoy services</string>
-    <string name="stat_devices_seen">Devices on your network</string>
-    <string name="stat_new_this_week">New this week</string>
-    <string name="stat_last_check_in">Last check-in</string>
-    <string name="stat_never">Not yet</string>
-
-    <string name="home_latest_activity">Latest activity</string>
-    <string name="home_no_activity">Nothing has touched your decoys yet. That is how it should be.</string>
-    <string name="home_your_dekoi">Your DeKoi</string>
     <string name="action_add_dekoi">Add DeKoi</string>
-    <string name="action_refresh">Refresh</string>
     <string name="action_back">Back</string>
     <string name="action_cancel">Cancel</string>
     <string name="action_remove">Remove</string>
@@ -44,124 +21,13 @@
     <string name="action_copy">Copy</string>
     <string name="action_copied">Copied</string>
     <string name="updated_ago">Updated %1$s</string>
-
-    <string name="setup_linked">Linked to your account</string>
-    <string name="setup_first_start">First start</string>
-    <string name="setup_online">Online</string>
-    <string name="setup_protecting">Watching your network</string>
-    <string name="setup_help_title">Still waiting?</string>
-    <string name="setup_help_body">Check that the memory card is in your DeKoi, that it has power, and that the network cable is plugged into your router. If you chose Wi-Fi, check the network name and password. If it still does not appear, prepare the card again with DeKoi Setup.</string>
-
-    <string name="device_online">Online</string>
-    <string name="device_offline">Offline</string>
-    <string name="device_setting_up">Setting up</string>
-    <string name="device_name">Name</string>
-    <string name="device_version">Software version</string>
-    <string name="device_address">Address on your network</string>
-    <string name="device_decoys">Decoy services running</string>
-    <string name="device_remove">Remove this DeKoi</string>
-    <string name="device_remove_confirm_title">Remove this DeKoi?</string>
-    <string name="device_remove_confirm_body">It will stop sending alerts to this account. To use it again, prepare its memory card with DeKoi Setup.</string>
-
-    <string name="service_ftp">file server</string>
-    <string name="service_http">storage login page</string>
-    <string name="service_ssh">remote login</string>
-    <string name="service_telnet">remote terminal</string>
-    <string name="service_database">database</string>
-    <string name="service_rdp">remote desktop</string>
-    <string name="service_vnc">screen sharing</string>
-    <string name="service_other">service</string>
-
-    <string name="event_login_title">Someone tried to sign in to the decoy %1$s</string>
-    <string name="event_login_why">Nothing on your network has a reason to sign in to your DeKoi. Someone, or a program, is trying passwords on the devices it finds. That is how break-ins usually start.</string>
-    <string name="event_connection_title">A device opened the decoy %1$s</string>
-    <string name="event_connection_why">Your DeKoi pretends to be a storage box. Ordinary devices leave it alone, so a visit means something on your network is looking around.</string>
-    <string name="event_scan_title">A device searched your network for openings</string>
-    <string name="event_scan_why">Trying address after address to find open doors is one of the first things an intruder or a harmful program does after getting in.</string>
-    <string name="event_intrusion_advice">Look at the details below. If you don’t recognise the device, disconnect it from your network, change your Wi-Fi password, and change the passwords of your important accounts. If it is your own device running network tools, mark it as known.</string>
-    <string name="event_host_scan_title">A device searched your whole network</string>
-    <string name="event_host_scan_why">It asked for the addresses of many devices in a short time. Network tools do this, and so does an intruder mapping what to attack next.</string>
-    <string name="event_arp_spoof_title">A device is pretending to be another device</string>
-    <string name="event_arp_spoof_why">It claimed an address that belongs to another device on your network. This is how an attacker puts itself between your devices and the internet to read or change your traffic.</string>
-    <string name="event_arp_spoof_advice">Find the device in the details below. If you don’t recognise it, disconnect it from your network, restart your router and change your Wi-Fi password.</string>
-    <string name="event_rogue_dhcp_title">A second device is handing out network settings</string>
-    <string name="event_rogue_dhcp_why">Normally only your router gives devices their network settings. Another device doing it can send your traffic through itself.</string>
-    <string name="event_rogue_router_title">A second device announces itself as your router</string>
-    <string name="event_rogue_router_why">A new device started announcing itself as a router. That can redirect your devices’ traffic through it.</string>
-    <string name="event_rogue_advice">Find the device in the details below. If you don’t recognise it, disconnect it from your network and restart your router.</string>
-    <string name="event_name_poisoning_title">A device answers questions it should not</string>
-    <string name="event_name_poisoning_why">Your DeKoi asked for a computer that does not exist, and something answered. Tools that do this trick computers into handing over passwords.</string>
-    <string name="event_ids_title">Suspicious traffic reached your DeKoi</string>
-    <string name="event_ids_why">The traffic matched a known pattern of attacks or harmful programs. The details below name the pattern.</string>
-    <string name="event_offline_title">Your DeKoi went offline</string>
-    <string name="event_offline_why">While it is offline, your DeKoi can’t warn you. Usually it is a power cut, an unplugged cable or a router restart.</string>
-    <string name="event_offline_advice">Check that your DeKoi has power and that its network cable is plugged in. It reconnects by itself.</string>
-    <string name="event_online_title">Your DeKoi is online</string>
-    <string name="event_online_why">Your DeKoi checks in every minute and is watching your network.</string>
-    <string name="event_online_advice">Nothing to do.</string>
-    <string name="event_other_title">Activity on your DeKoi</string>
-    <string name="event_other_why">Your DeKoi noticed something it has no plain description for yet.</string>
-
-    <string name="event_why">Why it matters</string>
-    <string name="event_advice">What to do</string>
-    <string name="event_details">Technical details</string>
-    <string name="event_detail_time">When</string>
-    <string name="event_detail_source">From</string>
-    <string name="event_detail_mac">Hardware address</string>
-    <string name="event_detail_vendor">Maker</string>
-    <string name="event_detail_port">Port</string>
-    <string name="event_detail_username">User name tried</string>
-    <string name="event_detail_path">Address requested</string>
-    <string name="event_detail_client">Program</string>
-    <string name="event_detail_command">Command</string>
-    <string name="event_detail_ports">Ports probed</string>
-    <string name="event_detail_signature">Pattern</string>
-    <string name="event_detail_category">Category</string>
-    <string name="event_detail_claimed_ip">Address it claimed</string>
-    <string name="event_detail_previous_mac">Hardware address of the real owner</string>
-    <string name="event_detail_server">Server</string>
-    <string name="event_detail_protocol">Method</string>
-    <string name="event_detail_targets">Addresses asked for</string>
-    <plurals name="event_repeated">
-        <item quantity="one">Happened once</item>
-        <item quantity="other">Happened %1$d times</item>
-    </plurals>
-    <string name="event_trust">I know this device</string>
-    <string name="event_trusted">Marked as known. Activity from it no longer counts as a warning.</string>
-    <string name="event_untrust">Forget this device</string>
-
-    <string name="network_body">Devices your DeKoi has seen on your network. New ones are marked.</string>
-    <string name="network_new">New</string>
-    <string name="network_known">Known</string>
-    <string name="network_private">Phone or tablet with a private address</string>
-    <string name="network_unknown_maker">Unknown maker</string>
-    <string name="network_empty">Your DeKoi lists the devices on your network here within 15 minutes of starting.</string>
-
-    <string name="add_title">Add a DeKoi</string>
-    <string name="add_body">On your computer, DeKoi Setup shows a code once the memory card is ready.</string>
-    <string name="add_scan">Scan the code</string>
-    <string name="add_scan_failed">The scanner did not work. Type the code shown under the square code in DeKoi Setup instead.</string>
-    <string name="add_manual_label">Or type the code</string>
-    <string name="add_manual_button">Add</string>
-    <string name="add_invalid">That is not a DeKoi code. Check it and try again.</string>
-    <string name="add_refused">This code can’t be used. Prepare the card again with DeKoi Setup to get a new one.</string>
-    <string name="add_too_many">Finish setting up your other DeKoi first.</string>
-    <string name="add_done">%1$s is linked to your account. Put the card in your DeKoi and plug it in.</string>
+    <string name="last_seven_days">Last 7 days</string>
 
     <string name="notification_channel_alerts">Alerts about your network</string>
     <string name="notifications_ask_title">Get alerts on this phone</string>
     <string name="notifications_ask_body">When something on your network touches your DeKoi, or your DeKoi goes offline, it can tell you right away. Allow notifications to get these alerts.</string>
     <string name="notifications_ask_allow">Continue</string>
     <string name="notifications_ask_later">Not now</string>
-
-    <string name="settings_account">Signed in</string>
-    <string name="settings_sign_out">Sign out</string>
-    <string name="settings_delete">Delete account</string>
-    <string name="settings_delete_confirm_title">Delete your account?</string>
-    <string name="settings_delete_confirm_body">This removes your account, your DeKoi devices and all their history. It can’t be undone.</string>
-    <string name="settings_privacy_title">Privacy</string>
-    <string name="settings_privacy_body">Your DeKoi reports activity on its decoys and the devices it sees on your network. It never collects passwords people type. History is deleted after 90 days.</string>
-    <string name="settings_version">Version %1$s</string>
 
     <string name="error_network">Can’t reach DeKoi right now. Check your internet connection.</string>
     <string name="error_generic">Something went wrong. Try again.</string>

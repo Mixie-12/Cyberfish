@@ -62,6 +62,13 @@ class GuidanceTest {
                 .size,
         )
         assertEquals(
+            HostKind.entries.size,
+            HostKind.entries
+                .map(::looksLike)
+                .toSet()
+                .size,
+        )
+        assertEquals(
             Severity.entries.size,
             Severity.entries
                 .map(::severityLabel)
