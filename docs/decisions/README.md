@@ -14,3 +14,4 @@ them.
 | 0006 | [Client stack](0006-client-stack.md)            | accepted |
 | 0007 | [Push notifications](0007-push-notifications.md)    | accepted |
 | 0008 | [Writing cards through the Raspberry Pi Imager CLI](0008-imager-cli.md) | accepted |
+| 0009 | [Google Cloud and Firebase as code](0009-google-infrastructure-as-code.md) | accepted |

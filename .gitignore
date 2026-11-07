@@ -34,3 +34,8 @@ Thumbs.db
 
 # Claude Code agent worktrees
 .claude/worktrees/
+
+# OpenTofu working files and state (state is backed up in 1Password, ADR 0009)
+infra/**/.terraform/
+infra/**/*.tfstate
+infra/**/*.tfstate.*
