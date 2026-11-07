@@ -1,11 +1,9 @@
 package no.cyberfish.dekoi.ui
 
+import android.text.format.DateFormat
 import androidx.annotation.StringRes
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.snap
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
@@ -13,9 +11,10 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalLocale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
@@ -30,30 +29,33 @@ import no.cyberfish.dekoi.Monitor
 import no.cyberfish.dekoi.MonitorKind
 import no.cyberfish.dekoi.MonitorState
 import no.cyberfish.dekoi.R
-import no.cyberfish.dekoi.status
+import no.cyberfish.dekoi.softwareUpdatedAt
 import no.cyberfish.dekoi.ui.components.InsetRow
 import no.cyberfish.dekoi.ui.components.InsetSection
 import no.cyberfish.dekoi.ui.components.KeyValueRow
 import no.cyberfish.dekoi.watchList
 import java.text.NumberFormat
+import java.time.Instant
+import java.time.LocalDate
 import java.time.format.DateTimeFormatter
-import java.time.format.FormatStyle
 
 private const val SEPARATOR = " · "
 
+/** Day and short month in the phone's order, such as "3 Nov". */
+private const val DAY_MONTH = "dMMM"
+
 /**
- * The glyph and tone that mark a monitor's state: green when it works,
- * amber when it fails, grey otherwise. Null means paused, because the
- * DeKoi is not online to run it.
+ * The glyph and colour that mark a monitor's state: a green check when it
+ * works, amber when it fails, a calm grey otherwise. Null means paused,
+ * because the DeKoi is not online to run it.
  */
 @Composable
-fun monitorMark(state: MonitorState?): Pair<Int, Tone> {
+fun monitorMark(state: MonitorState?): Pair<Int, Color> {
     val colors = LocalSeverityColors.current
     return when (state) {
-        MonitorState.OK -> R.drawable.ic_check_circle to colors.safe
-        MonitorState.FAILED -> R.drawable.ic_warning to colors.warning
-        MonitorState.STARTING -> R.drawable.ic_refresh to colors.info
-        MonitorState.OFF, MonitorState.UNKNOWN, null -> R.drawable.ic_info to colors.info
+        MonitorState.OK -> R.drawable.ic_check_circle to colors.safe.color
+        MonitorState.FAILED -> R.drawable.ic_warning to colors.warning.color
+        MonitorState.STARTING, MonitorState.OFF, MonitorState.UNKNOWN, null -> R.drawable.ic_info to colors.offline
     }
 }
 
@@ -122,14 +124,18 @@ private fun stateWord(state: MonitorState): Int =
     }
 
 /**
- * One row per protection. States hold only while the DeKoi is online; while
- * it is not, every row is grey and the footer says why.
+ * One row per protection, then the software, then, collapsed, the names
+ * the DeKoi reports them by. States hold only while the DeKoi is online;
+ * while it is not, every row is grey and the footer says why. Older
+ * software reports less: the rows show what it does report, and the
+ * footer says more follows. No row is made up.
  */
 @Composable
 fun Watching(
     number: Int,
     device: Device,
     status: DekoiStatus,
+    now: Instant,
     modifier: Modifier = Modifier,
 ) {
     val live = status == DekoiStatus.ONLINE
@@ -139,20 +145,30 @@ fun Watching(
             device.monitors.isEmpty() -> stringResource(R.string.dekoi_watching_older)
             else -> null
         }
+    val spec = if (LocalReduceMotion.current) snap() else expandSpring<IntSize>()
     Section(number, stringResource(R.string.dekoi_watching), modifier) {
-        InsetSection(footer = footer) {
-            device.watchList.forEach { monitor ->
-                val state = monitor.state.takeIf { live }
-                val on = stringResource(R.string.dekoi_state_on)
-                InsetRow(
-                    watchTitle(monitor, device, working = state == MonitorState.OK),
-                    Modifier.semantics(mergeDescendants = true) { if (state == MonitorState.OK) stateDescription = on },
-                    subtitle = watchDetail(monitor, state),
-                    leading = { MarkTile(state) },
-                )
-            }
+        InsetSection(Modifier.animateContentSize(spec), footer = footer) {
+            device.watchList.forEach { WatchRow(it, device, it.state.takeIf { live }) }
+            device.agentVersion?.let { SoftwareRow(it, device.softwareUpdatedAt, now) }
+            if (device.monitors.isNotEmpty() || device.images.isNotEmpty()) TechnicalRows(device)
         }
     }
+}
+
+@Composable
+private fun WatchRow(
+    monitor: Monitor,
+    device: Device,
+    state: MonitorState?,
+) {
+    val (glyph, tint) = monitorMark(state)
+    val on = stringResource(R.string.dekoi_state_on)
+    InsetRow(
+        watchTitle(monitor, device, working = state == MonitorState.OK),
+        Modifier.semantics(mergeDescendants = true) { if (state == MonitorState.OK) stateDescription = on },
+        subtitle = watchDetail(monitor, state),
+        leading = { Icon(painterResource(glyph), contentDescription = null, tint = tint) },
+    )
 }
 
 /** The line under a row: the state when the check is not on, or when the attack patterns were updated. */
@@ -164,58 +180,67 @@ private fun watchDetail(
     if (state == null) return null
     if (state != MonitorState.OK) return stringResource(stateWord(state))
     val updated = monitor.detail.rulesetDate?.takeIf { monitor.kind == MonitorKind.IDS } ?: return null
-    return stringResource(R.string.dekoi_watch_ids_updated, DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM).format(updated))
+    return stringResource(R.string.updated_ago, dayAndMonth(updated))
 }
 
 @Composable
-private fun MarkTile(state: MonitorState?) {
-    val (glyph, tone) = monitorMark(state)
-    Box(Modifier.size(Dimens.tile).background(tone.container, MaterialTheme.shapes.medium), contentAlignment = Alignment.Center) {
-        Icon(painterResource(glyph), contentDescription = null, tint = tone.color)
-    }
+private fun dayAndMonth(date: LocalDate): String {
+    val locale = LocalLocale.current.platformLocale
+    return DateTimeFormatter.ofPattern(DateFormat.getBestDateTimePattern(locale, DAY_MONTH), locale).format(date)
+}
+
+/** The software version and when it last changed; it updates by itself, so there is nothing to do here. */
+@Composable
+private fun SoftwareRow(
+    version: String,
+    updatedAt: Instant?,
+    now: Instant,
+) {
+    InsetRow(
+        stringResource(R.string.dekoi_software, version),
+        subtitle =
+            updatedAt?.let { stringResource(R.string.updated_ago, relativeTime(it, now)) } ?: stringResource(R.string.dekoi_software_auto),
+        leading = {
+            Icon(painterResource(R.drawable.ic_refresh), contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
+        },
+    )
 }
 
 /** Collapsed by default: the monitors' and images' own names and values, as the DeKoi reports them. */
 @Composable
-fun TechnicalDetails(
-    device: Device,
-    modifier: Modifier = Modifier,
-) {
+private fun TechnicalRows(device: Device) {
     var open by rememberSaveable { mutableStateOf(false) }
-    val spec = if (LocalReduceMotion.current) snap() else expandSpring<IntSize>()
-    InsetSection(modifier.animateContentSize(spec)) {
-        InsetRow(
-            stringResource(R.string.event_details),
-            modifier =
-                Modifier.semantics {
-                    if (open) {
-                        collapse {
-                            open = false
-                            true
-                        }
-                    } else {
-                        expand {
-                            open = true
-                            true
-                        }
+    InsetRow(
+        stringResource(R.string.event_details),
+        modifier =
+            Modifier.semantics {
+                if (open) {
+                    collapse {
+                        open = false
+                        true
                     }
-                },
-            trailing = {
-                Icon(
-                    painterResource(R.drawable.ic_expand_more),
-                    contentDescription = null,
-                    modifier = Modifier.rotate(if (open) 180f else 0f),
-                    tint = MaterialTheme.colorScheme.outline,
-                )
+                } else {
+                    expand {
+                        open = true
+                        true
+                    }
+                }
             },
-            onClick = { open = !open },
-            chevron = false,
-        )
-        if (!open) return@InsetSection
-        device.monitors.forEach { KeyValueRow(it.kindName, technicalValue(it)) }
-        device.images.forEach { image ->
-            KeyValueRow(image.name, listOfNotNull(image.version, image.updatedAtText).joinToString(SEPARATOR))
-        }
+        trailing = {
+            Icon(
+                painterResource(R.drawable.ic_expand_more),
+                contentDescription = null,
+                modifier = Modifier.rotate(if (open) 180f else 0f),
+                tint = MaterialTheme.colorScheme.outline,
+            )
+        },
+        onClick = { open = !open },
+        chevron = false,
+    )
+    if (!open) return
+    device.monitors.forEach { KeyValueRow(it.kindName, technicalValue(it)) }
+    device.images.forEach { image ->
+        KeyValueRow(image.name, listOfNotNull(image.version, image.updatedAtText).joinToString(SEPARATOR))
     }
 }
 

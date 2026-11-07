@@ -415,10 +415,10 @@ private fun ProtectionsTile(
             on == total -> pluralStringResource(R.plurals.home_protections_all, total, total)
             else -> pluralStringResource(R.plurals.home_protections_some, total, on, total)
         }
-    val (glyph, tone) = monitorMark(dekoi.watchList.maxOfOrNull { it.state }.takeIf { status == DekoiStatus.ONLINE })
+    val (glyph, tint) = monitorMark(dekoi.watchList.maxOfOrNull { it.state }.takeIf { status == DekoiStatus.ONLINE })
     StatTile(stringResource(R.string.home_protections), onClick, modifier) {
         Row(horizontalArrangement = Arrangement.spacedBy(Dimens.spaceS)) {
-            Icon(painterResource(glyph), contentDescription = null, modifier = Modifier.size(ACTION_ICON), tint = tone.color)
+            Icon(painterResource(glyph), contentDescription = null, modifier = Modifier.size(ACTION_ICON), tint = tint)
             Text(summary, style = MaterialTheme.typography.titleMedium)
         }
     }

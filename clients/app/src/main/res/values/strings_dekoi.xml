@@ -12,7 +12,6 @@
     <string name="device_offline">Offline</string>
     <string name="device_setting_up">Setting up</string>
     <string name="device_name">Name</string>
-    <string name="device_version">Software version</string>
     <string name="device_address">Address on your network</string>
     <string name="device_remove">Remove this DeKoi</string>
     <string name="device_remove_confirm_title">Remove this DeKoi?</string>
@@ -46,7 +45,6 @@
         <item quantity="other">Checking traffic against %1$s known attack patterns</item>
     </plurals>
     <string name="dekoi_watch_ids_plain">Checking traffic against known attack patterns</string>
-    <string name="dekoi_watch_ids_updated">Patterns updated %1$s</string>
     <plurals name="dekoi_watch_inventory">
         <item quantity="one">Keeping a list of %1$d device</item>
         <item quantity="other">Keeping a list of %1$d devices</item>
@@ -60,6 +58,8 @@
     <string name="dekoi_state_failed">Not working right now</string>
     <string name="dekoi_watching_older">More detail after the next automatic update.</string>
     <string name="dekoi_watching_offline">Paused while your DeKoi is offline.</string>
+    <string name="dekoi_software">Software %1$s</string>
+    <string name="dekoi_software_auto">Updates by itself</string>
     <string name="dekoi_decoys_footer">Fake services that look worth breaking into. Nothing on your network has a reason to touch them.</string>
     <plurals name="dekoi_touched">
         <item quantity="one">Touched %1$d time this week</item>

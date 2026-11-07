@@ -41,13 +41,17 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
@@ -66,9 +70,7 @@ import no.cyberfish.dekoi.cleanName
 import no.cyberfish.dekoi.hasDone
 import no.cyberfish.dekoi.nameToSave
 import no.cyberfish.dekoi.needsSetupHelp
-import no.cyberfish.dekoi.softwareUpdatedAt
 import no.cyberfish.dekoi.status
-import no.cyberfish.dekoi.ui.components.BrandTile
 import no.cyberfish.dekoi.ui.components.ConfirmDialog
 import no.cyberfish.dekoi.ui.components.InsetRow
 import no.cyberfish.dekoi.ui.components.InsetSection
@@ -76,7 +78,6 @@ import no.cyberfish.dekoi.ui.components.KeyValueRow
 import no.cyberfish.dekoi.ui.components.MissingScreen
 import no.cyberfish.dekoi.ui.components.Screen
 import no.cyberfish.dekoi.ui.components.StaleLabel
-import no.cyberfish.dekoi.watchList
 import java.time.Instant
 
 private const val PULSE_MS = 2000
@@ -88,6 +89,9 @@ private val STEP_TICK = 16.dp
 private val STEP_DOT = 8.dp
 private val STEP_BORDER = 2.dp
 private val STEP_LINE = 2.dp
+private const val HUD_ALPHA = 0.15f
+private val HUD_CUT = 12.dp
+private const val FISH_MARK = "><>"
 
 /** Online, offline or setting up, in words. */
 @StringRes
@@ -163,9 +167,9 @@ fun DekoiScreen(
         if (status == DekoiStatus.SETTING_UP) {
             val number = ++section
             item(key = "setup") { SetupChecklist(number, device, now, Modifier.itemMotion(this, still)) }
-        } else if (device.watchList.isNotEmpty()) {
+        } else {
             val number = ++section
-            item(key = "watching") { Watching(number, device, status, Modifier.itemMotion(this, still)) }
+            item(key = "watching") { Watching(number, device, status, now, Modifier.itemMotion(this, still)) }
         }
         val uptime = ++section
         item(key = "uptime") { UptimeCard(uptime, device, data.events, now, Modifier.itemMotion(this, still)) }
@@ -174,10 +178,7 @@ fun DekoiScreen(
             item(key = "decoys") { Decoys(number, device, data.events, now, onNavigate, Modifier.itemMotion(this, still)) }
         }
         val details = ++section
-        item(key = "details") { Details(details, device, now, onRename, Modifier.itemMotion(this, still)) }
-        if (device.monitors.isNotEmpty() || device.images.isNotEmpty()) {
-            item(key = "technical") { TechnicalDetails(device, Modifier.itemMotion(this, still)) }
-        }
+        item(key = "details") { Details(details, device, onRename, Modifier.itemMotion(this, still)) }
         item(key = "remove") {
             InsetSection(Modifier.itemMotion(this, still)) {
                 InsetRow(
@@ -203,6 +204,7 @@ fun DekoiScreen(
     }
 }
 
+/** The mark, name, status and last check-in inside the brand's HUD frame. */
 @Composable
 private fun Hero(
     device: Device,
@@ -211,11 +213,14 @@ private fun Hero(
     modifier: Modifier = Modifier,
 ) {
     Column(
-        modifier.fillMaxWidth(),
+        modifier
+            .fillMaxWidth()
+            .hudFrame(MaterialTheme.colorScheme.primary.copy(alpha = HUD_ALPHA))
+            .padding(horizontal = Dimens.gutter, vertical = Dimens.spaceXl),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(Dimens.spaceM),
     ) {
-        BrandTile(hero = true)
+        FishMark()
         Text(device.name, style = MaterialTheme.typography.headlineMedium, textAlign = TextAlign.Center)
         Row(
             Modifier.semantics(mergeDescendants = true) { liveRegion = LiveRegionMode.Polite },
@@ -232,6 +237,44 @@ private fun Hero(
             textAlign = TextAlign.Center,
         )
     }
+}
+
+/**
+ * Stand-in for the brand's HUD frame until the shared one lands (ADR 0020):
+ * one thin line around the edge with small 45-degree cut corners.
+ */
+private fun Modifier.hudFrame(color: Color): Modifier =
+    drawBehind {
+        val stroke = Dimens.hairline.toPx()
+        val cut = HUD_CUT.toPx()
+        val left = stroke / 2
+        val top = stroke / 2
+        val right = size.width - stroke / 2
+        val bottom = size.height - stroke / 2
+        val frame =
+            Path().apply {
+                moveTo(left + cut, top)
+                lineTo(right - cut, top)
+                lineTo(right, top + cut)
+                lineTo(right, bottom - cut)
+                lineTo(right - cut, bottom)
+                lineTo(left + cut, bottom)
+                lineTo(left, bottom - cut)
+                lineTo(left, top + cut)
+                close()
+            }
+        drawPath(frame, color, style = Stroke(stroke))
+    }
+
+/** Stand-in for the brand's fish mark until the shared one lands (ADR 0020). Decorative. */
+@Composable
+private fun FishMark() {
+    Text(
+        FISH_MARK,
+        style = MaterialTheme.typography.displaySmall,
+        color = MaterialTheme.colorScheme.primary,
+        modifier = Modifier.clearAndSetSemantics { },
+    )
 }
 
 @StringRes
@@ -337,7 +380,6 @@ private fun StepMark(
 private fun Details(
     number: Int,
     device: Device,
-    now: Instant,
     onRename: (Device, String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -345,15 +387,6 @@ private fun Details(
     Section(number, stringResource(R.string.dekoi_details), modifier) {
         InsetSection(Modifier.animateContentSize(spec)) {
             NameRow(device, onRename)
-            device.agentVersion?.let { version ->
-                InsetRow(
-                    stringResource(R.string.device_version),
-                    subtitle = device.softwareUpdatedAt?.let { stringResource(R.string.updated_ago, relativeTime(it, now)) },
-                    trailing = {
-                        Text(version, style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    },
-                )
-            }
             device.localIp?.let { KeyValueRow(stringResource(R.string.device_address), it) }
             KeyValueRow(stringResource(R.string.dekoi_linked_since), absoluteTime(device.createdAt))
         }
