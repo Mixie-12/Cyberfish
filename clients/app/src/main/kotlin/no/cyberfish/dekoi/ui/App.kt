@@ -236,16 +236,21 @@ private fun SignedIn(
         }
     }
 
-    // A tapped notification opens the alert over the Alerts tab.
-    LaunchedEffect(openEvent) {
-        val eventId = openEvent ?: return@LaunchedEffect
-        if (currentTab != Tab.ALERTS) selectTab(Tab.ALERTS)
-        navController.popBackStack(Route.Alerts, inclusive = false)
-        navController.navigate(Route.AlertDetail(eventId))
-        viewModel.eventOpened()
+    // NavHost sets its graph while the Scaffold below lays out, after these
+    // effects could first run; navigating before that throws. The entry is
+    // null until then, and never again after.
+    if (entry != null) {
+        // A tapped notification opens the alert over the Alerts tab.
+        LaunchedEffect(openEvent) {
+            val eventId = openEvent ?: return@LaunchedEffect
+            if (currentTab != Tab.ALERTS) selectTab(Tab.ALERTS)
+            navController.popBackStack(Route.Alerts, inclusive = false)
+            navController.navigate(Route.AlertDetail(eventId))
+            viewModel.eventOpened()
+        }
+        OnboardingOnce { navController.navigate(Route.Onboarding) }
     }
     NotificationPermission(setUp = data.devices.any { it.isSetUp })
-    OnboardingOnce { navController.navigate(Route.Onboarding) }
 
     // Screens link to tab roots as well as pushed screens; a tab root switches tabs.
     val navigate: (Route) -> Unit = { route ->

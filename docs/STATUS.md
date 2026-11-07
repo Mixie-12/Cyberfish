@@ -142,10 +142,17 @@ is not cut yet. CI does not start a release build, so a crash like this
 passes it. Google sign-in with debug builds works only on the machine
 whose debug key is in `infra/google/main.tf` (`6def...`).
 
-Needs hardware, not verified: the card writer with a real USB card reader;
-the decoy in Windows Explorer and Finder on the owner's LAN; the Wi-Fi
-watch against a real evil twin; the Pi running the new images after its
-nightly update (after v0.2.0); the ARP sweep from a wired PC.
+Card writer on the owner's phone (v0.2.2, USB-C reader): choosing the
+reader closed the app every time, because libaums 0.10.0 cannot read
+sense data; the app now carries the fixed SCSI driver (ADR 0029), proven
+against a simulated reader in `ScsiBlockDeviceTest`. Plugging the reader in
+could also close it (navigation before the graph existed), fixed in
+`ui/App.kt`. A full write on the reader after the fix is not verified yet.
+
+Needs hardware, not verified: the decoy in Windows Explorer and Finder on
+the owner's LAN; the Wi-Fi watch against a real evil twin; the Pi running
+the new images after its nightly update (after v0.2.0); the ARP sweep
+from a wired PC.
 The card writer needs a phone: on macOS the emulator (37.2.13) cannot take
 a USB card reader from the system driver. `-qemu -device usb-host,...`
 fails with "Service authorization failed", because the emulator lacks the
