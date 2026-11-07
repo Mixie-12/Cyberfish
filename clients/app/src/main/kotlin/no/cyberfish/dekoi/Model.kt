@@ -163,3 +163,9 @@ object TimestampSerializer : KSerializer<Instant> {
         value: Instant,
     ) = encoder.encodeString(value.toString())
 }
+
+/** The owner's own settings (owner_settings). Without a stored row, each one has its default, as in the table. */
+@Serializable
+data class OwnerSettings(
+    @SerialName("weekly_summary") val weeklySummary: Boolean = true,
+)
