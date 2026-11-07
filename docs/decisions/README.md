@@ -17,3 +17,4 @@ them.
 | 0009 | [Google Cloud and Firebase as code](0009-google-infrastructure-as-code.md) | accepted |
 | 0010 | [Device identification, networks and severity](0010-device-identification.md) | accepted |
 | 0011 | [App design system and notifications](0011-app-design.md) | accepted |
+| 0012 | [Linking a DeKoi from the phone](0012-phone-pairing.md) | accepted |
