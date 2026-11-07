@@ -26,6 +26,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import no.cyberfish.dekoi.R
 import no.cyberfish.dekoi.ui.Dimens
@@ -35,7 +36,8 @@ private val MISSING_SKELETON = 200.dp
 /**
  * A screen: an optional back button, a large title with an optional line
  * under it (such as a [StaleLabel]), then scrolling content. Tab roots pass
- * the [listState] the tab bar scrolls to the top on reselect.
+ * the [listState] the tab bar scrolls to the top on reselect. A list that
+ * spaces its items itself passes its own [spacing].
  */
 @Composable
 fun Screen(
@@ -44,13 +46,14 @@ fun Screen(
     listState: LazyListState = rememberLazyListState(),
     onBack: (() -> Unit)? = null,
     subtitle: (@Composable () -> Unit)? = null,
+    spacing: Dp = Dimens.section,
     content: LazyListScope.() -> Unit,
 ) {
     LazyColumn(
         modifier = modifier.fillMaxSize().background(MaterialTheme.colorScheme.background),
         state = listState,
         contentPadding = PaddingValues(start = Dimens.gutter, end = Dimens.gutter, top = Dimens.spaceM, bottom = Dimens.spaceXl),
-        verticalArrangement = Arrangement.spacedBy(Dimens.section),
+        verticalArrangement = Arrangement.spacedBy(spacing),
     ) {
         item {
             Column {
