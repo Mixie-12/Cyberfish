@@ -31,7 +31,7 @@ private const val PREFERENCES = "alarm"
 private const val SOUND = "sound"
 
 /**
- * Whether the alarm sound plays (ADR 0025): as the hero of an [alarm] first
+ * Whether the alarm sound plays (ADR 0026): as the hero of an [alarm] first
  * shows on this opening of its screen, while the owner keeps the sound on
  * and the phone is set to ring, not to vibrate or silent.
  */

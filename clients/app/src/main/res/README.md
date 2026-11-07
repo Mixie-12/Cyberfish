@@ -67,7 +67,7 @@ them in release builds. ExtraBold is for the `><>` mark only.
 
 ## Sound
 
-`raw/alarm_critical.mp3`, the alarm of a very likely attack (ADR 0025), is
+`raw/alarm_critical.mp3`, the alarm of a very likely attack (ADR 0026), is
 not in this directory: the `<variant>AlarmSound` task in
 `clients/app/build.gradle.kts` copies it unchanged from
 `SFX/CyberFish Error Sound.mp3` into a generated resource directory, so the

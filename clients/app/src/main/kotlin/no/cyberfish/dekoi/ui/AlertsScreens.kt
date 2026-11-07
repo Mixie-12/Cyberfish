@@ -18,6 +18,7 @@ import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.FilterChip
@@ -68,6 +69,7 @@ import no.cyberfish.dekoi.Severity
 import no.cyberfish.dekoi.amount
 import no.cyberfish.dekoi.eventText
 import no.cyberfish.dekoi.incidentSubtitle
+import no.cyberfish.dekoi.incidents
 import no.cyberfish.dekoi.looksLike
 import no.cyberfish.dekoi.serviceName
 import no.cyberfish.dekoi.severityLabel
@@ -81,6 +83,7 @@ import no.cyberfish.dekoi.ui.components.SeverityTile
 import no.cyberfish.dekoi.ui.components.Skeleton
 import no.cyberfish.dekoi.ui.components.StaleLabel
 import no.cyberfish.dekoi.ui.components.severityGlyph
+import no.cyberfish.dekoi.ui.motion.rememberHaptics
 import no.cyberfish.dekoi.ui.motion.sharedSeverity
 import java.time.Instant
 import java.time.LocalDate
@@ -93,6 +96,9 @@ private const val GLOW_ALPHA = 0.45f
 private const val SKELETON_ROWS = 4
 private const val SKELETON_TITLE = 0.8f
 private const val SKELETON_SUBTITLE = 0.5f
+
+/** Marking more unread alerts than this at once asks first. */
+private const val MARK_ALL_CONFIRM_ABOVE = 20
 private val RAIL = 16.dp
 private val DOT = 8.dp
 private val GLOW = 12.dp
@@ -162,7 +168,8 @@ fun dayLabel(
 /**
  * The Alerts tab: incidents on a calm timeline, newest first, under a
  * heading per day (ADR 0013). [scope] narrows it for a cross-link; the
- * owner can remove it.
+ * owner can remove it. With [onMarkAllRead], the header offers to mark
+ * every alert as read while any is unread.
  */
 @Composable
 fun AlertsScreen(
@@ -173,6 +180,7 @@ fun AlertsScreen(
     onRefresh: () -> Unit,
     onNavigate: (Route) -> Unit,
     onBack: (() -> Unit)?,
+    onMarkAllRead: (() -> Unit)?,
 ) {
     val zone = ZoneId.systemDefault()
     val today = now.atZone(zone).toLocalDate()
@@ -184,6 +192,8 @@ fun AlertsScreen(
     var service by rememberSaveable { mutableStateOf(scope.service) }
     var day by rememberSaveable { mutableStateOf(scope.day?.let(LocalDate::parse)) }
     val days = timeline(data.events, AlertFilter(unread, severity, mac, service, day), zone)
+    val unreadAlerts = remember(data.events) { incidents(data.events).count { !it.seen } }
+    val markAllRead = onMarkAllRead?.takeIf { unreadAlerts > 0 }
     val scopes =
         listOfNotNull(
             mac?.let { stringResource(R.string.alerts_filter_device) to { mac = null } },
@@ -201,7 +211,17 @@ fun AlertsScreen(
         stringResource(R.string.tab_alerts),
         listState = listState,
         onBack = onBack,
-        subtitle = { StaleLabel(data.updatedAt, now) },
+        subtitle = {
+            if (markAllRead == null) {
+                StaleLabel(data.updatedAt, now)
+            } else {
+                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                    StaleLabel(data.updatedAt, now)
+                    Spacer(Modifier.weight(1f))
+                    MarkAllRead(unreadAlerts, markAllRead)
+                }
+            }
+        },
         spacing = 0.dp,
     ) {
         data.problem?.let { item(key = "problem") { ErrorBanner(stringResource(it), onRefresh, Modifier.padding(top = Dimens.section)) } }
@@ -243,6 +263,33 @@ fun AlertsScreen(
                 ) { onNavigate(detail) }
             }
         }
+    }
+}
+
+/** A quiet text action; marking more than [MARK_ALL_CONFIRM_ABOVE] [unread] alerts asks first. */
+@Composable
+private fun MarkAllRead(
+    unread: Int,
+    onMarkAllRead: () -> Unit,
+) {
+    val haptics = rememberHaptics()
+    var asking by rememberSaveable { mutableStateOf(false) }
+    val markAll = {
+        asking = false
+        haptics.confirm()
+        onMarkAllRead()
+    }
+    TextButton(onClick = { if (unread > MARK_ALL_CONFIRM_ABOVE) asking = true else markAll() }) {
+        Text(stringResource(R.string.alerts_mark_all_read))
+    }
+    if (asking) {
+        AlertDialog(
+            onDismissRequest = { asking = false },
+            title = { Text(pluralStringResource(R.plurals.alerts_mark_all_read_title, unread, unread)) },
+            text = { Text(stringResource(R.string.alerts_mark_all_read_body)) },
+            confirmButton = { TextButton(onClick = markAll) { Text(stringResource(R.string.alerts_mark_all_read_confirm)) } },
+            dismissButton = { TextButton(onClick = { asking = false }) { Text(stringResource(R.string.action_cancel)) } },
+        )
     }
 }
 

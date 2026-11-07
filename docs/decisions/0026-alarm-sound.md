@@ -1,4 +1,4 @@
-# 0025: A sound with the alarm of a very likely attack
+# 0026: A sound with the alarm of a very likely attack
 
 Status: accepted, 2026-11-07
 
