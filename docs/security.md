@@ -18,6 +18,7 @@ date recorded in `docs/STATUS.md`), **pending** (not yet shown).
 | Actor                         | Can reach                                  | Must never reach                         |
 | ----------------------------- | ------------------------------------------ | ---------------------------------------- |
 | Anyone on the customer LAN    | decoys, the firewall, broadcast traffic    | the agent, its secret, the host          |
+| Anyone within Wi-Fi range     | the scan results (what their beacons say)  | the agent's privileges, the host, notification text |
 | A compromised decoy process   | its own container, write-only log volume   | secrets, the backend, the host           |
 | Any internet client           | the Data API with the publishable key      | any row, any function except device RPCs |
 | A signed-in owner             | their own rows through RLS                 | other owners' rows, device credentials   |
@@ -40,6 +41,9 @@ The data flow and every contract are in `docs/architecture.md`.
 | 8  | Attacker-controlled strings in notifications                     | fixed templates by event kind; payload carries the event id only | tested with Phase 5 (`notify` function tests) |
 | 9  | Anything beyond the intended surface on the project URL          | public schema only, GraphQL dropped, no buckets, no publications | verified 2026-11-07 against production: anonymous reads 401, private schema and GraphQL not exposed, no buckets, notify refuses requests without the secret |
 | 10 | Secrets in git history                                           | secrets only in GitHub secrets and 1Password                | tested: `gitleaks` on every push |
+| 11 | Forged access points: crafted names and elements, beacon floods  | the host only scans; iw's text parsed by the unprivileged agent, split on newline only, first kernel field per block, privacy bit decides open, names decoded, bounded to 32 bytes and cleaned; at most 16 reports a day | tested: agent `test_wifi` with real iw output |
+| 12 | The owner's Wi-Fi name as an injection vector                    | column grant, 32 bytes, no control characters, never in a notification or on the host | tested: `10_wifi_watch`, `00_hardening`, `notify` tests |
+| 13 | A compromised agent misusing the radio                           | the host reads three bytes of one file and accepts two capital letters; raspi-config checks the ISO list; the scan unit keeps only CAP_NET_ADMIN on a read-only system; the agent can make the host scan or stop, nothing else | config review; shellcheck and `systemd-analyze verify` in CI; pending on hardware |
 
 Further: typed passwords never leave the device (tested: agent `test_sources`,
 end-to-end assertion that the attacker's password is absent from the backend).
@@ -47,6 +51,32 @@ end-to-end assertion that the attacker's password is absent from the backend).
 Hardware (verified 2026-11-07, `docs/STATUS.md` Phase 7): from the LAN only
 the eight decoy ports answer and port 22 is the decoy, not the host's SSH;
 the login alert arrived about 1 s after the attempt with the fixed template.
+
+## Radio use (Wi-Fi watch, ADR 0019)
+
+- The Pi's Wi-Fi radio stays rfkill-blocked, as Raspberry Pi OS ships it,
+  until the owner has given a Wi-Fi name and the backend knows the device's
+  country. Then `dekoi-wifi-scan` sets the country (`raspi-config`) and runs
+  `iw dev wlan0 scan` every five minutes. Active scanning sends probe
+  requests; once the radio is on, NetworkManager may scan too. Nothing ever
+  joins a network: a wired DeKoi has no Wi-Fi profile, and the scan never
+  runs while wlan0 is connected or carries the default route.
+- The scan unit (`dekoi-wifi-scan.service`) runs as root with only
+  CAP_NET_ADMIN, a read-only file system except the scan directory, the
+  kernel command line and the saved rfkill state, a private /tmp and no raw
+  sockets. It reads nothing from the agent but the country.
+- The country comes from the `cf-ipcountry` header of the device's own
+  request. A wrong country only affects that device's radio; unknown means
+  off. Whether the header reaches PostgREST on the hosted project is
+  pending verification.
+- Residual risk: iw prints WPS strings as raw bytes, so a crafted beacon can
+  add lines to the scan text. It cannot make an open access point look
+  protected (the privacy bit is printed from the kernel before any
+  element), but a beacon that puts its WPS element before its name could
+  start a forged block and hide a copy from the parser. Reading scan
+  results from nl80211 directly in the agent would close this; not done.
+- Scan output and the country live in `/run` (memory), so the card sees no
+  writes; what the watch learned is in `wifi.json` next to the agent state.
 
 ## OWASP Top 10 (2025)
 
@@ -67,8 +97,8 @@ the login alert arrived about 1 s after the attempt with the fixed template.
 
 Object-level and function-level authorization (API1, API5): RLS and exact
 function grants, tested. Authentication (API2): Supabase Auth, device secrets.
-Property-level authorization (API3): column grants (only `name` and `trusted`
-are writable), tested. Resource consumption (API4): batch limits, pending-claim
+Property-level authorization (API3): column grants (only `name`, `wifi_name`
+and `trusted` are writable), tested. Resource consumption (API4): batch limits, pending-claim
 limit, bounded fields; no edge rate limit without a custom domain (ADR 0001).
 Business flows (API6): single-use pairing. SSRF (API7): the only outbound call
 from the backend goes to a fixed FCM URL. Misconfiguration (API8): see A02.
