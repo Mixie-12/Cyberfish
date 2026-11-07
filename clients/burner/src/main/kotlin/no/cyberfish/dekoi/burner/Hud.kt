@@ -236,12 +236,12 @@ internal fun Lines(
 
 /** Technical text for someone helping, collapsed until asked for. */
 @Composable
-internal fun Details(text: String) {
+internal fun Details(details: String) {
     var open by remember { mutableStateOf(false) }
     Action(if (open) text("details_hide") else text("details_show"), onClick = { open = !open })
     if (open) {
         SelectionContainer {
-            Text(text, Modifier.fillMaxWidth().padding(horizontal = 20.dp), style = Type.secondary)
+            Text(details, Modifier.fillMaxWidth().padding(horizontal = 20.dp), style = Type.secondary)
         }
     }
 }
