@@ -36,7 +36,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.geometry.center
@@ -68,17 +67,16 @@ import no.cyberfish.dekoi.Severity
 import no.cyberfish.dekoi.isOnline
 import no.cyberfish.dekoi.ui.Dimens
 import no.cyberfish.dekoi.ui.LocalReduceMotion
-import no.cyberfish.dekoi.ui.LocalSeverityColors
 import no.cyberfish.dekoi.ui.Route
 import no.cyberfish.dekoi.ui.components.BrandTile
 import no.cyberfish.dekoi.ui.components.HudFrame
 import no.cyberfish.dekoi.ui.components.kindIcon
+import no.cyberfish.dekoi.ui.motion.sharedKindTile
 import no.cyberfish.dekoi.ui.tabular
 import java.time.Instant
 import kotlin.math.round
 
 private val GLYPH = 22.dp
-private val HALO = 34.dp
 private val DASH = 4.dp
 private val HUB = 2.dp
 private val BADGE_SHIFT = 14.dp
@@ -93,7 +91,6 @@ private const val LABEL_DISTANCE = 44f
 private const val RING_ALPHA = 0.12f
 private const val SPOKE_ALPHA = 0.3f
 private const val EDGE_ALPHA = 0.5f
-private const val HALO_ALPHA = 0.45f
 
 private const val ZOOM_MS = 300
 private const val ZOOM_FROM = 0.85f
@@ -186,7 +183,7 @@ internal fun NetworkMap(
                     val node = placed.node
                     Node(node, origin + placed.at, emphasis = placed.ring == 0, now, string) {
                         when (node) {
-                            is MapNode.Host -> onNavigate(Route.HostDetail(node.entry.host.deviceId, node.entry.host.mac))
+                            is MapNode.Host -> onNavigate(node.entry.host.detail)
                             is MapNode.Dekoi -> onNavigate(Route.Dekoi(node.device.id))
                             is MapNode.Bubble -> focusOn(node.group)
                         }
@@ -281,7 +278,7 @@ private fun Node(
             when (node) {
                 is MapNode.Host -> {
                     val entry = node.entry
-                    NodeMark(edge, entry.attention, entry.new, entry.online) {
+                    NodeMark(edge, entry.attention, entry.new, entry.online, Modifier.sharedKindTile(entry.host.detail)) {
                         Icon(
                             painterResource(kindIcon(entry.host.kind)),
                             contentDescription = null,
@@ -319,7 +316,8 @@ private fun Node(
 /**
  * A round tile on the background with a hairline [edge], a halo in the
  * colour of a recent alert, a "New" badge, and a status dot unless
- * [online] is null.
+ * [online] is null. [tile] goes first on the round tile itself, for a
+ * shared element.
  */
 @Composable
 private fun NodeMark(
@@ -327,18 +325,12 @@ private fun NodeMark(
     attention: Severity?,
     new: Boolean,
     online: Boolean?,
+    tile: Modifier = Modifier,
     content: @Composable BoxScope.() -> Unit,
 ) {
-    val halo = attention?.let { LocalSeverityColors.current.of(it).color }
-    Box(
-        Modifier.size(Dimens.tile).drawBehind {
-            if (halo == null) return@drawBehind
-            val radius = HALO.toPx()
-            drawCircle(Brush.radialGradient(listOf(halo.copy(alpha = HALO_ALPHA), Color.Transparent), radius = radius), radius)
-        },
-    ) {
+    Box(Modifier.size(Dimens.tile).alertHalo(attention)) {
         Box(
-            Modifier
+            tile
                 .matchParentSize()
                 .clip(CircleShape)
                 .background(MaterialTheme.colorScheme.background)
