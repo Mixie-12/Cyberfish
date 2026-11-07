@@ -76,6 +76,10 @@ const TEMPLATES: Record<string, (subject: string) => Template> = {
   rogue_router: (s) => ({ title: `${s} announces itself as your router`, body: ALERT_BODY }),
   name_poisoning: (s) => ({ title: `${s} answers questions it should not`, body: ALERT_BODY }),
   ids_alert: (s) => ({ title: `${s} sent suspicious traffic to your DeKoi`, body: ALERT_BODY }),
+  // The source of a dns_hijack event is the resolver, not a device the
+  // inventory names.
+  dns_hijack: () => ({ title: "Some web addresses lead to the wrong place", body: ALERT_BODY }),
+  port_forward: (s) => ({ title: `${s} can now be reached from the internet`, body: ALERT_BODY }),
   device_offline: () => ({
     title: "Your DeKoi went offline",
     body:
