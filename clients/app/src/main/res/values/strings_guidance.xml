@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Steps and labels for alert guidance (Guidance.kt). Plain words, calm, one action per step. -->
 <resources>
-    <string name="severity_critical">Needs your attention now</string>
-    <string name="severity_warning">Worth a look</string>
+    <string name="severity_critical">Act now</string>
+    <string name="severity_warning">Check soon</string>
     <string name="severity_info">For your information</string>
 
     <string name="step_find_personal">Find the device. It looks like a phone, tablet or watch, so check the ones people in your home and your guests carry.</string>

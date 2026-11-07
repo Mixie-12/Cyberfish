@@ -21,11 +21,14 @@ import androidx.compose.ui.unit.dp
 import no.cyberfish.dekoi.Device
 import no.cyberfish.dekoi.Protection
 import no.cyberfish.dekoi.R
+import no.cyberfish.dekoi.Severity
+import no.cyberfish.dekoi.highestSeverity
 import no.cyberfish.dekoi.isIntrusion
 import no.cyberfish.dekoi.isOnline
 import no.cyberfish.dekoi.isSettingUp
 import no.cyberfish.dekoi.needsSetupHelp
 import no.cyberfish.dekoi.protection
+import no.cyberfish.dekoi.recentIntrusions
 import java.time.Duration
 import java.time.Instant
 
@@ -45,7 +48,7 @@ fun HomeScreen(
         title = stringResource(R.string.app_name),
         action = { AccentButton(R.string.action_refresh, onRefresh) },
     ) {
-        item { StatusHero(state) }
+        item { StatusHero(state, highestSeverity(recentIntrusions(data.events, data.trustedMacs, now))) }
         if (state == Protection.NO_DEVICE) {
             item { AccentButton(R.string.action_add_dekoi, onAdd) }
             return@Screen
@@ -69,7 +72,10 @@ fun HomeScreen(
 }
 
 @Composable
-private fun StatusHero(state: Protection) {
+private fun StatusHero(
+    state: Protection,
+    highest: Severity?,
+) {
     val (title, body) =
         when (state) {
             Protection.PROTECTED -> R.string.status_protected_title to R.string.status_protected_body
@@ -81,7 +87,7 @@ private fun StatusHero(state: Protection) {
     Card(Modifier.semantics { liveRegion = LiveRegionMode.Polite }) {
         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                StatusDot(LocalStatusColors.current.of(state), size = 14)
+                StatusDot(protectionColor(state, highest), size = 14)
                 Spacer(Modifier.width(10.dp))
                 Text(stringResource(title), style = MaterialTheme.typography.headlineSmall)
             }
@@ -121,11 +127,11 @@ private fun DeviceCard(
     now: Instant,
     onClick: () -> Unit,
 ) {
-    val colors = LocalStatusColors.current
+    val colors = LocalSeverityColors.current
     val (label, color) =
         when {
-            device.isSettingUp -> R.string.device_setting_up to colors.settingUp
-            device.isOnline(now) -> R.string.device_online to colors.protected
+            device.isSettingUp -> R.string.device_setting_up to MaterialTheme.colorScheme.primary
+            device.isOnline(now) -> R.string.device_online to colors.safe.color
             else -> R.string.device_offline to colors.offline
         }
     Card(onClick = onClick) {
@@ -156,11 +162,12 @@ private fun SetupSteps(device: Device) {
             R.string.setup_online to (device.lastSeenAt != null),
             R.string.setup_protecting to device.services.isNotEmpty(),
         )
-    val colors = LocalStatusColors.current
+    val done = LocalSeverityColors.current.safe.color
+    val pending = MaterialTheme.colorScheme.outlineVariant
     Column(verticalArrangement = Arrangement.spacedBy(6.dp), modifier = Modifier.padding(start = 2.dp)) {
-        steps.forEach { (label, done) ->
+        steps.forEach { (label, finished) ->
             Row(verticalAlignment = Alignment.CenterVertically) {
-                StatusDot(if (done) colors.protected else colors.divider)
+                StatusDot(if (finished) done else pending)
                 Spacer(Modifier.width(10.dp))
                 Text(stringResource(label), style = MaterialTheme.typography.bodyMedium)
             }

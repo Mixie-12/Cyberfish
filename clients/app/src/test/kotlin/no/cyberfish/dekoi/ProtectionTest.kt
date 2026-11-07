@@ -4,6 +4,7 @@ import java.time.Duration
 import java.time.Instant
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertNull
 
 class ProtectionTest {
     private val now = Instant.parse("2026-11-07T12:00:00Z")
@@ -79,5 +80,15 @@ class ProtectionTest {
         val devices = listOf(device(online = false), device(registered = false, seenAgo = null))
         assertEquals(Protection.OFFLINE, protection(devices, emptyList(), emptySet(), now))
         assertEquals(Protection.ATTENTION, protection(devices, listOf(event("connection")), emptySet(), now))
+    }
+
+    @Test
+    fun `the most serious alert sets the colour of attention`() {
+        val events =
+            listOf(Severity.INFO, Severity.CRITICAL, Severity.WARNING).map {
+                event("connection").copy(severityName = it.name.lowercase())
+            }
+        assertEquals(Severity.CRITICAL, highestSeverity(events))
+        assertNull(highestSeverity(emptyList()))
     }
 }

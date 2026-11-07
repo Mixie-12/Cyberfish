@@ -78,31 +78,22 @@ fun main() =
 
 @Composable
 private fun DekoiTheme(content: @Composable () -> Unit) {
-    val accent = Color(DesignTokens.ACCENT)
+    val dark = isSystemInDarkTheme()
+    val palette = if (dark) DesignTokens.Dark else DesignTokens.Light
+    val base = if (dark) darkColorScheme() else lightColorScheme()
     val scheme =
-        if (isSystemInDarkTheme()) {
-            darkColorScheme(
-                primary = accent,
-                onPrimary = Color.White,
-                background = Color(DesignTokens.Dark.BACKGROUND),
-                onBackground = Color(DesignTokens.Dark.TEXT),
-                surface = Color(DesignTokens.Dark.SURFACE),
-                onSurface = Color(DesignTokens.Dark.TEXT),
-                onSurfaceVariant = Color(DesignTokens.Dark.SECONDARY_TEXT),
-                outline = Color(DesignTokens.Dark.DIVIDER),
-            )
-        } else {
-            lightColorScheme(
-                primary = accent,
-                onPrimary = Color.White,
-                background = Color(DesignTokens.Light.BACKGROUND),
-                onBackground = Color(DesignTokens.Light.TEXT),
-                surface = Color(DesignTokens.Light.SURFACE),
-                onSurface = Color(DesignTokens.Light.TEXT),
-                onSurfaceVariant = Color(DesignTokens.Light.SECONDARY_TEXT),
-                outline = Color(DesignTokens.Light.DIVIDER),
-            )
-        }
+        base.copy(
+            primary = Color(palette.tint.color),
+            onPrimary = Color(palette.onTint),
+            background = Color(palette.background),
+            onBackground = Color(palette.text),
+            surface = Color(palette.surface),
+            onSurface = Color(palette.text),
+            onSurfaceVariant = Color(palette.textSecondary),
+            outline = Color(palette.textTertiary),
+            outlineVariant = Color(palette.separator),
+            error = Color(palette.critical.color),
+        )
     MaterialTheme(colorScheme = scheme, content = content)
 }
 

@@ -24,6 +24,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -37,6 +38,7 @@ import kotlinx.coroutines.launch
 import no.cyberfish.dekoi.BuildConfig
 import no.cyberfish.dekoi.R
 import no.cyberfish.dekoi.requestGoogleIdToken
+import no.cyberfish.dekoi.shared.DesignTokens
 
 @Composable
 fun SignInScreen(viewModel: AppViewModel) {
@@ -50,7 +52,7 @@ fun SignInScreen(viewModel: AppViewModel) {
             verticalArrangement = Arrangement.spacedBy(16.dp),
             modifier = Modifier.align(Alignment.Center),
         ) {
-            Box(Modifier.size(96.dp).clip(RoundedCornerShape(24.dp)).background(MaterialTheme.colorScheme.primary)) {
+            Box(Modifier.size(96.dp).clip(RoundedCornerShape(24.dp)).background(Color(DesignTokens.BRAND))) {
                 Image(painterResource(R.drawable.ic_launcher_foreground), contentDescription = null, modifier = Modifier.fillMaxSize())
             }
             Text(stringResource(R.string.app_name), style = MaterialTheme.typography.displaySmall)
@@ -79,7 +81,7 @@ fun SignInScreen(viewModel: AppViewModel) {
                 Text(stringResource(R.string.signin_button), style = MaterialTheme.typography.labelLarge)
             }
             failure?.let {
-                Text(stringResource(it), color = LocalStatusColors.current.attention, textAlign = TextAlign.Center)
+                Text(stringResource(it), color = MaterialTheme.colorScheme.error, textAlign = TextAlign.Center)
             }
         }
     }

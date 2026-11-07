@@ -39,7 +39,6 @@ import androidx.compose.ui.unit.dp
 import no.cyberfish.dekoi.Event
 import no.cyberfish.dekoi.R
 import no.cyberfish.dekoi.eventText
-import no.cyberfish.dekoi.isIntrusion
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
@@ -111,7 +110,7 @@ fun SecondaryText(
     text: String,
     modifier: Modifier = Modifier,
 ) {
-    Text(text, style = MaterialTheme.typography.bodyMedium, color = LocalStatusColors.current.secondaryText, modifier = modifier)
+    Text(text, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = modifier)
 }
 
 @Composable
@@ -136,7 +135,7 @@ fun KeyValue(
 
 @Composable
 fun Divider() {
-    HorizontalDivider(color = LocalStatusColors.current.divider)
+    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
 }
 
 @Composable
@@ -162,12 +161,11 @@ fun EventRow(
     now: Instant,
     onClick: () -> Unit,
 ) {
-    val colors = LocalStatusColors.current
     Row(
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier.fillMaxWidth().clickable(onClick = onClick).padding(vertical = 10.dp),
     ) {
-        StatusDot(if (event.isIntrusion) colors.attention else colors.offline)
+        StatusDot(LocalSeverityColors.current.of(event.severity).color)
         Spacer(Modifier.width(12.dp))
         Column(Modifier.weight(1f)) {
             Text(eventTitle(event), style = MaterialTheme.typography.bodyLarge, maxLines = 2, overflow = TextOverflow.Ellipsis)

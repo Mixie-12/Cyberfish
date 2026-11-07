@@ -212,7 +212,7 @@ fun ConfirmDialog(
         text = { Text(stringResource(body)) },
         confirmButton = {
             TextButton(onClick = onConfirm) {
-                Text(stringResource(confirm), color = LocalStatusColors.current.attention)
+                Text(stringResource(confirm), color = MaterialTheme.colorScheme.error)
             }
         },
         dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_cancel)) } },

@@ -48,6 +48,9 @@ fun recentIntrusions(
     now: Instant,
 ): List<Event> = events.filter { it.isIntrusion && it.srcMac !in trustedMacs && Duration.between(it.occurredAt, now) < ATTENTION_WINDOW }
 
+/** The most serious of these events (Severity lists the most serious first), or null when there are none. */
+fun highestSeverity(events: List<Event>): Severity? = events.minOfOrNull { it.severity }
+
 fun protection(
     devices: List<Device>,
     events: List<Event>,
