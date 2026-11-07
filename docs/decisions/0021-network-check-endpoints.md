@@ -30,9 +30,10 @@ checks must work with the rules deployed devices already have.
 - The gateway's UPnP description URL comes from SSDP answers the discovery
   listener already receives; only an answer from the gateway's address that
   names an IGD counts. No new socket or firewall rule.
-- The public address is `cf-connecting-ip`, else the first
-  `X-Forwarded-For` entry, the header Supabase documents; the country is
-  `cf-ipcountry` or nothing.
+- The public address is `cf-connecting-ip`, which the platform sets; the
+  country is `cf-ipcountry` or nothing. (The fallback to the first
+  `X-Forwarded-For` entry was dropped with ADR 0016: that entry is whatever
+  the caller sent.)
 
 ## Consequences
 

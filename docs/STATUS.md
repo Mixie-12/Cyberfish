@@ -1,6 +1,6 @@
 # Status
 
-Updated 2026-11-07. Phases 0 to 6 are on `main`, deployed by CI and released
+Updated 2026-11-08. Phases 0 to 6 are on `main`, deployed by CI and released
 as v0.1.1. The Phase 7 hardware test passed end to end with the findings
 below. Next: device identification and the app redesign the owner asked for
 (Phase 8).
@@ -21,12 +21,16 @@ below. Next: device identification and the app redesign the owner asked for
 
 | Secret                               | Where                                                     |
 | ------------------------------------ | --------------------------------------------------------- |
-| cosign image signing key, password   | GitHub secrets `COSIGN_PRIVATE_KEY`, `COSIGN_PASSWORD`; 1Password vault "Encryption", item "DeKoi cosign image signing key" |
-| cosign public key                    | `device/host/etc/dekoi/cosign.pub` (on every card)        |
-| Android release keystore, password   | GitHub secrets `ANDROID_KEYSTORE_BASE64`, `ANDROID_KEYSTORE_PASSWORD`; 1Password item "DeKoi Android release signing key". Alias `dekoi`. Certificate SHA-256 `7F:57:59:C5:01:5B:FC:7A:34:7A:72:35:35:54:07:91:96:E6:21:58:5A:9F:EE:69:44:75:86:A7:E8:43:67:41` |
-| Notification webhook secret          | GitHub secret `NOTIFY_SECRET` (generated 2026-11-07; written to Vault and the function by the deploy job) |
-| Supabase access token, DB password   | GitHub secrets `SUPABASE_ACCESS_TOKEN`, `SUPABASE_DB_PASSWORD` (docs/runbooks/deploy-backend.md) |
-| Google web client secret, Firebase service account | GitHub secrets `GOOGLE_WEB_CLIENT_SECRET`, `FCM_SERVICE_ACCOUNT` (docs/runbooks/google-firebase.md) |
+| First cosign image signing key, password | GitHub secrets `COSIGN_PRIVATE_KEY`, `COSIGN_PASSWORD` (move to the `release` environment); 1Password vault "Encryption", item "DeKoi cosign image signing key". Retires 2026-12-31 (ADR 0022) |
+| cosign public key                    | `device/host/etc/dekoi/cosign.pub` (on every card so far) |
+| Cloud KMS image signing key          | not created yet: needs a billing account (`infra/google/signing.tf`) |
+| Image signing backup key             | not created yet (`docs/runbooks/rotate-keys.md`)          |
+| Android release keystore, password   | GitHub secrets `ANDROID_KEYSTORE_BASE64`, `ANDROID_KEYSTORE_PASSWORD` (move to the `release` environment); 1Password item "DeKoi Android release signing key". Alias `dekoi`. Certificate SHA-256 `7F:57:59:C5:01:5B:FC:7A:34:7A:72:35:35:54:07:91:96:E6:21:58:5A:9F:EE:69:44:75:86:A7:E8:43:67:41` |
+| Notification webhook secret, FCM key | function secrets and Vault, replaced monthly by `rotate-keys.yml`; the GitHub secrets `NOTIFY_SECRET` and `FCM_SERVICE_ACCOUNT` are to be deleted after the first rotation |
+| Supabase access token                | GitHub secret `SUPABASE_ACCESS_TOKEN` (move to the `production` environment; needs Database read-write and Advisors read, docs/runbooks/deploy-backend.md) |
+| Supabase database password           | 1Password only; GitHub secret `SUPABASE_DB_PASSWORD` is unused and to be deleted |
+| Google web client secret             | GitHub secret `GOOGLE_WEB_CLIENT_SECRET` (move to the `production` environment) |
+| Backup decryption key                | not created yet (`docs/runbooks/restore-backup.md`)       |
 
 ## Phase log
 
@@ -94,9 +98,61 @@ Tested on a Raspberry Pi on a home LAN by ethernet, an Honor PTP-N49 phone
 | ARP sweep | Not reported when sent from the Wi-Fi PC (253 targets); not verified from a wired host, see Known limitations |
 | Typed passwords | Not shown in the app; the hardware check of the stored rows was not done (covered by the CI end-to-end test) |
 
+Backend hardening for public sign-up (2026-11-08, not yet deployed): Auth
+access tokens 15 minutes; write limits per address and per user in
+PostgREST's pre-request function; storage limits per account and device;
+a cap on `notify` calls against the Free plan quota; abandoned setups
+removed after 30 days; a test that account deletion reaches every table
+(ADR 0016, `docs/security.md`). HTTP 429 and the notify gate
+verified through the local gateway; backup dump and restore verified
+locally.
+
+Integration (2026-11-08, not yet pushed or deployed): the Wi-Fi watch
+(ADR 0019) and the request and storage limits (ADR 0016) merged onto
+`main` at `0eb5e02`, with three new migrations after the production ones:
+`20261107235000_wifi_watch`, `20261108000000_request_and_storage_limits`
+and `20261108000100_client_address` (`device_health_v1` takes the public
+address from `private.client_ip()`). `12_event_vocabulary` now lists
+every event kind with its severity. Locally: pgTAP 18 files, 409 tests,
+advisors clean; `notify` 18 tests; agent 196 tests, ruff clean; app 45,
+shared 5 and DeKoi Setup 24 unit tests, ktlint and Android lint clean. Not
+verified: that `cf-connecting-ip` and `cf-ipcountry` reach
+`request.headers` on the hosted project. Without them the per-address
+limits are off, no public address is stored and the Wi-Fi watch keeps the
+radio off (`docs/security.md`, "Monitoring").
+
 ## Owner actions open
 
 1. Optional: repeat the ARP sweep from a PC connected by cable.
+2. Realtime: suspend it (nothing uses it; public channels are open to
+   anyone with the publishable key). Either give CI a token with "Realtime
+   Config" read-write so the deploy sets it, or turn it off once in the
+   dashboard (`docs/security.md`, "Platform settings").
+3. SSL enforcement for direct database connections: replace the CI token
+   with one that adds "SSL Enforcement" read-write; then
+   `[db.ssl_enforcement] enabled = true` can go into `config.toml`.
+4. Check in the dashboard: Auth audit logs are not written to the
+   database, and IP address forwarding is off.
+5. Backups: create an age key pair, store the private key in 1Password
+   ("DeKoi backup age key") and the public key as the repository variable
+   `BACKUP_AGE_RECIPIENT`, so the CI backup job can run
+   (`docs/runbooks/restore-backup.md`). Until then nothing backs up
+   production.
+6. Decide before real customers: Supabase Pro (daily backups, PITR as an
+   add-on, no pausing, session time-outs, higher quotas) and a custom
+   domain with a firewall in front of the API.
+2. CI keys and signing (ADR 0022), in this order: make the repository
+   public and run `infra/github/apply.sh`; move the secrets into the
+   environments; create the backup age key; replace the Supabase access
+   token; apply `infra/google` and, once notify reads
+   `NOTIFY_SECRET_PREVIOUS`, run `rotate-keys.yml`; decide on Cloud KMS
+   billing; switch new cards to the KMS and backup keys; rewrite the
+   existing card; retire the first key. Exact steps in the runbooks
+   `rotate-keys.md`, `restore-backup.md`, `deploy-backend.md`,
+   `google-firebase.md`.
+3. Update the canary's Python dependencies: OSV-Scanner reports known
+   vulnerabilities in twisted 26.4.0, urllib3 2.7.0 and pyasn1 0.6.4
+   (`device/canary/requirements.txt`).
 
 Done 2026-11-07:
 - Supabase project `rmllpietnopviodbdkky` deployed entirely by CI (migrations,
@@ -116,13 +172,25 @@ Done 2026-11-07:
 - DeKoi sees traffic to itself and broadcast traffic, not traffic between
   other devices (ADR 0003); a mirror-port option is on the roadmap.
 - HTTPS decoy is off until each device has its own certificate.
-- IDS rules are at most a week old. On hardware the nftables and ulogd2 scan
-  path is verified; a live IDS alert, DHCP and name-poisoning probes are not.
+- IDS rules are as old as the last approved image rebuild (weekly). On
+  hardware the nftables and ulogd2 scan path is verified; a live IDS alert,
+  DHCP and name-poisoning probes are not.
 - An ARP sweep from a Wi-Fi client was not detected by a wired DeKoi; many
   access points answer or filter broadcast ARP for Wi-Fi clients. Retest from
   a wired host before relying on sweep detection across Wi-Fi.
+- No edge firewall without a custom domain: limits are counted in Postgres
+  and only accepted writes count (ADR 0016). A flood from many accounts can
+  hold back everyone's pushes for an hour or fill the 500 MB database
+  within weeks; monitoring is the alarm.
+- Free Supabase plan: no downloadable backups (CI job specified, not yet
+  built), sessions never expire, and Supabase may pause a project after a
+  week of low activity.
 - No edge rate limiting without a Supabase custom domain.
-- Free Supabase plan: backups are manual dumps.
+- Free Supabase plan: backups are nightly CLI dumps (`backup.yml`), not
+  point-in-time recovery.
+- Releases and weekly image rebuilds wait for the owner's approval.
+- The card written before ADR 0022 trusts every repository under
+  `ghcr.io/mixie-12` and only the first cosign key until it is rewritten.
 
 ## Roadmap (out of MVP scope)
 

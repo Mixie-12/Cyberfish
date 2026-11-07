@@ -106,7 +106,7 @@ sealed interface Route {
 
     @Serializable data object AddDekoi : Route
 
-    /** Writing a DeKoi card with this phone (ADR 0014, 0017); its screen comes from the card-writing work. */
+    /** Writing a DeKoi card with this phone (ADR 0014, 0017). */
     @Serializable data object WriteCard : Route
 
     @Serializable data object Licences : Route
@@ -306,9 +306,8 @@ private fun SignedIn(
             screen<Route.AddDekoi> {
                 AddDekoiScreen(data, now, onRefresh = viewModel::refreshDevices, onNavigate = navigate, onBack = back)
             }
-            // An empty screen until the card-writing work brings its own (ADR 0014).
             screen<Route.WriteCard> {
-                Screen(stringResource(R.string.add_write_card), onBack = back) { }
+                WriteCardScreen(onClaim = viewModel::claim, onBack = back)
             }
             screen<Route.Licences> {
                 LicencesScreen(back)
@@ -338,6 +337,7 @@ private fun SignedIn(
                     onNavigate = navigate,
                     weeklySummary = settings?.weeklySummary,
                     onWeeklySummary = viewModel::setWeeklySummary,
+                    onSetWifiName = viewModel::setWifiName,
                 )
             }
         }

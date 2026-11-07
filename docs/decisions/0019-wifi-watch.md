@@ -36,3 +36,26 @@ reach.
   of the DeKoi's range.
 - Owner-supplied text (the Wi-Fi name) is bounded and stored as data; it is
   never put into a notification.
+
+## Implementation notes (2026-11-07)
+
+Choices made while building it:
+
+- The host writes iw's text, not parsed JSON, and the agent parses it. iw
+  prints some beacon fields (WPS strings, the country code) as raw bytes,
+  so its output is attacker-controlled; parsing it belongs in the
+  unprivileged agent, which updates with its image, not in a root script
+  frozen on the card.
+- The watch scans only while the DeKoi is wired: a default route on
+  another interface and wlan0 not connected. A DeKoi on Wi-Fi reports
+  `uplink` and its radio is never touched, so the name from the card is
+  not used.
+- The country is the `cf-ipcountry` header the platform's edge (Cloudflare,
+  in front of Supabase) adds to the device's own request, read by
+  `device_wifi_v1` and never stored. The host applies it with
+  `raspi-config nonint do_wifi_country`, the mechanism Raspberry Pi OS uses
+  itself, only when it changes.
+- The new-access-point kind is `new_access_point`, a warning.
+- With nothing learned (the home network out of range during the first
+  day), the home network counts as WPA2. At most 16 access points are
+  reported per day, against beacon floods.

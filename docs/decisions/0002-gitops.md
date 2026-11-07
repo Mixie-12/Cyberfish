@@ -1,6 +1,6 @@
 # 0002: GitOps for every environment
 
-Status: accepted, 2026-11-07
+Status: accepted, 2026-11-07. Amended by 0022 (keys in CI, signing, rotation).
 
 ## Context
 

@@ -18,8 +18,22 @@ tofu apply
 op document edit "DeKoi OpenTofu state (infra/google)" terraform.tfstate --vault Encryption
 ```
 
-Rotate the FCM sender key with `./publish.sh --new-fcm-key`, then delete the
-older key in the console (IAM, Service accounts, fcm-sender, Keys).
+`publish.sh` also publishes the workload identity providers and service
+accounts that GitHub Actions uses instead of keys (ADR 0022). The FCM sender
+key is created, handed to the `notify` function and replaced every month by
+the `rotate-keys` workflow; it never passes through GitHub or this machine.
+Run that workflow once after the first apply (`docs/runbooks/rotate-keys.md`).
+
+Cloud KMS (the image signing key, `signing.tf`) needs a billing account.
+Once the owner has decided to pay for it (about 1 USD a month), commit the
+billing account ID (not a secret) as the default of `billing_account` in
+`signing.tf`, then follow `rotate-keys.md`, "Switch new cards to the Cloud
+KMS key". Removing it later would plan to destroy the key;
+`prevent_destroy` stops that plan.
+
+After the first apply with these changes, delete the old FCM secret from
+GitHub (`gh secret delete FCM_SERVICE_ACCOUNT --repo Mixie-12/Cyberfish`);
+the first rotation deletes its key in Google.
 
 ## Sign-in clients (console, one time)
 
@@ -35,7 +49,8 @@ In https://console.cloud.google.com/auth/overview?project=dekoi-cyberfish:
    prompt):
 
    ```
-   gh secret set GOOGLE_WEB_CLIENT_SECRET --repo Mixie-12/Cyberfish
+   gh secret set GOOGLE_WEB_CLIENT_SECRET --env production --repo Mixie-12/Cyberfish
+   gh variable set EXPIRES_GOOGLE_WEB_CLIENT_SECRET --repo Mixie-12/Cyberfish --body <a year from today>
    ```
 
 4. **Clients, Create client, Android**, name `DeKoi release`, package

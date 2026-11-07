@@ -23,6 +23,7 @@ import no.cyberfish.dekoi.Network
 import no.cyberfish.dekoi.NetworkHost
 import no.cyberfish.dekoi.OwnerSettings
 import no.cyberfish.dekoi.R
+import no.cyberfish.dekoi.shared.ClaimCode
 import java.io.IOException
 import java.time.Instant
 
@@ -101,6 +102,28 @@ class AppViewModel(
             } finally {
                 refreshes.value = false
             }
+        }
+    }
+
+    /** Claims the code of a card this phone wrote (WriteCardScreen); onDone receives the message to show. */
+    fun claim(
+        code: ClaimCode,
+        onDone: (Int) -> Unit,
+    ) {
+        viewModelScope.launch {
+            val result =
+                try {
+                    backend.claim(code)
+                    owner.value = owner.value.copy(devices = backend.devices())
+                    R.string.add_done
+                } catch (error: RestException) {
+                    if (error.statusCode == TOO_MANY_REQUESTS) R.string.add_too_many else R.string.add_refused
+                } catch (_: HttpRequestException) {
+                    R.string.error_network
+                } catch (_: HttpRequestTimeoutException) {
+                    R.string.error_network
+                }
+            onDone(result)
         }
     }
 
@@ -215,5 +238,13 @@ class AppViewModel(
         owner.value =
             owner.value.copy(events = owner.value.events.map { if (it.id in ids && it.seenAt == null) it.copy(seenAt = seenAt) else it })
         run { backend.acknowledge(ids) }
+    }
+
+    fun setWifiName(
+        device: Device,
+        name: String?,
+    ) = run {
+        backend.setWifiName(device, name)
+        owner.value = owner.value.copy(devices = backend.devices())
     }
 }

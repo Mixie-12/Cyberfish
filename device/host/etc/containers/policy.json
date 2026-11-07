@@ -2,10 +2,24 @@
   "default": [{"type": "reject"}],
   "transports": {
     "docker": {
-      "ghcr.io/mixie-12": [
+      "ghcr.io/mixie-12/dekoi-agent": [
         {
           "type": "sigstoreSigned",
-          "keyPath": "/etc/dekoi/cosign.pub",
+          "keyPaths": ["/etc/dekoi/cosign.pub"],
+          "signedIdentity": {"type": "matchRepository"}
+        }
+      ],
+      "ghcr.io/mixie-12/dekoi-canary": [
+        {
+          "type": "sigstoreSigned",
+          "keyPaths": ["/etc/dekoi/cosign.pub"],
+          "signedIdentity": {"type": "matchRepository"}
+        }
+      ],
+      "ghcr.io/mixie-12/dekoi-ids": [
+        {
+          "type": "sigstoreSigned",
+          "keyPaths": ["/etc/dekoi/cosign.pub"],
           "signedIdentity": {"type": "matchRepository"}
         }
       ]

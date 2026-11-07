@@ -3,7 +3,7 @@
 The backend is deployed by CI from `main` (ADR 0002): the `deploy` job in
 `.github/workflows/backend.yml` applies migrations and `config.toml` to the
 Supabase project. Nobody changes the project by hand. This runbook covers the
-one-time bootstrap, routine deploys, checks and backups.
+one-time bootstrap, routine deploys and checks. Backups: `restore-backup.md`.
 
 ## One-time bootstrap (owner)
 
@@ -11,7 +11,8 @@ one-time bootstrap, routine deploys, checks and backups.
    authentication. A CI access token reaches every project of the account, so
    keep nothing else in it.
 2. Create a project named `dekoi` in an EU region (Stockholm, `eu-north-1`).
-   Let Supabase generate the database password and store it in 1Password.
+   Let Supabase generate the database password and store it in 1Password;
+   nothing else needs it (ADR 0022).
 3. Note the project ref (the subdomain of the project URL) and the
    publishable key (Project Settings, API Keys). Both are public values.
 4. Create a scoped access token (Account, Access Tokens) named
@@ -21,43 +22,39 @@ one-time bootstrap, routine deploys, checks and backups.
    | Permission                    | Level      | Used by                         |
    | ----------------------------- | ---------- | ------------------------------- |
    | Edge Functions                | Read-write | `functions deploy`              |
-   | Edge Function Secrets         | Read-write | `secrets set`                   |
+   | Edge Function Secrets         | Read-write | `rotate-keys.yml`               |
    | Auth Config                   | Read-write | `config push` (Google sign-in)  |
    | Project Settings              | Read-write | required with Auth Config       |
    | Data API Config               | Read-write | `config push` (exposed schemas) |
-   | Database, Database Config, SSL Enforcement, Network Restrictions, Realtime Config, Storage Config | Read | `config diff` |
+   | Database                      | Read-write | temporary login role for `db push` and `db dump`; Vault in `rotate-keys.yml` |
+   | Database Config, SSL Enforcement, Network Restrictions, Realtime Config, Storage Config | Read | `config diff` |
    | Connection Pooling            | Read       | `db push` connection            |
+   | Advisors                      | Read       | `db advisors` (security workflow) |
    | Add-ons                       | Read       | `config push` (checks add-ons first; found by the first deploy) |
 
    Nothing else: no API Keys, API Key Secrets, Backups, branches or
-   organization permissions. Migrations use the database password, not the
-   token. If a deploy fails with 403, the response lists the missing
-   permissions; tokens cannot be edited, so create a replacement with them
-   added and record the change here.
-5. Store everything in GitHub. Values for secrets are typed at the prompt, so
-   they never appear in the shell history or in chat:
+   organization permissions. If a workflow fails with 403, the response
+   lists the missing permissions; tokens cannot be edited, so create a
+   replacement with them added and record the change here.
+5. Store everything in GitHub, the token as a secret of the `production`
+   environment (`infra/github/apply.sh` creates it). Secrets are typed at
+   the prompt, so they never appear in the shell history or in chat:
 
    ```
    gh variable set SUPABASE_PROJECT_REF --repo Mixie-12/Cyberfish --body <project ref>
    gh variable set SUPABASE_PUBLISHABLE_KEY --repo Mixie-12/Cyberfish --body <publishable key>
-   gh secret set SUPABASE_ACCESS_TOKEN --repo Mixie-12/Cyberfish
-   gh secret set SUPABASE_DB_PASSWORD --repo Mixie-12/Cyberfish
+   gh secret set SUPABASE_ACCESS_TOKEN --env production --repo Mixie-12/Cyberfish
+   gh variable set EXPIRES_SUPABASE_ACCESS_TOKEN --repo Mixie-12/Cyberfish --body <token expiry date>
    ```
 
-6. Push notifications (ADR 0007). In the Firebase project used for the app,
-   create a service account key: Project settings, Service accounts,
-   Generate new private key. It downloads a JSON file. Store it and a new
-   random shared secret for the events webhook, then delete the file:
+6. Push notifications (ADR 0007, 0022). After `infra/google` is applied
+   (`google-firebase.md`), the `rotate-keys` workflow creates the webhook
+   secret and the FCM key and hands them to the function and to Vault;
+   neither passes through GitHub. Run it once after the first deploy:
 
    ```
-   gh secret set FCM_SERVICE_ACCOUNT --repo Mixie-12/Cyberfish < <path to the JSON file>
-   openssl rand -hex 32 | gh secret set NOTIFY_SECRET --repo Mixie-12/Cyberfish
+   gh workflow run rotate-keys.yml --repo Mixie-12/Cyberfish --ref main
    ```
-
-   The deploy job sets both as function secrets and writes the webhook URL
-   and shared secret to Vault. Vault is written only by a `supabase db push`
-   that applies a migration, so changing `NOTIFY_SECRET` later takes effect
-   with the next migration.
 
 7. Start the first deploy and watch it:
 
@@ -101,22 +98,6 @@ Record the output and the date in `docs/STATUS.md`.
 
 ## Backups
 
-The Free plan has no downloadable backups. Until the project moves to a paid
-plan (decision for the owner before real customers), take a dump after every
-deploy that changes data shape, and at least weekly:
-
-```
-supabase db dump --remote=$REF -f dekoi-schema.sql
-supabase db dump --remote=$REF --data-only -f dekoi-data.sql
-```
-
-Store both encrypted (1Password document or the homelab backup), never in git.
-
-Restore test, into the local stack:
-
-```
-cd backend
-supabase start
-psql "postgresql://postgres:postgres@127.0.0.1:54322/postgres" -f dekoi-data.sql
-supabase test db
-```
+A scheduled CI job takes an encrypted backup daily and before every
+migration; `restore-backup.md` specifies it and the restore. Until the job
+runs, nothing backs up production.

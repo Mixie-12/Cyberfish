@@ -1,6 +1,9 @@
 package no.cyberfish.dekoi.burner
 
+import no.cyberfish.dekoi.shared.CardContent
 import no.cyberfish.dekoi.shared.ClaimCode
+import no.cyberfish.dekoi.shared.CloudInit
+import no.cyberfish.dekoi.shared.Network
 import java.nio.file.Files
 import java.nio.file.Path
 
@@ -30,10 +33,10 @@ fun writeCard(
 ): WriteResult {
     val dir = Files.createTempDirectory("dekoi-setup")
     try {
-        val userData = Files.writeString(dir.resolve("user-data"), CloudInit.userData(Device.userDataTemplate, Device::read, code))
+        val userData = Files.writeString(dir.resolve("user-data"), CardContent.userData(code))
         val networkConfig = Files.writeString(dir.resolve("network-config"), CloudInit.networkConfig(network))
         val log = dir.resolve("imager.log")
-        val exitCode = run(Imager.elevatedStart(executable, Imager.arguments(Device.image, userData, networkConfig, log, drive)))
+        val exitCode = run(Imager.elevatedStart(executable, Imager.arguments(CardContent.image, userData, networkConfig, log, drive)))
         if (exitCode == 0) return WriteResult.Written(code)
         return WriteResult.Failed(exitCode, if (Files.exists(log)) tail(Files.readAllBytes(log)) else "")
     } finally {

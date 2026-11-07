@@ -375,8 +375,8 @@ select results_eq(
 
 select is((select count(*)::integer from public.speed_tests), 0, 'no speed test is stored while it is off');
 
--- The address a report came from: as Cloudflare sets it, else as Supabase
--- documents it.
+-- The address a report came from, as the platform sets it in
+-- cf-connecting-ip (private.client_ip()); never what the caller sent.
 
 select set_config('request.headers',
   '{"cf-connecting-ip": "203.0.113.7", "cf-ipcountry": "NO", "x-forwarded-for": "198.51.100.1, 203.0.113.7"}',
@@ -413,8 +413,8 @@ select pg_temp.forwards(null);
 select results_eq(
   $$ select host(public_ip), public_country from public.devices
      where id = '00000000-0000-0000-0000-0000000000a1' $$,
-  $$ values ('198.51.100.9', null::text) $$,
-  'without cf-connecting-ip the address is the first X-Forwarded-For entry'
+  $$ values (null::text, null::text) $$,
+  'without cf-connecting-ip no address is stored; X-Forwarded-For is what the caller sent'
 );
 
 select set_config('request.headers', '', true);

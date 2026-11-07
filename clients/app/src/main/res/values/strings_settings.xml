@@ -42,4 +42,18 @@
     <string name="licence_ofl">SIL Open Font License 1.1</string>
     <string name="licence_android_sdk">Android Software Development Kit License</string>
     <string name="licence_ml_kit">ML Kit Terms of Service</string>
+
+    <string name="wifi_name_title">Your Wi-Fi name</string>
+    <string name="wifi_name_footer">Your DeKoi warns you when a Wi-Fi network near it copies this name to trick your devices into joining. It needs only the name, never your Wi-Fi password.</string>
+    <string name="wifi_name_not_set">Not set</string>
+    <string name="wifi_name_for_device">%1$s: %2$s</string>
+    <string name="wifi_name_label">Wi-Fi name</string>
+    <string name="wifi_name_hint">Exactly as your phone shows it. Leave it empty to turn the watch off.</string>
+    <string name="wifi_watch_add">Add the name of your Wi-Fi so your DeKoi can warn you if someone copies it.</string>
+    <string name="wifi_watch_starting">Starting. This takes a few minutes.</string>
+    <string name="wifi_watch_learning">Learning your Wi-Fi for a day before it starts warning you.</string>
+    <string name="wifi_watch_watching">Watching for copies of your Wi-Fi.</string>
+    <string name="wifi_watch_no_country">Off. Your DeKoi doesn’t know which country it is in, so it keeps its Wi-Fi radio off.</string>
+    <string name="wifi_watch_no_radio">Off. This DeKoi can’t use its Wi-Fi radio. A DeKoi set up before this feature needs its memory card prepared again.</string>
+    <string name="wifi_watch_uplink">Off. This DeKoi uses its Wi-Fi radio for its own connection.</string>
 </resources>

@@ -66,6 +66,7 @@ fun SettingsScreen(
     onNavigate: (Route) -> Unit,
     weeklySummary: Boolean?,
     onWeeklySummary: (Boolean) -> Unit,
+    onSetWifiName: (Device, String?) -> Unit,
 ) {
     var confirming by remember { mutableStateOf(false) }
     val now = Instant.now()
@@ -105,6 +106,7 @@ fun SettingsScreen(
                 )
             }
         }
+        if (devices.isNotEmpty()) item { WifiNameSection(devices, onSetWifiName) }
         item { Notifications() }
         item { WeeklySummary(weeklySummary, onWeeklySummary) }
         item { Privacy() }

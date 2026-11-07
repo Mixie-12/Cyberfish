@@ -141,6 +141,16 @@ class Backend(
         }
     }
 
+    /** The home network's name for the Wi-Fi watch (ADR 0019); null turns the watch off. */
+    suspend fun setWifiName(
+        device: Device,
+        name: String?,
+    ) {
+        client.from("devices").update({ if (name == null) setToNull("wifi_name") else set("wifi_name", name) }) {
+            filter { eq("id", device.id) }
+        }
+    }
+
     private companion object {
         const val EVENT_LIMIT = 200L
     }

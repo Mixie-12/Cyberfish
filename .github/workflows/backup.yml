@@ -1,0 +1,73 @@
+name: backup
+
+# Every night: roles, schema and data of production, dumped with the Supabase
+# CLI, encrypted with age to backend/backup-recipients.txt, and kept as a
+# workflow artifact for 90 days. The private key exists only in 1Password
+# (docs/runbooks/restore-backup.md); the plain dump never leaves the runner.
+
+on:
+  schedule:
+    - cron: "17 2 * * *"
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  dump:
+    if: vars.SUPABASE_PROJECT_REF != ''
+    runs-on: ubuntu-24.04
+    environment: production
+    permissions:
+      contents: read
+    concurrency:
+      group: backup
+      cancel-in-progress: false
+    defaults:
+      run:
+        working-directory: backend
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      PROJECT_REF: ${{ vars.SUPABASE_PROJECT_REF }}
+      AGE_VERSION: 1.3.2
+      AGE_SHA256: cbe24006683f8eb669266162894b9a522a1af52f2665fbc63a4bb032ed26ac10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: supabase/setup-cli@689adcfb80d947100a1eab127289b97d1fb07b13 # v3.2.0
+        with:
+          version: 3.0.0
+      - name: Install age
+        run: |
+          archive="$RUNNER_TEMP/age.tar.gz"
+          curl -fsSL -o "$archive" \
+            "https://github.com/FiloSottile/age/releases/download/v$AGE_VERSION/age-v$AGE_VERSION-linux-amd64.tar.gz"
+          echo "$AGE_SHA256  $archive" | sha256sum -c -
+          tar -xzf "$archive" -C "$RUNNER_TEMP" age/age
+      # The CLI signs in with a temporary login role that the access token
+      # mints; the dump includes auth.users (docs/runbooks/restore-backup.md).
+      - name: Dump and encrypt
+        id: dump
+        run: |
+          if [ ! -s backup-recipients.txt ]; then
+            echo "::error::backend/backup-recipients.txt is missing; see docs/runbooks/restore-backup.md"
+            exit 1
+          fi
+          umask 077
+          plain="$RUNNER_TEMP/dump"
+          mkdir "$plain"
+          trap 'rm -rf "$plain"' EXIT
+          supabase db dump --remote="$PROJECT_REF" --role-only -f "$plain/roles.sql"
+          supabase db dump --remote="$PROJECT_REF" -f "$plain/schema.sql"
+          supabase db dump --remote="$PROJECT_REF" --data-only --use-copy -f "$plain/data.sql"
+          name="dekoi-$(date -u +%Y%m%dT%H%MZ)"
+          tar -C "$plain" -cf - roles.sql schema.sql data.sql |
+            "$RUNNER_TEMP/age/age" --encrypt -R backup-recipients.txt -o "$RUNNER_TEMP/$name.tar.age"
+          echo "name=$name" >> "$GITHUB_OUTPUT"
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: ${{ steps.dump.outputs.name }}
+          path: ${{ runner.temp }}/${{ steps.dump.outputs.name }}.tar.age
+          retention-days: 90
+          compression-level: 0
+          if-no-files-found: error

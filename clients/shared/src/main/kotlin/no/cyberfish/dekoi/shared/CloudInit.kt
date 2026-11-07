@@ -1,6 +1,5 @@
-package no.cyberfish.dekoi.burner
+package no.cyberfish.dekoi.shared
 
-import no.cyberfish.dekoi.shared.ClaimCode
 import javax.crypto.SecretKeyFactory
 import javax.crypto.spec.PBEKeySpec
 
@@ -30,8 +29,9 @@ sealed interface Network {
 }
 
 /**
- * Renders the cloud-init files DeKoi Setup gives to Raspberry Pi Imager.
- * Pure: the caller supplies the template and the files it includes.
+ * Renders a card's cloud-init files, for DeKoi Setup (which gives them to
+ * Raspberry Pi Imager) and for the app (which writes the card itself, ADR
+ * 0014). Pure: the caller supplies the template and the files it includes.
  */
 object CloudInit {
     private val include = Regex("""^( +)content: !file (\S+)$""")
@@ -100,6 +100,35 @@ object CloudInit {
                     """.trimMargin()
             }
         }
+    }
+
+    /**
+     * A new cloud-init instance ID for one card. Raspberry Pi Imager 2.0
+     * makes one per write from the time in the same way
+     * (src/downloadthread.cpp, v2.0.8).
+     */
+    fun instanceId(epochMillis: Long): String = "dekoi-$epochMillis"
+
+    /** The NoCloud meta-data Imager writes next to user-data. */
+    fun metaData(instanceId: String): String = "instance-id: ${checked(instanceId)}\n"
+
+    /**
+     * cmdline.txt with the NoCloud data source and instance ID added, as
+     * Imager does, so that cloud-init keeps its cache across reboots instead
+     * of searching the boot partition again on each one.
+     */
+    fun commandLine(
+        current: String,
+        instanceId: String,
+    ): String {
+        val line = current.trim()
+        require(line.isNotEmpty() && '\n' !in line) { "cmdline.txt must be one line" }
+        return "$line ds=nocloud;i=${checked(instanceId)}"
+    }
+
+    private fun checked(instanceId: String): String {
+        require(instanceId.matches(Regex("[a-z0-9-]+"))) { "Not an instance ID: $instanceId" }
+        return instanceId
     }
 
     /**

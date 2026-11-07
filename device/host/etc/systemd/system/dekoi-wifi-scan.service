@@ -1,0 +1,21 @@
+# The Wi-Fi watch's scan (ADR 0019), started by dekoi-wifi-scan.timer. Root,
+# because setting the country and scanning need CAP_NET_ADMIN, but with only
+# that capability and a read-only system apart from what it must change.
+[Unit]
+Description=DeKoi Wi-Fi watch scan
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/libexec/dekoi-wifi-scan
+TimeoutStartSec=2min
+CapabilityBoundingSet=CAP_NET_ADMIN
+NoNewPrivileges=yes
+ProtectSystem=strict
+# The scan for the agent, and what raspi-config changes when the country
+# does: the kernel command line and the radio state systemd restores at boot.
+ReadWritePaths=/run/dekoi/wifi -/boot/firmware -/var/lib/systemd/rfkill
+ProtectHome=yes
+PrivateTmp=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+RestrictAddressFamilies=AF_UNIX AF_NETLINK AF_INET AF_INET6

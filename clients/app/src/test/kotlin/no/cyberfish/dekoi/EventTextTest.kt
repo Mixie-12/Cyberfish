@@ -1,10 +1,12 @@
 package no.cyberfish.dekoi
 
+import no.cyberfish.dekoi.ui.learn.learnTopicFor
 import java.time.Instant
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertNotEquals
+import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
@@ -16,6 +18,7 @@ class EventTextTest {
         detail: EventDetail = EventDetail(),
     ) = Event(id = 1, deviceId = "d", occurredAt = Instant.EPOCH, kind = kind, service = service, count = count, detail = detail)
 
+    // Titles about another device: it is the subject.
     private val deviceKinds =
         listOf(
             "login_attempt",
@@ -28,23 +31,28 @@ class EventTextTest {
             "name_poisoning",
             "ids_alert",
             "new_host",
+            "port_forward",
         )
 
+    // About DeKoi itself, a decoy file, the router's answers or a Wi-Fi network nearby.
+    private val otherKinds = listOf("device_offline", "device_online", "file_access", "dns_hijack", "evil_twin", "new_access_point")
+
+    private val everyKind = deviceKinds + otherKinds
+
     @Test
-    fun `every event kind the backend can send has its own title and action`() {
-        val kinds = deviceKinds + listOf("device_offline", "device_online")
-        val texts = kinds.map { eventText(event(it)) }
-        assertEquals(kinds.size, texts.map { it.title }.toSet().size)
-        assertEquals(kinds.size, texts.map { it.action }.toSet().size)
-        assertFalse(texts.any { it.title == R.string.event_other_title })
+    fun `every event kind has its own title and action, an explanation, steps and a Learn topic`() {
+        val texts = everyKind.map { eventText(event(it)) }
+        assertEquals(everyKind.size, texts.map { it.title }.toSet().size)
+        assertEquals(everyKind.size, texts.map { it.action }.toSet().size)
+        assertFalse(texts.any { it.title == R.string.event_other_title || it.explanation == R.string.event_other_why })
+        for (kind in everyKind - "device_online") assertTrue(steps(kind, HostKind.UNKNOWN).isNotEmpty(), kind)
+        for (kind in everyKind) assertNotNull(learnTopicFor(kind), kind)
     }
 
     @Test
     fun `titles about another device name it, titles about DeKoi do not`() {
         for (kind in deviceKinds) assertTrue(eventText(event(kind)).aboutSource, kind)
-        assertFalse(eventText(event("device_offline")).aboutSource)
-        assertFalse(eventText(event("device_online")).aboutSource)
-        assertFalse(eventText(event("something_new")).aboutSource)
+        for (kind in otherKinds + "something_new") assertFalse(eventText(event(kind)).aboutSource, kind)
     }
 
     @Test

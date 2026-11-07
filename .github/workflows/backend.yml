@@ -8,12 +8,17 @@ on:
     paths: [backend/**, .github/workflows/backend.yml]
   workflow_dispatch:
 
-permissions:
-  contents: read
+permissions: {}
+
+concurrency:
+  group: backend-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   database:
     runs-on: ubuntu-24.04
+    permissions:
+      contents: read
     defaults:
       run:
         working-directory: backend
@@ -31,6 +36,8 @@ jobs:
 
   functions:
     runs-on: ubuntu-24.04
+    permissions:
+      contents: read
     defaults:
       run:
         working-directory: backend/supabase/functions/notify
@@ -44,16 +51,21 @@ jobs:
       - name: Lint
         run: deno lint
       - name: Type check
-        run: deno check *.ts
+        run: deno check ./*.ts
       - name: Tests
         run: deno test --no-prompt
 
   # GitOps deploy to Supabase Cloud (ADR 0002). Skipped until the owner has
-  # set the SUPABASE_PROJECT_REF variable and the secrets.
+  # set the SUPABASE_PROJECT_REF variable and the secrets. The notify function
+  # secrets and the webhook secret in Vault belong to the rotate-keys workflow
+  # (ADR 0022); this job never sets them.
   deploy:
     needs: [database, functions]
     if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request' && vars.SUPABASE_PROJECT_REF != ''
     runs-on: ubuntu-24.04
+    environment: production
+    permissions:
+      contents: read
     concurrency:
       group: supabase-production
       cancel-in-progress: false
@@ -62,13 +74,15 @@ jobs:
         working-directory: backend
     env:
       SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      # Until the access token has the Database read-write permission
+      # (docs/runbooks/rotate-keys.md), the CLI cannot create its temporary
+      # login role and connects with the password. Remove this line and the
+      # secret together once the new token is set.
       SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
       SUPABASE_ENV: production
       PROJECT_REF: ${{ vars.SUPABASE_PROJECT_REF }}
       # Written to Vault by `supabase db push` ([db.vault] in config.toml).
       NOTIFY_URL: https://${{ vars.SUPABASE_PROJECT_REF }}.supabase.co/functions/v1/notify
-      NOTIFY_SECRET: ${{ secrets.NOTIFY_SECRET }}
-      FCM_SERVICE_ACCOUNT: ${{ secrets.FCM_SERVICE_ACCOUNT }}
       # Sign in with Google ([auth.external.google] in config.toml).
       SUPABASE_AUTH_EXTERNAL_GOOGLE_ENABLED: ${{ vars.GOOGLE_WEB_CLIENT_ID != '' }}
       SUPABASE_AUTH_EXTERNAL_GOOGLE_CLIENT_ID: ${{ vars.GOOGLE_WEB_CLIENT_ID }}
@@ -78,17 +92,6 @@ jobs:
       - uses: supabase/setup-cli@689adcfb80d947100a1eab127289b97d1fb07b13 # v3.2.0
         with:
           version: 3.0.0
-      # The backend deploys without Firebase; pushes start once
-      # FCM_SERVICE_ACCOUNT exists (docs/runbooks/deploy-backend.md).
-      - name: Check the notification secrets
-        run: |
-          if [ -z "$NOTIFY_SECRET" ]; then
-            echo "::error::NOTIFY_SECRET must be set (docs/runbooks/deploy-backend.md)"
-            exit 1
-          fi
-          if [ -z "$FCM_SERVICE_ACCOUNT" ]; then
-            echo "::warning::FCM_SERVICE_ACCOUNT is not set; push notifications stay off until it is"
-          fi
       # Google answers a made-up code with invalid_grant only when the client
       # ID and secret belong to the same web client; an Android client ID or a
       # wrong secret gets invalid_client. Fails here instead of on the phone.
@@ -104,13 +107,10 @@ jobs:
             echo "::error::Google refused GOOGLE_WEB_CLIENT_ID with GOOGLE_WEB_CLIENT_SECRET ($error); see docs/runbooks/google-firebase.md"
             exit 1
           fi
-      - name: Set function secrets
-        run: |
-          secrets=("NOTIFY_SECRET=$NOTIFY_SECRET")
-          if [ -n "$FCM_SERVICE_ACCOUNT" ]; then secrets+=("FCM_SERVICE_ACCOUNT=$FCM_SERVICE_ACCOUNT"); fi
-          supabase secrets set --remote="$PROJECT_REF" --yes "${secrets[@]}"
       # Expand before switching: a function may call what a new migration
-      # adds, while the old function keeps working with the new schema.
+      # adds, while the old function keeps working with the new schema. No
+      # database password: the CLI signs in with a temporary login role that
+      # the access token mints (ADR 0022).
       - name: Apply migrations
         run: supabase db push --remote="$PROJECT_REF" --yes
       - name: Deploy functions

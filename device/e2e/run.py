@@ -164,6 +164,10 @@ def main() -> None:
         )
         return row
 
+    def device_field(name: str) -> object:
+        (row,) = backend.as_user(token, "GET", f"/rest/v1/devices?select={name}")
+        return row[name]
+
     wait_for(
         "device registered, online, all decoys listening",
         lambda: (
@@ -209,6 +213,12 @@ def main() -> None:
             for network in backend.as_user(token, "GET", "/rest/v1/networks?select=cidr,source")
             if network["source"] == "interface"
         ],
+    )
+    # No Wi-Fi name is set, so the watch is off; this checks the RPC and that
+    # the agent starts with the Wi-Fi directories mounted.
+    wait_for(
+        "the Wi-Fi watch state, reported through device_wifi_v1",
+        lambda: device_field("wifi_watch") == "no_name",
     )
     print("end-to-end test passed")
 

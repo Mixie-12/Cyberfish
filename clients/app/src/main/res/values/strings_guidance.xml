@@ -17,6 +17,8 @@
     <string name="threat_probing">Some apps and network tools do this too. If you don’t recognise the device, treat it as an attack.</string>
     <string name="threat_known">It comes from a device you marked as known, so it is most likely you or one of your own tools.</string>
     <string name="threat_new_device">Most new devices belong to someone in your home or a guest.</string>
+    <string name="threat_new_access_point">Mesh Wi-Fi points and new routers do this. Someone who knows your Wi-Fi password and copies your network does too.</string>
+    <string name="threat_port_forward">Games consoles, cameras and remote access apps do this by themselves. A harmful program can do it too.</string>
     <string name="threat_status">This is about your DeKoi itself, not an attack.</string>
 
     <string name="step_find_personal">Find the device. It looks like a phone, tablet or watch, so check the ones people in your home and your guests carry.</string>
@@ -44,6 +46,17 @@
     <!-- A new device: knowing it comes first, the disconnect steps only if no one does. -->
     <string name="step_mark_known_newcomer">If it belongs to you or a guest, mark it as known below and stop here.</string>
     <string name="step_change_wifi_password_newcomer">Then change your Wi-Fi password, so it can’t join again.</string>
+    <!-- A device open to the internet (port_forward). -->
+    <string name="step_turn_off_remote_access">If you don’t use it from outside your home, turn off remote access in its app.</string>
+    <string name="step_turn_off_upnp">If no device needs to be reached from outside, turn off UPnP in your router’s app.</string>
+    <!-- Wrong answers for web addresses (dns_hijack). -->
+    <string name="step_use_mobile_data">Until this is sorted out, sign in to websites over mobile data, not your home Wi-Fi.</string>
+    <string name="step_ask_provider">If the alert comes back, ask your internet provider for help.</string>
+    <!-- A copy of the home Wi-Fi (evil_twin) or a new access point with its name (new_access_point). -->
+    <string name="step_avoid_copy">Don’t join a network with your Wi-Fi name that asks for no password or a new one.</string>
+    <string name="step_check_devices_network">On your phones and computers, check in the Wi-Fi settings that your network asks for your usual password.</string>
+    <string name="step_rejoin_network">If a device joined the copy, forget that network on it and join yours again.</string>
+    <string name="step_new_access_point_yours">If you added or replaced Wi-Fi equipment, there is nothing else to do.</string>
     <string name="step_restart_router">Restart your router, so every device gets its network settings from the router again.</string>
     <string name="step_check_power">Check that your DeKoi has power. Its light should be on.</string>
     <string name="step_check_cable">Check that its network cable is plugged in at both ends.</string>

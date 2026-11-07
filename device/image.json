@@ -5,5 +5,6 @@
   "download_sha256": "483db18a48da399b5b7022ffae9a07bc6d99daab30e593aedac09b69ff422843",
   "download_size": 550466056,
   "extract_sha256": "b8a393dc1c3701450b5fffbfe74368a98fb6eab7415ce456cc0cead886ea8780",
+  "extract_size": 3078619136,
   "init_format": "cloudinit-rpi"
 }

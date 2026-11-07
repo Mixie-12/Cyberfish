@@ -8,6 +8,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import no.cyberfish.dekoi.shared.ClaimCode
+import no.cyberfish.dekoi.shared.Network
 
 sealed interface Screen {
     data object Welcome : Screen

@@ -16,6 +16,10 @@ enum class Response {
     INTRUSION,
     IMPERSONATION,
     NEWCOMER,
+    EXPOSURE,
+    WRONG_ADDRESSES,
+    WIFI_COPY,
+    NEW_ACCESS_POINT,
     OFFLINE,
     NONE,
 }
@@ -24,6 +28,10 @@ fun responseFor(kind: String): Response =
     when (kind) {
         "arp_spoof", "rogue_dhcp", "rogue_router" -> Response.IMPERSONATION
         "new_host" -> Response.NEWCOMER
+        "port_forward" -> Response.EXPOSURE
+        "dns_hijack" -> Response.WRONG_ADDRESSES
+        "evil_twin" -> Response.WIFI_COPY
+        "new_access_point" -> Response.NEW_ACCESS_POINT
         "device_offline" -> Response.OFFLINE
         "device_online" -> Response.NONE
         else -> Response.INTRUSION
@@ -105,6 +113,26 @@ fun steps(
                 Step(R.string.step_change_wifi_password_newcomer)
         }
 
+        Response.EXPOSURE -> {
+            listOf(findStep(source), Step(R.string.step_turn_off_remote_access), Step(R.string.step_turn_off_upnp))
+        }
+
+        Response.WRONG_ADDRESSES -> {
+            listOf(Step(R.string.step_use_mobile_data), Step(R.string.step_restart_router), Step(R.string.step_ask_provider))
+        }
+
+        Response.WIFI_COPY -> {
+            listOf(Step(R.string.step_avoid_copy), Step(R.string.step_check_devices_network), Step(R.string.step_rejoin_network))
+        }
+
+        Response.NEW_ACCESS_POINT -> {
+            listOf(
+                Step(R.string.step_new_access_point_yours),
+                Step(R.string.step_check_devices_network),
+                Step(R.string.step_change_wifi_password),
+            )
+        }
+
         Response.OFFLINE -> {
             listOf(Step(R.string.step_check_power), Step(R.string.step_check_cable), Step(R.string.step_wait_reconnect))
         }
@@ -155,6 +183,8 @@ fun threat(
         kinds.any { it in IMPERSONATION_KINDS } -> Threat(ThreatLevel.LIKELY, R.string.threat_impersonation)
         "dns_hijack" in kinds -> Threat(ThreatLevel.LIKELY, R.string.threat_dns)
         "evil_twin" in kinds -> Threat(ThreatLevel.LIKELY, R.string.threat_wifi_copy)
+        "new_access_point" in kinds -> Threat(ThreatLevel.POSSIBLE, R.string.threat_new_access_point)
+        "port_forward" in kinds -> Threat(ThreatLevel.POSSIBLE, R.string.threat_port_forward)
         DEKOI_STATUS_KINDS.containsAll(kinds) -> Threat(ThreatLevel.UNLIKELY, R.string.threat_status)
         else -> Threat(ThreatLevel.POSSIBLE, R.string.threat_probing)
     }

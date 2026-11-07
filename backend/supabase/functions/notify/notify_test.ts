@@ -9,7 +9,8 @@ import {
   templateFor,
 } from "./notify.ts";
 
-const SECRET = "test-shared-secret";
+const SECRET = "a".repeat(64);
+const PREVIOUS_SECRET = "b".repeat(64);
 const OWNER = "00000000-0000-4000-8000-00000000000a";
 const SUPABASE = "http://supabase.test";
 const FCM = "http://fcm.test";
@@ -71,11 +72,12 @@ function fakeFetch(rows: unknown[], fcmStatus = 200, fcmBody: unknown = {}) {
   return { calls, fetchFn: fetchFn as typeof fetch };
 }
 
-async function handler(fetchFn: typeof fetch) {
+async function handler(fetchFn: typeof fetch, previousNotifySecret = "") {
   const { account } = await serviceAccount();
   return createHandler(
     {
       notifySecret: SECRET,
+      previousNotifySecret,
       supabaseUrl: SUPABASE,
       serviceRoleKey: "service-role-key",
       serviceAccount: account,
@@ -116,6 +118,8 @@ Deno.test("every event kind has its own template; anything else gets the generic
     "new_host",
     "dns_hijack",
     "port_forward",
+    "evil_twin",
+    "new_access_point",
     "device_offline",
   ];
   const generic = templateFor("something_new");
@@ -136,6 +140,7 @@ Deno.test("titles name the device kind from the fixed list, nothing else", () =>
     templateFor("port_forward", "game_console").title,
     "A games console can now be reached from the internet",
   );
+  equal(templateFor("evil_twin", "router").title, "Someone copied your Wi-Fi name");
 });
 
 Deno.test("a new device is named by its kind and goes to the updates channel", () => {
@@ -168,6 +173,40 @@ Deno.test("a wrong or missing secret is refused before anything else happens", a
   const noHeader = new Request("http://notify.test/", { method: "POST", body: "{}" });
   equal((await handle(noHeader)).status, 401);
   equal(calls.length, 0);
+});
+
+Deno.test("during a rotation the previous secret is accepted too, and nothing else", async () => {
+  const { calls, fetchFn } = fakeFetch([]);
+  const handle = await handler(fetchFn, PREVIOUS_SECRET);
+  equal((await handle(webhook({ event_id: 1 }, SECRET))).status, 204);
+  equal((await handle(webhook({ event_id: 2 }, PREVIOUS_SECRET))).status, 204);
+  equal((await handle(webhook({ event_id: 3 }, "c".repeat(64)))).status, 401);
+  equal((await handle(webhook({ event_id: 4 }, ""))).status, 401);
+  equal(calls.length, 2);
+});
+
+Deno.test("without a previous secret an empty header is still refused", async () => {
+  const { calls, fetchFn } = fakeFetch([]);
+  const handle = await handler(fetchFn, "");
+  equal((await handle(webhook({ event_id: 1 }, ""))).status, 401);
+  equal((await handle(webhook({ event_id: 1 }, PREVIOUS_SECRET))).status, 401);
+  equal(calls.length, 0);
+});
+
+Deno.test("short secrets stop the function from starting", async () => {
+  const { fetchFn } = fakeFetch([]);
+  const { account } = await serviceAccount();
+  const config = {
+    notifySecret: SECRET,
+    previousNotifySecret: "",
+    supabaseUrl: SUPABASE,
+    serviceRoleKey: "service-role-key",
+    serviceAccount: account,
+    fcmBaseUrl: FCM,
+  };
+  throws(() => createHandler({ ...config, notifySecret: "" }, fetchFn));
+  throws(() => createHandler({ ...config, notifySecret: "short" }, fetchFn));
+  throws(() => createHandler({ ...config, previousNotifySecret: "short" }, fetchFn));
 });
 
 Deno.test("a body without a positive integer event id or an owner id is rejected", async () => {

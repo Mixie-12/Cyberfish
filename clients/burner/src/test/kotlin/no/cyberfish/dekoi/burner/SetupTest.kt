@@ -3,6 +3,7 @@ package no.cyberfish.dekoi.burner
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import no.cyberfish.dekoi.shared.ClaimCode
+import no.cyberfish.dekoi.shared.Network
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse

@@ -13,7 +13,8 @@ import no.cyberfish.dekoi.Backend
 import no.cyberfish.dekoi.R
 import no.cyberfish.dekoi.shared.ClaimCode
 
-private const val TOO_MANY_REQUESTS = 429
+/** The backend's answer to a claim while another DeKoi of the account is still setting up. */
+internal const val TOO_MANY_REQUESTS = 429
 
 /**
  * Claiming the code of a card prepared with DeKoi Setup (ADR 0017). Scoped

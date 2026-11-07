@@ -6,7 +6,7 @@ import subprocess
 import time
 from collections.abc import Callable
 
-from . import api, dns_check, health, identify, inventory, lan, monitors, upnp
+from . import api, dns_check, health, identify, inventory, lan, monitors, upnp, wifi
 from .config import Config
 from .decoys import listening_ports, load_decoys, running_services
 from .detect import Collapser, ScanDetector
@@ -79,6 +79,8 @@ class Agent:
         self.speed_test_wanted = False
         self.measure_schedule = Schedule(MEASURE_SECONDS)
         self.health_schedule = Schedule(HEALTH_SECONDS)
+        self.wifi = wifi.Watch(config.state_path.with_name("wifi.json"))
+        self.wifi_schedule = Schedule(wifi.CHECK_SECONDS)
 
     def tick(self) -> None:
         at = self.clock()
@@ -99,6 +101,8 @@ class Agent:
             self.measure(at)
         if self.health_schedule.ready(at):
             self.report_health(at)
+        if self.wifi_schedule.ready(at):
+            self.check_wifi(at)
 
     def collect(self, at: float) -> None:
         self._identify()
@@ -366,6 +370,18 @@ class Agent:
         self.health.reported()
         self.speed_test_wanted = isinstance(reply, dict) and reply.get("speed_test") is True
         self.health_schedule.succeeded(at)
+
+    def check_wifi(self, at: float) -> None:
+        """The Wi-Fi watch (ADR 0019): reports its state, gets its settings."""
+        arguments = self._auth() | {"watch": self.wifi.status}
+        try:
+            reply = api.call(self.config, "device_wifi_v1", arguments)
+        except api.ApiError as error:
+            self._failed(self.wifi_schedule, at, error)
+            return
+        if events := self.wifi.check(at, reply):
+            self._enqueue(events)
+        self.wifi_schedule.succeeded(at)
 
     def save(self) -> None:
         self.state.save(self.config.state_path)

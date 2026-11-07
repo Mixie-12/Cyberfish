@@ -9,6 +9,7 @@ is the source of truth for every function named here.
 
 ```
 Pi: OpenCanary --log file--> agent --HTTPS, anon key + device secret--> Supabase RPCs
+Pi: host Wi-Fi scan (iw) --/run/dekoi/wifi--> agent --country--> host Wi-Fi scan
                                                                             |
 App <--HTTPS, user JWT, RLS-- Postgres tables <------------------------------+
 App <--FCM push-- Edge Function "notify" <--database webhook on events insert
@@ -24,6 +25,8 @@ agent --HTTPS--> 1.1.1.1 (DNS over HTTPS), speed.cloudflare.com (speed test, opt
 | LAN to decoys                   | anyone on the customer LAN    | decoys in a locked-down container        |
 | LAN discovery traffic to agent  | anyone on the customer LAN    | kernel filter, bounded parsers, cleaned and bounded strings, fixed vocabularies |
 | Canary container to agent       | possibly compromised decoys   | one-way, read-only log file; no secrets  |
+| Wi-Fi radio to agent            | anyone within radio range     | the host only scans; iw's text read-only, parsed unprivileged, bounded, cleaned |
+| Agent to host Wi-Fi scan        | a compromised agent           | one file, three bytes read, two capital letters accepted |
 | Agent to backend                | any internet client           | 256-bit device secret, input validation  |
 | Gateway and resolver to agent   | a possibly compromised router | read-only requests to the gateway's own address, bounded size and time, no document types, values validated before they are reported |
 | App to backend                  | any internet client           | Supabase Auth JWT, RLS, column grants    |
@@ -58,6 +61,7 @@ a `_v1` function never changes; new behaviour goes into `_v2`.
 | `device_hosts_v1`     | `device_id`, `secret`, `hosts` (array, up to 1024)          | rows written  |
 | `device_hosts_v2`     | `device_id`, `secret`, `hosts` (up to 1024), `networks` (up to 64) | rows written |
 | `device_health_v1`    | `device_id`, `secret`, `samples` (up to 216), `dns`, `resolver`, `forwards` (up to 64, or null), `download_mbps` | `{"speed_test": bool}` |
+| `device_wifi_v1`      | `device_id`, `secret`, `watch`                              | `{name, country}` |
 
 Event object: `agent_event_id` (device-unique integer), `occurred_at`,
 `kind`, `service`, `src_ip`, `src_mac`, `dst_port`, `count`, `detail`.
@@ -75,17 +79,24 @@ Kinds a device may report (`private.device_event_kinds()`):
 | `rogue_router`   | IPv6 router advertisement watcher        | `protocol`                          |
 | `name_poisoning` | LLMNR, NBT-NS and mDNS probes            | `protocol`                          |
 | `ids_alert`      | Suricata                                 | `signature`, `category`, `severity`, `signature_id` |
+| `evil_twin`      | Wi-Fi watch, a weaker copy of the home network | `security`, `home_security`, `channel`, `signal_dbm` |
+| `new_access_point` | Wi-Fi watch, a new access point with the home name | as `evil_twin` |
 
-The backend writes three more kinds itself (`private.event_kinds()`):
-`device_offline` and `device_online` (scheduled job and heartbeat), and
-`new_host`. Once a DeKoi's first inventory row is 24 hours old, a trigger on
+The backend writes five more kinds itself (`private.event_kinds()`):
+`device_offline` and `device_online` (scheduled job and heartbeat),
+`dns_hijack` and `port_forward` (network health, below), and `new_host`.
+Once a DeKoi's first inventory row is 24 hours old, a trigger on
 `network_hosts` turns the first sighting of a hardware address into a
 `new_host` event carrying its `src_mac` and `src_ip` (ADR 0015). The
 learning period is per DeKoi; an address another DeKoi knows is still new.
 
 `detail` accepts only these fields: strings up to 256 characters without
 control characters; `targets`, `severity` and `signature_id` as non-negative
-integers; `ports` as up to 64 numbers. Payload excerpts are never accepted.
+integers; `ports` as up to 64 numbers; `security` and `home_security` as one of
+`open`, `wep`, `wpa`, `wpa2`, `wpa3`; `channel` as up to three digits;
+`signal_dbm` as 0 or a negative integer of up to three digits. Payload
+excerpts and network names are never accepted. For the Wi-Fi watch kinds,
+`src_mac` is the access point's BSSID.
 
 Host object (v1): `mac`, `ip`, `vendor`. Version 2 adds the identification
 of ADR 0010: `hostname` and `model` (1 to 64 characters, no control
@@ -136,9 +147,8 @@ The backend decides what is new. A change to `mismatch` writes a
 `dns_hijack` event (critical, without a source MAC) and a mapping never seen
 before writes a `port_forward` event (warning) whose `src_mac` is the
 inventory's host at that address. It records the public address from
-`cf-connecting-ip`, or else the first `X-Forwarded-For` entry, the header
-Supabase documents for the client address, and the country from
-`cf-ipcountry` when present; the device never reports either. The reply's
+`private.client_ip()` (the platform's `cf-connecting-ip`, ADR 0016) and the
+country from `cf-ipcountry` when present; the device never reports either. The reply's
 `speed_test` is true while the owner has the test on and no result is stored
 for 20 hours.
 
@@ -150,39 +160,69 @@ Responses the agent must handle:
 | 400  | malformed input                          | drop the batch, log it; never retry it      |
 | 403  | registration refused or secret rejected  | before registration: retry with backoff;    |
 |      |                                          | after: device was removed, back off to 1 h  |
+| 429  | over a request or storage limit          | keep the batch, retry with backoff          |
 | 5xx, network error | backend unavailable            | keep the batch, retry with backoff          |
+
+Every write through the Data API passes `guard.check_request()` first,
+which counts it per client address and per user (ADR 0016, limits in
+`private.request_limits()`). Triggers bound what one account or device can
+store (migration `20261108000000_request_and_storage_limits.sql`).
 
 ## App API (v1)
 
 | Operation              | How                                                        |
 | ---------------------- | ---------------------------------------------------------- |
 | Claim a device         | `claim_device_v1(claim_code, name)`                        |
-| Read own data          | `select` on `devices`, `events`, `network_hosts`, `networks`, `owner_settings` (RLS) |
-| Read own data          | `select` on `devices`, `events`, `network_hosts`, `networks`, `health_samples`, `port_forwards`, `speed_tests` (RLS) |
+| Read own data          | `select` on `devices`, `events`, `network_hosts`, `networks`, `health_samples`, `port_forwards`, `speed_tests`, `owner_settings` (RLS) |
 | Rename, remove device  | `update` of `name`, `delete` on `devices` (RLS)            |
 | Speed test on or off   | `update` of `speed_test` on `devices` (RLS)                |
+| Set the Wi-Fi name     | `update` of `wifi_name` on `devices` (RLS), null for none  |
 | Trust a host           | `update` of `trusted` on `network_hosts` (RLS)             |
 | Weekly summary on, off | `select`, and `insert` or `update` of `weekly_summary`, on `owner_settings` (RLS); `user_id` defaults to the caller; no row means on |
 | Push token             | `register_push_token_v1(token)`, `unregister_push_token_v1(token)` |
 | Delete account         | `delete_account_v1()`                                      |
 
+## Wi-Fi watch
+
+ADR 0019. The owner gives the home network's name (`devices.wifi_name`, up
+to 32 bytes). Every five minutes the agent calls `device_wifi_v1` with the
+watch's state and gets `{name, country}`; the country comes from the
+`cf-ipcountry` header the platform's edge sets on the device's request, and
+is null when absent. With both, the agent writes the country to
+`/run/dekoi/wifi-country/country`; without either, it removes it.
+
+`dekoi-wifi-scan.timer` runs `/usr/local/libexec/dekoi-wifi-scan` (host
+files in `device/host/`) every five minutes. It acts only while the country
+file holds two capital letters, sets the country with
+`raspi-config nonint do_wifi_country` when it changes, scans with
+`iw dev wlan0 scan` only while another interface has the default route and
+wlan0 is not connected, and replaces `/run/dekoi/wifi/scan` with a status
+line (`scan`, `uplink`, `no_radio`) and up to 1 MiB of iw's output. The
+agent parses it (`device/agent/dekoi_agent/wifi.py`), learns the access
+points with the home name for 24 hours, then reports `evil_twin` and
+`new_access_point`.
+
+`devices.wifi_watch` is the state the device last reported: `no_name`,
+`no_country`, `no_radio` (no shared directories on an older card, no wlan0,
+or no scan for 15 minutes), `uplink`, `learning`, `watching`.
+
 ## Event severity
 
 `events.severity` is generated from the kind, and for `ids_alert` from the
-Suricata severity, by `private.event_severity` (its latest definition, in
-`20261107183000_network_health.sql`, documents the mapping):
-`critical`, `warning` or `info`. Clients read the column and keep no
-mapping of their own.
+Suricata severity, by `private.event_severity`: `critical`, `warning` or
+`info`. The pgTAP test `12_event_vocabulary` lists every kind with its
+severity and fails when a kind has none. Clients read the column and keep
+no mapping of their own.
 
 ## Scheduled jobs
 
 pg_cron runs `private.mark_offline_devices()` every 5 minutes (one
 `device_offline` event per outage), `private.apply_retention()` nightly
-(events, hosts and networks older than 90 days) and
-`private.post_weekly_summaries()` on Sundays at 17:00 UTC.
-`device_offline` event per outage) and `private.apply_retention()` nightly
 (events, hosts, networks, health samples, port forwards and speed tests
-older than 90 days).
+older than 90 days), `private.expire_pending_setups()` nightly (setups
+whose DeKoi never registered within 30 days),
+`private.prune_rate_counters()` every 10 minutes (ended request windows)
+and `private.post_weekly_summaries()` on Sundays at 17:00 UTC.
 
 ## Notifications
 
@@ -192,7 +232,9 @@ secret in Vault). `notify` asks `notification_targets_v2(event_id)` which
 phones to notify, with which template, severity and source kind, and sends
 FCM HTTP v1 messages whose data payload is `event_id` only. The rules are in
 `notification_targets_v1` (ADR 0007); `new_host` events notify at most once
-per DeKoi per 10 minutes, so devices that join together give one push.
+per DeKoi per 10 minutes, so devices that join together give one push. The
+webhook fires only while the account and the project are under their
+hourly notify limits (ADR 0016).
 
 The weekly job posts `{"weekly_summary_for": "<user id>"}` the same way, once
 per owner with a registered DeKoi. `notify` asks `weekly_summary_v1(user_id)`,
@@ -201,3 +243,6 @@ which returns the owner's phones with three numbers for the last 7 days
 percent), or nothing when the owner turned the summary off or already had
 one in the last 6 days. The push uses a fixed template on the `updates`
 channel and carries no data.
+
+`notify` accepts the secret in `NOTIFY_SECRET` and, while it is rotated,
+the one in `NOTIFY_SECRET_PREVIOUS` (`docs/runbooks/rotate-keys.md`).

@@ -30,6 +30,8 @@ data class Device(
     /** Empty until the DeKoi runs software that reports them (ADR 0013). */
     val monitors: List<Monitor> = emptyList(),
     val images: List<ImageVersion> = emptyList(),
+    @SerialName("wifi_name") val wifiName: String? = null,
+    @SerialName("wifi_watch") val wifiWatchName: String? = null,
 )
 
 /** One check a DeKoi runs and how it is doing, from its heartbeat (ADR 0013). */

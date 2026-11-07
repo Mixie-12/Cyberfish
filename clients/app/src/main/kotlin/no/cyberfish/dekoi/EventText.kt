@@ -126,6 +126,57 @@ fun eventText(event: Event): EventText =
             )
         }
 
+        "file_access" -> {
+            EventText(
+                R.string.event_file_access_title,
+                R.string.event_file_access_action,
+                R.string.event_file_access_consequence,
+                R.string.event_file_access_why,
+                aboutSource = false,
+            )
+        }
+
+        "port_forward" -> {
+            EventText(
+                R.string.event_port_forward_title,
+                R.string.event_port_forward_action,
+                R.string.event_port_forward_consequence,
+                R.string.event_port_forward_why,
+            )
+        }
+
+        // The source of a dns_hijack event is the resolver, and of the Wi-Fi
+        // watch's events a network nearby, not a device the inventory names.
+        "dns_hijack" -> {
+            EventText(
+                R.string.event_dns_hijack_title,
+                R.string.event_dns_hijack_action,
+                R.string.event_dns_hijack_consequence,
+                R.string.event_dns_hijack_why,
+                aboutSource = false,
+            )
+        }
+
+        "evil_twin" -> {
+            EventText(
+                R.string.event_evil_twin_title,
+                R.string.event_evil_twin_action,
+                R.string.event_evil_twin_consequence,
+                R.string.event_evil_twin_why,
+                aboutSource = false,
+            )
+        }
+
+        "new_access_point" -> {
+            EventText(
+                R.string.event_new_access_point_title,
+                R.string.event_new_access_point_action,
+                R.string.event_new_access_point_consequence,
+                R.string.event_new_access_point_why,
+                aboutSource = false,
+            )
+        }
+
         "device_offline" -> {
             EventText(
                 R.string.event_offline_title,

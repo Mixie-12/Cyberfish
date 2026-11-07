@@ -138,7 +138,7 @@ fun learnTopicFor(kind: String): LearnTopic? =
         "host_scan" -> LearnTopic.NETWORK_SWEEP
         "arp_spoof", "name_poisoning" -> LearnTopic.IMPERSONATION
         "rogue_dhcp", "rogue_router" -> LearnTopic.FAKE_SETTINGS
-        "evil_twin" -> LearnTopic.WIFI_COPY
+        "evil_twin", "new_access_point" -> LearnTopic.WIFI_COPY
         "new_host" -> LearnTopic.NEW_DEVICE
         "port_forward" -> LearnTopic.PORT_FORWARD
         "dns_hijack" -> LearnTopic.DNS_TAMPERING

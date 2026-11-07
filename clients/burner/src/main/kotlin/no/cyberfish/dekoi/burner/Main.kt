@@ -54,6 +54,7 @@ import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
 import androidx.compose.ui.window.rememberWindowState
 import no.cyberfish.dekoi.shared.ClaimCode
+import no.cyberfish.dekoi.shared.Network
 import java.awt.Dimension
 import java.util.Locale
 

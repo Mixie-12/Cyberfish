@@ -1,0 +1,99 @@
+name: security
+
+# Weekly: known vulnerabilities in what devices run and in what we build,
+# and the Supabase advisors against production. Pull requests that change a
+# dependency get the dependency scan.
+
+on:
+  schedule:
+    - cron: "41 5 * * 1"
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - clients/gradle/**
+      - clients/**/*.gradle.kts
+      - device/canary/requirements.txt
+      - backend/supabase/functions/**/deno.json
+      - .github/gradle-lockfiles.init.gradle.kts
+      - .github/workflows/security.yml
+
+permissions: {}
+
+concurrency:
+  group: security-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  # The images devices run now. Releases are scanned before they are signed
+  # (device-images.yml); this catches what was published since.
+  images:
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        image: [canary, agent, ids]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/scan-image
+        with:
+          image: ghcr.io/mixie-12/dekoi-${{ matrix.image }}:stable
+
+  # OSV-Scanner reads requirements.txt (pip) and Gradle lockfiles, which the
+  # init script writes from the resolved runtime classpaths. The notify
+  # function imports nothing outside the Deno runtime.
+  dependencies:
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    env:
+      VERSION: 2.7.0
+      SHA256: 160c6253e2922e9e0a6a9771c5c4c40a4b3c6090b34a3cdd5e80c96cc2e4218b
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-java@77dd5b2ce225ea11469928ac317850245a74ae78 # v6.2.0
+        with:
+          distribution: temurin
+          java-version: 21
+      - uses: gradle/actions/setup-gradle@8da46b539cd8fe6ab27ca75128919a18d757604c # v6.4.1
+      - name: Write Gradle lockfiles
+        working-directory: clients
+        run: >-
+          ./gradlew --no-daemon --init-script ../.github/gradle-lockfiles.init.gradle.kts
+          lockRuntimeClasspaths --write-locks
+      - name: Install OSV-Scanner
+        run: |
+          curl -fsSL -o "$RUNNER_TEMP/osv-scanner" \
+            "https://github.com/google/osv-scanner/releases/download/v$VERSION/osv-scanner_linux_amd64"
+          echo "$SHA256  $RUNNER_TEMP/osv-scanner" | sha256sum -c -
+          chmod +x "$RUNNER_TEMP/osv-scanner"
+      - name: Scan
+        run: '"$RUNNER_TEMP/osv-scanner" scan source -r .'
+
+  advisors:
+    if: github.event_name != 'pull_request' && vars.SUPABASE_PROJECT_REF != ''
+    runs-on: ubuntu-24.04
+    environment: production
+    permissions:
+      contents: read
+    defaults:
+      run:
+        working-directory: backend
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      PROJECT_REF: ${{ vars.SUPABASE_PROJECT_REF }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: supabase/setup-cli@689adcfb80d947100a1eab127289b97d1fb07b13 # v3.2.0
+        with:
+          version: 3.0.0
+      - name: Security and performance advisors on production
+        run: supabase db advisors --remote="$PROJECT_REF" --type all --fail-on warn
