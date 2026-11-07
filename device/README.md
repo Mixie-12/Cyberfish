@@ -35,6 +35,9 @@ The canary image runs as two containers (ADR 0018): `dekoi-canary`
 decoy's name, model, firmware, shares or bait files, edit `canary/persona/`;
 `persona.json` is filled into the templates when the image is built, and
 the host name in `cloud-init/user-data.yaml` must match it (a test checks).
+The bait files in `persona/public` are text; one named like `x.pdf.txt`
+becomes `x.pdf` (also `.xlsx`, `.docx`, `.png`; `canary/render.py`). Their
+user names come from `bait_users` in `persona.json`.
 
 ## Wi-Fi watch
 

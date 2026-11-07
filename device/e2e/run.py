@@ -29,7 +29,7 @@ ATTACKER_IMAGE = (
     "3f4d6b32e26703c6082839234f43769d5046b3ac7c910033911d1e71d8cd630a"
 )
 CROCKFORD = "0123456789ABCDEFGHJKMNPQRSTVWXYZ"
-BAIT_FILE = "wallet-seed-backup.txt"
+BAIT_FILE = "passord.txt"
 DECOYS = ["ftp", "http", "mysql", "rdp", "redis", "smb", "ssh", "telnet", "vnc"]
 PERSONA = json.loads((Path(__file__).parents[1] / "canary/persona/persona.json").read_text())
 SCANNER_IP = "192.0.2.10"
