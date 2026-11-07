@@ -65,6 +65,24 @@ class CloudInitTest {
     }
 
     @Test
+    fun `meta-data and the command line name the same instance, as Imager writes them`() {
+        val id = CloudInit.instanceId(1762531200000)
+        val cmdline = "console=serial0,115200 console=tty1 root=PARTUUID=a1b2c3d4-02 rootfstype=ext4 fsck.repair=yes rootwait\n"
+
+        assertEquals("dekoi-1762531200000", id)
+        assertEquals("instance-id: dekoi-1762531200000\n", CloudInit.metaData(id))
+        assertEquals(cmdline.trim() + " ds=nocloud;i=dekoi-1762531200000", CloudInit.commandLine(cmdline, id))
+    }
+
+    @Test
+    fun `an instance ID or command line that could change the boot is refused`() {
+        assertFailsWith<IllegalArgumentException> { CloudInit.metaData("x\ninstance-id: y") }
+        assertFailsWith<IllegalArgumentException> { CloudInit.commandLine("rootwait", "x init=/bin/sh") }
+        assertFailsWith<IllegalArgumentException> { CloudInit.commandLine("rootwait\ninit=/bin/sh", "dekoi-1") }
+        assertFailsWith<IllegalArgumentException> { CloudInit.commandLine(" \n", "dekoi-1") }
+    }
+
+    @Test
     fun `cable configures only the wired interface`() {
         val expected =
             """
