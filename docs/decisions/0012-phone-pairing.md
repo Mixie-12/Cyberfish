@@ -35,14 +35,37 @@ factory.
   most 5 minutes old and the request at most 10 minutes; with two or more
   requests nobody is linked (fail closed) and the requests are dropped. It
   returns `linked`, `none` or `conflict`.
+- Only a power-on counts. The agent reads the reset reason the Raspberry Pi
+  firmware reports for this boot and calls confirm only after a power-on
+  reset, never after a watchdog or software reboot that a remote attacker
+  might provoke. If a supported model cannot report it, linking by restart
+  is not offered on that model (no fallback that accepts any boot).
+- The owner is told: a push "A DeKoi was linked to your account" after
+  linking, and the app shows `conflict` as "Someone else on this network
+  also asked to link it. Restart it and try again."
 - The app polls the device list and shows each step: found, waiting for the
   restart, linked, online, watching.
 
+Security properties, each with a test (pgTAP for the database, unit tests
+for the agent, the end-to-end test for the whole flow): no secret in the
+advertisement; requests only for unowned devices and only by signed-in
+users; one pending request per user; confirm needs the device secret, a
+request older than the boot, a fresh boot and exactly one request; owned
+devices never change owner through this path; expired requests and stale
+unowned devices are deleted.
+
 ## Consequences
 
-- Nobody on the network can link a DeKoi without restarting it by hand. A
-  power cut during someone else's 10-minute window would link it to them;
-  the window is short and the device must be unowned.
+- Nobody on the network can link a DeKoi without restarting it by hand.
+  This is the "press the link button" model of devices like Philips Hue,
+  but stricter: Hue links whoever asks during the window, DeKoi links
+  nobody when two ask. A power cut during someone else's 10-minute window
+  would link it to them; the window is short, the device must be unowned,
+  and the owner would see the DeKoi missing from their app and write the
+  card again.
+- Anyone can enroll unowned devices without an account, as anyone can call
+  `device_register_v1` today; they are deleted after 24 hours unless
+  linked, and there is no edge rate limit (ADR 0001).
 - A second app asking at the same time blocks linking until it stops; the
   app tells the owner to restart and try again.
 - During setup an attacker on the LAN can see that a DeKoi is present; once
