@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="Images/cyberfish-app-icon.svg" width="96" alt="CyberFish logo">
+</p>
+
 # DeKoi by CyberFish
 
 A plug-and-play network honeypot and intrusion detector. A Raspberry Pi poses
@@ -5,6 +9,15 @@ as a storage box on the local network; nothing legitimate talks to it, so any
 contact is a signal. It also runs an IDS and watches the network for sweeps,
 ARP spoofing, rogue DHCP servers and routers, and name poisoning. The owner
 gets a plain-language alert on their phone.
+
+<img src="Images/dekoi-what-it-does.svg" alt="Bob uses the home network and never touches DeKoi. Eve scans what looks like a storage box and tries to sign in. DeKoi reports it over HTTPS, and Alice gets an alert on her phone within seconds.">
+
+## How it works
+
+<img src="Images/dekoi-how-it-works.svg" alt="The Pi's firewall lets Eve reach only the decoys. The agent reads the decoy and IDS logs one way, drops typed passwords and sends events to Supabase over HTTPS, outbound only. The device API checks the device secret and every field, row-level security keeps each owner's data separate, and a fixed alert reaches Alice's phone through Firebase Cloud Messaging. The Pi runs only signed images.">
+
+The contracts behind this picture are in `docs/architecture.md`; the evidence
+for each security claim is in `docs/security.md`.
 
 | Directory   | What it is                                                     |
 | ----------- | -------------------------------------------------------------- |

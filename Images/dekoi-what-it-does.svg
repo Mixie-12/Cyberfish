@@ -1,0 +1,218 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="1000" height="724" viewBox="0 0 1000 724" role="img" aria-labelledby="title desc">
+  <title id="title">What DeKoi does</title>
+  <desc id="desc">Bob uses the home network as usual and never touches DeKoi. Eve, an intruder, sees what looks like a storage box, scans it and tries to sign in. DeKoi reports this to the DeKoi cloud over HTTPS, and Alice, the owner, gets a plain-language alert on her phone within seconds.</desc>
+  <defs>
+    <style>
+      text { font-family: "Segoe UI", -apple-system, BlinkMacSystemFont, "Helvetica Neue", Helvetica, Arial, sans-serif; fill: #A9BBD3; font-size: 13px; }
+      .eyebrow { font-size: 12px; font-weight: 600; letter-spacing: 2.4px; fill: #2EA8FF; }
+      .label { font-size: 11px; font-weight: 600; letter-spacing: 2px; fill: #6F84A3; }
+      .title { font-size: 28px; font-weight: 600; fill: #F4FBFF; }
+      .sub { font-size: 15px; }
+      .name { font-size: 16px; font-weight: 600; fill: #F4FBFF; }
+      .h { font-size: 14px; font-weight: 600; fill: #F4FBFF; }
+      .small { font-size: 12px; }
+      .dim { fill: #6F84A3; }
+      .chip { font-size: 11px; fill: #C9D6E8; }
+      .c { text-anchor: middle; }
+      .r { text-anchor: end; }
+    </style>
+    <radialGradient id="bgGlow" cx="0.46" cy="0.52" r="0.42">
+      <stop offset="0" stop-color="#2EA8FF" stop-opacity="0.10"/>
+      <stop offset="1" stop-color="#2EA8FF" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="glow" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="12"/></filter>
+    <filter id="glowSm" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="4"/></filter>
+    <clipPath id="avatar"><circle r="33"/></clipPath>
+    <marker id="arRed" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto"><path d="M0 0L10 5L0 10L3 5Z" fill="#FF5C70"/></marker>
+    <marker id="arGreen" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto"><path d="M0 0L10 5L0 10L3 5Z" fill="#34D399"/></marker>
+    <marker id="arBlue" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto"><path d="M0 0L10 5L0 10L3 5Z" fill="#2EA8FF"/></marker>
+    <marker id="arViolet" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto"><path d="M0 0L10 5L0 10L3 5Z" fill="#A78BFA"/></marker>
+    <symbol id="fish" viewBox="176 386 672 252">
+      <path d="M183.47 631.47V573.44L301.23 521.81Q309.76 517.97 319.15 515.41Q328.53 512.85 334.08 512Q328.53 511.15 319.15 508.8Q309.76 506.45 301.23 502.61L183.47 450.99V392.53L379.73 481.28V542.29Z M610.13 631.47 413.87 542.72V481.71L610.13 392.53V450.56L492.37 502.19Q483.84 506.03 474.45 508.59Q465.07 511.15 459.52 512Q465.07 512.85 474.45 515.2Q483.84 517.55 492.37 521.39L610.13 573.01Z M644.27 631.47V573.44L762.03 521.81Q770.56 517.97 779.95 515.41Q789.33 512.85 794.88 512Q789.33 511.15 779.95 508.8Q770.56 506.45 762.03 502.61L644.27 450.99V392.53L840.53 481.28V542.29Z"/>
+    </symbol>
+  </defs>
+
+  <rect width="1000" height="724" rx="24" fill="#040A15"/>
+  <rect width="1000" height="724" rx="24" fill="url(#bgGlow)"/>
+
+  <use href="#fish" xlink:href="#fish" x="886" y="42" width="72" height="27" fill="#2EA8FF" filter="url(#glowSm)"/>
+  <use href="#fish" xlink:href="#fish" x="886" y="42" width="72" height="27" fill="#F4FBFF"/>
+  <text class="eyebrow" x="40" y="56">WHAT DEKOI DOES</text>
+  <text class="title" x="40" y="90">A decoy on your network. Any touch is a signal.</text>
+  <text class="sub" x="40" y="118">DeKoi looks like a storage box. Nothing legitimate talks to it, so when something does, the owner knows within seconds.</text>
+
+  <rect x="24" y="150" width="576" height="350" rx="18" fill="#081221" stroke="#17263D"/>
+  <text class="label" x="46" y="180">ALICE'S HOME NETWORK</text>
+
+  <g transform="translate(110 236)">
+    <circle r="34" fill="#0B2A22" stroke="#34D399" stroke-width="1.5"/>
+    <g clip-path="url(#avatar)" fill="#34D399">
+      <circle cy="-8" r="12"/>
+      <path d="M-24 34C-24 15-13 7 0 7S24 15 24 34Z"/>
+    </g>
+  </g>
+  <text class="name c" x="110" y="294">Bob</text>
+  <text class="c" x="110" y="313">browses, streams, prints</text>
+  <text class="c" x="110" y="330" style="fill:#34D399">DeKoi stays quiet</text>
+
+  <line x1="148" y1="236" x2="258" y2="236" stroke="#34D399" stroke-width="2" marker-end="url(#arGreen)"/>
+  <text class="small c" x="203" y="226" style="fill:#34D399">everyday traffic</text>
+
+  <g transform="translate(300 236)">
+    <path d="M-20 -14L-26 -32M20 -14L26 -32" stroke="#4A6488" stroke-width="3" stroke-linecap="round"/>
+    <rect x="-38" y="-14" width="76" height="28" rx="8" fill="#0C1A2E" stroke="#3A5274" stroke-width="1.5"/>
+    <circle cx="-24" r="2.6" fill="#34D399"/>
+    <circle cx="-14" r="2.6" fill="#34D399"/>
+    <circle cx="-4" r="2.6" fill="#34D399"/>
+    <rect x="12" y="-3" width="16" height="6" rx="3" fill="#22395A"/>
+  </g>
+  <text class="c" x="300" y="274" style="fill:#C9D6E8">Router</text>
+  <text class="small dim c" x="300" y="291">to the internet</text>
+
+  <path d="M366 194H546A14 14 0 0 1 560 208V302A14 14 0 0 1 546 316H470L456 330L442 316H366A14 14 0 0 1 352 302V208A14 14 0 0 1 366 194Z" fill="#0E1A2C" stroke="#FF5C70" stroke-opacity="0.6" stroke-dasharray="4 4"/>
+  <text class="label" x="368" y="220" style="fill:#FF8A9A">WHAT EVE SEES</text>
+  <text class="h" x="368" y="244">A storage box (NAS)</text>
+  <g>
+    <rect x="368" y="258" width="42" height="20" rx="6" fill="#16243A" stroke="#2A3F5F"/>
+    <rect x="414" y="258" width="42" height="20" rx="6" fill="#16243A" stroke="#2A3F5F"/>
+    <rect x="460" y="258" width="42" height="20" rx="6" fill="#16243A" stroke="#2A3F5F"/>
+    <rect x="506" y="258" width="42" height="20" rx="6" fill="#16243A" stroke="#2A3F5F"/>
+    <rect x="368" y="284" width="42" height="20" rx="6" fill="#16243A" stroke="#2A3F5F"/>
+    <rect x="414" y="284" width="42" height="20" rx="6" fill="#16243A" stroke="#2A3F5F"/>
+    <rect x="460" y="284" width="42" height="20" rx="6" fill="#16243A" stroke="#2A3F5F"/>
+    <rect x="506" y="284" width="42" height="20" rx="6" fill="#16243A" stroke="#2A3F5F"/>
+    <text class="chip c" x="389" y="272">SSH</text>
+    <text class="chip c" x="435" y="272">FTP</text>
+    <text class="chip c" x="481" y="272">HTTP</text>
+    <text class="chip c" x="527" y="272">Telnet</text>
+    <text class="chip c" x="389" y="298">MySQL</text>
+    <text class="chip c" x="435" y="298">RDP</text>
+    <text class="chip c" x="481" y="298">VNC</text>
+    <text class="chip c" x="527" y="298">Redis</text>
+  </g>
+
+  <g transform="translate(456 380)">
+    <rect x="-70" y="-42" width="140" height="84" rx="14" fill="#2EA8FF" opacity="0.45" filter="url(#glow)"/>
+    <rect x="64" y="-26" width="12" height="16" rx="2" fill="#12304F" stroke="#2EA8FF"/>
+    <rect x="64" y="4" width="12" height="16" rx="2" fill="#12304F" stroke="#2EA8FF"/>
+    <rect x="-70" y="-42" width="140" height="84" rx="14" fill="#0A1B30" stroke="#2EA8FF" stroke-width="2"/>
+    <g fill="#2A5A85">
+      <rect x="-54" y="-34" width="4" height="4"/><rect x="-45" y="-34" width="4" height="4"/>
+      <rect x="-36" y="-34" width="4" height="4"/><rect x="-27" y="-34" width="4" height="4"/>
+      <rect x="-18" y="-34" width="4" height="4"/><rect x="-9" y="-34" width="4" height="4"/>
+      <rect x="0" y="-34" width="4" height="4"/><rect x="9" y="-34" width="4" height="4"/>
+      <rect x="18" y="-34" width="4" height="4"/><rect x="27" y="-34" width="4" height="4"/>
+      <rect x="36" y="-34" width="4" height="4"/><rect x="45" y="-34" width="4" height="4"/>
+    </g>
+    <use href="#fish" xlink:href="#fish" x="-38" y="-10" width="76" height="28.5" fill="#2EA8FF" filter="url(#glowSm)"/>
+    <use href="#fish" xlink:href="#fish" x="-38" y="-10" width="76" height="28.5" fill="#F4FBFF"/>
+  </g>
+  <text class="name c" x="456" y="446">DeKoi</text>
+  <text class="c" x="456" y="464">a Raspberry Pi honeypot</text>
+
+  <g transform="translate(110 380)">
+    <circle r="34" fill="#2A0E16" stroke="#FF5C70" stroke-width="1.5"/>
+    <g clip-path="url(#avatar)">
+      <path d="M0 -24C-14 -24 -21 -13 -21 -1V8C-25 14 -27 24 -27 34H27C27 24 25 14 21 8V-1C21 -13 14 -24 0 -24Z" fill="#FF5C70"/>
+      <ellipse cy="0" rx="10" ry="12.5" fill="#1A070C"/>
+      <ellipse cx="-4" cy="-1" rx="2.3" ry="1.4" fill="#FF5C70"/>
+      <ellipse cx="4" cy="-1" rx="2.3" ry="1.4" fill="#FF5C70"/>
+    </g>
+  </g>
+  <text class="name c" x="110" y="438">Eve</text>
+  <text class="c" x="110" y="457">an intruder, or malware</text>
+  <text class="c" x="110" y="474">on a hacked device</text>
+
+  <line x1="148" y1="380" x2="378" y2="380" stroke="#FF5C70" stroke-width="2" stroke-dasharray="7 6" marker-end="url(#arRed)"/>
+  <text class="small c" x="263" y="358" style="fill:#FF8A9A">scans, tries to sign in</text>
+  <circle cx="263" cy="380" r="12" fill="#FF5C70" stroke="#081221" stroke-width="3"/>
+  <text class="c" x="263" y="384.5" style="fill:#FFFFFF;font-weight:700">1</text>
+
+  <path transform="translate(700 392)" d="M-40 26H42A22 22 0 0 0 46 -17A30 30 0 0 0 -8 -28A22 22 0 0 0 -44 -6A17 17 0 0 0 -40 26Z" fill="#2EA8FF" opacity="0.35" filter="url(#glow)"/>
+  <path transform="translate(700 392)" d="M-40 26H42A22 22 0 0 0 46 -17A30 30 0 0 0 -8 -28A22 22 0 0 0 -44 -6A17 17 0 0 0 -40 26Z" fill="#0C1A2E" stroke="#2EA8FF" stroke-width="1.8"/>
+  <g transform="translate(702 386)" fill="none" stroke="#2EA8FF" stroke-width="1.6">
+    <ellipse cy="-8" rx="12" ry="4"/>
+    <path d="M-12 -8V8C-12 10.2 -6.6 12 0 12S12 10.2 12 8V-8"/>
+    <path d="M-12 0C-12 2.2 -6.6 4 0 4S12 2.2 12 0"/>
+  </g>
+  <text class="name c" x="702" y="446">DeKoi cloud</text>
+  <text class="c" x="702" y="464">Supabase, EU</text>
+
+  <line x1="534" y1="380" x2="652" y2="380" stroke="#2EA8FF" stroke-width="2" marker-end="url(#arBlue)"/>
+  <circle cx="600" cy="380" r="12" fill="#2EA8FF" stroke="#040A15" stroke-width="3"/>
+  <text class="c" x="600" y="384.5" style="fill:#040A15;font-weight:700">2</text>
+
+  <line x1="766" y1="380" x2="814" y2="380" stroke="#A78BFA" stroke-width="2" marker-end="url(#arViolet)"/>
+  <circle cx="790" cy="380" r="12" fill="#A78BFA" stroke="#040A15" stroke-width="3"/>
+  <text class="c" x="790" y="384.5" style="fill:#040A15;font-weight:700">3</text>
+
+  <g transform="translate(892 222)">
+    <circle r="34" fill="#1D1638" stroke="#A78BFA" stroke-width="1.5"/>
+    <g clip-path="url(#avatar)">
+      <path d="M-15 -5C-16 -19 -8 -23 0 -23S16 -19 15 -5C15 1 14 5 12 7H-12C-14 5 -15 1 -15 -5Z" fill="#7C5CE0"/>
+      <circle cy="-8" r="10.5" fill="#A78BFA"/>
+      <path d="M-24 34C-24 15-13 7 0 7S24 15 24 34Z" fill="#A78BFA"/>
+    </g>
+  </g>
+  <text class="name r" x="846" y="214">Alice</text>
+  <text class="r" x="846" y="233">the owner,</text>
+  <text class="r" x="846" y="250">at home or away</text>
+
+  <rect x="820" y="292" width="144" height="194" rx="22" fill="#0A1424" stroke="#2C4466" stroke-width="2"/>
+  <rect x="870" y="301" width="44" height="7" rx="3.5" fill="#1A2B44"/>
+  <rect x="830" y="318" width="124" height="98" rx="12" fill="#2EA8FF" opacity="0.25" filter="url(#glowSm)"/>
+  <rect x="830" y="318" width="124" height="98" rx="12" fill="#11223A" stroke="#2EA8FF" stroke-opacity="0.7"/>
+  <use href="#fish" xlink:href="#fish" x="840" y="329" width="22" height="8.3" fill="#2EA8FF"/>
+  <text x="868" y="337" style="font-size:10.5px;fill:#6F84A3">DeKoi · now</text>
+  <text x="840" y="357" style="font-size:12.5px;font-weight:600;fill:#F4FBFF">Someone tried to</text>
+  <text x="840" y="373" style="font-size:12.5px;font-weight:600;fill:#F4FBFF">sign in to your</text>
+  <text x="840" y="389" style="font-size:12.5px;font-weight:600;fill:#F4FBFF">DeKoi</text>
+  <text x="840" y="406" style="font-size:10.5px">Tap for what to do</text>
+  <rect x="830" y="430" width="124" height="8" rx="4" fill="#16243A"/>
+  <rect x="830" y="446" width="92" height="8" rx="4" fill="#16243A"/>
+  <rect x="872" y="472" width="40" height="4" rx="2" fill="#2C4466"/>
+
+  <rect x="24" y="526" width="304" height="84" rx="14" fill="#081221" stroke="#17263D"/>
+  <circle cx="52" cy="552" r="13" fill="#FF5C70"/>
+  <text class="c" x="52" y="556.5" style="fill:#FFFFFF;font-weight:700">1</text>
+  <text class="h" x="76" y="557">Eve takes the bait</text>
+  <text x="76" y="579">She scans, finds the storage box</text>
+  <text x="76" y="597">and tries to sign in.</text>
+
+  <rect x="348" y="526" width="304" height="84" rx="14" fill="#081221" stroke="#17263D"/>
+  <circle cx="376" cy="552" r="13" fill="#2EA8FF"/>
+  <text class="c" x="376" y="556.5" style="fill:#040A15;font-weight:700">2</text>
+  <text class="h" x="400" y="557">DeKoi reports it</text>
+  <text x="400" y="579">Only outward, over HTTPS. The</text>
+  <text x="400" y="597">password Eve typed never leaves.</text>
+
+  <rect x="672" y="526" width="304" height="84" rx="14" fill="#081221" stroke="#17263D"/>
+  <circle cx="700" cy="552" r="13" fill="#A78BFA"/>
+  <text class="c" x="700" y="556.5" style="fill:#040A15;font-weight:700">3</text>
+  <text class="h" x="724" y="557">Alice gets an alert</text>
+  <text x="724" y="579">In plain language, within seconds,</text>
+  <text x="724" y="597">with what happened and what to do.</text>
+
+  <rect x="24" y="626" width="952" height="76" rx="14" fill="#081221" stroke="#17263D"/>
+  <text x="46" y="652" style="font-weight:600;fill:#C9D6E8">DeKoi also watches the whole network for</text>
+  <g>
+    <rect x="46" y="664" width="144" height="26" rx="13" fill="#0E1D33" stroke="#22395A"/>
+    <rect x="198.8" y="664" width="144" height="26" rx="13" fill="#0E1D33" stroke="#22395A"/>
+    <rect x="351.6" y="664" width="144" height="26" rx="13" fill="#0E1D33" stroke="#22395A"/>
+    <rect x="504.4" y="664" width="144" height="26" rx="13" fill="#0E1D33" stroke="#22395A"/>
+    <rect x="657.2" y="664" width="144" height="26" rx="13" fill="#0E1D33" stroke="#22395A"/>
+    <rect x="810" y="664" width="144" height="26" rx="13" fill="#0E1D33" stroke="#22395A"/>
+    <circle cx="58" cy="677" r="3" fill="#2EA8FF"/>
+    <circle cx="210.8" cy="677" r="3" fill="#2EA8FF"/>
+    <circle cx="363.6" cy="677" r="3" fill="#2EA8FF"/>
+    <circle cx="516.4" cy="677" r="3" fill="#2EA8FF"/>
+    <circle cx="669.2" cy="677" r="3" fill="#2EA8FF"/>
+    <circle cx="822" cy="677" r="3" fill="#2EA8FF"/>
+    <text x="68" y="681" style="font-size:12px;fill:#C9D6E8">Network sweeps</text>
+    <text x="220.8" y="681" style="font-size:12px;fill:#C9D6E8">ARP spoofing</text>
+    <text x="373.6" y="681" style="font-size:12px;fill:#C9D6E8">Rogue DHCP servers</text>
+    <text x="526.4" y="681" style="font-size:12px;fill:#C9D6E8">Rogue IPv6 routers</text>
+    <text x="679.2" y="681" style="font-size:12px;fill:#C9D6E8">Name poisoning</text>
+    <text x="832" y="681" style="font-size:12px;fill:#C9D6E8">Known attacks (IDS)</text>
+  </g>
+</svg>
