@@ -345,6 +345,20 @@ network", tag per source so repeats replace each other. No action buttons:
 trusting or blocking needs the full context. Opening the alert in the app
 cancels its notification.
 
+## Motion
+
+Code: `clients/app/.../ui/motion`. Push and pop use shared axis X with
+fade-through fades (the old screen is gone in the first 35 %); a back
+gesture seeks the pop linearly with a crossfade so the previous screen
+shows at once. Shared elements: a host's kind tile and an alert's severity
+move into the hero of their detail screen, only while that screen is pushed
+or popped, never on a tab switch. Status changes fade through; items of a
+plain list expand and fade with the expand spring; lazy rows use
+`animateItem()`. Haptics use the platform constants (toggle on or off,
+confirm) and long press, the firm click, once when a critical alert opens;
+the system touch feedback setting applies. Under reduced motion nothing
+moves and nothing vibrates.
+
 ## Libraries
 
 Charts are Compose Canvas (bars, bar list, sparkline, uptime strip); no chart

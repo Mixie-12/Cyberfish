@@ -2,15 +2,6 @@ package no.cyberfish.dekoi.ui
 
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
-import androidx.compose.animation.AnimatedContentTransitionScope
-import androidx.compose.animation.EnterTransition
-import androidx.compose.animation.ExitTransition
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.scaleIn
-import androidx.compose.animation.slideInHorizontally
-import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -42,15 +33,12 @@ import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.DrawScope
-import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.LifecycleResumeEffect
@@ -59,7 +47,6 @@ import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
@@ -73,6 +60,10 @@ import no.cyberfish.dekoi.shared.DesignTokens
 import no.cyberfish.dekoi.ui.components.Screen
 import no.cyberfish.dekoi.ui.learn.LearnScreen
 import no.cyberfish.dekoi.ui.learn.LearnTopicScreen
+import no.cyberfish.dekoi.ui.motion.Direction
+import no.cyberfish.dekoi.ui.motion.SharedElementHost
+import no.cyberfish.dekoi.ui.motion.rememberNavTransitions
+import no.cyberfish.dekoi.ui.motion.screen
 import no.cyberfish.dekoi.ui.network.HostDetailScreen
 import no.cyberfish.dekoi.ui.network.NetworkScreen
 import no.cyberfish.dekoi.ui.network.NetworksScreen
@@ -146,11 +137,6 @@ private enum class Tab(
 /** The tab root this entry shows, or null for a pushed screen. */
 private fun NavBackStackEntry.rootTab(): Tab? = Tab.entries.firstOrNull { destination.hasRoute(it.route::class) }
 
-private const val PUSH_MS = 300
-private const val TAB_MS = 200
-private const val TAB_OUT_MS = TAB_MS * 35 / 100
-private const val TAB_SCALE = 0.92f
-private val PUSH_DISTANCE = 30.dp
 private val TAB_INDICATOR = 2.dp
 private val TAB_INDICATOR_WIDTH = 32.dp
 private val TAB_LABEL_MIN = 6.sp
@@ -158,11 +144,13 @@ private val TAB_LABEL_MIN = 6.sp
 @Composable
 fun DekoiApp(viewModel: AppViewModel) {
     val session by viewModel.session.collectAsStateWithLifecycle()
-    when (val current = session) {
-        is SessionStatus.Authenticated -> SignedIn(viewModel, current.session.user?.email)
-        is SessionStatus.RefreshFailure -> SignedIn(viewModel, null)
-        is SessionStatus.NotAuthenticated -> SignInScreen(viewModel)
-        SessionStatus.Initializing -> Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background))
+    SharedElementHost {
+        when (val current = session) {
+            is SessionStatus.Authenticated -> SignedIn(viewModel, current.session.user?.email)
+            is SessionStatus.RefreshFailure -> SignedIn(viewModel, null)
+            is SessionStatus.NotAuthenticated -> SignInScreen(viewModel)
+            SessionStatus.Initializing -> Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background))
+        }
     }
 }
 
@@ -241,8 +229,7 @@ private fun SignedIn(
     }
     val back: () -> Unit = { navController.popBackStack() }
     val now = Instant.now()
-    val transitions =
-        Transitions(with(LocalDensity.current) { PUSH_DISTANCE.roundToPx() }, LocalLayoutDirection.current, reduceMotion, tabSwitch)
+    val transitions = rememberNavTransitions { from, to -> tabSwitch.active || (from.rootTab() != null && to.rootTab() != null) }
 
     Scaffold(
         bottomBar = {
@@ -257,15 +244,17 @@ private fun SignedIn(
             navController,
             startDestination = Route.Home,
             modifier = Modifier.padding(padding),
-            enterTransition = { transitions.enter(this, forward = true) },
-            exitTransition = { transitions.exit(this, forward = true) },
-            popEnterTransition = { transitions.enter(this, forward = false) },
-            popExitTransition = { transitions.exit(this, forward = false) },
+            enterTransition = { transitions.enter(this, Direction.FORWARD) },
+            exitTransition = { transitions.exit(this, Direction.FORWARD) },
+            popEnterTransition = { transitions.enter(this, Direction.BACK) },
+            popExitTransition = { transitions.exit(this, Direction.BACK) },
+            predictivePopEnterTransition = { transitions.enter(this, Direction.BACK_GESTURE) },
+            predictivePopExitTransition = { transitions.exit(this, Direction.BACK_GESTURE) },
         ) {
-            composable<Route.Home> {
+            screen<Route.Home> {
                 HomeScreen(data, now, refreshing, listStates.getValue(Tab.HOME), viewModel::refresh, navigate)
             }
-            composable<Route.Alerts> {
+            screen<Route.Alerts> {
                 AlertsScreen(
                     data,
                     now,
@@ -276,10 +265,10 @@ private fun SignedIn(
                     onBack = null,
                 )
             }
-            composable<Route.FilteredAlerts> { entry ->
+            screen<Route.FilteredAlerts> { entry ->
                 AlertsScreen(data, now, entry.toRoute(), rememberLazyListState(), viewModel::refresh, navigate, onBack = back)
             }
-            composable<Route.AlertDetail> { entry ->
+            screen<Route.AlertDetail> { entry ->
                 AlertDetailScreen(
                     data,
                     now,
@@ -290,17 +279,17 @@ private fun SignedIn(
                     onBack = back,
                 )
             }
-            composable<Route.Network> {
+            screen<Route.Network> {
                 NetworkScreen(data, now, listStates.getValue(Tab.NETWORK), navigate)
             }
-            composable<Route.HostDetail> { entry ->
+            screen<Route.HostDetail> { entry ->
                 val route = entry.toRoute<Route.HostDetail>()
                 HostDetailScreen(data, now, route.deviceId, route.mac, viewModel::setTrusted, viewModel::setNameAndRoom, navigate, back)
             }
-            composable<Route.Networks> {
+            screen<Route.Networks> {
                 NetworksScreen(data, back)
             }
-            composable<Route.Dekoi> { entry ->
+            screen<Route.Dekoi> { entry ->
                 DekoiScreen(
                     data,
                     now,
@@ -314,30 +303,30 @@ private fun SignedIn(
                     onBack = back,
                 )
             }
-            composable<Route.AddDekoi> {
+            screen<Route.AddDekoi> {
                 AddDekoiScreen(data, now, onRefresh = viewModel::refreshDevices, onNavigate = navigate, onBack = back)
             }
             // An empty screen until the card-writing work brings its own (ADR 0014).
-            composable<Route.WriteCard> {
+            screen<Route.WriteCard> {
                 Screen(stringResource(R.string.add_write_card), onBack = back) { }
             }
-            composable<Route.Licences> {
+            screen<Route.Licences> {
                 LicencesScreen(back)
             }
-            composable<Route.Onboarding> {
+            screen<Route.Onboarding> {
                 OnboardingScreen(
                     needsDekoi = data.loaded && data.devices.isEmpty(),
                     onDone = back,
                     onAddDekoi = { navController.navigate(Route.AddDekoi) { popUpTo<Route.Onboarding> { inclusive = true } } },
                 )
             }
-            composable<Route.Learn> {
+            screen<Route.Learn> {
                 LearnScreen(onOpen = { navigate(Route.LearnTopic(it.id)) }, onBack = back)
             }
-            composable<Route.LearnTopic> { entry ->
+            screen<Route.LearnTopic> { entry ->
                 LearnTopicScreen(entry.toRoute<Route.LearnTopic>().id, back)
             }
-            composable<Route.Settings> {
+            screen<Route.Settings> {
                 val settings by viewModel.settings.collectAsStateWithLifecycle()
                 LaunchedEffect(Unit) { viewModel.loadSettings() }
                 SettingsScreen(
@@ -357,51 +346,6 @@ private fun SignedIn(
 
 private suspend fun LazyListState.scrollToTop(reduceMotion: Boolean) {
     if (reduceMotion) scrollToItem(0) else animateScrollToItem(0)
-}
-
-/**
- * Pushing a screen slides it in along the reading direction with a fade
- * (shared axis X); changing tabs fades through (docs/design.md, "Tokens").
- */
-private class Transitions(
-    private val distance: Int,
-    layoutDirection: LayoutDirection,
-    private val reduceMotion: Boolean,
-    private val tabSwitch: TabSwitch,
-) {
-    private val reading = if (layoutDirection == LayoutDirection.Ltr) 1 else -1
-
-    private fun AnimatedContentTransitionScope<NavBackStackEntry>.changesTab() =
-        tabSwitch.active || (initialState.rootTab() != null && targetState.rootTab() != null)
-
-    fun enter(
-        scope: AnimatedContentTransitionScope<NavBackStackEntry>,
-        forward: Boolean,
-    ): EnterTransition =
-        when {
-            reduceMotion -> {
-                EnterTransition.None
-            }
-
-            scope.changesTab() -> {
-                fadeIn(tween(TAB_MS - TAB_OUT_MS, delayMillis = TAB_OUT_MS)) +
-                    scaleIn(tween(TAB_MS - TAB_OUT_MS, delayMillis = TAB_OUT_MS), TAB_SCALE)
-            }
-
-            else -> {
-                slideInHorizontally(tween(PUSH_MS)) { distance * reading * if (forward) 1 else -1 } + fadeIn(tween(PUSH_MS))
-            }
-        }
-
-    fun exit(
-        scope: AnimatedContentTransitionScope<NavBackStackEntry>,
-        forward: Boolean,
-    ): ExitTransition =
-        when {
-            reduceMotion -> ExitTransition.None
-            scope.changesTab() -> fadeOut(tween(TAB_OUT_MS))
-            else -> slideOutHorizontally(tween(PUSH_MS)) { -distance * reading * if (forward) 1 else -1 } + fadeOut(tween(PUSH_MS))
-        }
 }
 
 // A hairline along the top and a blue line over the chosen tab; no pill.
