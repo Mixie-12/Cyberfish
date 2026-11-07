@@ -28,3 +28,4 @@ them.
 | 0020 | [The CyberFish brand in the apps](0020-cyberfish-brand.md) | accepted |
 | 0021 | [Endpoints and rules of the network checks](0021-network-check-endpoints.md) | accepted |
 | 0022 | [Keys in CI, image signing in Cloud KMS, automatic rotation](0022-ci-keys-and-signing.md) | accepted |
+| 0026 | [Daily read-only checks of production](0026-production-monitoring.md) | accepted |
