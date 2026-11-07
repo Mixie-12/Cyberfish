@@ -1,6 +1,6 @@
 # Status
 
-Updated 2026-11-07. Phases 0 to 6 are on `main`, deployed by CI and released
+Updated 2026-11-08. Phases 0 to 6 are on `main`, deployed by CI and released
 as v0.1.1. The Phase 7 hardware test passed end to end with the findings
 below. Next: device identification and the app redesign the owner asked for
 (Phase 8).
@@ -94,9 +94,36 @@ Tested on a Raspberry Pi on a home LAN by ethernet, an Honor PTP-N49 phone
 | ARP sweep | Not reported when sent from the Wi-Fi PC (253 targets); not verified from a wired host, see Known limitations |
 | Typed passwords | Not shown in the app; the hardware check of the stored rows was not done (covered by the CI end-to-end test) |
 
+Backend hardening for public sign-up (2026-11-08, not yet deployed): Auth
+access tokens 15 minutes; write limits per address and per user in
+PostgREST's pre-request function; storage limits per account and device;
+a cap on `notify` calls against the Free plan quota; abandoned setups
+removed after 30 days; a test that account deletion reaches every table;
+the dns_hijack and port_forward kinds restored after parallel migrations
+dropped them (ADR 0016, `docs/security.md`). 373 pgTAP tests and advisors
+clean locally; HTTP 429 and the notify gate verified through the local
+gateway; backup dump and restore verified locally.
+
 ## Owner actions open
 
 1. Optional: repeat the ARP sweep from a PC connected by cable.
+2. Realtime: suspend it (nothing uses it; public channels are open to
+   anyone with the publishable key). Either give CI a token with "Realtime
+   Config" read-write so the deploy sets it, or turn it off once in the
+   dashboard (`docs/security.md`, "Platform settings").
+3. SSL enforcement for direct database connections: replace the CI token
+   with one that adds "SSL Enforcement" read-write; then
+   `[db.ssl_enforcement] enabled = true` can go into `config.toml`.
+4. Check in the dashboard: Auth audit logs are not written to the
+   database, and IP address forwarding is off.
+5. Backups: create an age key pair, store the private key in 1Password
+   ("DeKoi backup age key") and the public key as the repository variable
+   `BACKUP_AGE_RECIPIENT`, so the CI backup job can run
+   (`docs/runbooks/restore-backup.md`). Until then nothing backs up
+   production.
+6. Decide before real customers: Supabase Pro (daily backups, PITR as an
+   add-on, no pausing, session time-outs, higher quotas) and a custom
+   domain with a firewall in front of the API.
 
 Done 2026-11-07:
 - Supabase project `rmllpietnopviodbdkky` deployed entirely by CI (migrations,
@@ -121,8 +148,13 @@ Done 2026-11-07:
 - An ARP sweep from a Wi-Fi client was not detected by a wired DeKoi; many
   access points answer or filter broadcast ARP for Wi-Fi clients. Retest from
   a wired host before relying on sweep detection across Wi-Fi.
-- No edge rate limiting without a Supabase custom domain.
-- Free Supabase plan: backups are manual dumps.
+- No edge firewall without a custom domain: limits are counted in Postgres
+  and only accepted writes count (ADR 0016). A flood from many accounts can
+  hold back everyone's pushes for an hour or fill the 500 MB database
+  within weeks; monitoring is the alarm.
+- Free Supabase plan: no downloadable backups (CI job specified, not yet
+  built), sessions never expire, and Supabase may pause a project after a
+  week of low activity.
 
 ## Roadmap (out of MVP scope)
 
