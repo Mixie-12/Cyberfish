@@ -1,32 +1,33 @@
 package no.cyberfish.dekoi.burner
 
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.ScrollState
+import androidx.compose.foundation.VerticalScrollbar
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.rememberScrollbarAdapter
+import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.RadioButton
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.material3.darkColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -40,59 +41,68 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.font.FontFamily
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
 import androidx.compose.ui.window.rememberWindowState
 import no.cyberfish.dekoi.shared.ClaimCode
-import no.cyberfish.dekoi.shared.DesignTokens
+import java.awt.Dimension
 import java.util.Locale
 
 fun main() =
     application {
-        Window(onCloseRequest = ::exitApplication, title = "DeKoi Setup", state = rememberWindowState(width = 560.dp, height = 720.dp)) {
-            DekoiTheme {
-                val scope = rememberCoroutineScope()
-                val setup = remember { Setup(scope) }
-                LaunchedEffect(setup) { setup.lookForCards() }
-                val screen by setup.screen.collectAsState()
-                Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-                    Column(
-                        Modifier.fillMaxSize().padding(32.dp).verticalScroll(rememberScrollState()),
-                        verticalArrangement = Arrangement.spacedBy(16.dp),
-                    ) {
-                        SetupScreen(screen, setup)
-                    }
-                }
-            }
+        Window(onCloseRequest = ::exitApplication, title = "DeKoi Setup", state = rememberWindowState(width = 840.dp, height = 780.dp)) {
+            // AWT sizes are in the same scaled units as dp. The minimum fits
+            // the content column and the QR code next to the claim code.
+            LaunchedEffect(window) { window.minimumSize = Dimension(720, 560) }
+            val scope = rememberCoroutineScope()
+            val setup = remember { Setup(scope) }
+            val screen by setup.screen.collectAsState()
+            DekoiTheme { SetupWindow(screen, setup) }
         }
     }
 
-// Dark only (ADR 0020). Blue is an accent and never fills a button, so
-// actions are outlined buttons and text buttons.
-private val colorScheme =
-    darkColorScheme(
-        primary = Color(DesignTokens.BLUE),
-        onPrimary = Color(DesignTokens.BACKGROUND),
-        background = Color(DesignTokens.BACKGROUND),
-        onBackground = Color(DesignTokens.TEXT),
-        surface = Color(DesignTokens.BACKGROUND),
-        onSurface = Color(DesignTokens.TEXT),
-        onSurfaceVariant = Color(DesignTokens.MID_GREY),
-        surfaceContainer = Color(DesignTokens.NAVY),
-        outline = Color(DesignTokens.MID_GREY),
-        outlineVariant = Color(DesignTokens.HAIRLINE),
-        error = Color(DesignTokens.CRITICAL.color),
-    )
-
 @Composable
-private fun DekoiTheme(content: @Composable () -> Unit) {
-    MaterialTheme(colorScheme = colorScheme, content = content)
+private fun SetupWindow(
+    screen: Screen,
+    setup: Setup,
+) {
+    val step = screen.step
+    // The welcome screen is the title page: centred, with the wordmark large instead of the header.
+    val title = screen == Screen.Welcome
+    Column(Modifier.fillMaxSize().background(Brand.background)) {
+        if (!title) {
+            Row(Modifier.fillMaxWidth().padding(horizontal = 40.dp, vertical = 20.dp), verticalAlignment = Alignment.CenterVertically) {
+                Lockup()
+                Spacer(Modifier.weight(1f))
+                step?.let { StepRail(it) }
+            }
+            Hairline()
+        }
+        Box(Modifier.weight(1f)) {
+            // Each screen opens at its top, wherever the one before was scrolled to.
+            val scroll = remember(screen) { ScrollState(0) }
+            Column(
+                Modifier.fillMaxSize().verticalScroll(scroll).padding(horizontal = 40.dp, vertical = 32.dp),
+                verticalArrangement = if (title) Arrangement.Center else Arrangement.Top,
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
+                Column(Modifier.widthIn(max = 640.dp).fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(20.dp)) {
+                    step?.let { StepLabel(it) }
+                    SetupScreen(screen, setup)
+                }
+            }
+            VerticalScrollbar(rememberScrollbarAdapter(scroll), Modifier.align(Alignment.CenterEnd).fillMaxHeight().padding(4.dp))
+        }
+    }
 }
 
 @Composable
@@ -101,12 +111,16 @@ private fun ColumnScope.SetupScreen(
     setup: Setup,
 ) {
     when (screen) {
+        Screen.Welcome -> {
+            Welcome(setup)
+        }
+
         Screen.Looking -> {
-            Waiting("Looking for SD cards")
+            Waiting("Looking for memory cards")
         }
 
         Screen.NotWindows -> {
-            Title("DeKoi Setup runs on Windows")
+            Heading("This needs a Windows PC")
             Body("This version of DeKoi Setup can only write cards on a Windows PC.")
         }
 
@@ -115,16 +129,24 @@ private fun ColumnScope.SetupScreen(
         }
 
         Screen.Installing -> {
-            Waiting("Installing Raspberry Pi Imager")
-            Body("Windows may ask for permission. Choose Yes.")
+            Waiting("Installing Raspberry Pi Imager", "Windows may ask for permission. Choose Yes.")
         }
 
         is Screen.ChooseCard -> {
             ChooseCard(screen.drives, setup)
         }
 
+        is Screen.ListFailed -> {
+            Failed(
+                "Could not look for cards",
+                "DeKoi Setup could not check which memory cards are connected. Try again in a moment.",
+                screen.details,
+                setup,
+            )
+        }
+
         is Screen.ChooseNetwork -> {
-            ChooseNetwork(screen.drive, setup)
+            ChooseNetwork(screen.drive, screen.network, setup)
         }
 
         is Screen.Confirm -> {
@@ -132,19 +154,35 @@ private fun ColumnScope.SetupScreen(
         }
 
         Screen.Writing -> {
-            Waiting("Writing the card")
-            Body("This takes 10 to 20 minutes. Raspberry Pi Imager shows the details in its own window.")
-            Body("Leave the card in until DeKoi Setup says it is ready.")
+            Waiting(
+                "Writing the card",
+                "This takes 10 to 20 minutes. Raspberry Pi Imager shows the details in its own window.",
+                "Leave the card in until DeKoi Setup says it is ready.",
+            )
         }
 
-        is Screen.Failed -> {
-            Failed(screen.details, setup)
+        is Screen.WriteFailed -> {
+            Failed(
+                "The card was not written",
+                "Check that the card is still in the reader, then try again. If Windows asked for permission, choose Yes next time.",
+                screen.details,
+                setup,
+            )
         }
 
         is Screen.Done -> {
-            Done(screen.code, setup)
+            Done(screen.code, screen.cable, setup)
         }
     }
+}
+
+@Composable
+private fun ColumnScope.Welcome(setup: Setup) {
+    Horizon(markSize = 64.sp, seaHeight = 72.dp, glow = true)
+    Text("DeKoi Setup", Modifier.align(Alignment.CenterHorizontally), style = Type.wordmark)
+    Body("DeKoi Setup prepares the memory card for your DeKoi.", TextAlign.Center)
+    Body("When it is done, it shows a code that links your DeKoi to the app on your phone.", TextAlign.Center)
+    Action("Start", setup::lookForCards, Modifier.align(Alignment.CenterHorizontally).padding(top = 12.dp), primary = true)
 }
 
 @Composable
@@ -152,13 +190,17 @@ private fun NoImager(
     installFailed: Boolean,
     setup: Setup,
 ) {
-    Title("DeKoi Setup needs Raspberry Pi Imager")
+    Heading("One more program is needed")
     Body("Raspberry Pi Imager writes the card. It is free and made by Raspberry Pi.")
     if (installFailed) {
-        Body("It was not installed. You can also download it from ${Imager.DOWNLOAD_PAGE} and then choose Look again.")
+        SelectionContainer {
+            Body("It was not installed. You can also download it from ${Imager.DOWNLOAD_PAGE} and then choose Look again.")
+        }
     }
-    OutlinedButton(onClick = setup::installImager) { Text("Install Raspberry Pi Imager") }
-    TextButton(onClick = setup::lookForCards) { Text("Look again") }
+    Actions {
+        Action("Look again", setup::lookForCards)
+        Action("Install Raspberry Pi Imager", setup::installImager, primary = true)
+    }
 }
 
 @Composable
@@ -166,39 +208,58 @@ private fun ChooseCard(
     drives: List<Drive>,
     setup: Setup,
 ) {
-    Title("Choose the SD card")
     if (drives.isEmpty()) {
-        Body("No SD card found. Insert the card, then choose Look again.")
-    }
-    for (drive in drives) {
-        Surface(
-            Modifier.fillMaxWidth().clickable { setup.choose(drive) },
-            shape = MaterialTheme.shapes.medium,
-            color = MaterialTheme.colorScheme.surface,
-        ) {
-            Column(Modifier.padding(16.dp)) {
-                Text(drive.label, style = MaterialTheme.typography.titleMedium)
-                Secondary(size(drive))
+        Heading("Insert the memory card")
+        Body("No memory card was found. Put the card in the card reader, then choose Look again.")
+    } else {
+        Heading("Which memory card?")
+        Body("Only memory cards and USB drives are listed, never the disks inside this computer. The card needs 8 GB or more.")
+        Column(Modifier.fillMaxWidth().hudFrame()) {
+            drives.forEachIndexed { index, drive ->
+                if (index > 0) Hairline()
+                CardRow(drive) { setup.choose(drive) }
             }
         }
     }
-    OutlinedButton(onClick = setup::lookForCards) { Text("Look again") }
+    Actions { Action("Look again", setup::lookForCards) }
+}
+
+@Composable
+private fun CardRow(
+    drive: Drive,
+    onChoose: () -> Unit,
+) {
+    Row(
+        Modifier.fillMaxWidth().clickable(role = Role.Button, onClick = onChoose).padding(horizontal = 20.dp, vertical = 16.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            Text(drive.label, style = Type.strong)
+            Secondary(size(drive))
+        }
+        Text("CHOOSE", style = Type.label)
+    }
 }
 
 @Composable
 private fun ChooseNetwork(
     drive: Drive,
+    network: Network,
     setup: Setup,
 ) {
-    var wifi by remember { mutableStateOf(false) }
-    var name by remember { mutableStateOf("") }
-    var password by remember { mutableStateOf("") }
-    var country by remember { mutableStateOf(Locale.getDefault().country.takeIf { it in countries } ?: "GB") }
+    val entered = network as? Network.WiFi
+    var wifi by remember { mutableStateOf(entered != null) }
+    var name by remember { mutableStateOf(entered?.ssid ?: "") }
+    var password by remember { mutableStateOf(entered?.password ?: "") }
+    var country by remember { mutableStateOf(entered?.country ?: Locale.getDefault().country.takeIf { it in countries } ?: "GB") }
     var problem by remember { mutableStateOf<String?>(null) }
 
-    Title("How will your DeKoi connect?")
-    Choice("Network cable (recommended)", selected = !wifi) { wifi = false }
-    Choice("Wi-Fi", selected = wifi) { wifi = true }
+    Heading("How will it connect?")
+    Body("Your DeKoi needs the internet to reach the app on your phone.")
+    Column(Modifier.selectableGroup()) {
+        Choice("Network cable (recommended)", "Plug your DeKoi into your router. This is the most reliable.", !wifi) { wifi = false }
+        Choice("Wi-Fi", "For when your DeKoi cannot be near the router.", wifi) { wifi = true }
+    }
     if (wifi) {
         OutlinedTextField(name, { name = it }, Modifier.fillMaxWidth(), label = { Text("Wi-Fi name") }, singleLine = true)
         OutlinedTextField(
@@ -211,16 +272,18 @@ private fun ChooseNetwork(
         )
         CountryPicker(country) { country = it }
     }
-    problem?.let { Text(it, color = MaterialTheme.colorScheme.error) }
-    Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-        OutlinedButton(onClick = {
+    problem?.let {
+        Text(it, Modifier.semantics { liveRegion = LiveRegionMode.Polite }, style = Type.body.copy(color = Brand.critical))
+    }
+    Actions {
+        Action("Back", setup::lookForCards)
+        Action("Continue", primary = true, onClick = {
             try {
                 setup.confirm(drive, if (wifi) Network.WiFi(name, password, country) else Network.Cable)
             } catch (e: IllegalArgumentException) {
                 problem = e.message
             }
-        }) { Text("Continue") }
-        TextButton(onClick = setup::lookForCards) { Text("Back") }
+        })
     }
 }
 
@@ -230,14 +293,19 @@ private fun CountryPicker(
     onChange: (String) -> Unit,
 ) {
     var open by remember { mutableStateOf(false) }
-    Secondary("Country (sets the Wi-Fi rules for your country)")
-    OutlinedButton(onClick = { open = true }) { Text(countries.getValue(country)) }
-    DropdownMenu(open, onDismissRequest = { open = false }, Modifier.heightIn(max = 360.dp)) {
-        for ((code, name) in countries) {
-            DropdownMenuItem(text = { Text(name) }, onClick = {
-                onChange(code)
-                open = false
-            })
+    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        Label("Country")
+        Secondary("Sets the Wi-Fi rules for your country.")
+        Box {
+            Action(countries.getValue(country), onClick = { open = true }, Modifier.border(1.dp, Brand.midGrey, ControlShape))
+            DropdownMenu(open, onDismissRequest = { open = false }, Modifier.heightIn(max = 360.dp)) {
+                for ((code, name) in countries) {
+                    DropdownMenuItem(text = { Text(name) }, onClick = {
+                        onChange(code)
+                        open = false
+                    })
+                }
+            }
         }
     }
 }
@@ -248,59 +316,85 @@ private fun Confirm(
     network: Network,
     setup: Setup,
 ) {
-    Title("Erase this card?")
-    Body("Everything on ${drive.label} (${size(drive)}) will be erased and replaced with DeKoi.")
-    Body(
-        when (network) {
-            Network.Cable -> "Your DeKoi will connect with a network cable."
-            is Network.WiFi -> "Your DeKoi will connect to the Wi-Fi network ${network.ssid}."
-        },
+    Heading("Erase this card?")
+    Body("Everything on this card will be erased and replaced with DeKoi.")
+    Lines(
+        listOf(
+            "Card" to "${drive.label}, ${size(drive)}",
+            "Network" to
+                when (network) {
+                    Network.Cable -> "Network cable"
+                    is Network.WiFi -> "Wi-Fi \"${network.ssid}\""
+                },
+        ),
+        labelWidth = 120.dp,
     )
-    Body("Windows will ask whether Raspberry Pi Imager may make changes. Choose Yes.")
-    Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-        OutlinedButton(onClick = { setup.write(drive, network) }) { Text("Erase and write") }
-        TextButton(onClick = { setup.choose(drive) }) { Text("Back") }
+    Body("Next, Windows asks whether Raspberry Pi Imager may make changes to your device. Choose Yes.")
+    Actions {
+        Action("Back", { setup.choose(drive, network) })
+        Action("Erase and write", { setup.write(drive, network) }, primary = true)
     }
+    Details("Windows disk ${drive.device}")
 }
 
 @Composable
 private fun Failed(
+    heading: String,
+    advice: String,
     details: String,
     setup: Setup,
 ) {
-    var open by remember { mutableStateOf(false) }
-    Title("The card was not written")
-    Body("Check that the card is still in the reader, then try again. If Windows asked for permission, choose Yes next time.")
-    OutlinedButton(onClick = setup::lookForCards) { Text("Try again") }
-    TextButton(onClick = { open = !open }) { Text(if (open) "Hide technical details" else "Show technical details") }
-    if (open) {
-        SelectionContainer {
-            Text(details, fontFamily = FontFamily.Monospace, style = MaterialTheme.typography.bodySmall)
-        }
-    }
+    Heading(heading)
+    Body(advice)
+    Actions { Action("Try again", setup::lookForCards, primary = true) }
+    Details(details)
 }
 
 @Composable
-private fun ColumnScope.Done(
+private fun Done(
     code: ClaimCode,
+    cable: Boolean,
     setup: Setup,
 ) {
-    Title("Your card is ready")
-    QrCode(code.qrPayload, Modifier.align(Alignment.CenterHorizontally).size(260.dp))
-    Text(code.shortName, Modifier.align(Alignment.CenterHorizontally), style = MaterialTheme.typography.headlineSmall)
-    Text(
-        code.grouped,
-        Modifier.align(Alignment.CenterHorizontally),
-        fontFamily = FontFamily.Monospace,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-    )
-    Body("In the DeKoi app, choose Add DeKoi and scan this code. If scanning does not work, type the code shown under it.")
-    Text("Insert the card and plug in your DeKoi", style = MaterialTheme.typography.titleMedium)
-    Spacer(Modifier.height(8.dp))
-    OutlinedButton(onClick = setup::lookForCards) { Text("Prepare another card") }
+    Heading("Your card is ready")
+    Row(
+        Modifier.fillMaxWidth().hudFrame().padding(16.dp),
+        horizontalArrangement = Arrangement.spacedBy(28.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        QrCode(code.qrPayload, Modifier.size(200.dp))
+        Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            Label("Name")
+            Text(code.shortName, style = Type.name)
+            Spacer(Modifier.height(12.dp))
+            Label("Code")
+            SelectionContainer { Text(code.grouped, style = Type.code) }
+        }
+    }
+    Label("Next")
+    Lines(nextSteps(code, cable).mapIndexed { index, text -> "%02d".format(Locale.ROOT, index + 1) to text }, labelWidth = 56.dp)
+    Secondary("The first start takes up to 10 minutes. The app shows each step.")
+    Actions { Action("Prepare another card", setup::lookForCards) }
+    Horizon(markSize = 24.sp, seaHeight = 56.dp, glow = false)
 }
 
-/** Dark modules on white with a four-module quiet zone, in light and dark mode alike, so phones can read it. */
+/** What the owner does after the card is written (docs/runbooks/setup-and-pair.md). */
+internal fun nextSteps(
+    code: ClaimCode,
+    cable: Boolean,
+): List<String> =
+    listOf(
+        "Open the DeKoi app on your phone and tap Add DeKoi.",
+        "Scan the code. The app then shows the same name, ${code.shortName}. If scanning does not work, type the code.",
+        "Put the card in your DeKoi.",
+        if (cable) {
+            "Connect the network cable to your router, then the power."
+        } else {
+            "Connect the power. Your DeKoi joins the Wi-Fi by itself."
+        },
+    )
+
+/** Dark modules on white with a four-module quiet zone, so phones can read it on the dark screen. */
 @Composable
 private fun QrCode(
     payload: String,
@@ -321,31 +415,14 @@ private fun QrCode(
 }
 
 @Composable
-private fun Choice(
-    text: String,
-    selected: Boolean,
-    onClick: () -> Unit,
+private fun Waiting(
+    heading: String,
+    vararg body: String,
 ) {
-    Row(Modifier.fillMaxWidth().clickable(onClick = onClick), verticalAlignment = Alignment.CenterVertically) {
-        RadioButton(selected, onClick)
-        Text(text, style = MaterialTheme.typography.bodyLarge)
-    }
+    Heading(heading)
+    ProgressLine()
+    for (text in body) Body(text)
 }
-
-@Composable
-private fun Waiting(text: String) {
-    Title(text)
-    CircularProgressIndicator()
-}
-
-@Composable
-private fun Title(text: String) = Text(text, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.SemiBold)
-
-@Composable
-private fun Body(text: String) = Text(text, style = MaterialTheme.typography.bodyLarge)
-
-@Composable
-private fun Secondary(text: String) = Text(text, color = MaterialTheme.colorScheme.onSurfaceVariant)
 
 private fun size(drive: Drive) = "%.1f GB".format(Locale.ROOT, drive.sizeBytes / 1e9)
 

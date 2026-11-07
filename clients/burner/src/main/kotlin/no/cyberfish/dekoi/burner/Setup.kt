@@ -10,6 +10,8 @@ import kotlinx.coroutines.withContext
 import no.cyberfish.dekoi.shared.ClaimCode
 
 sealed interface Screen {
+    data object Welcome : Screen
+
     data object Looking : Screen
 
     data object NotWindows : Screen
@@ -24,8 +26,14 @@ sealed interface Screen {
         val drives: List<Drive>,
     ) : Screen
 
+    data class ListFailed(
+        val details: String,
+    ) : Screen
+
+    /** [network] is what the form starts with: cable, or what was entered before going back. */
     data class ChooseNetwork(
         val drive: Drive,
+        val network: Network,
     ) : Screen
 
     data class Confirm(
@@ -35,12 +43,14 @@ sealed interface Screen {
 
     data object Writing : Screen
 
-    data class Failed(
+    data class WriteFailed(
         val details: String,
     ) : Screen
 
+    /** [cable] decides whether the next steps include the network cable; the Wi-Fi details are not kept. */
     data class Done(
         val code: ClaimCode,
+        val cable: Boolean,
     ) : Screen
 }
 
@@ -48,7 +58,7 @@ sealed interface Screen {
 class Setup(
     private val scope: CoroutineScope,
 ) {
-    private val state = MutableStateFlow<Screen>(Screen.Looking)
+    private val state = MutableStateFlow<Screen>(Screen.Welcome)
     val screen: StateFlow<Screen> = state.asStateFlow()
 
     fun lookForCards() {
@@ -67,8 +77,12 @@ class Setup(
         }
     }
 
-    fun choose(drive: Drive) {
-        state.value = Screen.ChooseNetwork(drive)
+    // Cable is the recommended connection, so it is chosen until the owner picks Wi-Fi.
+    fun choose(
+        drive: Drive,
+        network: Network = Network.Cable,
+    ) {
+        state.value = Screen.ChooseNetwork(drive, network)
     }
 
     fun confirm(
@@ -96,8 +110,8 @@ class Setup(
                 }
             state.value =
                 when (result) {
-                    is WriteResult.Written -> Screen.Done(result.code)
-                    is WriteResult.Failed -> Screen.Failed("Raspberry Pi Imager exit code ${result.exitCode}\n\n${result.log}")
+                    is WriteResult.Written -> Screen.Done(result.code, cable = network == Network.Cable)
+                    is WriteResult.Failed -> Screen.WriteFailed("Raspberry Pi Imager exit code ${result.exitCode}\n\n${result.log}")
                 }
         }
     }
@@ -109,7 +123,7 @@ class Setup(
         return try {
             Screen.ChooseCard(WindowsDrives.list())
         } catch (e: Exception) {
-            Screen.Failed("Listing the cards failed: $e")
+            Screen.ListFailed("Listing the cards failed: $e")
         }
     }
 }
