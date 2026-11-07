@@ -8,7 +8,7 @@ or more, a card reader for your computer, a network cable, and an Android phone.
    Start.
 3. Choose the card, then choose "Network cable" (recommended) or enter your
    Wi-Fi name and password. Confirm, and wait until DeKoi Setup shows a code.
-4. In the app, tap "Add DeKoi" and scan the code on your computer screen.
+4. In the app, tap "Add a DeKoi" and scan the code on your computer screen.
    The app shows the same short name as DeKoi Setup, for example "DeKoi 7F3K".
 5. Put the card in your DeKoi. Connect the network cable to your router, then
    the power.
