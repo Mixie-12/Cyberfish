@@ -29,12 +29,12 @@ sh clients/app/icon/render.sh
 
 ## Symbols and marks
 
-In `drawable/`, `ic_launcher_monochrome.xml` is the `><>` mark. Its
-`pathData` is the string resource `mark_path`, which
+In `drawable/`, `ic_launcher_monochrome.xml`, `ic_notification.xml` (the
+status bar icon) and `ic_mark.xml` (the widget's header) are the `><>`
+mark. Their `pathData` is the string resource `mark_path`, which
 `clients/app/build.gradle.kts` takes from the path `fish` in
 `Images/cyberfish-app-icon.svg` (ADR 0030); `FishMark` draws the same path.
-`ic_notification.xml` (the status bar icon) is the earlier koi mark. Every
-other `ic_*.xml` is a Material Symbol (docs/design.md, "Libraries"):
+Every other `ic_*.xml` is a Material Symbol (docs/design.md, "Libraries"):
 
 - Source: https://github.com/google/material-design-icons, commit
   `10ecc14790612ca8fd164e3f4ffe9c16fc50d5b7` (2026-10-23)

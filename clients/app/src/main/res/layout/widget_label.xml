@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The widget's label (widget/DekoiWidget.kt sets its colour). -->
+<TextView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/widget_label"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:ellipsize="end"
+    android:fontFamily="monospace"
+    android:letterSpacing="0.14"
+    android:maxLines="1"
+    android:text="@string/widget_label"
+    android:textAllCaps="true"
+    android:textSize="10sp" />

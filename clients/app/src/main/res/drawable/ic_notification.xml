@@ -1,19 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- The earlier koi mark as a white silhouette, the eye cut out, for the status bar. -->
+<!-- The status bar icon: the mark (@string/mark_path, res/README.md) in
+     white, 22 dp wide. The viewport is the middle 70 % of the app icon's
+     1024 units, which centres the mark. -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="24dp"
     android:height="24dp"
-    android:viewportWidth="60"
-    android:viewportHeight="60">
+    android:viewportWidth="716.8"
+    android:viewportHeight="716.8">
     <group
-        android:translateX="-27"
-        android:translateY="-24">
+        android:translateX="-153.6"
+        android:translateY="-153.6">
         <path
             android:fillColor="#FFFFFFFF"
-            android:fillType="evenOdd"
-            android:pathData="M30,54 C30,41 45,35 58,40 C64,42 69,47 73,54 C69,61 64,66 58,68 C45,73 30,67 30,54 Z M39,51 a3,3 0 1,0 6,0 a3,3 0 1,0 -6,0 Z" />
-        <path
-            android:fillColor="#FFFFFFFF"
-            android:pathData="M71,54 L84,43 C82,50 82,58 84,65 Z" />
+            android:pathData="@string/mark_path" />
     </group>
 </vector>
