@@ -62,6 +62,8 @@ compose.desktop {
         mainClass = "no.cyberfish.dekoi.burner.MainKt"
         nativeDistributions {
             targetFormats(TargetFormat.Msi)
+            // What :burner:suggestRuntimeModules reports beyond the defaults.
+            modules("java.instrument", "jdk.unsupported")
             packageName = "DeKoi Setup"
             // MSI needs MAJOR.MINOR.BUILD; the release job passes the tag.
             packageVersion = providers.gradleProperty("dekoi.version").getOrElse("0.0.1")

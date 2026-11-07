@@ -21,3 +21,12 @@ cloud-init files with cloud-init itself (from the repository root):
 ```
 docker run --rm -v "$PWD:/repo:ro" debian:trixie@sha256:9c6e381421d0f48d1b8133e573f33c185ee16cbf505eda9c4a8a4791b25ea8a6 sh /repo/clients/burner/check-cloud-init.sh
 ```
+
+Run DeKoi Setup (Windows), or build its installer into
+`burner/build/compose/binaries/main/msi/` (the release job does this on
+`v*` tags):
+
+```
+./gradlew :burner:run
+./gradlew :burner:packageMsi -Pdekoi.version=0.1.0
+```
