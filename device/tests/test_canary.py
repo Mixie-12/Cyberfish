@@ -56,6 +56,8 @@ def test_persona_fills_every_placeholder(tmp_path: Path) -> None:
     assert f"<title>{persona['company']} - " in page
     for value in ("name", "workgroup", "sap_system"):
         assert persona[value] in page, value
+    canary = json.loads((out / "opencanary.conf").read_text(encoding="utf-8"))
+    assert f"[{persona['sap_system']}/100]" in canary["tcpbanner_4.datareceivedbanner"]
 
 
 def test_login_page_posts_what_opencanary_reads(tmp_path: Path) -> None:
@@ -69,6 +71,17 @@ def test_login_page_posts_what_opencanary_reads(tmp_path: Path) -> None:
     assert "http://" not in page
     assert "https://" not in page
     assert "<script" not in page
+
+
+def test_web_banners_say_how_long_their_page_is(tmp_path: Path) -> None:
+    canary = json.loads((render(tmp_path) / "opencanary.conf").read_text(encoding="utf-8"))
+    banners = [v for k, v in canary.items() if k.endswith(".datareceivedbanner")]
+    responses = [banner for banner in banners if banner.startswith("HTTP/1.1 ")]
+    assert responses
+    for response in responses:
+        head, body = response.split("\r\n\r\n", 1)
+        length = re.search(r"^content-length: (\d+)\r?$", head, re.MULTILINE | re.IGNORECASE)
+        assert length is not None and int(length[1]) == len(body.encode()), head
 
 
 def test_bait_files_are_small_and_open_in_the_format_their_name_says(tmp_path: Path) -> None:

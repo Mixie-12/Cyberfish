@@ -31,7 +31,21 @@ ATTACKER_IMAGE = (
 CROCKFORD = "0123456789ABCDEFGHJKMNPQRSTVWXYZ"
 OPEN_SHARE = "Felles"
 BAIT_FILE = "IT/VPN_access.txt"
-DECOYS = ["ftp", "http", "mysql", "rdp", "redis", "smb", "ssh", "telnet", "vnc"]
+DECOYS = [
+    "ftp",
+    "http",
+    "modbus",
+    "mssql",
+    "mysql",
+    "rdp",
+    "redis",
+    "s7",
+    "sap",
+    "smb",
+    "ssh",
+    "telnet",
+    "vnc",
+]
 PERSONA = json.loads(
     (Path(__file__).parents[1] / "canary/persona/persona.json").read_text(encoding="utf-8")
 )
@@ -108,7 +122,8 @@ def wait_for(description: str, check) -> object:
 
 def attack(password: str) -> None:
     script = (
-        "apk add -q --no-progress openssh-client sshpass curl arp-scan samba-client >/dev/null"
+        "apk add -q --no-progress openssh-client sshpass curl arp-scan samba-client freetds"
+        " >/dev/null"
         f" && (sshpass -p '{password}' ssh -o StrictHostKeyChecking=no"
         " -o UserKnownHostsFile=/dev/null -o PreferredAuthentications=password"
         " -o PubkeyAuthentication=no -o ConnectTimeout=10"
@@ -126,6 +141,11 @@ def attack(password: str) -> None:
         f" -c 'get {BAIT_FILE} /dev/null'"
         " && curl -sf --max-time 10 http://host.containers.internal/index.html"
         f" | grep -qF '{PERSONA['name']}'"
+        # The SAP dispatcher and the Modbus gateway answer nothing; connecting is enough.
+        " && (nc -w 2 host.containers.internal 3200 </dev/null || true)"
+        " && (nc -w 2 host.containers.internal 502 </dev/null || true)"
+        f" && (timeout 20 tsql -H host.containers.internal -p 1433 -U sa -P '{password}'"
+        " </dev/null >/dev/null 2>&1 || true)"
         " && (timeout 20 arp-scan --localnet --interface=eth0 >/dev/null || true)"
     )
     # Podman, unlike Docker, does not grant NET_RAW by default; arp-scan needs it.
@@ -215,13 +235,16 @@ def check_attack(backend: Backend, token: str) -> None:
     )
     wait_for("file share opened", lambda: seen("connection", "smb"))
     wait_for("bait file opened", lambda: seen("file_access", "smb"))
+    wait_for("SAP dispatcher connection", lambda: seen("connection", "sap"))
+    wait_for("Modbus connection", lambda: seen("connection", "modbus"))
+    wait_for("MSSQL login attempt", lambda: seen("login_attempt", "mssql"))
     wait_for("port scan", lambda: seen("port_scan"))
     wait_for("network sweep seen in ARP traffic", lambda: seen("host_scan"))
 
     rows = events()
     logins = [e for e in rows if e["kind"] == "login_attempt"]
     names = {(e["detail"].get("username"), e["detail"].get("bait", False)) for e in logins}
-    assert names == {("admin", False), (BAIT_USER, True)}, logins
+    assert names == {("admin", False), (BAIT_USER, True), ("sa", False)}, logins
     assert password not in json.dumps(rows), "a typed password reached the backend"
     opened = [e for e in rows if e["kind"] == "file_access"]
     expected = {"share": OPEN_SHARE, "file": BAIT_FILE}

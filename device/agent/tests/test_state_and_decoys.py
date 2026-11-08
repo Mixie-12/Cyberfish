@@ -38,11 +38,19 @@ def test_decoys_are_the_canary_config_and_the_file_share() -> None:
         22: "ssh",
         23: "telnet",
         80: "http",
+        102: "s7",
         445: "smb",
+        502: "modbus",
+        1433: "mssql",
+        3200: "sap",
+        3299: "sap",
         3306: "mysql",
         3389: "rdp",
+        3600: "sap",
         5900: "vnc",
         6379: "redis",
+        8000: "sap",
+        50000: "sap",
     }
 
 
