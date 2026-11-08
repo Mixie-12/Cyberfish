@@ -205,7 +205,7 @@ that delete it are in `docs/architecture.md`, "Scheduled jobs".
 | Source of the last push per DeKoi | devices on the owner's network | `private.notified_sources` | 1 day |
 | Client address (IPv6 by its /64) or user ID with a request count | anyone writing to the API | `private.rate_counters` | at most 70 minutes |
 | API, Auth and function logs with client addresses | anyone calling the API | Supabase's log store | 1 day on the Free plan |
-| Encrypted backups of all of the above | everyone above | GitHub Actions artifacts | 30 days (`docs/runbooks/restore-backup.md`) |
+| Encrypted backups of all of the above | everyone above | GitHub Actions artifacts | 90 days (`.github/workflows/backup.yml`, ADR 0022) |
 
 Never stored: passwords typed into decoys (they never leave the device),
 traffic contents, precise location (the country comes from the platform's
@@ -217,7 +217,7 @@ other table refers to `auth.users` or to such a table with
 `on delete cascade`. `04_account` checks both: the deletion itself, and that
 every table in `public` and `private` is reached that way, so a table added
 later cannot be forgotten. What remains afterwards: rate counts for up to
-70 minutes, platform logs for a day, backups for 30 days.
+70 minutes, platform logs for a day, backups for 90 days.
 
 Processors: Supabase (database, Auth, functions; EU, Stockholm), Google
 (sign-in; FCM receives the push token, a fixed notification text and the
