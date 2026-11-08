@@ -37,7 +37,7 @@ it stands).
 
 The CyberFish landing page is a three.js scene with DeKoi as its mascot. It
 was built during the hackathon as the visual for the pitch and as a starting
-point for an advertising campaign. It is a separate asset, not part of the
+point for an advertising campaign. It is am advertising asset, not strictly part of the core
 product, so it lives in its own repository:
 [nevermindmae/cyberfish-landing-page](https://github.com/nevermindmae/cyberfish-landing-page).
-It follows the same rules as this repository.
+It followed the same hackathon rules as the main product repository. 
