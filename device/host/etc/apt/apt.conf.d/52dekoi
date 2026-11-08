@@ -2,13 +2,26 @@
 // and reboot at night when an update needs it.
 APT::Periodic::Update-Package-Lists "1";
 APT::Periodic::Unattended-Upgrade "1";
-APT::Periodic::AutocleanInterval "7";
+// Every downloaded package, weekly. autoclean keeps whatever the archive
+// still lists, and the Raspberry Pi archive lists every kernel since the
+// release: about 65 MB per kernel update would pile up on the card.
+APT::Periodic::CleanInterval "7";
 
 Unattended-Upgrade::Origins-Pattern {
 	"origin=Debian,codename=${distro_codename},label=Debian";
 	"origin=Debian,codename=${distro_codename}-updates,label=Debian";
 	"origin=Debian,codename=${distro_codename}-security,label=Debian-Security";
 	"origin=Raspberry Pi Foundation,codename=${distro_codename}";
+};
+
+// First boot replaces configuration files that packages own
+// (/etc/nftables.conf, /etc/ulogd.conf, /etc/containers/policy.json).
+// Without these options unattended-upgrades skips every update that ships
+// a new version of such a file, for good; with them dpkg keeps DeKoi's file
+// and installs the update.
+DPkg::Options {
+	"--force-confdef";
+	"--force-confold";
 };
 
 Unattended-Upgrade::Remove-Unused-Dependencies "true";

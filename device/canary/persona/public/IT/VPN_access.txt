@@ -1,0 +1,16 @@
+VPN - fjerntilgang til $workgroup
+Sist endret 19.08.2024
+
+Brannmur: FortiGate 60D (FortiOS 5.6), SSL-VPN
+Adresse: 198.51.100.37, port 10443
+Klient: FortiClient 5.6, eller nettleser
+
+Brukere
+    $vpn_user      Revisjon-2026!   Ekstern revisor, aktiv til 31.12.2026
+    $admin_user         Fryselager#28    IT og Nordøy Datadrift (samme som domene)
+    $scada_user        Ammoniakk!1      Kjølevakt hjemmefra, bare til 10.20.1.0/24
+
+Etter innlogging:
+    Fjernskrivebord til $name (SAP GUI, SQL, filer)
+    \\$name\Felles og \\$name\Finance
+    Kjøleanlegget via $name (se Operations\PLC_HMI_access.txt)

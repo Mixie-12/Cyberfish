@@ -5,12 +5,12 @@
 # DeKoi by CyberFish
 
 A plug-and-play network honeypot and intrusion detector. A Raspberry Pi poses
-as a storage box on the local network; nothing legitimate talks to it, so any
-contact is a signal. It also runs an IDS and watches the network for sweeps,
-ARP spoofing, rogue DHCP servers and routers, and name poisoning. The owner
-gets a plain-language alert on their phone.
+as a small company's finance server on the local network; nothing legitimate
+talks to it, so any contact is a signal. It also runs an IDS and watches the
+network for sweeps, ARP spoofing, rogue DHCP servers and routers, and name
+poisoning. The owner gets a plain-language alert on their phone.
 
-<img src="Images/dekoi-what-it-does.svg" alt="Bob uses the home network and never touches DeKoi. Eve scans what looks like a storage box and tries to sign in. DeKoi reports it over HTTPS, and Alice gets an alert on her phone within seconds.">
+<img src="Images/dekoi-what-it-does.svg" alt="Bob uses the home network and never touches DeKoi. Eve scans what looks like a company's finance server and tries to sign in. DeKoi reports it over HTTPS, and Alice gets an alert on her phone within seconds.">
 
 ## How it works
 

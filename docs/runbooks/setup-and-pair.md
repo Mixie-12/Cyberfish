@@ -24,30 +24,35 @@ configure on the device.
 
 ## Demo your DeKoi
 
-On your network, your DeKoi looks like a family storage server called
-family-nas, with shared folders full of tempting files. All of it is bait:
-the passwords open nothing, and the card and personal numbers are test
-numbers. You can play the intruder yourself:
+On your network, your DeKoi looks like the central server of a small
+company, Kaldskjær Sjømat AS, called sap-pay-prod: payments, SAP, payroll,
+backups and the cold store's control system, with shared folders full of
+tempting files. The company is made up and all of it is bait: the
+passwords open nothing, and no card, account or personal number in the
+files can be real. You can play the intruder yourself:
 
 1. Find it.
-   - Windows: open File Explorer, then Network, then FAMILY-NAS. Or type
-     `\\family-nas` in the address bar. If Explorer asks to turn on network
-     discovery, allow it for private networks.
-   - Mac: choose family-nas under Network in Finder's sidebar. Or choose
-     Go, then Connect to Server, and enter `smb://family-nas.local`; connect
-     as a guest.
-2. Open the Public folder and open a file, for example `passord.txt` or
-   `kredittkort-kopi.pdf`.
+   - Windows: open File Explorer, then Network, then SAP-PAY-PROD. Or type
+     `\\sap-pay-prod` in the address bar. If Explorer asks to turn on
+     network discovery, allow it for private networks.
+   - Mac: choose sap-pay-prod under Network in Finder's sidebar. Or choose
+     Go, then Connect to Server, and enter `smb://sap-pay-prod.local`;
+     connect as a guest.
+2. Open the Felles folder and open a file, for example
+   `IT\VPN_access.txt` or `Finance\Card settlement\Chargebacks_2026-09-30_kortdata.xlsx`.
 3. Try to open a locked folder, such as Finance. When it asks you to sign
    in, use a user name and password from the files, for example
-   `familie.admin`. The alert then says the name came from the bait.
-4. Open http://family-nas.local in a browser and sign in there too.
+   `ks-drift`. The alert then says the name came from the bait.
+4. Open http://sap-pay-prod.local in a browser and sign in to the payment
+   portal too.
 5. Watch the alerts arrive on your phone, within about a minute.
 
-Seeing family-nas in the list does not alert you; opening it does, as it
+Seeing sap-pay-prod in the list does not alert you; opening it does, as it
 would for an intruder. Never type a real password. Afterwards you can mark
 your computer as known in the alert.
 
-Cards prepared before this version keep the name backup-nas and do not show
-up in Explorer or Finder. Prepare the card again with DeKoi Setup to get the
-new decoy.
+A DeKoi whose card was prepared before this version shows the same decoy
+after its next update, but your router may still list it as family-nas,
+and the SAP, Modbus, S7 and SQL Server decoys stay closed. Prepare the card
+again to change both. Cards older still keep the name backup-nas and do
+not show up in Explorer or Finder.

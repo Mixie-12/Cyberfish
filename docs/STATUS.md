@@ -109,7 +109,8 @@ records why.
 - Request and storage limits in Postgres, Auth tokens 15 minutes, account
   deletion reaching every table (ADR 0016).
 - The visible decoy `family-nas`: file share with bait files, storage web
-  page, mDNS, WS-Discovery and NetBIOS announcements (ADR 0018).
+  page, mDNS, WS-Discovery and NetBIOS announcements (ADR 0018); replaced
+  by the finance server of ADR 0035 after v0.2.0.
 - The Wi-Fi watch: `evil_twin` and `new_access_point` alerts (ADR 0019).
 - CI (ADR 0022): signing only in the `release` environment, Cloud KMS key
   as code, edge images unsigned, new cards trust only the three release
@@ -206,6 +207,49 @@ DeKoi. The state, freshness, decoy and Wi-Fi mappings are unit tested.
 Not verified on a phone: how the panel, the views and their motion look,
 and the Wi-Fi alarm with a real evil twin.
 
+The decoy as a small company's finance server (ADR 0035, asked for by the
+owner, not released): `sap-pay-prod` of the made-up Kaldskjær Sjømat AS,
+Windows Server 2008 R2 era banners, a payment portal page, a lived-in
+Felles share (payments, card settlement, SAP exports, payroll, SAP users,
+server, VPN and PLC passwords) and seven bait user names; new decoys on
+the SAP ports (3200, 3299, 3600, 8000, 50000), Modbus 502, S7 102 and
+MSSQL 1433, 13 decoys in all. Bait numbers that could be real fail a test.
+Devices in the field show the new persona after the update but keep the
+host name `family-nas` and their old firewall until the card is written
+again. Verified: device tests (260), ruff, hadolint, nft; agent parsing of
+real OpenCanary and Samba lines, the canary image built and attacked in
+Docker, its decoys read-only and without capabilities as in the units, the
+host name `family-nas` (share list, guest read, bait sign-in with a
+domain, NetBIOS, mDNS and WS-Discovery names, every new port, MSSQL
+sign-in, no typed password in the events); gitleaks finds nothing in the
+bait; ktlint, app (220), shared (25) and DeKoi Setup (18) unit tests,
+Android lint and builds. Not verified: CI's end-to-end run with the new
+checks, the decoy from a Windows or Mac client on a real LAN, the new
+ports through a new card's firewall, how the 13 services fit around the
+live decoy view.
+
+Maintenance without anyone watching (ADR 0036, asked for by the owner, not
+released): on new cards unattended-upgrades keeps DeKoi's conffiles and
+still installs the update (before, nftables, ulogd2 and containers-common
+were held back for good once an update changed their file), the package
+cache is emptied weekly (the Raspberry Pi archive keeps every kernel), the
+agent restarts when its loop stops pinging for 15 minutes, and logrotate
+checks the scan log hourly. The nightly retention keeps 30 days of pg_cron
+runs. The daily monitor also checks the Vault entries and answers of
+notify (6 hours), the Google sign-in client (Google deletes clients unused
+for six months), and the last runs of backup, expiry, rotate-keys and
+security; expiry fails while a credential has no date. ADR 0037 proposes
+a signed Debian package for host configuration. Verified: in Debian trixie,
+a changed conffile blocks the update without the new apt options and not
+with them; a Quadlet unit with `Notify=true` and `WatchdogSec` stays up
+while pinged and restarts when the pings stop (Podman 5.4.2, systemd 257);
+logrotate.timer runs hourly with the drop-in; pgTAP 22 files, 449 tests;
+device tests 262 in the agent's base image, ruff; `monitor.sql` read-only
+as `supabase_read_only_user` on the local stack, with and without a failed
+answer and the Vault entries; actionlint on the changed workflows. Not
+verified: the workflows on GitHub, `monitor.sql` against production, any
+of it on a Pi.
+
 Needs hardware, not verified: the decoy in Windows Explorer and Finder on
 the owner's LAN; the Wi-Fi watch against a real evil twin; the Pi running
 the new images after its nightly update (after v0.2.0); the ARP sweep
@@ -242,6 +286,10 @@ but does nothing (tested 2026-11-07, Genesys 05e3:0749).
    2026-11-07). Then run `infra/github/apply.sh` and move the secrets into
    the environments: the Supabase token and Google client secret into
    `production`, the cosign and Android keys into `release` (ADR 0022).
+   Before that, decide how scheduled workflows stay on: in a public
+   repository GitHub disables them after 60 days without repository
+   activity, the monitor, backups and rotation included (GitHub docs,
+   checked 2026-11-08).
 7. Set `EXPIRES_SUPABASE_ACCESS_TOKEN`, `EXPIRES_GOOGLE_WEB_CLIENT_SECRET`
    and `EXPIRES_COSIGN_PRIVATE_KEY` (2026-12-31) as in `rotate-keys.md`.
 8. `tofu apply` and `./publish.sh` in `infra/google`
@@ -252,11 +300,14 @@ but does nothing (tested 2026-11-07, Genesys 05e3:0749).
    retires on 2026-12-31; then `rotate-keys.md`, "Switch new cards to the
    Cloud KMS key".
 10. Decide before real customers: Supabase Pro (daily backups, PITR as an
-    add-on, no pausing, session time-outs, higher quotas) and a custom
-    domain with a firewall in front of the API (ADR 0016).
+    add-on, no pausing, session time-outs, higher quotas), a custom
+    domain with a firewall in front of the API (ADR 0016), and how host
+    configuration reaches cards in the field (ADR 0037, proposed: its key
+    can only reach a device on its card).
 11. After v0.2.0 and the KMS switch, rewrite the Pi's card with the phone
     or DeKoi Setup for the new host configuration: the decoy's firewall
-    ports, the Wi-Fi scan, trust in the three release repositories only.
+    ports (the SAP, Modbus, S7 and MSSQL decoys of ADR 0035 too) and its
+    host name, the Wi-Fi scan, trust in the three release repositories only.
     Then retire the first key (`rotate-keys.md`, "Retire the first key").
 12. Optional: repeat the ARP sweep from a PC connected by cable.
 13. After the first `installer` run on `main`, make the `dekoi-installer`
@@ -267,6 +318,15 @@ but does nothing (tested 2026-11-07, Genesys 05e3:0749).
 - Host configuration is frozen when a card is written; images update. The
   Pi's current card has the old firewall and no Wi-Fi scan, and trusts
   every repository under `ghcr.io/mixie-12` signed with the first key.
+  Cards from before ADR 0035 keep the host name `family-nas` in the
+  router's list, local DNS and the DNS name in Samba's sign-in challenge.
+  Cards from before ADR 0036 hold back nftables, ulogd2 and
+  containers-common once an update changes their configuration file, keep
+  every downloaded kernel in the package cache, and run the agent without
+  a watchdog. ADR 0037 proposes a way to change host configuration.
+- The finance server is not Windows to a careful fingerprint (Linux TCP/IP
+  stack, SMB 3.1.1, OpenCanary's Telnet prompt), and the bait's dates age
+  with the image (ADR 0035).
 - DeKoi sees traffic to itself and broadcasts, not traffic between other
   devices (ADR 0003); no per-device bandwidth. The HTTPS decoy is off until
   each device has its own certificate.

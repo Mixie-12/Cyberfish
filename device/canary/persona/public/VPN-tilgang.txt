@@ -1,9 +1,0 @@
-VPN-tilgang hjem (for jobb og hytta)
-
-Server: $name.local, eller hjemmeadressen som står i ruteren
-Port: 1194
-Brukernavn: $vpn_user
-Passord: Hytta-2024!
-
-Med VPN kommer du også inn på NAS-en hjemmefra.
-Admin på NAS-en: se passord.txt

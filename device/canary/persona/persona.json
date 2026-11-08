@@ -1,11 +1,17 @@
 {
-  "name": "family-nas",
-  "model": "4-bay network storage",
-  "firmware": "5.2.3-2417",
+  "name": "sap-pay-prod",
+  "company": "Kaldskjær Sjømat AS",
+  "workgroup": "KALDSKJAER",
+  "domain": "kaldskjaer.local",
+  "description": "SAP ERP and card payments (PROD)",
+  "sap_system": "KSP",
   "bait_users": {
-    "admin_user": "familie.admin",
-    "backup_user": "nas-backup",
-    "bank_user": "bank.bruker",
-    "vpn_user": "hjemme-vpn"
+    "admin_user": "ks-drift",
+    "sap_user": "KS_FIBATCH",
+    "sql_user": "ks_rapport",
+    "vpn_user": "vpn.revisor",
+    "scada_user": "kjol.vakt",
+    "backup_user": "svc_ksbackup",
+    "gateway_user": "ks.betaling"
   }
 }

@@ -42,12 +42,6 @@ def test_firewall_opens_exactly_the_decoys_and_their_announcements() -> None:
     assert nft_set("decoy_udp_ports") == ANNOUNCEMENT_UDP_PORTS
 
 
-def test_web_decoy_also_answers_on_port_5000() -> None:
-    config = json.loads((DEVICE / "canary" / "opencanary.conf").read_text())
-    redirects = re.findall(r"tcp dport (\d+) redirect to :(\d+)", NFTABLES.read_text())
-    assert redirects == [("5000", str(config["http.port"]))]
-
-
 def test_file_share_listens_where_the_agent_expects_it() -> None:
     smb_conf = (PERSONA / "smb.conf").read_text()
     assert re.search(r"^\s+smb ports = (\d+)$", smb_conf, re.MULTILINE)[1] == str(FILE_SHARE_PORT)
@@ -101,6 +95,24 @@ def test_memory_limits_do_not_stop_a_container_on_a_pi() -> None:
     user_data = USER_DATA.read_text()
     assert "cgroup_enable=memory" in user_data
     assert re.search(r"^power_state:\n  mode: reboot$", user_data, re.MULTILINE)
+
+
+def test_a_hung_agent_restarts_before_the_backend_counts_it_offline() -> None:
+    unit = (HOST / "etc" / "containers" / "systemd" / "dekoi-agent.container").read_text()
+    watchdog = re.search(r"^WatchdogSec=(\d+)min$", unit, re.MULTILINE)
+    assert watchdog is not None
+    # private.mark_offline_devices: 30 minutes without a heartbeat.
+    assert 10 <= int(watchdog[1]) < 30
+    assert re.search(r"^Notify=true$", unit, re.MULTILINE)
+    assert 'notify("WATCHDOG=1")' in (DEVICE / "agent" / "dekoi_agent" / "__main__.py").read_text()
+
+
+def test_updates_install_where_first_boot_replaced_a_package_file() -> None:
+    # Without both, unattended-upgrades holds back every update that brings
+    # a new version of /etc/nftables.conf, /etc/ulogd.conf or policy.json.
+    apt = (HOST / "etc" / "apt" / "apt.conf.d" / "52dekoi").read_text()
+    options = r'^DPkg::Options \{\n\t"--force-confdef";\n\t"--force-confold";\n\};$'
+    assert re.search(options, apt, re.MULTILINE)
 
 
 def test_devices_trust_only_the_release_repositories() -> None:

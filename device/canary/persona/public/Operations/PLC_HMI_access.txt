@@ -1,0 +1,16 @@
+Kjøleanlegg og fryselager - tilgang til PLS og HMI
+Bare for driftssjef og kjølevakt. Ikke endre settpunkter uten avtale med Kenneth.
+
+Fryselager 1 og 2 (-28 °C), ammoniakkanlegg med tre kompressorer
+    PLS: Siemens S7-300, CPU 315-2 PN/DP, 10.20.1.10, rack 0, slot 2
+    Beskyttelsesnivå 3, passord: Kulde315
+    HMI: WinCC flexible Runtime på panel-PC 10.20.1.20
+        VNC: port 5900, passord kjol2018
+        HMI-bruker: $scada_user / Ammoniakk!1 (kvittere alarmer, endre settpunkt)
+    Modbus/TCP-gateway for energimålere og frekvensomformere: 10.20.1.30:502, slave 1-6
+
+Fra kontornettet går alt via $name: port 102 (S7) og 502 (Modbus) er videresendt dit.
+Prosjektfiler: STEP 7 V5.5 på $name, D:\Prosjekter\Fryselager_2014.zip
+
+Alarmer går på SMS til kjølevakta.
+Ved ammoniakklekkasje: ring 110, så driftssjefen.

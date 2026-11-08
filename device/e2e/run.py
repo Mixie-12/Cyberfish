@@ -29,9 +29,26 @@ ATTACKER_IMAGE = (
     "3f4d6b32e26703c6082839234f43769d5046b3ac7c910033911d1e71d8cd630a"
 )
 CROCKFORD = "0123456789ABCDEFGHJKMNPQRSTVWXYZ"
-BAIT_FILE = "passord.txt"
-DECOYS = ["ftp", "http", "mysql", "rdp", "redis", "smb", "ssh", "telnet", "vnc"]
-PERSONA = json.loads((Path(__file__).parents[1] / "canary/persona/persona.json").read_text())
+OPEN_SHARE = "Felles"
+BAIT_FILE = "IT/VPN_access.txt"
+DECOYS = [
+    "ftp",
+    "http",
+    "modbus",
+    "mssql",
+    "mysql",
+    "rdp",
+    "redis",
+    "s7",
+    "sap",
+    "smb",
+    "ssh",
+    "telnet",
+    "vnc",
+]
+PERSONA = json.loads(
+    (Path(__file__).parents[1] / "canary/persona/persona.json").read_text(encoding="utf-8")
+)
 BAIT_USER = PERSONA["bait_users"]["admin_user"]
 SCANNER_IP = "192.0.2.10"
 SCAN_LOG = Path("/var/log/ulog/dekoi-scan.json")
@@ -105,7 +122,8 @@ def wait_for(description: str, check) -> object:
 
 def attack(password: str) -> None:
     script = (
-        "apk add -q --no-progress openssh-client sshpass curl arp-scan samba-client >/dev/null"
+        "apk add -q --no-progress openssh-client sshpass curl arp-scan samba-client freetds"
+        " >/dev/null"
         f" && (sshpass -p '{password}' ssh -o StrictHostKeyChecking=no"
         " -o UserKnownHostsFile=/dev/null -o PreferredAuthentications=password"
         " -o PubkeyAuthentication=no -o ConnectTimeout=10"
@@ -119,9 +137,15 @@ def attack(password: str) -> None:
         # A user name from the bait files: flagged, and never counted as a repeat.
         f" && (smbclient //host.containers.internal/Finance -U '{BAIT_USER}%{password}' -c ls"
         " >/dev/null || true)"
-        f" && smbclient //host.containers.internal/Public -N -c 'get {BAIT_FILE} /dev/null'"
+        f" && smbclient //host.containers.internal/{OPEN_SHARE} -N"
+        f" -c 'get {BAIT_FILE} /dev/null'"
         " && curl -sf --max-time 10 http://host.containers.internal/index.html"
-        f" | grep -qF '<title>{PERSONA['name']}</title>'"
+        f" | grep -qF '{PERSONA['name']}'"
+        # The SAP dispatcher and the Modbus gateway answer nothing; connecting is enough.
+        " && (nc -w 2 host.containers.internal 3200 </dev/null || true)"
+        " && (nc -w 2 host.containers.internal 502 </dev/null || true)"
+        f" && (timeout 20 tsql -H host.containers.internal -p 1433 -U sa -P '{password}'"
+        " </dev/null >/dev/null 2>&1 || true)"
         " && (timeout 20 arp-scan --localnet --interface=eth0 >/dev/null || true)"
     )
     # Podman, unlike Docker, does not grant NET_RAW by default; arp-scan needs it.
@@ -155,6 +179,81 @@ def feed_port_scan() -> None:
     ]
     with SCAN_LOG.open("a") as log:
         log.write("\n".join(lines) + "\n")
+
+
+def start_device(backend: Backend, token: str) -> None:
+    """Claims a device as the app does and starts the units with its claim code."""
+    claim_code = "".join(secrets.choice(CROCKFORD) for _ in range(26))
+    device_id = backend.as_user(
+        token, "POST", "/rest/v1/rpc/claim_device_v1", {"claim_code": claim_code, "name": "E2E"}
+    )
+    print(f"ok: claimed device {device_id}")
+
+    Path("/etc/dekoi").mkdir(exist_ok=True)
+    Path("/etc/dekoi/claim-code").write_text(claim_code + "\n")
+    SCAN_LOG.parent.mkdir(parents=True, exist_ok=True)
+    SCAN_LOG.touch(mode=0o644)
+    run("systemctl", "daemon-reload")
+    units = ["dekoi-canary", "dekoi-announce", "dekoi-agent", "dekoi-ids"]
+    run("systemctl", "start", *(unit + ".service" for unit in units))
+    print("ok: units started (canary healthy, agent ready)")
+
+    wait_for("IDS loaded its rules and is capturing, locked down", ids_running)
+    wait_for("NetBIOS, mDNS and WS-Discovery announcing, locked down", announcing)
+
+    def ready() -> bool:
+        (row,) = backend.as_user(
+            token, "GET", "/rest/v1/devices?select=registered_at,online,services"
+        )
+        registered = row["registered_at"] is not None
+        return registered and row["online"] and sorted(row["services"]) == DECOYS
+
+    wait_for("device registered, online, all decoys listening", ready)
+
+
+def check_attack(backend: Backend, token: str) -> None:
+    """Attacks the decoys and checks the events the app would show."""
+    password = "e2e-" + secrets.token_hex(8)
+    attack(password)
+    feed_port_scan()
+
+    def events() -> list[dict]:
+        return backend.as_user(token, "GET", "/rest/v1/events?select=*")
+
+    def seen(kind: str, service: str | None = None) -> bool:
+        return any(
+            e["kind"] == kind and (service is None or e["service"] == service) for e in events()
+        )
+
+    wait_for("SSH login attempt", lambda: seen("login_attempt", "ssh"))
+    wait_for("HTTP login attempt", lambda: seen("login_attempt", "http"))
+    wait_for("web page fetched", lambda: seen("connection", "http"))
+    wait_for("file share sign-in attempt", lambda: seen("login_attempt", "smb"))
+    wait_for(
+        "sign-in with a user name from the bait files",
+        lambda: any(e["detail"].get("bait") for e in events()),
+    )
+    wait_for("file share opened", lambda: seen("connection", "smb"))
+    wait_for("bait file opened", lambda: seen("file_access", "smb"))
+    wait_for("SAP dispatcher connection", lambda: seen("connection", "sap"))
+    wait_for("Modbus connection", lambda: seen("connection", "modbus"))
+    wait_for("MSSQL login attempt", lambda: seen("login_attempt", "mssql"))
+    wait_for("port scan", lambda: seen("port_scan"))
+    wait_for("network sweep seen in ARP traffic", lambda: seen("host_scan"))
+
+    rows = events()
+    logins = [e for e in rows if e["kind"] == "login_attempt"]
+    names = {(e["detail"].get("username"), e["detail"].get("bait", False)) for e in logins}
+    assert names == {("admin", False), (BAIT_USER, True), ("sa", False)}, logins
+    assert password not in json.dumps(rows), "a typed password reached the backend"
+    opened = [e for e in rows if e["kind"] == "file_access"]
+    expected = {"share": OPEN_SHARE, "file": BAIT_FILE}
+    assert all(e["detail"] == expected and e["severity"] == "critical" for e in opened), opened
+    (scan,) = [e for e in rows if e["kind"] == "port_scan"]
+    assert scan["src_ip"] == SCANNER_IP and scan["detail"]["ports"] == [25, 110, 139, 443, 445], (
+        scan
+    )
+    print("ok: events are correct and contain no passwords")
 
 
 def monitoring_complete(row: dict) -> bool:
@@ -214,78 +313,8 @@ def check_reports(backend: Backend, token: str) -> None:
 def main() -> None:
     backend = Backend(json.loads(Path(sys.argv[1]).read_text()))
     token = backend.user_token(backend.create_user())
-
-    claim_code = "".join(secrets.choice(CROCKFORD) for _ in range(26))
-    device_id = backend.as_user(
-        token, "POST", "/rest/v1/rpc/claim_device_v1", {"claim_code": claim_code, "name": "E2E"}
-    )
-    print(f"ok: claimed device {device_id}")
-
-    Path("/etc/dekoi").mkdir(exist_ok=True)
-    Path("/etc/dekoi/claim-code").write_text(claim_code + "\n")
-    SCAN_LOG.parent.mkdir(parents=True, exist_ok=True)
-    SCAN_LOG.touch(mode=0o644)
-    run("systemctl", "daemon-reload")
-    units = ["dekoi-canary", "dekoi-announce", "dekoi-agent", "dekoi-ids"]
-    run("systemctl", "start", *(unit + ".service" for unit in units))
-    print("ok: units started (canary healthy, agent ready)")
-
-    wait_for("IDS loaded its rules and is capturing, locked down", ids_running)
-
-    wait_for("NetBIOS, mDNS and WS-Discovery announcing, locked down", announcing)
-
-    def device() -> dict:
-        (row,) = backend.as_user(
-            token, "GET", "/rest/v1/devices?select=registered_at,online,services"
-        )
-        return row
-
-    wait_for(
-        "device registered, online, all decoys listening",
-        lambda: (
-            (d := device())["registered_at"] and d["online"] and sorted(d["services"]) == DECOYS
-        ),
-    )
-
-    password = "e2e-" + secrets.token_hex(8)
-    attack(password)
-    feed_port_scan()
-
-    def events() -> list[dict]:
-        return backend.as_user(token, "GET", "/rest/v1/events?select=*")
-
-    def seen(kind: str, service: str | None = None) -> bool:
-        return any(
-            e["kind"] == kind and (service is None or e["service"] == service) for e in events()
-        )
-
-    wait_for("SSH login attempt", lambda: seen("login_attempt", "ssh"))
-    wait_for("HTTP login attempt", lambda: seen("login_attempt", "http"))
-    wait_for("web page fetched", lambda: seen("connection", "http"))
-    wait_for("file share sign-in attempt", lambda: seen("login_attempt", "smb"))
-    wait_for(
-        "sign-in with a user name from the bait files",
-        lambda: any(e["detail"].get("bait") for e in events()),
-    )
-    wait_for("file share opened", lambda: seen("connection", "smb"))
-    wait_for("bait file opened", lambda: seen("file_access", "smb"))
-    wait_for("port scan", lambda: seen("port_scan"))
-    wait_for("network sweep seen in ARP traffic", lambda: seen("host_scan"))
-
-    rows = events()
-    logins = [e for e in rows if e["kind"] == "login_attempt"]
-    names = {(e["detail"].get("username"), e["detail"].get("bait", False)) for e in logins}
-    assert names == {("admin", False), (BAIT_USER, True)}, logins
-    assert password not in json.dumps(rows), "a typed password reached the backend"
-    opened = [e for e in rows if e["kind"] == "file_access"]
-    expected = {"share": "Public", "file": BAIT_FILE}
-    assert all(e["detail"] == expected and e["severity"] == "critical" for e in opened), opened
-    (scan,) = [e for e in rows if e["kind"] == "port_scan"]
-    assert scan["src_ip"] == SCANNER_IP and scan["detail"]["ports"] == [25, 110, 139, 443, 445], (
-        scan
-    )
-    print("ok: events are correct and contain no passwords")
-
+    start_device(backend, token)
+    check_attack(backend, token)
     check_reports(backend, token)
     print("end-to-end test passed")
 

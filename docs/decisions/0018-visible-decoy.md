@@ -1,6 +1,7 @@
 # 0018: A decoy that is easy to find
 
-Status: accepted, 2026-11-07
+Status: accepted, 2026-11-07. ADR 0035 replaces the persona (`family-nas`)
+and drops port 5000; the rest stands.
 
 ## Context
 

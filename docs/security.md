@@ -58,7 +58,7 @@ The data flow and every contract are in `docs/architecture.md`.
 | 19 | A leaked CI credential stays useful                              | KMS signing key cannot be exported; webhook secret and FCM key replaced monthly and never in GitHub; no database password in CI; an issue 30 days before the other credentials expire | `rotate-keys.yml`, `expiry.yml`; pending: first runs |
 | 20 | A known-vulnerable dependency ships                              | Grype before signing (fails on fixable critical), weekly Grype on `:stable`, OSV-Scanner on pip and Gradle, Dependabot | `device-images.yml`, `security.yml`; OSV-Scanner run locally 2026-11-07 |
 | 21 | Production data lost                                             | nightly dump, encrypted with age, kept 90 days              | `backup.yml`; pending: recipients file and a restore test |
-| 22 | The decoy file share becomes a way in: a sign-in or guest access that works, a writable share, real data | no account exists, failed sign-ins never become guest sessions, only Public opens without a password and it is read-only, its files are written for the decoy and baked into the image: their credentials open nothing, card numbers are documented test numbers, personal numbers synthetic | tested: `device/e2e/run.py` (sign-in refused, bait file read), `device/tests/test_canary.py` (test numbers only); verified 2026-11-07 on the built image under Podman 5.4.2 with the units' flags: every password share refuses anonymous access, sign-in and writes refused |
+| 22 | The decoy file share becomes a way in: a sign-in or guest access that works, a writable share, real data | no account exists, failed sign-ins never become guest sessions, only Felles opens without a password and it is read-only, its files are written for the decoy and baked into the image: their credentials open nothing, card numbers fail the Luhn check, account and organisation numbers their check digit, personal numbers are synthetic, addresses private or documentation ranges (ADR 0024, 0035) | tested: `device/e2e/run.py` (sign-in refused, bait file read), `device/tests/test_canary.py` (numbers that cannot be real); verified 2026-11-07 on the built image under Podman 5.4.2 with the units' flags: every password share refuses anonymous access, sign-in and writes refused |
 | 23 | Hostile user, share or file names from the file share            | only the user name, share and file are kept, bounded and stripped; Samba logs no password or hash; fixed detail keys `share` and `file` | tested: agent `test_sources` (real Samba records), `18_file_access` |
 | 24 | Discovery traffic floods the owner with alerts                   | NetBIOS, mDNS and WS-Discovery are answered but never parsed; listing the shares (`IPC$`) and clients probing without a password are not events | tested: agent `test_sources`; `device/e2e/run.py` (anonymous listing yields no sign-in event) |
 | 25 | Exhausting the device through the file share                     | at most 20 smbd processes, state in a small tmpfs, logs rotated at 1 MB | config review: `canary/persona/smb.conf` |
@@ -71,8 +71,9 @@ Hardware (verified 2026-11-07, `docs/STATUS.md` Phase 7): from the LAN only
 the eight decoy ports answer and port 22 is the decoy, not the host's SSH;
 the login alert arrived about 1 s after the attempt with the fixed template.
 The file share and its announcements (ADR 0018) are pending on hardware:
-the new ports from the LAN, the decoy in Windows Explorer and Finder, and
-port 5000.
+the new ports from the LAN, the decoy in Windows Explorer and Finder. So
+are the SAP, Modbus, S7 and MSSQL decoys of ADR 0035 from the LAN (new
+cards only; an older card's firewall drops them).
 
 ## Outbound traffic from the device
 
@@ -205,7 +206,7 @@ that delete it are in `docs/architecture.md`, "Scheduled jobs".
 | Source of the last push per DeKoi | devices on the owner's network | `private.notified_sources` | 1 day |
 | Client address (IPv6 by its /64) or user ID with a request count | anyone writing to the API | `private.rate_counters` | at most 70 minutes |
 | API, Auth and function logs with client addresses | anyone calling the API | Supabase's log store | 1 day on the Free plan |
-| Encrypted backups of all of the above | everyone above | GitHub Actions artifacts | 30 days (`docs/runbooks/restore-backup.md`) |
+| Encrypted backups of all of the above | everyone above | GitHub Actions artifacts | 90 days (`.github/workflows/backup.yml`, ADR 0022) |
 
 Never stored: passwords typed into decoys (they never leave the device),
 traffic contents, precise location (the country comes from the platform's
@@ -217,7 +218,7 @@ other table refers to `auth.users` or to such a table with
 `on delete cascade`. `04_account` checks both: the deletion itself, and that
 every table in `public` and `private` is reached that way, so a table added
 later cannot be forgotten. What remains afterwards: rate counts for up to
-70 minutes, platform logs for a day, backups for 30 days.
+70 minutes, platform logs for a day, backups for 90 days.
 
 Processors: Supabase (database, Auth, functions; EU, Stockholm), Google
 (sign-in; FCM receives the push token, a fixed notification text and the
@@ -242,9 +243,12 @@ API's read-only endpoint as `supabase_read_only_user`.
 | Database size: `pg_database_size(current_database())` | over 350 MB, 70% of the Free plan's 500 MB | built, daily |
 | Notify quota: events received this calendar month, an upper bound on `notify` calls | over 400,000 of the Free plan's 500,000 | built, daily |
 | Notify gate: hours of the last day with more than 600 events | any: pushes were held back for everyone (ADR 0016) | built, daily |
+| Pushes: `notify_url` and `notify_secret` in Vault, and notify's answers that pg_net keeps for 6 hours | a name missing (the events trigger then posts nothing), or any answer of those 6 hours other than 2xx: wrong secret, function missing, FCM key refused, runtime limits, FCM refusing a phone | built, daily; sees the 6 hours before the check only |
 | Flooding: per account, devices, setups waiting, events reported in any hour of the last day, push tokens | any account over half its limit (ADR 0016), or setups waiting over 100 in all | built, daily |
+| Google sign-in client: the deploy job's check against Google's token endpoint | any answer but `invalid_grant`: the client was deleted (after six months without a token request; `google-firebase.md`, "Unused clients") or the secret no longer matches | built, daily |
+| Unattended workflows: the last finished run on `main` of `auto-merge.yml`, `backup.yml`, `expiry.yml`, `pins.yml`, `rotate-keys.yml`, `security.yml` and `tag-release.yml` | older than its period with an hour or two to spare (8 hours; 26 hours; 32 days for rotation; 7 days for scans): a schedule that stopped starting runs. A run that fails opens its own issue (`failures.yml`, ADR 0038) | built, daily |
 | Surface checks in `docs/runbooks/deploy-backend.md` | any unexpected status | not built |
-| Backup and restore test (`docs/runbooks/restore-backup.md`) | any step | not built |
+| Restore test (`docs/runbooks/restore-backup.md`) | any step | by hand, once and after schema changes: only the owner holds the backup key |
 | CI access token expiry (`docs/runbooks/deploy-backend.md`, step 4) | less than 30 days left; a reminder in the owner's calendar, since the token cannot read its own expiry | monthly, by hand |
 
 ## Known limitations

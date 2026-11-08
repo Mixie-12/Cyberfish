@@ -11,7 +11,7 @@
     <string name="learn_honeypot_summary">Hvorfor en boks uten innhold kan fortelle deg så mye.</string>
     <string-array name="learn_honeypot_body">
         <item>En honningkrukke, på engelsk «honeypot», er en lokkedue: noe som ser interessant ut, men som ikke inneholder noe av verdi. Sikkerhetsfolk har lenge brukt slike for å oppdage inntrengere tidlig.</item>
-        <item>Din DeKoi er en slik. På nettverket ditt ser den ut som en lagringsboks for bilder og sikkerhetskopier, og den dukker opp når noen ser seg rundt på nettverket fra en datamaskin.</item>
+        <item>Din DeKoi er en slik. På nettverket ditt ser den ut som serveren til en liten bedrift, med betalinger, regnskap og sikkerhetskopier, og den dukker opp når noen ser seg rundt på nettverket fra en datamaskin.</item>
         <item>Ingen av dine egne enheter har noen grunn til å bruke den. Så når noe prøver å åpne den, logge på den eller teste den, er det verdt å vite om.</item>
         <item>Derfor kommer det få varsler, og de betyr noe. DeKoi trenger ikke gjette hva som er normalt på nettverket ditt: hver gang noe rører den, er det et signal.</item>
         <item>DeKoi ser det som sendes til den, og det som sendes til alle enheter samtidig. Den ser ikke privat trafikk mellom de andre enhetene dine.</item>
@@ -26,7 +26,7 @@
     <string name="learn_sign_in_title">Noen prøvde å logge på</string>
     <string name="learn_sign_in_summary">En enhet prøvde et brukernavn og passord på din DeKoi.</string>
     <string-array name="learn_sign_in_body">
-        <item>Din DeKoi har måter å logge på, slik mange ekte lagringsbokser og datamaskiner har. Ingen hjemme hos deg har en konto på den, så ingen har noen grunn til å prøve.</item>
+        <item>Din DeKoi har måter å logge på, slik ekte servere og datamaskiner har. Ingen hjemme hos deg har en konto på den, så ingen har noen grunn til å prøve.</item>
         <item>Et påloggingsforsøk betyr som regel én av to ting: en person som tester hva de kan komme inn på, eller skadelig programvare på en av enhetene dine som prøver vanlige passord på alt den finner.</item>
         <item>Uansett leter noe på nettverket ditt etter en vei inn. Hvis det prøver seg på din DeKoi, prøver det seg kanskje på de andre enhetene dine også.</item>
         <item>Noen ganger er årsaken ufarlig, for eksempel et nysgjerrig familiemedlem. Varselet sier hvilken enhet det var, så du kan finne ut av det.</item>

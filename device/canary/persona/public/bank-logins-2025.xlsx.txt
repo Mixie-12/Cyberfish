@@ -1,5 +1,0 @@
-Account	User name	Password	Note
-Online bank	$bank_user	Fjelltur!2024	BankID needed as well
-Savings account			NO93 8601 1117 947
-Credit cards			Numbers and PINs in kredittkort-kopi.pdf
-Bitcoin wallet		Lofoten-1987	Recovery words in Bitcoin-lommebok-backup.txt
