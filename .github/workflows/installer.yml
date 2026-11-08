@@ -1,13 +1,20 @@
 name: installer
 
-# Builds the bundle the phone copies onto a card (ADR 0031) and publishes it
-# to GHCR as one application/zip layer, whose digest is the zip's SHA-256.
-# Nothing uses a new bundle until device/installer.json pins its digest
-# (docs/runbooks/release.md). Pull requests are checked by device.yml.
+# Builds the bundle the phone copies onto a card (ADR 0031). Pull requests
+# and other branches only build and check it. On main it is published to GHCR
+# as one application/zip layer, whose digest is the zip's SHA-256; once it can
+# be fetched as a phone fetches it, its pin is proposed for
+# device/installer.json in a pull request that auto-merge.yml merges after
+# the checks (ADR 0036). Nothing uses a bundle until that pin lands.
 
 on:
   push:
     branches: [main]
+    paths:
+      - device/installer/**
+      - device/image.json
+      - .github/workflows/installer.yml
+  pull_request:
     paths:
       - device/installer/**
       - device/image.json
@@ -18,18 +25,13 @@ permissions: {}
 
 concurrency:
   group: installer-${{ github.ref }}
-  cancel-in-progress: false
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
-  publish:
+  bundle:
     runs-on: ubuntu-24.04
     permissions:
       contents: read
-      packages: write
-    env:
-      REPOSITORY: ghcr.io/mixie-12/dekoi-installer
-      ORAS_VERSION: 1.3.6
-      ORAS_SHA256: 66fb0ad7206f3f6fa77ed5b552049d364ccf4b50b1684554f731f76302b52ca0
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -42,6 +44,34 @@ jobs:
       - uses: docker/setup-qemu-action@99012661954931238ded8c8b007157a8430204e1 # v4.4.0
       - name: Build the bundle
         run: docker build -f device/installer/Containerfile -o "$RUNNER_TEMP/bundle" device
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: github.ref == 'refs/heads/main'
+        with:
+          name: dekoi-installer
+          path: ${{ runner.temp }}/bundle/dekoi-installer.zip
+          retention-days: 1
+          compression-level: 0
+          if-no-files-found: error
+
+  publish:
+    needs: bundle
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    permissions:
+      actions: read
+      packages: write
+    outputs:
+      pin: ${{ steps.push.outputs.pin }}
+    env:
+      REPOSITORY: ghcr.io/mixie-12/dekoi-installer
+      ORAS_VERSION: 1.3.6
+      ORAS_SHA256: 66fb0ad7206f3f6fa77ed5b552049d364ccf4b50b1684554f731f76302b52ca0
+    steps:
+      - name: Fetch the bundle this run built
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: gh run download "$GITHUB_RUN_ID" --name dekoi-installer --dir "$RUNNER_TEMP/bundle"
       - name: Install ORAS
         run: |
           archive="$RUNNER_TEMP/oras.tar.gz"
@@ -56,6 +86,7 @@ jobs:
           password: ${{ github.token }}
       # The registry's manifest must name exactly the zip that was built.
       - name: Push as one application/zip layer
+        id: push
         working-directory: ${{ runner.temp }}/bundle
         run: |
           "$RUNNER_TEMP/oras" push "$REPOSITORY:$GITHUB_SHA" dekoi-installer.zip:application/zip
@@ -67,5 +98,46 @@ jobs:
               and .layers[0].digest == $digest and .layers[0].size == $size' > /dev/null
           pin="$(jq -nc --arg repository "${REPOSITORY#ghcr.io/}" --arg digest "$digest" \
             --argjson size "$size" '{repository: $repository, digest: $digest, size: $size}')"
-          echo "$pin"
+          echo "pin=$pin" >> "$GITHUB_OUTPUT"
           printf 'device/installer.json for this build:\n\n    %s\n' "$pin" >> "$GITHUB_STEP_SUMMARY"
+
+  # docs/runbooks/release.md, "Installer bundle", done by CI.
+  pin:
+    needs: publish
+    runs-on: ubuntu-24.04
+    permissions:
+      actions: write
+      contents: write
+      pull-requests: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      PIN: ${{ needs.publish.outputs.pin }}
+      RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Fetch the blob without signing in, as the phone does
+        run: |
+          repository="$(jq -r .repository <<< "$PIN")"
+          digest="$(jq -r .digest <<< "$PIN")"
+          token="$(curl -fsS "https://ghcr.io/token?scope=repository:$repository:pull" | jq -r .token)"
+          if ! curl -fsSL -H @<(printf 'Authorization: Bearer %s\n' "$token") -o "$RUNNER_TEMP/bundle.zip" \
+            "https://ghcr.io/v2/$repository/blobs/$digest"; then
+            echo "::error::ghcr.io refused an anonymous pull of $repository; is the package public? (docs/runbooks/release.md)"
+            exit 1
+          fi
+          jq -e --arg digest "sha256:$(sha256sum "$RUNNER_TEMP/bundle.zip" | cut -d ' ' -f 1)" \
+            --argjson size "$(stat -c %s "$RUNNER_TEMP/bundle.zip")" \
+            '.digest == $digest and .size == $size' <<< "$PIN" > /dev/null
+      - name: Propose the pin
+        run: |
+          if jq -e --argjson pin "$PIN" '. == $pin' device/installer.json > /dev/null; then
+            echo "device/installer.json already pins this build"
+            exit 0
+          fi
+          jq . <<< "$PIN" > device/installer.json
+          .github/scripts/propose.sh installer-pin device/installer.json \
+            "device: pin the installer bundle built from ${GITHUB_SHA::12}" \
+            "installer.yml built and published this bundle from $GITHUB_SHA ($RUN_URL) and fetched it back without signing in, as a phone does: its SHA-256 and size match. The apps take the pin at their next build."
