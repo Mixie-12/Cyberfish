@@ -1,0 +1,25 @@
+Betalingsløsninger - nøkler og tilganger
+Ikke send på e-post. Sist endret 12.06.2025 (nye nøkler etter at konsulenten sluttet).
+
+Nettbutikk - Netaxept (gammel integrasjon fra 2013, .NET på $name)
+    Brukersted (MerchantId): 11207453
+    Token produksjon: 7Hf!q2-Lx9_Rb4?Wm#8Ts
+    Token test: t3st!Kq7_Zx2?Lp9
+    Admin-portal: $gateway_user / Laks-Eksport26!
+    Callback: http://$name/payments/callback.aspx (åpnet i brannmuren)
+
+Butikkterminaler (BankAxept, Visa, Mastercard)
+    Fabrikkutsalget: TID 70145528
+    Kaia: TID 70145531
+    Brukersted butikk: 11207461
+    Admin-PIN terminaler: 4711
+
+Oppgjørsfiler fra innløser til SAP
+    SFTP-bruker: $gateway_user
+    Privat nøkkel: D:\keys\settle_prod.ppk (passfrase Oppgjor#2013)
+    Jobb i SAP: ZFI_SETTLE_IMPORT, hver natt 23:00
+
+Bankfiler (SAP F110 til banken)
+    Avtale-ID: 50214-KS
+    Sertifikat og nøkkel: \\$name\sapmnt\$sap_system\global\bank\
+    Godkjenning: Ingrid Solheim og Tor Arne Kvalvik (to signaturer over 500 000)

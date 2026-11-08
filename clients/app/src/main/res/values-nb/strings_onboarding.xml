@@ -7,8 +7,8 @@
     <string name="onboarding_page">Side %1$d av %2$d</string>
 
     <string name="onboarding_decoy_label">Hva den er</string>
-    <string name="onboarding_decoy_title">En lagringsboks som ikke er det</string>
-    <string name="onboarding_decoy_body">Din DeKoi ser ut som en lagringsboks for bilder og sikkerhetskopier, men inneholder ingenting av verdi. Dine egne enheter har ingen grunn til å bruke den, så ingenting skal noen gang røre den.</string>
+    <string name="onboarding_decoy_title">En server som ikke er det</string>
+    <string name="onboarding_decoy_body">Din DeKoi ser ut som serveren til en liten bedrift, med betalinger, regnskap og sikkerhetskopier, men inneholder ingenting av verdi. Dine egne enheter har ingen grunn til å bruke den, så ingenting skal noen gang røre den.</string>
 
     <string name="onboarding_touch_label">Slik virker den</string>
     <string name="onboarding_touch_title">Når noe rører den, får du vite det</string>

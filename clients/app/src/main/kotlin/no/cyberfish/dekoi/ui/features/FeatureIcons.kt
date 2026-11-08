@@ -212,7 +212,7 @@ private class Stage(
     private fun polyline(points: List<Offset>): Path =
         Path().apply { points.forEachIndexed { i, p -> if (i == 0) moveTo(p.x, p.y) else lineTo(p.x, p.y) } }
 
-    // A storage box with drive bays; someone walks up to it and the box answers with a ring.
+    // A server with drive bays; someone walks up to it and the server answers with a ring.
     private fun decoy(t: Float) {
         box(16f, 8f, 32f, 40f, ink.line)
         listOf(16f, 22f, 28f).forEach { y -> line(at(19f, y), at(29f, y), faint) }

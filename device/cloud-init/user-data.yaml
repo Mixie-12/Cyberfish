@@ -11,8 +11,10 @@
 # which update themselves.
 
 # The persona's name (device/canary/persona/persona.json; a test keeps them
-# equal), so the router's device list and local DNS show the decoy too.
-hostname: family-nas
+# equal), so the router's device list and local DNS show the decoy too. The
+# decoys never use this name: cards written earlier keep family-nas here
+# while their updated images announce the persona (ADR 0035).
+hostname: sap-pay-prod
 manage_etc_hosts: true
 
 # One locked account with no shell, so Raspberry Pi OS does not wait for a

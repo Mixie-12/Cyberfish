@@ -29,10 +29,12 @@ namespace, no capabilities and a read-only root (ADR 0005, ADR 0018):
 | `dekoi-announce` | NetBIOS names (`nmbd`), mDNS (`avahi-daemon`), WS-Discovery (`wsdd2`) | none |
 
 Their ports are the sets in `device/host/etc/nftables.conf`, which a test
-keeps equal to the decoys; TCP 5000 is redirected to the web decoy. The
-persona (name, model, firmware, shares, bait files) is defined once in
-`device/canary/persona/` and filled into the configuration when the image
-is built; new cards take its name as host name. Discovery (NetBIOS, mDNS,
+keeps equal to the decoys. The persona (ADR 0035: name, company,
+workgroup, shares, bait files and the user names in them) is defined once
+in `device/canary/persona/` and filled into the configuration, OpenCanary's
+included, when the image is built; new cards take its name as host name,
+and no decoy uses the host name, so cards with an older one show the same
+persona. Discovery (NetBIOS, mDNS,
 WS-Discovery, listing the shares through `IPC$`, anonymous probes) never
 becomes an event; signing in, opening a share and reading a file do.
 

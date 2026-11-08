@@ -58,7 +58,7 @@ The data flow and every contract are in `docs/architecture.md`.
 | 19 | A leaked CI credential stays useful                              | KMS signing key cannot be exported; webhook secret and FCM key replaced monthly and never in GitHub; no database password in CI; an issue 30 days before the other credentials expire | `rotate-keys.yml`, `expiry.yml`; pending: first runs |
 | 20 | A known-vulnerable dependency ships                              | Grype before signing (fails on fixable critical), weekly Grype on `:stable`, OSV-Scanner on pip and Gradle, Dependabot | `device-images.yml`, `security.yml`; OSV-Scanner run locally 2026-11-07 |
 | 21 | Production data lost                                             | nightly dump, encrypted with age, kept 90 days              | `backup.yml`; pending: recipients file and a restore test |
-| 22 | The decoy file share becomes a way in: a sign-in or guest access that works, a writable share, real data | no account exists, failed sign-ins never become guest sessions, only Public opens without a password and it is read-only, its files are written for the decoy and baked into the image: their credentials open nothing, card numbers are documented test numbers, personal numbers synthetic | tested: `device/e2e/run.py` (sign-in refused, bait file read), `device/tests/test_canary.py` (test numbers only); verified 2026-11-07 on the built image under Podman 5.4.2 with the units' flags: every password share refuses anonymous access, sign-in and writes refused |
+| 22 | The decoy file share becomes a way in: a sign-in or guest access that works, a writable share, real data | no account exists, failed sign-ins never become guest sessions, only Felles opens without a password and it is read-only, its files are written for the decoy and baked into the image: their credentials open nothing, card numbers fail the Luhn check, account and organisation numbers their check digit, personal numbers are synthetic, addresses private or documentation ranges (ADR 0024, 0035) | tested: `device/e2e/run.py` (sign-in refused, bait file read), `device/tests/test_canary.py` (numbers that cannot be real); verified 2026-11-07 on the built image under Podman 5.4.2 with the units' flags: every password share refuses anonymous access, sign-in and writes refused |
 | 23 | Hostile user, share or file names from the file share            | only the user name, share and file are kept, bounded and stripped; Samba logs no password or hash; fixed detail keys `share` and `file` | tested: agent `test_sources` (real Samba records), `18_file_access` |
 | 24 | Discovery traffic floods the owner with alerts                   | NetBIOS, mDNS and WS-Discovery are answered but never parsed; listing the shares (`IPC$`) and clients probing without a password are not events | tested: agent `test_sources`; `device/e2e/run.py` (anonymous listing yields no sign-in event) |
 | 25 | Exhausting the device through the file share                     | at most 20 smbd processes, state in a small tmpfs, logs rotated at 1 MB | config review: `canary/persona/smb.conf` |
@@ -71,8 +71,9 @@ Hardware (verified 2026-11-07, `docs/STATUS.md` Phase 7): from the LAN only
 the eight decoy ports answer and port 22 is the decoy, not the host's SSH;
 the login alert arrived about 1 s after the attempt with the fixed template.
 The file share and its announcements (ADR 0018) are pending on hardware:
-the new ports from the LAN, the decoy in Windows Explorer and Finder, and
-port 5000.
+the new ports from the LAN, the decoy in Windows Explorer and Finder. So
+are the SAP, Modbus, S7 and MSSQL decoys of ADR 0035 from the LAN (new
+cards only; an older card's firewall drops them).
 
 ## Outbound traffic from the device
 

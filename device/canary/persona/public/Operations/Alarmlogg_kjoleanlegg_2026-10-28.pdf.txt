@@ -1,0 +1,14 @@
+Alarmlogg kjøleanlegg, uke 44
+Utskrift fra WinCC flexible 28.10.2026 07:12, panel-PC 10.20.1.20
+
+26.10.2026 02:14   A102   Høy trykkgasstemperatur, kompressor 2        Kvittert $scada_user
+26.10.2026 02:31   A102   Normal
+26.10.2026 14:47   A215   Lav oljenivå, kompressor 2                   Kvittert kbakke
+27.10.2026 13:05   A311   Fryselager 2 over -24 °C (port åpen)         Kvittert $scada_user
+27.10.2026 13:22   A311   Normal
+27.10.2026 23:58   A401   Kommunikasjonsfeil Modbus slave 4 (energimåler)
+28.10.2026 00:03   A401   Normal
+28.10.2026 05:40   A102   Høy trykkgasstemperatur, kompressor 2        Ikke kvittert
+
+Settpunkt fryselager 1: -28,0 °C     Settpunkt fryselager 2: -28,0 °C
+Kompressor 2: service bestilt hos Ytre Tindvik Kjøleteknikk (se FBL1N)

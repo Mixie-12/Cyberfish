@@ -28,10 +28,12 @@ fun serviceName(service: String?): Int =
         "http" -> R.string.service_http
         "ssh" -> R.string.service_ssh
         "telnet" -> R.string.service_telnet
-        "mysql", "redis" -> R.string.service_database
+        "mssql", "mysql", "redis" -> R.string.service_database
         "rdp" -> R.string.service_rdp
         "vnc" -> R.string.service_vnc
         "smb" -> R.string.service_file_share
+        "sap" -> R.string.service_business
+        "modbus", "s7" -> R.string.service_control
         else -> R.string.service_other
     }
 
@@ -43,8 +45,10 @@ fun portName(port: Int): Int? =
         22 -> R.string.service_ssh
         23 -> R.string.service_telnet
         80, 443, 8080, 8443 -> R.string.port_web
+        102, 502 -> R.string.service_control
         139, 445 -> R.string.port_file_sharing
         1433, 3306, 5432, 6379, 27017 -> R.string.service_database
+        3200, 3299, 3600 -> R.string.service_business
         3389 -> R.string.service_rdp
         5900 -> R.string.service_vnc
         else -> null

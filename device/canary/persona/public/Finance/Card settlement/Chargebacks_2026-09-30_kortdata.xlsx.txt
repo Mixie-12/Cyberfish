@@ -1,0 +1,9 @@
+Innsigelser (chargebacks) Q3 - kortdata fra innløser, til SAP-avstemming				IKKE DEL
+
+Dato	Kunde	Kortnummer	Utløp	CVC	Beløp NOK	Årsak	Status
+04.07.2026	Henrik Aasen	4573 1257 3468 0861	08/28	417	12 950,00	Ikke mottatt	Tapt
+19.07.2026	Mona Lie	5304 1251 2475 2875	11/27	092	3 480,00	Ukjent kjøp	Vunnet
+02.08.2026	Petter Dahl	4921 5061 0546 7145	03/29	668	5 760,00	Ukjent kjøp	Åpen
+16.08.2026	Lise Karlsen	5522 8457 5193 1475	06/28	305	2 145,00	Feil beløp	Vunnet
+30.08.2026	Sander Holm	4546 1760 6953 6672	01/27	771	899,00	Ikke mottatt	Åpen
+21.09.2026	Eva Brekke	5424 1860 6160 9035	10/29	246	7 320,00	Svindel	Åpen

@@ -1,3 +1,4 @@
+import re
 import stat
 from pathlib import Path
 
@@ -7,6 +8,7 @@ from dekoi_agent.state import MAX_QUEUE, State
 
 CANARY_CONFIG = Path(__file__).parents[2] / "canary" / "opencanary.conf"
 PERSONA = Path(__file__).parents[2] / "canary" / "persona" / "persona.json"
+MIGRATIONS = Path(__file__).parents[3] / "backend" / "supabase" / "migrations"
 
 
 def test_state_round_trip_is_private(tmp_path: Path) -> None:
@@ -38,19 +40,50 @@ def test_decoys_are_the_canary_config_and_the_file_share() -> None:
         22: "ssh",
         23: "telnet",
         80: "http",
+        102: "s7",
         445: "smb",
+        502: "modbus",
+        1433: "mssql",
+        3200: "sap",
+        3299: "sap",
         3306: "mysql",
         3389: "rdp",
+        3600: "sap",
         5900: "vnc",
         6379: "redis",
+        8000: "sap",
+        50000: "sap",
     }
 
 
+def test_the_backend_takes_every_decoy_service_in_a_heartbeat() -> None:
+    # The backend refuses a heartbeat with a service it cannot store, and the
+    # device then looks offline.
+    (migration,) = MIGRATIONS.glob("*_core_schema.sql")
+    schema = migration.read_text()
+    name = re.search(r"domain private\.service_name as text\s+check \(value ~ '([^']+)'\)", schema)
+    limit = re.search(r"services private\.service_name\[\].*\(services\) <= (\d+)", schema)
+    assert name is not None and limit is not None
+    services = set(load_decoys(CANARY_CONFIG).values())
+    assert len(services) <= int(limit[1])
+    assert all(re.search(name[1], service) for service in services)
+
+
+def test_a_banner_decoy_is_named_by_its_service_key(tmp_path: Path) -> None:
+    config = tmp_path / "opencanary.conf"
+    config.write_text(
+        '{"tcpbanner.enabled": true, "tcpbanner_1.enabled": true, "tcpbanner_1.port": 3200,'
+        ' "tcpbanner_1.service": "sap", "tcpbanner_2.enabled": true, "tcpbanner_2.port": 9000,'
+        ' "tcpbanner_3.enabled": false, "tcpbanner_3.port": 502, "tcpbanner_3.service": "modbus"}'
+    )
+    assert load_decoys(config) == {445: "smb", 3200: "sap", 9000: "tcpbanner_2"}
+
+
 def test_bait_users_are_the_persona_names_in_lower_case(tmp_path: Path) -> None:
-    assert {"familie.admin", "nas-backup"} <= load_bait_users(PERSONA)
+    assert {"ks-drift", "ks_fibatch"} <= load_bait_users(PERSONA)
     persona = tmp_path / "persona.json"
-    persona.write_text('{"name": "x", "bait_users": {"admin_user": "Familie.Admin"}}')
-    assert load_bait_users(persona) == {"familie.admin"}
+    persona.write_text('{"name": "x", "bait_users": {"admin_user": "KS-Drift"}}')
+    assert load_bait_users(persona) == {"ks-drift"}
 
 
 def test_listening_ports_and_running_services(tmp_path: Path) -> None:
@@ -68,6 +101,8 @@ def test_listening_ports_and_running_services(tmp_path: Path) -> None:
     ports = listening_ports(tmp_path)
     assert ports == {22, 21}
     assert running_services({21: "ftp", 22: "ssh", 80: "http"}, ports) == ["ftp", "ssh"]
+    # A service with several ports is one decoy.
+    assert running_services({21: "sap", 22: "sap", 80: "http"}, ports) == ["sap"]
 
 
 def test_parse_arp_scan() -> None:

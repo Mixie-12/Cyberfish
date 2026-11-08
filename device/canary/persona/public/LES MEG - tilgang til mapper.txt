@@ -1,0 +1,15 @@
+LES MEG - tilgang til mappene på Felles
+
+Felles er åpen for alle i $workgroup-domenet. Legg filer i riktig avdeling:
+
+  Finance      Økonomi. Betalingsfiler og SAP-eksporter ligger her midlertidig
+               til de er flyttet til Finance-området (skulle vært gjort i 2019).
+  HR           Lønn og personal. Lønnslister flyttes til Payroll etter utbetaling.
+  IT           Driftsdokumentasjon.
+  Operations   Produksjon, kjøleanlegg og fryselager.
+  Scans        Fra kopimaskinen i 2. etasje.
+
+Mangler du tilgang til Finance, Payroll eller SCADA: send e-post til IT.
+Passord til servere og tjenester ligger i IT-mappen. Ikke send dem på e-post.
+
+Marius, IT

@@ -389,8 +389,8 @@ def _join_discovery_groups(sock: socket.socket, index: int, name: str) -> None:
 
 
 def ask_for_services() -> None:
-    """One mDNS service enumeration and one SSDP search, the questions any
-    storage box asks. The answers reach the discovery listener."""
+    """One mDNS service enumeration and one SSDP search, the questions many
+    computers and servers ask. The answers reach the discovery listener."""
     with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as mdns:
         mdns.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         mdns.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_TTL, 1)

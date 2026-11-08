@@ -2,13 +2,15 @@
 <!-- Alerts timeline and incident detail (AlertsScreens.kt, AlertDetailScreen.kt, EventText.kt, Incidents.kt). -->
 <resources>
     <string name="service_ftp">file server</string>
-    <string name="service_http">storage login page</string>
+    <string name="service_http">payment login page</string>
     <string name="service_ssh">remote login</string>
     <string name="service_telnet">remote terminal</string>
     <string name="service_database">database</string>
     <string name="service_rdp">remote desktop</string>
     <string name="service_vnc">screen sharing</string>
     <string name="service_file_share">file share</string>
+    <string name="service_business">business system</string>
+    <string name="service_control">machine control</string>
     <string name="service_other">service</string>
     <string name="port_web">web pages</string>
     <string name="port_file_sharing">file sharing</string>
@@ -22,7 +24,7 @@
     <string name="event_login_bait_consequence">They used a password from your decoy’s files. Someone has looked through the bait and is trying what they found.</string>
     <string name="event_connection_title">%1$s opened one of your decoys</string>
     <string name="event_connection_action">Opened a decoy</string>
-    <string name="event_connection_why">Your DeKoi pretends to be a storage box. Ordinary devices leave it alone, so a visit means something on your network is looking around.</string>
+    <string name="event_connection_why">Your DeKoi pretends to be a company’s server. Ordinary devices leave it alone, so a visit means something on your network is looking around.</string>
     <string name="event_probe_consequence">Something on your network may be looking for a way in.</string>
     <string name="event_scan_title">%1$s searched your network for openings</string>
     <string name="event_scan_action">Searched for openings</string>
@@ -57,7 +59,7 @@
     <string name="event_file_access_title">Someone opened a file on your decoy file share</string>
     <string name="event_file_access_action">Opened a file on the decoy file share</string>
     <string name="event_file_access_consequence">Someone on your network is looking through files that are not theirs.</string>
-    <string name="event_file_access_why">Your DeKoi shows a shared folder with tempting file names, and nothing real is in them. Nobody in your home needs these files, so opening one means someone on your network is looking for passwords, money or personal papers.</string>
+    <string name="event_file_access_why">Your DeKoi shows a shared folder with tempting file names, such as payments and passwords, and nothing real is in them. Nobody in your home needs these files, so opening one means someone on your network is looking for passwords, money or data to steal.</string>
     <string name="event_port_forward_title">%1$s can now be reached from the internet</string>
     <string name="event_port_forward_action">Opened a way in from the internet</string>
     <string name="event_port_forward_consequence">Anyone on the internet can now try to connect to it.</string>

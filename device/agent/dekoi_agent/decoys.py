@@ -22,6 +22,9 @@ def load_decoys(config_path: Path) -> dict[int, str]:
     """Map port to service name for every decoy.
 
     The decoys are the services enabled in an OpenCanary config, and the file share.
+    A service is named after its OpenCanary module, unless the config gives it
+    a "service": OpenCanary ignores that key, and the banner modules
+    (tcpbanner_1 and so on) need it to say what they pretend to be.
     """
     config = json.loads(Path(config_path).read_text())
     decoys = {FILE_SHARE_PORT: FILE_SHARE_SERVICE}
@@ -29,7 +32,7 @@ def load_decoys(config_path: Path) -> dict[int, str]:
         name, _, field = key.partition(".")
         port = config.get(f"{name}.port")
         if field == "enabled" and value is True and isinstance(port, int):
-            decoys[port] = name
+            decoys[port] = config.get(f"{name}.service", name)
     return decoys
 
 
@@ -57,7 +60,8 @@ def listening_ports(proc_net: Path = Path("/proc/net")) -> set[int]:
 
 
 def running_services(decoys: dict[int, str], ports: set[int]) -> list[str]:
-    return sorted(name for port, name in decoys.items() if port in ports)
+    """The services with a listening port, each once: one service can have several ports."""
+    return sorted({name for port, name in decoys.items() if port in ports})
 
 
 if __name__ == "__main__":
