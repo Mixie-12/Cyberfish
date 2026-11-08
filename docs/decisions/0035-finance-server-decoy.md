@@ -37,7 +37,8 @@ firewall their card gave them; only their images update.
   the Luhn check (they look real at first glance; none can be a card),
   account and organisation numbers fail their mod 11 check digit, personal
   numbers stay synthetic. Addresses are private or documentation ranges, no
-  real domain or company. Seven honeytokens; one typed with a domain
+  real domain or company, no vendor's default password (SAP*'s opens real
+  systems). Seven honeytokens; one typed with a domain
   (`KALDSKJAER\ks-drift`, `ks-drift@...`) is flagged too.
 - Devices in the field: no decoy takes its name from the Pi's host name.
   Samba, avahi and wsdd2 read the persona's name from the image, so an
