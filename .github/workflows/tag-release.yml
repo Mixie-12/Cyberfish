@@ -10,7 +10,7 @@ name: tag release
 
 on:
   schedule:
-    - cron: "47 7 * * *"
+    - cron: "47 5 * * *"
   workflow_dispatch:
 
 permissions: {}
