@@ -34,6 +34,13 @@ RestartSec=10
 # has accepted a heartbeat: 15 minutes leave room for four attempts, after
 # which podman auto-update rolls back an image that cannot reach the backend.
 TimeoutStartSec=900
+# The agent pings after every pass of its loop; a pass that hangs gets the
+# agent restarted before the backend counts the device as offline (30
+# minutes). The slowest healthy pass, with every check due and the backend
+# timing out, stays under ten minutes (arp-scan at most 2 minutes, each
+# request 20 s, UPnP and the speed test 30 s each). Tested with Podman 5.4.2
+# and systemd 257: the pings reach systemd through Notify=true.
+WatchdogSec=15min
 
 [Install]
 WantedBy=multi-user.target

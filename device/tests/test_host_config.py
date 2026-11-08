@@ -103,6 +103,16 @@ def test_memory_limits_do_not_stop_a_container_on_a_pi() -> None:
     assert re.search(r"^power_state:\n  mode: reboot$", user_data, re.MULTILINE)
 
 
+def test_a_hung_agent_restarts_before_the_backend_counts_it_offline() -> None:
+    unit = (HOST / "etc" / "containers" / "systemd" / "dekoi-agent.container").read_text()
+    watchdog = re.search(r"^WatchdogSec=(\d+)min$", unit, re.MULTILINE)
+    assert watchdog is not None
+    # private.mark_offline_devices: 30 minutes without a heartbeat.
+    assert 10 <= int(watchdog[1]) < 30
+    assert re.search(r"^Notify=true$", unit, re.MULTILINE)
+    assert 'notify("WATCHDOG=1")' in (DEVICE / "agent" / "dekoi_agent" / "__main__.py").read_text()
+
+
 def test_updates_install_where_first_boot_replaced_a_package_file() -> None:
     # Without both, unattended-upgrades holds back every update that brings
     # a new version of /etc/nftables.conf, /etc/ulogd.conf or policy.json.
