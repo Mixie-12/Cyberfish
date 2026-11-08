@@ -1,0 +1,24 @@
+Passord servere og tjenester (IKKE DEL)
+Gammel liste fra Marius. Flyttes til et passordhvelv når vi får tid.
+
+$name (Windows Server 2008 R2 SP1: SAP $sap_system, SQL Server, filserver)
+    Lokal administrator: Administrator / KsAdm!n2011
+    Domene-admin: $workgroup\$admin_user / Fryselager#28
+    Fjernskrivebord: $name:3389, samme bruker
+    SFTP og SSH for bankfiler: $admin_user, samme passord
+
+SQL Server 2008 R2 (instans MSSQLSERVER, database $sap_system)
+    sa / Sap2010!prd
+    $sql_user / Rapport2019 (bare lesing, brukes av Excel-rapportene i Finance)
+
+MySQL 5.1 (nettbutikken)
+    root / Nettbutikk2013
+
+Backup Exec 2012
+    Tjenestekonto: $workgroup\$backup_user / Backup2012!
+    Krypteringspassord for båndene: KS-tape-2016
+
+Brannmur FortiGate 60D: admin / Fortinet#KS (bare fra kontornettet)
+
+VPN hjemmefra: se VPN_access.txt
+Kjøleanlegg og PLS: se Operations\PLC_HMI_access.txt

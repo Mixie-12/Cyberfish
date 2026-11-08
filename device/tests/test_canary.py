@@ -4,12 +4,11 @@ import importlib.util
 import json
 import re
 import signal
-import struct
 import subprocess
 import sys
 import time
 import zipfile
-import zlib
+from datetime import UTC, datetime
 from pathlib import Path
 from types import ModuleType
 from xml.etree import ElementTree
@@ -19,9 +18,13 @@ import pytest
 CANARY = Path(__file__).parents[1] / "canary"
 PERSONA = CANARY / "persona"
 BAIT = PERSONA / "public"
-CONFIGURATION = ["smb.conf", "avahi-daemon.conf", "skin/index.html"]
+# What the Containerfile renders, from canary/.
+CONFIGURATION = ["opencanary.conf", "persona/smb.conf", "persona/avahi-daemon.conf", "persona/skin"]
 # Card numbers that payment processors document for testing; no card has them.
 TEST_CARDS = {"4111111111111111", "5555555555554444"}
+# Weights of the mod 11 check digit of Norwegian account and organisation numbers.
+ACCOUNT_WEIGHTS = [5, 4, 3, 2, 7, 6, 5, 4, 3, 2]
+ORG_WEIGHTS = [3, 2, 7, 6, 5, 4, 3, 2]
 
 
 def load(name: str) -> ModuleType:
@@ -33,27 +36,30 @@ def load(name: str) -> ModuleType:
 
 
 def render(tmp_path: Path) -> Path:
-    command = [sys.executable, "-I", str(CANARY / "render.py"), "persona.json", str(tmp_path)]
-    subprocess.run([*command, *CONFIGURATION, "public"], cwd=PERSONA, check=True)
+    command = [sys.executable, "-I", "render.py", "persona/persona.json", str(tmp_path)]
+    subprocess.run([*command, *CONFIGURATION, "persona/public"], cwd=CANARY, check=True)
     return tmp_path
 
 
 def test_persona_fills_every_placeholder(tmp_path: Path) -> None:
-    persona = json.loads((PERSONA / "persona.json").read_text())
+    persona = json.loads((PERSONA / "persona.json").read_text(encoding="utf-8"))
     out = render(tmp_path)
-    for template in CONFIGURATION:
-        text = (out / template).read_text()
-        assert "$" not in text, template
-    assert f"netbios name = {persona['name']}" in (out / "smb.conf").read_text()
-    assert f"host-name={persona['name']}" in (out / "avahi-daemon.conf").read_text()
-    page = (out / "skin" / "index.html").read_text()
-    assert f"<title>{persona['name']}</title>" in page
-    assert persona["model"] in page
-    assert persona["firmware"] in page
+    for path in (p for p in out.rglob("*") if p.is_file() and "public" not in p.parts):
+        assert "$" not in path.read_text(encoding="utf-8"), path
+    smb = (out / "persona" / "smb.conf").read_text(encoding="utf-8")
+    assert f"netbios name = {persona['name']}" in smb
+    assert f"workgroup = {persona['workgroup']}" in smb
+    assert f"server string = {persona['description']}" in smb
+    avahi = (out / "persona" / "avahi-daemon.conf").read_text(encoding="utf-8")
+    assert f"host-name={persona['name']}" in avahi
+    page = (out / "persona" / "skin" / "index.html").read_text(encoding="utf-8")
+    assert f"<title>{persona['company']} - " in page
+    for value in ("name", "workgroup", "sap_system"):
+        assert persona[value] in page, value
 
 
 def test_login_page_posts_what_opencanary_reads(tmp_path: Path) -> None:
-    page = (render(tmp_path) / "skin" / "index.html").read_text()
+    page = (render(tmp_path) / "persona" / "skin" / "index.html").read_text(encoding="utf-8")
     assert '<form method="post" action="/index.html">' in page
     assert 'name="username"' in page
     assert 'name="password"' in page
@@ -67,7 +73,7 @@ def test_login_page_posts_what_opencanary_reads(tmp_path: Path) -> None:
 
 def test_bait_files_are_small_and_open_in_the_format_their_name_says(tmp_path: Path) -> None:
     formats = load("render").FORMATS
-    public = render(tmp_path) / "public"
+    public = render(tmp_path) / "persona" / "public"
     sources = sorted(p.relative_to(BAIT) for p in BAIT.rglob("*") if p.is_file())
     made = sorted(p.relative_to(public) for p in public.rglob("*") if p.is_file())
     assert made == sorted(
@@ -85,33 +91,64 @@ def test_bait_files_are_small_and_open_in_the_format_their_name_says(tmp_path: P
                 assert "[Content_Types].xml" in package.namelist()
                 for part in package.namelist():
                     ElementTree.fromstring(package.read(part))  # noqa: S314 - our own build output
-        elif path.suffix == ".png":
-            width, height, length = struct.unpack(">II9xI", content[16:37])
-            assert content.startswith(b"\x89PNG\r\n\x1a\n")
-            assert len(zlib.decompress(content[41 : 41 + length])) == height * (1 + 3 * width)
         else:
             assert "$" not in content.decode("utf-8"), path
 
 
+def test_bait_files_are_dated_by_their_names_and_folders_by_their_newest_file(
+    tmp_path: Path,
+) -> None:
+    public = render(tmp_path) / "persona" / "public"
+
+    def day(path: Path) -> str:
+        return datetime.fromtimestamp(path.stat().st_mtime, UTC).date().isoformat()
+
+    payments = public / "Finance" / "Payments"
+    assert day(payments / "2026-11-06_fiskeroppgjor_uke45.csv") == "2026-11-06"
+    assert day(payments) == "2026-11-06"
+    assert day(public / "Scans" / "SCAN_20260914_101233.pdf") == "2026-09-14"
+    assert day(public / "IT" / "VPN_access.txt") == "2025-06-12"
+    newest = max(p.stat().st_mtime for p in public.rglob("*"))
+    assert public.stat().st_mtime == newest
+    hours = {datetime.fromtimestamp(p.stat().st_mtime, UTC).hour for p in public.rglob("*")}
+    assert hours <= set(range(8, 17)), "office hours"
+
+
 def test_every_bait_user_name_is_in_the_bait_files() -> None:
-    users = json.loads((PERSONA / "persona.json").read_text())["bait_users"]
+    users = json.loads((PERSONA / "persona.json").read_text(encoding="utf-8"))["bait_users"]
     text = "".join(p.read_text(encoding="utf-8") for p in BAIT.rglob("*") if p.is_file())
     for placeholder in users:
         assert f"${placeholder}" in text, placeholder
 
 
-def test_bait_numbers_are_test_numbers() -> None:
-    """Card numbers are documented test numbers, personal numbers synthetic.
+def luhn_valid(number: str) -> bool:
+    digits = [int(d) for d in reversed(number)]
+    doubled = [d * 2 - 9 if d * 2 > 9 else d * 2 for d in digits[1::2]]
+    return (sum(digits[::2]) + sum(doubled)) % 10 == 0
 
-    Synthetic Norwegian personal numbers (Skatteetaten's test population)
-    have 80 added to the month, so no person has one.
+
+def mod11_valid(number: str, weights: list[int]) -> bool:
+    check = (11 - sum(int(d) * w for d, w in zip(number, weights, strict=False)) % 11) % 11
+    return check == int(number[-1])
+
+
+def test_bait_numbers_cannot_be_real() -> None:
+    """Nothing in the bait is a real card, person, account or company.
+
+    Card numbers fail the Luhn check or are documented test numbers.
+    Personal numbers are synthetic: Skatteetaten's test population has 80
+    added to the month, so no person has one. Account (1234.56.78901) and
+    organisation numbers (123 456 789) fail their mod 11 check digit.
     """
     text = "\n".join(p.read_text(encoding="utf-8") for p in BAIT.rglob("*") if p.is_file())
-    numbers = [n.replace(" ", "") for n in re.findall(r"\d[\d ]{9,22}\d", text)]
-    cards = {n for n in numbers if len(n) == 16}
-    personal = [n for n in numbers if len(n) == 11]
-    assert cards and cards <= TEST_CARDS
+    cards = [re.sub(r"\D", "", n) for n in re.findall(r"(?<!\d)(?:\d{4}[ -]?){3}\d{4}(?!\d)", text)]
+    personal = re.findall(r"(?<![\d.])\d{6} ?\d{5}(?![\d.])", text)
+    accounts = [n.replace(".", "") for n in re.findall(r"(?<!\d)\d{4}\.\d{2}\.\d{5}(?!\d)", text)]
+    companies = [n.replace(" ", "") for n in re.findall(r"(?<!\d)\d{3} \d{3} \d{3}(?!\d)", text)]
+    assert cards and all(n in TEST_CARDS or not luhn_valid(n) for n in cards), cards
     assert personal and all(81 <= int(n[2:4]) <= 92 for n in personal), personal
+    assert accounts and not any(mod11_valid(n, ACCOUNT_WEIGHTS) for n in accounts), accounts
+    assert companies and not any(mod11_valid(n, ORG_WEIGHTS) for n in companies), companies
 
 
 @pytest.mark.skipif(sys.platform != "linux", reason="the supervisor runs on Linux")

@@ -1,0 +1,14 @@
+Oppgjørsrapport nettbutikk (Netaxept)	Brukersted 11207453	01.10.2026 - 31.10.2026	Oppgjørskonto 1503.94.01935
+
+Dato	Ordre	Kort	Kortnummer	Beløp NOK	Gebyr	Status
+02.10.2026	WS-118734	Visa	457312******0861	1 249,00	17,49	Oppgjort
+03.10.2026	WS-118741	Mastercard	552284******1475	3 480,00	48,72	Oppgjort
+07.10.2026	WS-118802	Visa	426684******7186	689,00	9,65	Oppgjort
+11.10.2026	WS-118866	Visa	476173******7204	12 950,00	181,30	Oppgjort
+14.10.2026	WS-118901	Mastercard	516815******3133	2 145,00	30,03	Oppgjort
+18.10.2026	WS-118957	Visa	454617******6672	899,00	12,59	Tilbakeført
+22.10.2026	WS-119013	Mastercard	542418******9035	5 760,00	80,64	Oppgjort
+27.10.2026	WS-119088	Visa	411773******0088	1 990,00	27,86	Oppgjort
+30.10.2026	WS-119140	Mastercard	222300******6301	7 320,00	102,48	Oppgjort
+
+Sum				36 482,00	510,76	9 transaksjoner

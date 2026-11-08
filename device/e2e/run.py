@@ -29,9 +29,12 @@ ATTACKER_IMAGE = (
     "3f4d6b32e26703c6082839234f43769d5046b3ac7c910033911d1e71d8cd630a"
 )
 CROCKFORD = "0123456789ABCDEFGHJKMNPQRSTVWXYZ"
-BAIT_FILE = "passord.txt"
+OPEN_SHARE = "Felles"
+BAIT_FILE = "IT/VPN_access.txt"
 DECOYS = ["ftp", "http", "mysql", "rdp", "redis", "smb", "ssh", "telnet", "vnc"]
-PERSONA = json.loads((Path(__file__).parents[1] / "canary/persona/persona.json").read_text())
+PERSONA = json.loads(
+    (Path(__file__).parents[1] / "canary/persona/persona.json").read_text(encoding="utf-8")
+)
 BAIT_USER = PERSONA["bait_users"]["admin_user"]
 SCANNER_IP = "192.0.2.10"
 SCAN_LOG = Path("/var/log/ulog/dekoi-scan.json")
@@ -119,9 +122,10 @@ def attack(password: str) -> None:
         # A user name from the bait files: flagged, and never counted as a repeat.
         f" && (smbclient //host.containers.internal/Finance -U '{BAIT_USER}%{password}' -c ls"
         " >/dev/null || true)"
-        f" && smbclient //host.containers.internal/Public -N -c 'get {BAIT_FILE} /dev/null'"
+        f" && smbclient //host.containers.internal/{OPEN_SHARE} -N"
+        f" -c 'get {BAIT_FILE} /dev/null'"
         " && curl -sf --max-time 10 http://host.containers.internal/index.html"
-        f" | grep -qF '<title>{PERSONA['name']}</title>'"
+        f" | grep -qF '{PERSONA['name']}'"
         " && (timeout 20 arp-scan --localnet --interface=eth0 >/dev/null || true)"
     )
     # Podman, unlike Docker, does not grant NET_RAW by default; arp-scan needs it.
@@ -220,7 +224,7 @@ def check_attack(backend: Backend, token: str) -> None:
     assert names == {("admin", False), (BAIT_USER, True)}, logins
     assert password not in json.dumps(rows), "a typed password reached the backend"
     opened = [e for e in rows if e["kind"] == "file_access"]
-    expected = {"share": "Public", "file": BAIT_FILE}
+    expected = {"share": OPEN_SHARE, "file": BAIT_FILE}
     assert all(e["detail"] == expected and e["severity"] == "critical" for e in opened), opened
     (scan,) = [e for e in rows if e["kind"] == "port_scan"]
     assert scan["src_ip"] == SCANNER_IP and scan["detail"]["ports"] == [25, 110, 139, 443, 445], (

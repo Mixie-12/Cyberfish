@@ -4,21 +4,26 @@ Usage: render.py PERSONA_JSON OUTPUT_DIR TEMPLATE...
 
 Each template, a file or a directory of them relative to the working
 directory, is written to the same relative path under OUTPUT_DIR, with the
-persona's $name, $model, $firmware and bait user names ($admin_user and so
-on) replaced. An unknown or misspelt placeholder fails the build.
+persona's values ($name, $company and so on) and bait user names
+($admin_user and so on) replaced. An unknown or misspelt placeholder fails
+the build.
 
-A template named like "Skattemelding 2025.pdf.txt" is written without its
-.txt, in the format the name says: a one-page PDF or a document with its
-lines, a spreadsheet with a row per line and a cell per tab, or a picture
-fading through the colours on its lines. So the bait stays small text in
-git, and the share serves files that open. Standard library only.
+A template named like "Lonnsliste_2026-10-25.xlsx.txt" is written without
+its .txt, in the format the name says: a one-page PDF or a document with its
+lines, or a spreadsheet with a row per line and a cell per tab. So the bait
+stays small text in git, and the share serves files that open.
+
+Every build writes the same bytes, yet the share should look used: a file
+is dated by the date in its name (2026-10-25 or 20261025), else UNDATED, at
+an office hour taken from its name; a folder by its newest entry.
+Standard library only.
 """
 
 import io
 import json
 import os
+import re
 import string
-import struct
 import sys
 import zipfile
 import zlib
@@ -26,10 +31,10 @@ from datetime import UTC, datetime
 from pathlib import Path
 from xml.sax.saxutils import escape
 
-# Every build writes the same bytes. The files carry this time, after the
-# newest thing they mention, instead of the build's.
-MODIFIED = (2026, 5, 2, 20, 41, 0)
-PICTURE_SIZE = (160, 120)
+UNDATED = (2025, 6, 12)
+DATED = re.compile(r"(20\d\d)-?(\d\d)-?(\d\d)")
+# What Office writes into its own packages.
+PACKAGE_TIME = (1980, 1, 1, 0, 0, 0)
 XML = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n'
 OPENXML = "http://schemas.openxmlformats.org"
 RELATIONSHIPS = f"{OPENXML}/officeDocument/2006/relationships"
@@ -42,9 +47,20 @@ def render(persona: dict, output: Path, templates: list[str]) -> None:
     for path in (p for template in templates for p in _files(Path(template))):
         text = string.Template(path.read_text(encoding="utf-8")).substitute(values)
         _write(output / path, text)
-    stamp = datetime(*MODIFIED, tzinfo=UTC).timestamp()
-    for path in output.rglob("*"):
+    # Reversed, every entry of a folder comes before the folder.
+    for path in sorted(output.rglob("*"), reverse=True):
+        if path.is_dir():
+            stamp = max(entry.stat().st_mtime for entry in path.iterdir())
+        else:
+            stamp = _stamp(path.name)
         os.utime(path, (stamp, stamp))
+
+
+def _stamp(name: str) -> float:
+    date = DATED.search(name)
+    day = tuple(int(part) for part in date.groups()) if date else UNDATED
+    minute = 8 * 60 + zlib.crc32(name.encode()) % (9 * 60)
+    return datetime(*day, minute // 60, minute % 60, tzinfo=UTC).timestamp()
 
 
 def _files(path: Path) -> list[Path]:
@@ -167,38 +183,12 @@ def _package(parts: dict[str, str]) -> bytes:
     buffer = io.BytesIO()
     with zipfile.ZipFile(buffer, "w") as archive:
         for name, xml in parts.items():
-            info = zipfile.ZipInfo(name, MODIFIED)
+            info = zipfile.ZipInfo(name, PACKAGE_TIME)
             archive.writestr(info, XML + xml, compress_type=zipfile.ZIP_DEFLATED)
     return buffer.getvalue()
 
 
-def png(lines: list[str]) -> bytes:
-    """A picture fading through the colours on its lines (#rrggbb), top to bottom."""
-    stops = [bytes.fromhex(line.strip().removeprefix("#")) for line in lines if line.strip()]
-    width, height = PICTURE_SIZE
-    pixels = b"".join(b"\0" + _blend(stops, y / (height - 1)) * width for y in range(height))
-    header = struct.pack(">IIBBBBB", width, height, 8, 2, 0, 0, 0)
-    return (
-        b"\x89PNG\r\n\x1a\n"
-        + _png_chunk(b"IHDR", header)
-        + _png_chunk(b"IDAT", zlib.compress(pixels, 9))
-        + _png_chunk(b"IEND", b"")
-    )
-
-
-def _blend(stops: list[bytes], position: float) -> bytes:
-    scaled = position * (len(stops) - 1)
-    index = min(int(scaled), len(stops) - 2)
-    weight = scaled - index
-    pair = zip(stops[index], stops[index + 1], strict=True)
-    return bytes(round(a + (b - a) * weight) for a, b in pair)
-
-
-def _png_chunk(kind: bytes, data: bytes) -> bytes:
-    return struct.pack(">I", len(data)) + kind + data + struct.pack(">I", zlib.crc32(kind + data))
-
-
-FORMATS = {".pdf": pdf, ".xlsx": xlsx, ".docx": docx, ".png": png}
+FORMATS = {".pdf": pdf, ".xlsx": xlsx, ".docx": docx}
 
 
 if __name__ == "__main__":

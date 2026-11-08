@@ -1,0 +1,20 @@
+Backup Exec 2012 - jobblogg (kopiert fra konsollen 06.11.2026)
+Server: $name   Mål: \\$name\Backup og LTO-5-bånd i skapet på serverrommet
+
+06.11.2026 01:00  SQL $sap_system full        OK     ${sap_system}_full_20261106_0100.bak     212,4 GB
+05.11.2026 01:00  SQL $sap_system full        OK     ${sap_system}_full_20261105_0100.bak     212,1 GB
+04.11.2026 01:00  SQL $sap_system full        FEIL   Båndet er fullt. Bytt bånd (LTO-5).
+03.11.2026 01:00  SQL $sap_system full        OK     ${sap_system}_full_20261103_0100.bak     211,8 GB
+02.11.2026 03:00  System state          OK     ${name}_systemstate_20261102.bkf
+02.11.2026 04:00  Felles og Finance     OK     filer_20261102.bkf                  48,9 GB
+01.11.2026 02:00  MySQL nettbutikk      OK     nettbutikk_20261101.sql.gz           1,2 GB
+
+Gamle sikkerhetskopier på \\$name\Backup (ikke slettet, plassen går snart ut):
+    ${sap_system}_full_20191231_aarsslutt.bak
+    ${sap_system}_full_20201231_aarsslutt.bak
+    ${sap_system}_full_20211231_aarsslutt.bak
+    lonn_2015-2021_eksport.zip
+    ${name}_C_2019-06-14.vhd
+    nettbutikk_kunder_med_kort_2017.sql.gz   (fra før Netaxept, sjekk om den må slettes)
+
+Tjenestekonto: $workgroup\$backup_user (passord i IT-mappen)

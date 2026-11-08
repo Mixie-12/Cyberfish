@@ -1,0 +1,13 @@
+Lønnsliste oktober 2026, utbetalt 25.10.2026	$company	Fra konto 3208.51.18657	KONFIDENSIELT
+
+Ansattnr	Navn	Fødselsnummer	Stilling	Avdeling	Brutto	Skattetrekk	Netto	Konto
+1001	Tor Arne Kvalvik	148374 62283	Daglig leder	Ledelse	98 500	37 430	61 070	1594.61.12895
+1004	Ingrid Solheim	028981 68363	Økonomisjef	Finance	81 200	29 232	51 968	3201.71.49431
+1012	Kenneth Bakke	239169 51655	Driftssjef	Operations	67 300	22 882	44 418	1209.70.28259
+1017	Marius Eide	088690 71480	IT-ansvarlig	IT	62 400	20 592	41 808	9365.02.76355
+1021	Hilde Strand	308186 65578	HR og lønn	HR	54 900	17 568	37 332	4312.75.34989
+1023	Siri Nygård	178778 57239	Regnskap	Finance	52 100	16 672	35 428	1720.04.63886
+1030	Jonas Moe	059293 58033	Kjøletekniker	Operations	51 800	16 058	35 742	2050.71.60686
+1034	Anita Berg	118471 72519	Butikksjef	Butikk	44 600	13 380	31 220	8220.97.79076
+
+Sum	8 ansatte				512 800	173 814	338 986	Skattetrekk til 9235.08.40842

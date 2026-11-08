@@ -57,10 +57,10 @@ def test_a_banner_decoy_is_named_by_its_service_key(tmp_path: Path) -> None:
 
 
 def test_bait_users_are_the_persona_names_in_lower_case(tmp_path: Path) -> None:
-    assert {"familie.admin", "nas-backup"} <= load_bait_users(PERSONA)
+    assert {"ks-drift", "ks_fibatch"} <= load_bait_users(PERSONA)
     persona = tmp_path / "persona.json"
-    persona.write_text('{"name": "x", "bait_users": {"admin_user": "Familie.Admin"}}')
-    assert load_bait_users(persona) == {"familie.admin"}
+    persona.write_text('{"name": "x", "bait_users": {"admin_user": "KS-Drift"}}')
+    assert load_bait_users(persona) == {"ks-drift"}
 
 
 def test_listening_ports_and_running_services(tmp_path: Path) -> None:
