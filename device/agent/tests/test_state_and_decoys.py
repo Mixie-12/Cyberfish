@@ -1,3 +1,4 @@
+import re
 import stat
 from pathlib import Path
 
@@ -7,6 +8,7 @@ from dekoi_agent.state import MAX_QUEUE, State
 
 CANARY_CONFIG = Path(__file__).parents[2] / "canary" / "opencanary.conf"
 PERSONA = Path(__file__).parents[2] / "canary" / "persona" / "persona.json"
+MIGRATIONS = Path(__file__).parents[3] / "backend" / "supabase" / "migrations"
 
 
 def test_state_round_trip_is_private(tmp_path: Path) -> None:
@@ -52,6 +54,19 @@ def test_decoys_are_the_canary_config_and_the_file_share() -> None:
         8000: "sap",
         50000: "sap",
     }
+
+
+def test_the_backend_takes_every_decoy_service_in_a_heartbeat() -> None:
+    # The backend refuses a heartbeat with a service it cannot store, and the
+    # device then looks offline.
+    (migration,) = MIGRATIONS.glob("*_core_schema.sql")
+    schema = migration.read_text()
+    name = re.search(r"domain private\.service_name as text\s+check \(value ~ '([^']+)'\)", schema)
+    limit = re.search(r"services private\.service_name\[\].*\(services\) <= (\d+)", schema)
+    assert name is not None and limit is not None
+    services = set(load_decoys(CANARY_CONFIG).values())
+    assert len(services) <= int(limit[1])
+    assert all(re.search(name[1], service) for service in services)
 
 
 def test_a_banner_decoy_is_named_by_its_service_key(tmp_path: Path) -> None:
