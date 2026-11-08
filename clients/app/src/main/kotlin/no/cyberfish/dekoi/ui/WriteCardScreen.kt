@@ -1,16 +1,15 @@
 package no.cyberfish.dekoi.ui
 
-import android.content.Context
-import android.content.Intent
+import android.content.ActivityNotFoundException
 import android.text.format.Formatter
-import android.util.Log
 import androidx.activity.compose.BackHandler
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.StringRes
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -19,7 +18,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.CutCornerShape
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -33,7 +31,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -52,23 +49,15 @@ import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.progressBarRangeInfo
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.em
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.NonCancellable
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
-import no.cyberfish.dekoi.CARD_LOG_TAG
+import no.cyberfish.dekoi.Card
 import no.cyberfish.dekoi.DekoiApplication
 import no.cyberfish.dekoi.R
-import no.cyberfish.dekoi.Reader
-import no.cyberfish.dekoi.WriteCardService
-import no.cyberfish.dekoi.WriteFailed
 import no.cyberfish.dekoi.WriteFailure
 import no.cyberfish.dekoi.WriteState
-import no.cyberfish.dekoi.allowReader
-import no.cyberfish.dekoi.cardReaders
-import no.cyberfish.dekoi.openCard
+import no.cyberfish.dekoi.cardTree
+import no.cyberfish.dekoi.pickerIntent
+import no.cyberfish.dekoi.removableCards
 import no.cyberfish.dekoi.shared.CardContent
 import no.cyberfish.dekoi.shared.ClaimCode
 import no.cyberfish.dekoi.ui.components.HudFrame
@@ -78,9 +67,10 @@ import no.cyberfish.dekoi.ui.components.Screen
 import no.cyberfish.dekoi.ui.components.TechnicalDetailsRow
 
 /**
- * Writing a card with this phone through a USB card reader (ADR 0014, 0017):
- * connect, choose the reader, confirm "Erase this card", write, link the
- * card's code to the account with [onClaim], then power on.
+ * Preparing a card with this phone (ADR 0017, 0031): connect the card,
+ * choose it and give DeKoi its root folder in Android's picker, confirm
+ * "Erase this card", copy the installer onto it, link the card's code to
+ * the account with [onClaim], then power on.
  */
 @Composable
 fun WriteCardScreen(
@@ -90,9 +80,8 @@ fun WriteCardScreen(
     val context = LocalContext.current
     val writing = remember { (context.applicationContext as DekoiApplication).cardWriting }
     val state by writing.state.collectAsStateWithLifecycle()
-    val scope = rememberCoroutineScope()
 
-    // Each visit starts over, unless a card is being written or waits to be
+    // Each visit starts over, unless a card is being prepared or waits to be
     // linked; rotating the phone is not a new visit.
     var entered by rememberSaveable { mutableStateOf(false) }
     LaunchedEffect(Unit) {
@@ -111,26 +100,27 @@ fun WriteCardScreen(
         if (waiting) claim()
     }
 
-    // Leaving lets go of a card that is open but not confirmed.
+    // Leaving lets go of a card that is chosen but not confirmed.
     val leave = {
         writing.reset()
         onBack()
     }
     BackHandler(onBack = leave)
 
-    fun open(reader: Reader) {
-        if (!writing.opening()) return
-        scope.launch {
-            if (!allowReader(context, reader)) return@launch writing.failed(WriteFailure.DENIED)
-            // Not cancellable: an opened card always reaches CardWriting, which closes it if no longer wanted.
-            withContext(Dispatchers.IO + NonCancellable) {
-                try {
-                    writing.opened(openCard(context, reader))
-                } catch (error: WriteFailed) {
-                    Log.w(CARD_LOG_TAG, "Opening the card failed", error)
-                    writing.failed(error.failure, error)
-                }
-            }
+    // The access is not made persistable: it ends when DeKoi closes.
+    val picker =
+        rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+            val card = (writing.state.value as? WriteState.Opening)?.card ?: return@rememberLauncherForActivityResult
+            writing.opened(cardTree(result, card))
+        }
+
+    fun open(card: Card) {
+        if (!writing.open(card)) return
+        val intent = pickerIntent(context, card) ?: return writing.failed(WriteFailure.CARD_ERROR)
+        try {
+            picker.launch(intent)
+        } catch (error: ActivityNotFoundException) {
+            writing.failed(WriteFailure.CARD_ERROR, error)
         }
     }
 
@@ -138,19 +128,19 @@ fun WriteCardScreen(
         item {
             when (val current = state) {
                 WriteState.Connect -> {
-                    Connect { writing.look(cardReaders(context)) }
+                    Connect { writing.look(removableCards(context)) }
                 }
 
                 is WriteState.Choose -> {
-                    Choose(current.readers, ::open) { writing.look(cardReaders(context)) }
+                    Choose(current.cards, ::open) { writing.look(removableCards(context)) }
                 }
 
-                WriteState.Opening -> {
+                is WriteState.Opening -> {
                     Step(R.string.write_step_choose) { Body(stringResource(R.string.write_opening)) }
                 }
 
                 is WriteState.Confirm -> {
-                    Confirm(current, onErase = { startWriting(context) }, onCancel = writing::reset)
+                    Confirm(current.card, onErase = writing::erase, onCancel = writing::reset)
                 }
 
                 is WriteState.Writing -> {
@@ -178,11 +168,6 @@ fun WriteCardScreen(
     }
 }
 
-// Started while the screen is in front; the service moves itself to the foreground.
-private fun startWriting(context: Context) {
-    context.startService(Intent(context, WriteCardService::class.java))
-}
-
 @Composable
 private fun Connect(onFind: () -> Unit) {
     Step(R.string.write_step_connect) {
@@ -193,30 +178,32 @@ private fun Connect(onFind: () -> Unit) {
 
 @Composable
 private fun Choose(
-    readers: List<Reader>,
-    onChoose: (Reader) -> Unit,
+    cards: List<Card>,
+    onChoose: (Card) -> Unit,
     onLookAgain: () -> Unit,
 ) {
     Step(R.string.write_step_choose) {
-        if (readers.isEmpty()) {
-            Body(stringResource(R.string.write_no_reader))
+        if (cards.isEmpty()) {
+            Body(stringResource(R.string.write_no_card))
             Action(R.string.write_look_again, onLookAgain)
             return@Step
         }
         Body(stringResource(R.string.write_choose_body))
         Column {
-            readers.forEach { reader ->
+            cards.forEach { card ->
                 HorizontalDivider()
-                Text(
-                    reader.name,
-                    style = MaterialTheme.typography.bodyLarge,
-                    modifier =
-                        Modifier
-                            .fillMaxWidth()
-                            .heightIn(min = Dimens.row)
-                            .clickable(role = Role.Button) { onChoose(reader) }
-                            .padding(vertical = Dimens.spaceL),
-                )
+                Row(
+                    Modifier
+                        .fillMaxWidth()
+                        .heightIn(min = Dimens.row)
+                        .clickable(role = Role.Button) { onChoose(card) }
+                        .padding(vertical = Dimens.spaceL),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(Dimens.spaceM),
+                ) {
+                    Text(card.name, style = MaterialTheme.typography.bodyLarge, modifier = Modifier.weight(1f))
+                    Size(card.bytes)
+                }
             }
             HorizontalDivider()
         }
@@ -224,8 +211,17 @@ private fun Choose(
 }
 
 @Composable
+private fun Size(bytes: Long) {
+    Text(
+        Formatter.formatShortFileSize(LocalContext.current, bytes),
+        style = MaterialTheme.typography.bodyLarge.tabular(),
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+    )
+}
+
+@Composable
 private fun Confirm(
-    card: WriteState.Confirm,
+    card: Card,
     onErase: () -> Unit,
     onCancel: () -> Unit,
 ) {
@@ -235,12 +231,8 @@ private fun Confirm(
         HudFrame(Modifier.fillMaxWidth()) {
             Column(verticalArrangement = Arrangement.spacedBy(Dimens.spaceS)) {
                 Text(card.name, style = MaterialTheme.typography.titleMedium)
-                Text(
-                    Formatter.formatShortFileSize(context, card.bytes),
-                    style = MaterialTheme.typography.bodyLarge.tabular(),
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-                Body(stringResource(R.string.write_confirm_body, Formatter.formatShortFileSize(context, CardContent.image.downloadSize)))
+                Size(card.bytes)
+                Body(stringResource(R.string.write_confirm_body, Formatter.formatShortFileSize(context, CardContent.installer.size)))
                 OutlinedButton(
                     onClick = onErase,
                     modifier = Modifier.fillMaxWidth().heightIn(min = Dimens.touchTarget),
@@ -270,23 +262,25 @@ private fun RefuseObscuredTouches() {
 
 @Composable
 private fun Writing(progress: WriteState.Writing) {
-    val image = CardContent.image
-    // Checking reads what writing wrote, several times faster.
-    val fraction = (WRITE_SHARE * progress.written + (1 - WRITE_SHARE) * progress.checked) / image.extractSize
+    val phases =
+        listOf(
+            Triple(R.string.write_phase_download, progress.downloaded, CardContent.installer.size),
+            Triple(R.string.write_phase_write, progress.written, progress.total),
+            Triple(R.string.write_phase_check, progress.checked, progress.total),
+        )
+    // Each phase moves about as many bytes, so each fills a third of the line.
+    val fraction = phases.sumOf { (_, done, total) -> if (total > 0) done.toDouble() / total else 0.0 } / phases.size
     Step(R.string.write_step_writing) {
         GlowLine(fraction.toFloat())
         Column {
-            Phase(R.string.write_phase_download, progress.downloaded, image.downloadSize)
-            Phase(R.string.write_phase_write, progress.written, image.extractSize)
-            Phase(R.string.write_phase_check, progress.checked, image.extractSize)
+            phases.forEach { (name, done, total) -> Phase(name, done, total) }
             HorizontalDivider()
         }
         Body(stringResource(R.string.write_keep_connected))
     }
 }
 
-private const val WRITE_SHARE = 0.8
-
+/** One phase of preparing; [total] is 0 while it is not known yet. */
 @Composable
 private fun Phase(
     @StringRes name: Int,
@@ -294,7 +288,7 @@ private fun Phase(
     total: Long,
 ) {
     val context = LocalContext.current
-    val finished = done >= total
+    val finished = total in 1..done
     val color =
         when {
             finished -> MaterialTheme.colorScheme.onSurface
@@ -310,7 +304,7 @@ private fun Phase(
         Text(stringResource(name), style = MaterialTheme.typography.bodyLarge, color = color, modifier = Modifier.weight(1f))
         if (finished) {
             Icon(painterResource(R.drawable.ic_check), contentDescription = stringResource(R.string.write_phase_done), tint = color)
-        } else {
+        } else if (total > 0) {
             Text(
                 stringResource(
                     R.string.write_progress,
@@ -329,7 +323,7 @@ private fun Linking() {
     Step(R.string.write_step_link) { Body(stringResource(R.string.write_linking)) }
 }
 
-/** The card is written, but linking it failed: try again, or keep the code to type later. */
+/** The card is prepared, but linking it failed: try again, or keep the code to type later. */
 @Composable
 private fun Unlinked(
     code: ClaimCode,
@@ -378,23 +372,19 @@ private fun Failed(
     failed: WriteState.Failed,
     onTryAgain: () -> Unit,
 ) {
-    val context = LocalContext.current
+    val size = Formatter.formatShortFileSize(LocalContext.current, failed.bytes ?: 0)
     val message =
         when (failed.failure) {
-            WriteFailure.NO_CARD -> {
-                stringResource(R.string.write_failed_no_card)
-            }
-
-            WriteFailure.SEVERAL_CARDS -> {
-                stringResource(R.string.write_failed_several)
-            }
-
             WriteFailure.DENIED -> {
                 stringResource(R.string.write_failed_denied)
             }
 
-            WriteFailure.UNSUITABLE -> {
-                stringResource(R.string.write_failed_unsuitable, Formatter.formatShortFileSize(context, failed.bytes ?: 0))
+            WriteFailure.TOO_SMALL -> {
+                stringResource(R.string.write_failed_too_small, size)
+            }
+
+            WriteFailure.TOO_LARGE -> {
+                stringResource(R.string.write_failed_too_large, size)
             }
 
             WriteFailure.LOCKED -> {
@@ -424,7 +414,7 @@ private fun Failed(
     }
 }
 
-/** Collapsed: what the reader, the phone or the download reported, for whoever helps the owner. */
+/** Collapsed: what the phone or the download reported, for whoever helps the owner. */
 @Composable
 private fun TechnicalDetail(text: String) {
     var open by rememberSaveable { mutableStateOf(false) }

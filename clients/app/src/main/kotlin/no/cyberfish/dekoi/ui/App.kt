@@ -110,7 +110,7 @@ sealed interface Route {
 
     @Serializable data object AddDekoi : Route
 
-    /** Writing a DeKoi card with this phone (ADR 0014, 0017). */
+    /** Preparing a DeKoi card with this phone (ADR 0017, 0031). */
     @Serializable data object WriteCard : Route
 
     @Serializable data object Licences : Route

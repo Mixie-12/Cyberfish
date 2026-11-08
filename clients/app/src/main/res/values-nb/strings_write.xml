@@ -2,31 +2,30 @@
 <resources>
     <string name="write_title">Gjør klar minnekortet</string>
 
-    <string name="write_step_connect">01 / KOBLE TIL KORTLESEREN</string>
-    <string name="write_connect_body">Sett et minnekort på 8 til 256 GB i en USB-kortleser, og koble så kortleseren til denne telefonen.</string>
-    <string name="write_connect_button">Finn kortleseren</string>
+    <string name="write_step_connect">01 / KOBLE TIL KORTET</string>
+    <string name="write_connect_body">Sett et minnekort på 8 til 32 GB i en USB-kortleser, og koble så kortleseren til denne telefonen.</string>
+    <string name="write_connect_button">Finn kortet</string>
 
-    <string name="write_step_choose">02 / VELG KORTLESEREN</string>
-    <string name="write_choose_body">Velg kortleseren din. Telefonen spør deg så om DeKoi får bruke den.</string>
-    <string name="write_reader_unnamed">USB-kortleser</string>
-    <string name="write_no_reader">Fant ingen kortleser. Sjekk at den er koblet til denne telefonen.</string>
+    <string name="write_step_choose">02 / VELG KORTET</string>
+    <string name="write_choose_body">Velg kortet ditt. Telefonen åpner det så: velg Bruk denne mappen, og deretter Tillat.</string>
+    <string name="write_no_card">Fant ikke noe kort. Sjekk at kortet står i kortleseren, og at kortleseren er koblet til denne telefonen.</string>
     <string name="write_look_again">Se etter igjen</string>
-    <string name="write_opening">Leser kortet …</string>
+    <string name="write_opening">Åpner kortet …</string>
 
     <string name="write_step_confirm">03 / SLETT DETTE KORTET</string>
-    <string name="write_confirm_body">Alt på dette kortet blir slettet. Telefonen laster så ned Raspberry Pi OS, %1$s, så Wi-Fi er best, og skriver det til kortet sammen med innstillingene for din DeKoi. Dette kan ta en halvtime. Du kan bruke andre apper så lenge.</string>
+    <string name="write_confirm_body">Alt på dette kortet blir slettet. Telefonen laster så ned installasjonsprogrammet til DeKoi, %1$s, og kopierer det til kortet sammen med innstillingene for din DeKoi. Dette tar noen minutter.</string>
     <string name="write_erase">Slett dette kortet</string>
 
-    <string name="write_step_writing">04 / SKRIV TIL KORTET</string>
+    <string name="write_step_writing">04 / GJØR KLAR KORTET</string>
     <string name="write_phase_download">Laster ned</string>
-    <string name="write_phase_write">Skriver</string>
+    <string name="write_phase_write">Kopierer</string>
     <string name="write_phase_check">Kontrollerer</string>
     <string name="write_phase_done">Ferdig</string>
     <string name="write_progress">%1$s av %2$s</string>
-    <string name="write_keep_connected">La kortleseren være tilkoblet til kortet er klart.</string>
+    <string name="write_keep_connected">La kortet være tilkoblet, og bli i denne appen til kortet er klart.</string>
 
     <string name="write_step_link">05 / KOBLE KORTET TIL KONTOEN</string>
-    <string name="write_linking">Kortet er klart. Kobler det til kontoen din …</string>
+    <string name="write_linking">Kortet er klart. Kobler det til kontoen din …</string>
     <string name="write_link_failed">Kortet er klart, men det er ikke koblet til kontoen din ennå.</string>
     <string name="write_link_later">Du kan også koble det til senere: gå til «Legg til en DeKoi» og skriv inn denne koden.</string>
 
@@ -34,22 +33,16 @@
     <string name="write_done_body">%1$s er koblet til kontoen din.</string>
     <string name="write_next_card">Sett minnekortet i din DeKoi.</string>
     <string name="write_next_cable">Koble din DeKoi til ruteren med en nettverkskabel.</string>
-    <string name="write_next_power">Koble til strømmen. Din DeKoi setter seg opp selv og dukker opp i appen i løpet av noen minutter.</string>
+    <string name="write_next_power">Koble til strømmen. Din DeKoi setter seg nå opp selv mens lyset blinker. Dette tar omtrent 10 minutter, og så dukker den opp i appen.</string>
     <string name="write_done_button">Ferdig</string>
 
     <string name="write_step_failed">KORTET ER IKKE KLART</string>
-    <string name="write_failed_no_card">Det er ikke noe kort i kortleseren. Sett inn kortet og prøv igjen.</string>
-    <string name="write_failed_several">Det står mer enn ett kort i kortleseren. La bare kortet du vil skrive til, stå i den.</string>
-    <string name="write_failed_denied">DeKoi har ikke lov til å bruke kortleseren. Prøv igjen, og tillat det når telefonen spør.</string>
-    <string name="write_failed_unsuitable">Dette kortet rommer %1$s. Bruk et minnekort på 8 til 256 GB.</string>
+    <string name="write_failed_denied">DeKoi trenger hele kortet. Prøv igjen: velg selve kortet, ikke en mappe på det, og gi tilgang.</string>
+    <string name="write_failed_too_small">Telefonen ser %1$s på dette kortet. Bruk et minnekort på 8 til 32 GB. Hvis kortet er større, har det fortsatt et tidligere oppsett: formater det i lagringsinnstillingene på telefonen, og prøv igjen.</string>
+    <string name="write_failed_too_large">Dette kortet rommer %1$s. Din DeKoi kan bare starte fra et kort på 8 til 32 GB som er gjort klart med en telefon. Bruk et mindre kort, eller gjør klar dette med DeKoi Setup på en datamaskin.</string>
     <string name="write_failed_locked">Kortet er låst. Skyv den lille bryteren på siden av kortet opp, og prøv igjen.</string>
     <string name="write_failed_network">Nedlastingen stoppet. Sjekk internettforbindelsen og prøv igjen.</string>
-    <string name="write_failed_download">Nedlastingen kom fram skadet, så kortet ble ikke ferdig. Prøv igjen.</string>
-    <string name="write_failed_card">Kortet sluttet å svare. Sjekk at kortleseren er tilkoblet, og prøv igjen.</string>
-    <string name="write_failed_verify">Kortet beholdt ikke det som ble skrevet. Prøv et annet kort.</string>
-
-    <string name="write_notification_title">Minnekort til din DeKoi</string>
-    <string name="write_notification_writing">Skriver til kortet. La kortleseren være tilkoblet.</string>
-    <string name="write_notification_written">Kortet er klart. Åpne DeKoi for å koble det til kontoen din.</string>
-    <string name="write_notification_failed">Kortet er ikke klart. Åpne DeKoi for å se hvorfor.</string>
+    <string name="write_failed_download">Nedlastingen kom fram skadet. Ingenting på kortet ble endret. Prøv igjen.</string>
+    <string name="write_failed_card">Telefonen fikk ikke skrevet til kortet. Sjekk at kortleseren er tilkoblet, og prøv igjen.</string>
+    <string name="write_failed_verify">Kortet beholdt ikke det som ble kopiert til det. Prøv et annet kort.</string>
 </resources>

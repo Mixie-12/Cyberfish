@@ -1,55 +1,142 @@
 package no.cyberfish.dekoi
 
 import androidx.annotation.StringRes
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import me.jahnen.libaums.core.driver.BlockDeviceDriver
+import kotlinx.coroutines.launch
 import no.cyberfish.dekoi.shared.ClaimCode
-import no.cyberfish.dekoi.shared.Image
-import java.io.Closeable
+import java.io.IOException
 
-/** A USB card reader, by its device name in UsbManager. */
-data class Reader(
-    val id: String,
+/** A memory card Android has mounted, in a card reader or the phone's own slot. */
+data class Card(
+    /** The volume's UUID, which also names it in Android's storage provider. */
+    val uuid: String,
     val name: String,
+    /** The size of its file system, as Android reports it; 0 when it does not. */
+    val bytes: Long,
+    /** Mounted read-only: the card's lock switch is down. */
+    val locked: Boolean,
 )
 
-/** A card in a reader the owner chose, open until it is written or let go. */
-class OpenCard(
-    val reader: Reader,
-    val device: BlockDeviceDriver,
-    connection: Closeable,
-) : Closeable by connection {
-    val name: String get() = reader.name
-    val bytes: Long get() = device.blocks * device.blockSize
+/** Why preparing a card stopped; each has its own message for the owner. */
+enum class WriteFailure {
+    DENIED,
+    TOO_SMALL,
+    TOO_LARGE,
+    LOCKED,
+    NETWORK,
+    DOWNLOAD_DAMAGED,
+    CARD_ERROR,
+    NOT_VERIFIED,
 }
 
-/** The steps of writing a card with this phone (ADR 0014, 0017). */
+/** Preparing stopped; the owner is told [failure]. */
+class WriteFailed(
+    val failure: WriteFailure,
+    cause: Throwable? = null,
+) : IOException(failure.name, cause)
+
+/**
+ * Runs a step whose errors mean [failure]: every exception the network,
+ * the phone's storage or Android's storage provider throws (IOException,
+ * SecurityException, IllegalArgumentException, IllegalStateException)
+ * becomes [WriteFailed], so none closes the app and each is told as what
+ * the step was doing.
+ */
+internal inline fun <T> failingWith(
+    failure: WriteFailure,
+    step: () -> T,
+): T =
+    try {
+        step()
+    } catch (error: WriteFailed) {
+        throw error
+    } catch (error: IOException) {
+        throw WriteFailed(failure, error)
+    } catch (error: RuntimeException) {
+        throw WriteFailed(failure, error)
+    }
+
+// The chain and length of a technical detail.
+private const val DETAIL_CAUSES = 6
+private const val DETAIL_LENGTH = 1000
+
+/**
+ * Why preparing stopped, for the technical details under the failure:
+ * each cause's type and message, outermost first, as plain text.
+ */
+fun technicalDetail(error: Throwable): String =
+    generateSequence(error) { it.cause }
+        .take(DETAIL_CAUSES)
+        .joinToString("\n") { "${it.javaClass.simpleName}: ${it.message.orEmpty()}" }
+        .filter { it == '\n' || !it.isISOControl() }
+        .take(DETAIL_LENGTH)
+
+// Android formats a card of up to 32,896 MiB as FAT32 and a larger one as
+// exFAT (vold, PublicVolume::doFormat), which the Raspberry Pi cannot start
+// from (ADR 0031). Cards hold a few percent less than their nominal size,
+// so 8 GB cards pass and 4 GB cards do not.
+private const val MIN_CARD_BYTES = 7_000_000_000L
+private const val MAX_CARD_BYTES = 32_896L * 1024 * 1024
+
+/** Why [card] cannot be prepared, or null when it can. */
+fun cardProblem(card: Card): WriteFailure? =
+    when {
+        card.locked -> WriteFailure.LOCKED
+        card.bytes < MIN_CARD_BYTES -> WriteFailure.TOO_SMALL
+        card.bytes > MAX_CARD_BYTES -> WriteFailure.TOO_LARGE
+        else -> null
+    }
+
+// The provider StorageVolume.createOpenDocumentTreeIntent opens. A volume's
+// root folder there is "<UUID>:" and any other folder "<UUID>:<path>"
+// (ExternalStorageProvider.getDocIdForFile).
+private const val STORAGE_PROVIDER = "com.android.externalstorage.documents"
+
+/**
+ * True for the root folder of [card] in Android's storage provider: never
+ * a folder on it, and never another volume, such as the phone's storage.
+ */
+fun isCardRoot(
+    authority: String?,
+    treeDocumentId: String,
+    card: Card,
+): Boolean = authority == STORAGE_PROVIDER && treeDocumentId == "${card.uuid}:"
+
+/** The steps of preparing a card with this phone (ADR 0017, 0031). */
 sealed interface WriteState {
     data object Connect : WriteState
 
-    /** The readers found; empty when none is connected. */
+    /** The cards found; empty when none is connected. */
     data class Choose(
-        val readers: List<Reader>,
+        val cards: List<Card>,
     ) : WriteState
 
-    /** Android asks the owner about the chosen reader, then the card is read. */
-    data object Opening : WriteState
+    /** Android's picker asks the owner whether DeKoi may use [card]. */
+    data class Opening(
+        val card: Card,
+    ) : WriteState
 
     /** Waiting for the owner to confirm "Erase this card". */
     data class Confirm(
-        val name: String,
-        val bytes: Long,
+        val card: Card,
+        /** The card's root folder, as Android's picker granted it. */
+        val tree: String,
     ) : WriteState
 
     data class Writing(
         val downloaded: Long = 0,
         val written: Long = 0,
         val checked: Long = 0,
+        /** Bytes to copy to the card; 0 until the bundle is downloaded. */
+        val total: Long = 0,
     ) : WriteState
 
-    /** The card is written and verified; its code waits to be linked to the account. */
+    /** The card is prepared and verified; its code waits to be linked to the account. */
     data class Written(
         val code: ClaimCode,
         /** Why the last attempt to link it failed; null before the first one. */
@@ -74,60 +161,63 @@ sealed interface WriteState {
         val failure: WriteFailure,
         /** The card's size, when it was the problem. */
         val bytes: Long? = null,
-        /** What the reader, the phone or the download reported, from [technicalDetail]. */
+        /** What the phone or the download reported, from [technicalDetail]. */
         val detail: String? = null,
     ) : WriteState
 }
 
 /**
- * Writing one card, shared by the screen and WriteCardService. Each step
- * only follows the one before it, so a late or repeated call (a second tap,
- * progress after a failure) changes nothing. The open card is held here
- * until the service takes it to write.
+ * Preparing one card. It outlives the screen that starts it: [prepare]
+ * runs in [scope], so rotating the phone or leaving the screen does not
+ * stop it, and a written code waits here until it is linked. Each step
+ * only follows the one before it, so a late or repeated call (a second
+ * tap, progress after a failure) changes nothing.
  */
 class CardWriting(
-    private val image: Image,
+    private val prepare: (WriteState.Confirm, (WriteState.Writing) -> Unit) -> ClaimCode,
+    private val scope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.IO),
 ) {
     private val states = MutableStateFlow<WriteState>(WriteState.Connect)
     val state: StateFlow<WriteState> = states.asStateFlow()
-    private var card: OpenCard? = null
 
-    /** Shows the readers connected now. */
+    /** Shows the cards connected now. */
     @Synchronized
-    fun look(readers: List<Reader>) {
+    fun look(cards: List<Card>) {
         val current = states.value
-        if (current is WriteState.Connect || current is WriteState.Choose) states.value = WriteState.Choose(readers)
+        if (current is WriteState.Connect || current is WriteState.Choose) states.value = WriteState.Choose(cards)
     }
 
-    /** True when the owner may open a reader now; then it is opening. */
+    /**
+     * True when Android's picker may open on [card] now. A card that cannot
+     * be prepared is refused here, before the owner is asked anything.
+     */
     @Synchronized
-    fun opening(): Boolean {
+    fun open(card: Card): Boolean {
         if (states.value !is WriteState.Choose) return false
-        states.value = WriteState.Opening
-        return true
+        val problem = cardProblem(card)
+        states.value = if (problem == null) WriteState.Opening(card) else WriteState.Failed(problem, card.bytes)
+        return problem == null
     }
 
-    /** The chosen card is open: the owner confirms it, or it is refused. */
+    /** The picker's answer: the card's root folder, or null when the owner gave none or another folder. */
     @Synchronized
-    fun opened(opened: OpenCard) {
-        if (states.value != WriteState.Opening) return opened.close()
-        if (!suitableCard(opened.device.blockSize, opened.bytes, image)) {
-            opened.close()
-            states.value = WriteState.Failed(WriteFailure.UNSUITABLE, opened.bytes)
-            return
-        }
-        card = opened
-        states.value = WriteState.Confirm(opened.name, opened.bytes)
+    fun opened(tree: String?) {
+        val current = states.value as? WriteState.Opening ?: return
+        states.value = if (tree == null) WriteState.Failed(WriteFailure.DENIED) else WriteState.Confirm(current.card, tree)
     }
 
-    /** The owner confirmed: hands the card to the writer, or null if nothing is confirmed. */
+    /** The owner confirmed: the card is prepared in the background. */
     @Synchronized
-    fun erase(): OpenCard? {
-        if (states.value !is WriteState.Confirm) return null
-        val confirmed = card
-        card = null
+    fun erase() {
+        val confirmed = states.value as? WriteState.Confirm ?: return
         states.value = WriteState.Writing()
-        return confirmed
+        scope.launch {
+            try {
+                written(prepare(confirmed, ::progress))
+            } catch (error: WriteFailed) {
+                failed(error.failure, error)
+            }
+        }
     }
 
     @Synchronized
@@ -140,22 +230,15 @@ class CardWriting(
         if (states.value is WriteState.Writing) states.value = WriteState.Written(code)
     }
 
-    /**
-     * Stops with [failure]. The technical details hold [cause], when there is
-     * one, and whether the phone still saw the reader afterwards, when known.
-     */
+    /** Stops with [failure]; the technical details hold [cause], when there is one. */
     @Synchronized
     fun failed(
         failure: WriteFailure,
         cause: Throwable? = null,
-        readerConnected: Boolean? = null,
     ) {
         val current = states.value
         if (current is WriteState.Opening || current is WriteState.Confirm || current is WriteState.Writing) {
-            release()
-            val presence = readerConnected?.let { if (it) "Reader still connected" else "Reader no longer connected" }
-            val detail = listOfNotNull(cause?.let(::technicalDetail), presence).joinToString("\n").ifEmpty { null }
-            states.value = WriteState.Failed(failure, detail = detail)
+            states.value = WriteState.Failed(failure, detail = cause?.let(::technicalDetail))
         }
     }
 
@@ -191,14 +274,13 @@ class CardWriting(
     }
 
     /**
-     * Starts over and lets go of an open card. A card being written, or a
-     * written card whose code is not linked yet, is kept.
+     * Starts over. A card being prepared, or a prepared card whose code is
+     * not linked yet, is kept.
      */
     @Synchronized
     fun reset() {
         val current = states.value
         if (current is WriteState.Writing || current is WriteState.Written || current is WriteState.Linking) return
-        release()
         states.value = WriteState.Connect
     }
 
@@ -210,10 +292,5 @@ class CardWriting(
     fun enter() {
         val current = states.value
         if (current is WriteState.Linking) states.value = WriteState.Written(current.code) else reset()
-    }
-
-    private fun release() {
-        card?.close()
-        card = null
     }
 }

@@ -6,13 +6,12 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import com.google.firebase.FirebaseApp
 import com.google.firebase.messaging.FirebaseMessaging
-import no.cyberfish.dekoi.shared.CardContent
 
 class DekoiApplication : Application() {
     val backend: Backend by lazy { Backend(BuildConfig.SUPABASE_URL, BuildConfig.SUPABASE_KEY) }
 
-    /** Writing a card outlives the screen that starts it (WriteCardService). */
-    val cardWriting = CardWriting(CardContent.image)
+    /** Preparing a card outlives the screen that starts it. */
+    val cardWriting = CardWriting({ confirmed, onProgress -> prepareCard(this, confirmed, onProgress) })
 
     /** False in debug builds made without the Firebase settings. */
     var pushEnabled = false
