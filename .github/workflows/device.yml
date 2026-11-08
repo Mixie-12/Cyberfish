@@ -36,6 +36,7 @@ jobs:
           docker run --rm -v "$PWD:/repo:ro" -w /repo
           hadolint/hadolint@sha256:9a3944b7fddcb947d1ffd90829ac1a6e5c30479223358f249d8b96c7d0019e27
           hadolint device/canary/Containerfile device/agent/Containerfile device/ids/Containerfile
+          device/installer/Containerfile
       - name: Firewall rules, Quadlet units, the Wi-Fi scan and its units on Debian Trixie
         run: >-
           docker run --rm --cap-add NET_ADMIN -v "$PWD/device/host:/host:ro"

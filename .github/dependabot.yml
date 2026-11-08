@@ -31,7 +31,7 @@ updates:
       pip:
         patterns: ["*"]
   - package-ecosystem: docker
-    directories: [/device/agent, /device/canary, /device/ids]
+    directories: [/device/agent, /device/canary, /device/ids, /device/installer]
     schedule:
       interval: weekly
     cooldown:
