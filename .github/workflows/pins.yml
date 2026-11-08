@@ -56,7 +56,8 @@ jobs:
           fi
           # The Debian release is the word before -arm64-lite in the file name.
           owner="$(jq -r --slurpfile pinned device/image.json '
-            def release: .url | capture("-raspios-(?<r>[a-z]+)-arm64-lite\\.img\\.xz$").r;
+            def release: (.url | capture("-raspios-(?<r>[a-z]+)-arm64-lite\\.img\\.xz$").r)
+              // error("no Debian release in \(.url)");
             if release != ($pinned[0] | release) then "Raspberry Pi OS on Debian \(release) needs a test on a Raspberry Pi"
             elif .init_format != $pinned[0].init_format then "Raspberry Pi OS \(.release_date) has first-boot format \(.init_format)"
             else "" end' <<< "$latest")"
