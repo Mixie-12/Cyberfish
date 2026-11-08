@@ -37,8 +37,6 @@ googleid = { module = "com.google.android.libraries.identity.googleid:googleid",
 code-scanner = { module = "com.google.android.gms:play-services-code-scanner", version = "16.1.0" }
 firebase-messaging = { module = "com.google.firebase:firebase-messaging", version = "26.0.1" }
 zxing-core = { module = "com.google.zxing:core", version = "3.5.4" }
-libaums = { module = "me.jahnen.libaums:core", version = "0.10.0" }
-xz = { module = "org.tukaani:xz", version = "1.12" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

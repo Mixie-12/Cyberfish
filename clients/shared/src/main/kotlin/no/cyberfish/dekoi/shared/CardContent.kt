@@ -2,11 +2,12 @@ package no.cyberfish.dekoi.shared
 
 /**
  * What goes on a DeKoi card, from the repository's `device/` directory at
- * build time (see build.gradle.kts): the pinned image and the files the
- * cloud-init template includes.
+ * build time (see build.gradle.kts): the pinned image, the pinned installer
+ * bundle and the files the cloud-init template includes.
  */
 object CardContent {
     val image: Image = pinnedImage
+    val installer: Installer = pinnedInstaller
 
     fun read(path: String): String {
         val stream = checkNotNull(CardContent::class.java.getResourceAsStream("/device/$path")) { "device/$path is not bundled" }
@@ -37,8 +38,28 @@ data class Image(
         require(extractSize % SECTOR == 0L) { "The image is not a whole number of sectors" }
     }
 
-    companion object {
+    private companion object {
         const val SECTOR = 512
-        private val SHA256 = Regex("[0-9a-f]{64}")
     }
 }
+
+/**
+ * The installer bundle the phone puts on a card (ADR 0031): a zip, pushed
+ * to ghcr.io as the one layer of an OCI artifact and fetched by digest.
+ */
+data class Installer(
+    /** The repository on ghcr.io, such as mixie-12/dekoi-installer. */
+    val repository: String,
+    /** SHA-256 of the zip, which is also its blob digest. */
+    val sha256: String,
+    val size: Long,
+) {
+    val digest: String get() = "sha256:$sha256"
+
+    init {
+        require(sha256.matches(SHA256)) { "Not a SHA-256" }
+        require(size > 0) { "The size must be positive" }
+    }
+}
+
+private val SHA256 = Regex("[0-9a-f]{64}")

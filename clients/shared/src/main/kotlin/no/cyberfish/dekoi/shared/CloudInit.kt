@@ -30,8 +30,9 @@ sealed interface Network {
 
 /**
  * Renders a card's cloud-init files, for DeKoi Setup (which gives them to
- * Raspberry Pi Imager) and for the app (which writes the card itself, ADR
- * 0014). Pure: the caller supplies the template and the files it includes.
+ * Raspberry Pi Imager) and for the app (which puts them on the card for the
+ * installer, ADR 0031). Pure: the caller supplies the template and the
+ * files it includes.
  */
 object CloudInit {
     private val include = Regex("""^( +)content: !file (\S+)$""")
@@ -109,26 +110,14 @@ object CloudInit {
      */
     fun instanceId(epochMillis: Long): String = "dekoi-$epochMillis"
 
-    /** The NoCloud meta-data Imager writes next to user-data. */
-    fun metaData(instanceId: String): String = "instance-id: ${checked(instanceId)}\n"
-
     /**
-     * cmdline.txt with the NoCloud data source and instance ID added, as
-     * Imager does, so that cloud-init keeps its cache across reboots instead
-     * of searching the boot partition again on each one.
+     * The NoCloud meta-data Imager writes next to user-data. The installer
+     * also puts the ID on the kernel command line (ADR 0031), so it is
+     * limited to characters that cannot add a kernel parameter.
      */
-    fun commandLine(
-        current: String,
-        instanceId: String,
-    ): String {
-        val line = current.trim()
-        require(line.isNotEmpty() && '\n' !in line) { "cmdline.txt must be one line" }
-        return "$line ds=nocloud;i=${checked(instanceId)}"
-    }
-
-    private fun checked(instanceId: String): String {
+    fun metaData(instanceId: String): String {
         require(instanceId.matches(Regex("[a-z0-9-]+"))) { "Not an instance ID: $instanceId" }
-        return instanceId
+        return "instance-id: $instanceId\n"
     }
 
     /**

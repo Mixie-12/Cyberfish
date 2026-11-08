@@ -1,30 +1,29 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Write a card with this phone (WriteCardScreen.kt, WriteCardService.kt, CardReader.kt). -->
+<!-- Prepare a card with this phone (WriteCardScreen.kt, CardWriting.kt). -->
 <resources>
-    <string name="write_title">Write a card</string>
+    <string name="write_title">Prepare the card</string>
 
-    <string name="write_step_connect">01 / CONNECT THE READER</string>
-    <string name="write_connect_body">Put a memory card of 8 to 256 GB in a USB card reader, then connect the reader to this phone.</string>
-    <string name="write_connect_button">Find the reader</string>
+    <string name="write_step_connect">01 / CONNECT THE CARD</string>
+    <string name="write_connect_body">Put a memory card of 8 to 32 GB in a USB card reader, then connect the reader to this phone.</string>
+    <string name="write_connect_button">Find the card</string>
 
-    <string name="write_step_choose">02 / CHOOSE THE READER</string>
-    <string name="write_choose_body">Choose your card reader. Your phone then asks whether DeKoi may use it.</string>
-    <string name="write_reader_unnamed">USB card reader</string>
-    <string name="write_no_reader">No card reader found. Check that it is connected to this phone.</string>
+    <string name="write_step_choose">02 / CHOOSE THE CARD</string>
+    <string name="write_choose_body">Choose your card. Your phone then opens it: choose Use this folder, then Allow.</string>
+    <string name="write_no_card">No card found. Check that the card is in the reader and that the reader is connected to this phone.</string>
     <string name="write_look_again">Look again</string>
-    <string name="write_opening">Reading the card…</string>
+    <string name="write_opening">Opening the card…</string>
 
     <string name="write_step_confirm">03 / ERASE THIS CARD</string>
-    <string name="write_confirm_body">Everything on this card will be erased. Your phone then downloads Raspberry Pi OS, %1$s, so Wi-Fi is best, and writes it to the card with your DeKoi’s settings. This can take half an hour; you can use other apps meanwhile.</string>
+    <string name="write_confirm_body">Everything on this card will be erased. Your phone then downloads the DeKoi installer, %1$s, and copies it to the card with your DeKoi’s settings. This takes a few minutes.</string>
     <string name="write_erase">Erase this card</string>
 
-    <string name="write_step_writing">04 / WRITE THE CARD</string>
+    <string name="write_step_writing">04 / PREPARE THE CARD</string>
     <string name="write_phase_download">Downloading</string>
-    <string name="write_phase_write">Writing</string>
+    <string name="write_phase_write">Copying</string>
     <string name="write_phase_check">Checking</string>
     <string name="write_phase_done">Done</string>
     <string name="write_progress">%1$s of %2$s</string>
-    <string name="write_keep_connected">Keep the reader connected until the card is ready.</string>
+    <string name="write_keep_connected">Keep the card connected and stay in this app until the card is ready.</string>
 
     <string name="write_step_link">05 / LINK THE CARD</string>
     <string name="write_linking">The card is ready. Linking it to your account…</string>
@@ -35,22 +34,16 @@
     <string name="write_done_body">%1$s is linked to your account.</string>
     <string name="write_next_card">Put the memory card in your DeKoi.</string>
     <string name="write_next_cable">Connect your DeKoi to your router with a network cable.</string>
-    <string name="write_next_power">Connect the power. Your DeKoi sets itself up and appears in the app within a few minutes.</string>
+    <string name="write_next_power">Connect the power. Your DeKoi now sets itself up while its light blinks. This takes about 10 minutes, then it appears in the app.</string>
     <string name="write_done_button">Done</string>
 
     <string name="write_step_failed">THE CARD IS NOT READY</string>
-    <string name="write_failed_no_card">There is no card in the reader. Put the card in and try again.</string>
-    <string name="write_failed_several">The reader holds more than one card. Leave only the card you want to write in it.</string>
-    <string name="write_failed_denied">DeKoi may not use the reader. Try again and allow it when your phone asks.</string>
-    <string name="write_failed_unsuitable">This card holds %1$s. Use a memory card of 8 to 256 GB.</string>
+    <string name="write_failed_denied">DeKoi needs the whole card. Try again: choose the card itself, not a folder on it, and allow access.</string>
+    <string name="write_failed_too_small">Your phone sees %1$s on this card. Use a memory card of 8 to 32 GB. If this card is larger, it still holds an earlier setup: format it in your phone’s storage settings, then try again.</string>
+    <string name="write_failed_too_large">This card holds %1$s. Your DeKoi can only start from a card of 8 to 32 GB prepared with a phone. Use a smaller card, or prepare this one with DeKoi Setup on a computer.</string>
     <string name="write_failed_locked">The card is locked. Slide the small switch on its side up, then try again.</string>
     <string name="write_failed_network">The download stopped. Check your internet connection and try again.</string>
-    <string name="write_failed_download">The download arrived damaged, so the card was not finished. Try again.</string>
-    <string name="write_failed_card">The card stopped responding. Check that the reader is connected and try again.</string>
-    <string name="write_failed_verify">The card did not keep what was written. Try another card.</string>
-
-    <string name="write_notification_title">Memory card for your DeKoi</string>
-    <string name="write_notification_writing">Writing the card. Keep the reader connected.</string>
-    <string name="write_notification_written">The card is ready. Open DeKoi to link it.</string>
-    <string name="write_notification_failed">The card is not ready. Open DeKoi to see why.</string>
+    <string name="write_failed_download">The download arrived damaged. Nothing on the card was changed. Try again.</string>
+    <string name="write_failed_card">The phone could not write to the card. Check that the reader is connected and try again.</string>
+    <string name="write_failed_verify">The card did not keep what was copied to it. Try another card.</string>
 </resources>

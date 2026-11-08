@@ -130,7 +130,7 @@ private val STEP_DOT = 8.dp
 private val STEP_BORDER = 2.dp
 
 /**
- * Adding a DeKoi (ADR 0017): its card carries a claim code. The phone writes
+ * Adding a DeKoi (ADR 0017): its card carries a claim code. The phone prepares
  * the card and claims the code itself (Route.WriteCard), or the owner scans
  * or types the code DeKoi Setup showed. Then the setup timeline follows the
  * new DeKoi; [onRefresh] reloads the account's devices for it.

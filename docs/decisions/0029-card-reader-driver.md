@@ -1,6 +1,6 @@
 # 0029: The card reader driver carries libaums' unreleased fix
 
-Status: accepted, 2026-11-07
+Status: superseded by 0031, 2026-11-08 (accepted 2026-11-07)
 
 ## Context
 

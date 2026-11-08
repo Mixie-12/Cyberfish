@@ -159,7 +159,7 @@ class AppViewModel(
         }
     }
 
-    /** Claims the code of a card this phone wrote (WriteCardScreen); onDone receives the message to show. */
+    /** Claims the code of a card this phone prepared (WriteCardScreen); onDone receives the message to show. */
     fun claim(
         code: ClaimCode,
         onDone: (Int) -> Unit,
