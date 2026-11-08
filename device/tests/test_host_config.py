@@ -88,6 +88,21 @@ def test_every_unit_is_started_by_first_boot() -> None:
     assert set(started[1].split(", ")) == units
 
 
+def test_memory_limits_do_not_stop_a_container_on_a_pi() -> None:
+    # Raspberry Pi firmware disables the memory cgroup controller; a Podman
+    # --memory limit then keeps the container from starting at all.
+    units = (HOST / "etc" / "containers" / "systemd").glob("*.container")
+    limited = [
+        unit.name
+        for unit in units
+        if re.search(r"^PodmanArgs=.*--memory", unit.read_text(), re.MULTILINE)
+    ]
+    assert not limited
+    user_data = USER_DATA.read_text()
+    assert "cgroup_enable=memory" in user_data
+    assert re.search(r"^power_state:\n  mode: reboot$", user_data, re.MULTILINE)
+
+
 def test_devices_trust_only_the_release_repositories() -> None:
     policy = json.loads(POLICY.read_text())
     assert policy["default"] == [{"type": "reject"}]
