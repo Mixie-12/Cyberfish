@@ -1,7 +1,7 @@
 name: auto-merge
 
 # Merges pull requests from Dependabot and from this repository's own
-# automation once every check on their head commit succeeded (ADR 0036).
+# automation once every check on their head commit succeeded (ADR 0038).
 # .github/scripts/pr-state.sh decides from GitHub's records alone: the author
 # and its branch, GitHub's signature on every commit, the files and lines
 # changed (pr-files.jq), and every workflow run on the head. Nothing from a

@@ -4,7 +4,7 @@ name: expiry
 # date in a repository variable named EXPIRES_<secret>, as YYYY-MM-DD. From
 # REMIND_DAYS before that date, this opens one issue per credential that
 # points at docs/runbooks/rotate-keys.md, assigned to the repository owner,
-# whom GitHub emails (ADR 0036).
+# whom GitHub emails (ADR 0038).
 
 on:
   schedule:

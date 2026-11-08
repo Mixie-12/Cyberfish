@@ -2,7 +2,7 @@ name: monitor
 
 # Every day: read-only checks of production (docs/security.md,
 # "Monitoring"). A failed check fails the run, and failures.yml opens or
-# updates the issue "monitor failed" for the owner (ADR 0036). Logs carry
+# updates the issue "monitor failed" for the owner (ADR 0038). Logs carry
 # check names and counts only, never addresses, keys or owners' data.
 
 on:

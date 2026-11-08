@@ -100,5 +100,5 @@ digest and checks size and hash. The `installer` workflow builds the
 bundle for every pull request that changes `installer/` or `image.json`,
 pushes it on every such change on `main`, and proposes the new line for
 this file in a pull request that `auto-merge` merges after the checks
-(`docs/runbooks/release.md`, ADR 0036). The unit tests run with the other
+(`docs/runbooks/release.md`, ADR 0038). The unit tests run with the other
 device tests (Linux only: the installer uses `fcntl`).

@@ -228,7 +228,7 @@ event id), GitHub (encrypted backups, which it cannot read).
 `.github/workflows/monitor.yml` runs the built checks every morning,
 read-only (ADR 0027). A failure opens the issue "monitor failed",
 assigned to the owner, or comments on the open one, with the failed jobs
-and the run (`failures.yml`, ADR 0036); logs hold check names, counts and
+and the run (`failures.yml`, ADR 0038); logs hold check names, counts and
 booleans, never addresses or keys. The
 database checks are `backend/monitor.sql`, run through the Management
 API's read-only endpoint as `supabase_read_only_user`.

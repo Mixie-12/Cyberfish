@@ -2,7 +2,7 @@ name: pins
 
 # Every day: keeps current the pins that Dependabot cannot see, each through
 # a pull request that auto-merge.yml merges once its checks, the installer
-# build among them, pass (ADR 0036). The check jobs read the outside world
+# build among them, pass (ADR 0038). The check jobs read the outside world
 # with read-only tokens; only the propose job can write.
 #   raspios: Raspberry Pi OS Lite (64-bit) from Raspberry Pi's own OS list,
 #     released at least COOLDOWN_DAYS ago, downloaded and checked against the
@@ -165,7 +165,7 @@ jobs:
         run: |
           asked="$(gh issue list --state all --search "\"$ASK_OWNER\" in:title" --json title |
             jq --arg title "$ASK_OWNER" 'map(select(.title == $title)) | length')"
-          body="pins.yml found a Raspberry Pi OS Lite (64-bit) release that it does not propose by itself (ADR 0036)."
+          body="pins.yml found a Raspberry Pi OS Lite (64-bit) release that it does not propose by itself (ADR 0038)."
           body="$body Test it on a Raspberry Pi with a card from DeKoi Setup, then update device/image.json by hand."
           if [ "$asked" = 0 ]; then
             gh issue create --title "$ASK_OWNER" --assignee "$OWNER" --body "$body"

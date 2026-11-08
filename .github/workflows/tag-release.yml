@@ -5,7 +5,7 @@ name: tag release
 # the next patch version on main and starts on the tag the workflows that a
 # pushed tag starts (triggered.sh reads them from their filters: app release,
 # clients, device images). A tag made with GITHUB_TOKEN starts nothing by
-# itself (ADR 0036). Building, scanning, signing and verifying stay in those
+# itself (ADR 0038). Building, scanning, signing and verifying stay in those
 # workflows and the release environment, unchanged (ADR 0022).
 
 on:

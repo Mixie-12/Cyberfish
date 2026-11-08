@@ -5,7 +5,7 @@ name: installer
 # as one application/zip layer, whose digest is the zip's SHA-256; once it can
 # be fetched as a phone fetches it, its pin is proposed for
 # device/installer.json in a pull request that auto-merge.yml merges after
-# the checks (ADR 0036). Nothing uses a bundle until that pin lands.
+# the checks (ADR 0038). Nothing uses a bundle until that pin lands.
 
 on:
   push:

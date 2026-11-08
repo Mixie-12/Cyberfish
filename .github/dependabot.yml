@@ -1,7 +1,7 @@
 # One weekly pull request per ecosystem. New versions wait a week before they
 # are proposed, so a compromised release has time to be found and pulled.
 # Security updates are not delayed. auto-merge.yml merges a pull request once
-# every check on it succeeded (ADR 0036). Major versions come one per pull
+# every check on it succeeded (ADR 0038). Major versions come one per pull
 # request, so one that fails its checks holds back nothing else.
 version: 2
 updates:

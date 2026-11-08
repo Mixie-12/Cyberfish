@@ -5,7 +5,7 @@ name: app release
 # certificate, and attach it with its checksum to the GitHub Release. The key
 # is a secret of the release environment, which waits for the owner. A tag
 # that tag-release.yml creates starts this by workflow_dispatch on the tag
-# (ADR 0036); started anywhere else, it does nothing.
+# (ADR 0038); started anywhere else, it does nothing.
 
 on:
   push:

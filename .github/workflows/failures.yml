@@ -1,7 +1,7 @@
 name: failures
 
 # The owner hears about automation that fails without opening the repository
-# (ADR 0036). A run that fails on main, on a v* tag or from a schedule opens
+# (ADR 0038). A run that fails on main, on a v* tag or from a schedule opens
 # the issue "<workflow> failed", assigned to the repository owner, whom
 # GitHub emails; while that issue is open, later failures comment on it.
 # Checks of pull requests are reported on the pull request by auto-merge.yml.

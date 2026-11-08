@@ -2,7 +2,7 @@
 # propose.sh NAME PATH TITLE BODY
 # Proposes PATH, as it is in the working tree, in a pull request from the
 # branch automation/NAME that auto-merge.yml merges once its checks pass (ADR
-# 0036). The branch is the checked-out commit plus one commit made through
+# 0038). The branch is the checked-out commit plus one commit made through
 # the API, so GitHub signs it. A pull request opened with GITHUB_TOKEN starts
 # its workflows only after an approval, so the workflows it would start are
 # started on the branch here. Nothing happens while an open pull request

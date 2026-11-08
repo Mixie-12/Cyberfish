@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Repository settings as code (ADR 0022, 0036). Idempotent: run it after
+# Repository settings as code (ADR 0022, 0038). Idempotent: run it after
 # changing this file, signed in to gh as the repository owner. Required
 # reviewers, private vulnerability reporting and secret scanning need a
 # public repository on GitHub Pro; on a private one they are left out and
@@ -59,7 +59,7 @@ environment release 'v*' tag <<JSON
  "deployment_branch_policy": {"protected_branches": false, "custom_branch_policies": true}}
 JSON
 
-# Dependabot alerts also tell tag-release.yml that a fix landed (ADR 0036).
+# Dependabot alerts also tell tag-release.yml that a fix landed (ADR 0038).
 for feature in vulnerability-alerts automated-security-fixes; do
     gh api --method PUT "repos/$repo/$feature" > /dev/null
 done
@@ -67,7 +67,7 @@ send PUT actions/permissions <<'JSON'
 {"enabled": true, "allowed_actions": "all", "sha_pinning_required": true}
 JSON
 # pins.yml and installer.yml open pull requests for auto-merge.yml (ADR
-# 0036); no workflow approves one, and no rule asks for an approval.
+# 0038); no workflow approves one, and no rule asks for an approval.
 send PUT actions/permissions/workflow <<'JSON'
 {"default_workflow_permissions": "read", "can_approve_pull_request_reviews": true}
 JSON

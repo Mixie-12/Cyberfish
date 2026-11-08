@@ -4,7 +4,7 @@ on:
   push:
     branches: [main]
   pull_request:
-  # Started on a branch where GITHUB_TOKEN events start nothing (ADR 0036).
+  # Started on a branch where GITHUB_TOKEN events start nothing (ADR 0038).
   workflow_dispatch:
 
 permissions: {}

@@ -3,7 +3,7 @@
 # pull_request) on REF (refs/heads/<branch> or refs/tags/<tag>) when the
 # PATHs changed; with no PATH, as if every path changed. Pushes, tags and pull
 # requests made with GITHUB_TOKEN start no workflow, so the automation starts
-# these by workflow_dispatch instead (ADR 0036). The filters are read from the
+# these by workflow_dispatch instead (ADR 0038). The filters are read from the
 # workflow files, the one place they are defined; triggered.jq fails on filter
 # syntax it does not model rather than guess. Run from the repository root.
 set -euo pipefail

@@ -6,7 +6,7 @@ name: device images
 # environment, which waits for the owner's approval and is the only place
 # that can sign. The weekly run asks for a rebuild of the latest release on
 # fresh Debian packages and IDS rules. Pushes to main, and runs started on
-# main where a GITHUB_TOKEN merge starts nothing (ADR 0036), publish unsigned
+# main where a GITHUB_TOKEN merge starts nothing (ADR 0038), publish unsigned
 # :edge images to separate repositories that no device trusts. A tag that
 # tag-release.yml creates starts this by workflow_dispatch on the tag.
 
