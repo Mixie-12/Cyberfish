@@ -14,7 +14,7 @@
     <string name="learn_honeypot_summary">Why a box that holds nothing can tell you so much.</string>
     <string-array name="learn_honeypot_body">
         <item>A honeypot is a decoy: something that looks worth a look but holds nothing of value. Security teams have used them for a long time to spot intruders early.</item>
-        <item>Your DeKoi is one. On your network it looks like a storage box for photos and backups, and it shows up when someone browses the network from a computer.</item>
+        <item>Your DeKoi is one. On your network it looks like a small company’s server for payments, accounting and backups, and it shows up when someone browses the network from a computer.</item>
         <item>None of your own devices has a reason to use it. So when something tries to open it, sign in to it or test it, that is worth knowing about.</item>
         <item>This keeps alerts rare and meaningful. DeKoi does not have to guess what is normal on your network: any touch is a signal.</item>
         <item>DeKoi sees what is sent to it and what is sent to every device at once. It does not see private traffic between your other devices.</item>
@@ -29,7 +29,7 @@
     <string name="learn_sign_in_title">Someone tried to sign in</string>
     <string name="learn_sign_in_summary">A device tried a user name and password on your DeKoi.</string>
     <string-array name="learn_sign_in_body">
-        <item>Your DeKoi offers ways to sign in, as many real storage boxes and computers do. Nobody in your home has an account on it, so nobody has a reason to try.</item>
+        <item>Your DeKoi offers ways to sign in, as real servers and computers do. Nobody in your home has an account on it, so nobody has a reason to try.</item>
         <item>A sign-in attempt usually means one of two things: a person testing what they can get into, or harmful software on one of your devices trying common passwords on everything it finds.</item>
         <item>Either way, something on your network is looking for a way in. If it tries your DeKoi, it may be trying your other devices too.</item>
         <item>Sometimes the cause is harmless, such as a curious family member. The alert says which device it was, so you can find out.</item>

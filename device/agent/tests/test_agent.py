@@ -200,16 +200,16 @@ def test_a_sign_in_with_a_bait_name_is_flagged_and_never_counted_as_a_repeat(
     agent = Agent(config, State(device_id="device-1", secret="a" * 64), Clock(), FakeListeners())
     agent.tick()
     bait = json.loads(ssh_attempt())
-    bait["logdata"] = {"USERNAME": "Familie.Admin", "PASSWORD": "Sommer2019!"}
+    bait["logdata"] = {"USERNAME": "KS-Drift", "PASSWORD": "Fryselager#28"}
     config.canary_log.write_text(ssh_attempt() + "\n" + json.dumps(bait) + "\n")
     agent.tick()
 
     (call,) = backend.called("device_events_v1")
     assert [e["detail"] for e in call["events"]] == [
         {"username": "root"},
-        {"username": "Familie.Admin", "bait": True},
+        {"username": "KS-Drift", "bait": True},
     ]
-    assert "Sommer2019!" not in json.dumps(call)
+    assert "Fryselager#28" not in json.dumps(call)
 
 
 def test_backend_outage_keeps_events_and_malformed_batches_are_dropped(

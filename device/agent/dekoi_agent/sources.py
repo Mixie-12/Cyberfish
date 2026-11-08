@@ -29,15 +29,19 @@ CANARY_KINDS = {
     4002: "login_attempt",  # SSH login
     6001: "login_attempt",  # Telnet login
     8001: "login_attempt",  # MySQL login
+    9001: "login_attempt",  # MSSQL login with a SQL Server account
+    9002: "login_attempt",  # MSSQL login with a Windows account
     12001: "login_attempt",  # VNC authentication
     14001: "login_attempt",  # RDP connection with user name
     17001: "connection",  # Redis command
+    18001: "connection",  # TCP banner connection (SAP, Modbus, S7)
 }
 
 # OpenCanary logdata fields we keep, and their name in the event detail.
-# PASSWORD and command arguments are deliberately absent.
+# PASSWORD, MSSQL's Password and command arguments are deliberately absent.
 CANARY_DETAIL = {
     "USERNAME": "username",
+    "UserName": "username",  # MSSQL
     "PATH": "path",
     "USERAGENT": "user_agent",
     "REMOTEVERSION": "client_version",
@@ -127,11 +131,14 @@ def parse_canary(line: str, decoys: dict[int, str], now: float) -> dict | None:
 def flag_bait(event: dict, bait_users: frozenset[str]) -> dict:
     """Marks a sign-in with a user name from the bait files (bait_users, lower case).
 
-    The user name is reported anyway; the password typed with it is never
-    read, so the flag says only that someone tried what the bait offered.
+    A Windows domain written with the name (DOMAIN\\name, name@domain) is
+    ignored, as the bait files name a domain. The user name is reported
+    anyway; the password typed with it is never read, so the flag says only
+    that someone tried what the bait offered.
     """
-    username = event["detail"].get("username", "")
-    if event["kind"] == "login_attempt" and username.casefold() in bait_users:
+    username = event["detail"].get("username", "").casefold()
+    account = username.rpartition("\\")[2].partition("@")[0]
+    if event["kind"] == "login_attempt" and account in bait_users:
         event["detail"]["bait"] = True
     return event
 

@@ -1,108 +1,85 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=8">
 <meta name="robots" content="noindex, nofollow">
 <link rel="icon" href="data:,">
-<title>$name</title>
-<style>
-  * { box-sizing: border-box; }
-  html, body { margin: 0; height: 100%; }
-  body {
-    display: flex; flex-direction: column; align-items: center; justify-content: center;
-    min-height: 100%; padding: 24px 16px;
-    font: 14px/1.45 -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-    color: #1f2933;
-    background: linear-gradient(160deg, #e9eef4 0%, #d5dee8 55%, #c3cfdc 100%);
-  }
-  .panel {
-    width: 100%; max-width: 380px; padding: 32px 32px 28px;
-    background: #fff; border-radius: 12px;
-    box-shadow: 0 1px 2px rgba(15, 30, 50, .08), 0 12px 32px rgba(15, 30, 50, .14);
-  }
-  .device { display: flex; align-items: center; gap: 14px; margin-bottom: 24px; }
-  .device svg { flex: none; }
-  .product {
-    margin: 0 0 2px; font-size: 11px; font-weight: 600; letter-spacing: .08em;
-    text-transform: uppercase; color: #2f6fb2;
-  }
-  h1 { margin: 0; font-size: 20px; font-weight: 600; letter-spacing: .2px; }
-  .model { margin: 2px 0 0; font-size: 12px; color: #6b7785; }
-  .error {
-    margin: 0 0 16px; padding: 10px 12px; border-radius: 6px;
-    background: #fdecec; color: #a32020; font-size: 13px;
-  }
-  label { display: block; margin: 0 0 6px; font-size: 12px; font-weight: 600; color: #3e4c59; }
-  input[type=text], input[type=password] {
-    display: block; width: 100%; margin: 0 0 16px; padding: 10px 12px;
-    font: inherit; color: inherit; background: #f7f9fb;
-    border: 1px solid #cbd3dc; border-radius: 6px;
-  }
-  input[type=text]:focus, input[type=password]:focus {
-    outline: none; border-color: #2f6fb2; background: #fff;
-    box-shadow: 0 0 0 3px rgba(47, 111, 178, .18);
-  }
-  .remember { display: flex; align-items: center; gap: 8px; margin: 0 0 20px; font-size: 13px; color: #3e4c59; }
-  .remember input { margin: 0; }
-  .remember label { margin: 0; font-size: 13px; font-weight: 400; }
-  button {
-    width: 100%; padding: 11px; border: 0; border-radius: 6px;
-    font: inherit; font-weight: 600; color: #fff; background: #2f6fb2; cursor: pointer;
-  }
-  button:hover { background: #285f99; }
-  button:focus-visible { outline: 3px solid rgba(47, 111, 178, .35); outline-offset: 2px; }
-  .status {
-    display: flex; flex-wrap: wrap; justify-content: center; gap: 4px 14px;
-    margin-top: 20px; font-size: 12px; color: #52606d;
-  }
-  .status span { white-space: nowrap; }
-  .dot {
-    display: inline-block; width: 8px; height: 8px; margin-right: 6px; border-radius: 50%;
-    background: #2e9d5b; vertical-align: 0;
-  }
+<title>$company - Payment and Settlement Portal</title>
+<style type="text/css">
+  body { margin: 0; background: #dfe4ea; font: 11px/1.4 Tahoma, Verdana, Arial, sans-serif; color: #222; }
+  #page { width: 760px; margin: 0 auto; background: #fff; border: 1px solid #a9b4c0; border-top: 0; }
+  #header { height: 58px; padding: 0 16px; background: #1f3b5c; background: linear-gradient(#35587f, #1f3b5c); color: #fff; }
+  #header .company { float: left; margin-top: 12px; font: bold 18px Georgia, "Times New Roman", serif; }
+  #header .company span { display: block; font: 11px Tahoma, Verdana, sans-serif; color: #c9d6e4; }
+  #header .product { float: right; margin-top: 21px; font-size: 13px; font-weight: bold; color: #e6edf4; }
+  #bar { padding: 4px 16px; background: #eef1f4; border-bottom: 1px solid #c3ccd6; color: #4a5866; }
+  #bar .host { text-transform: uppercase; }
+  #main { padding: 22px 16px 26px; overflow: hidden; }
+  #logon { float: left; width: 360px; }
+  fieldset { margin: 0; padding: 10px 14px 14px; border: 1px solid #b7c2ce; }
+  legend { padding: 0 4px; font-weight: bold; color: #1f3b5c; }
+  table { border-collapse: collapse; }
+  td { padding: 4px 6px 4px 0; vertical-align: middle; }
+  td.label { width: 92px; text-align: right; color: #444; }
+  input.text, select { width: 200px; padding: 2px; font: 11px Tahoma, Verdana, sans-serif; border: 1px solid #8e9aa7; }
+  input.button { padding: 2px 14px; font: bold 11px Tahoma, Verdana, sans-serif; color: #1f3b5c;
+    background: #e9edf1; background: linear-gradient(#fdfdfd, #d9dfe5); border: 1px solid #7d8b99; cursor: pointer; }
+  .error { margin: 0 0 8px; padding: 4px 6px; border: 1px solid #d08f8f; background: #fbe9e9; color: #a40000; }
+  .note { margin-top: 12px; padding: 6px 8px; border: 1px solid #e0cf7a; background: #fff9d9; }
+  #side { float: right; width: 330px; }
+  #side h2 { margin: 0 0 6px; font-size: 12px; color: #1f3b5c; border-bottom: 1px solid #c3ccd6; }
+  #side table { width: 100%; margin-bottom: 14px; }
+  #side td { padding: 2px 0; border-bottom: 1px dotted #d3d9df; }
+  #side td.value { text-align: right; color: #333; }
+  .ok { color: #2a7a2a; font-weight: bold; }
+  #footer { padding: 6px 16px; border-top: 1px solid #c3ccd6; background: #eef1f4; color: #6b7785; font-size: 10px; }
 </style>
 </head>
 <body>
-<main class="panel">
-  <div class="device">
-    <svg width="44" height="44" viewBox="0 0 44 44" aria-hidden="true">
-      <rect x="4" y="3" width="36" height="38" rx="5" fill="#33475b"/>
-      <rect x="9" y="8" width="26" height="5" rx="1.5" fill="#5f7891"/>
-      <rect x="9" y="15.5" width="26" height="5" rx="1.5" fill="#5f7891"/>
-      <rect x="9" y="23" width="26" height="5" rx="1.5" fill="#5f7891"/>
-      <rect x="9" y="30.5" width="26" height="5" rx="1.5" fill="#5f7891"/>
-      <circle cx="31" cy="10.5" r="1.2" fill="#6fe0a0"/>
-      <circle cx="31" cy="18" r="1.2" fill="#6fe0a0"/>
-      <circle cx="31" cy="25.5" r="1.2" fill="#6fe0a0"/>
-      <circle cx="31" cy="33" r="1.2" fill="#6fe0a0"/>
-    </svg>
-    <div>
-      <p class="product">Storage Manager</p>
-      <h1>$name</h1>
-      <p class="model">$model &middot; Firmware $firmware</p>
+<div id="page">
+  <div id="header">
+    <div class="company">$company<span>Finance and payments</span></div>
+    <div class="product">Payment and Settlement Portal</div>
+  </div>
+  <div id="bar">SAP system $sap_system (ECC 6.0), client 100 &middot; Server <span class="host">$name</span> &middot; Domain $workgroup</div>
+  <div id="main">
+    <div id="logon">
+      <form method="post" action="/index.html">
+        <fieldset>
+          <legend>Log on</legend>
+          <!--STARTERR-->
+          <p class="error">Logon failed. Check your user name and password and try again.</p>
+          <!--ENDERR-->
+          <table>
+            <tr><td class="label"><label for="username">User name:</label></td>
+              <td><input class="text" type="text" id="username" name="username" autocomplete="username" autocapitalize="none" spellcheck="false" required autofocus></td></tr>
+            <tr><td class="label"><label for="password">Password:</label></td>
+              <td><input class="text" type="password" id="password" name="password" autocomplete="current-password" required></td></tr>
+            <tr><td class="label"><label for="domain">Log on to:</label></td>
+              <td><select id="domain" name="domain"><option>$workgroup</option><option>SAP $sap_system</option></select></td></tr>
+            <tr><td></td><td><input class="button" type="submit" value="Log on"></td></tr>
+          </table>
+        </fieldset>
+      </form>
+      <p class="note">Authorised users only. Card data on this system is handled under PCI DSS v2.0.
+        Password problems: contact IT on extension 214.</p>
+    </div>
+    <div id="side">
+      <h2>Settlement status</h2>
+      <table>
+        <tr><td>Card settlement (Netaxept)</td><td class="value">06.11.2026 23:00</td></tr>
+        <tr><td>Terminal batch (BankAxept)</td><td class="value">06.11.2026 22:41</td></tr>
+        <tr><td>Fishermen settlement, week 45</td><td class="value">06.11.2026 15:12</td></tr>
+        <tr><td>Next payment run (SAP F110)</td><td class="value">10.11.2026 06:00</td></tr>
+        <tr><td>Bank file transfer</td><td class="value ok">Connected</td></tr>
+      </table>
+      <h2>Notices</h2>
+      <p>Year-end: payment runs after 18.12 need approval from the CFO.</p>
     </div>
   </div>
-  <form method="post" action="/index.html">
-    <!--STARTERR-->
-    <p class="error" role="alert">The user name or password you entered is incorrect.</p>
-    <!--ENDERR-->
-    <label for="username">User name</label>
-    <input type="text" id="username" name="username" autocomplete="username" autocapitalize="none" spellcheck="false" required autofocus>
-    <label for="password">Password</label>
-    <input type="password" id="password" name="password" autocomplete="current-password" required>
-    <div class="remember">
-      <input type="checkbox" id="remember" name="remember" value="1">
-      <label for="remember">Remember me</label>
-    </div>
-    <button type="submit">Sign in</button>
-  </form>
-</main>
-<footer class="status">
-  <span><i class="dot"></i>System status: Healthy</span>
-  <span>Volume 1: 4 of 4 disks online</span>
-  <span>7.2 of 10.9 TB used</span>
-  <span>Last backup: 02:14</span>
-</footer>
+  <div id="footer">Payment and Settlement Portal 4.2.1 (build 1187) &middot; .NET Framework 4.0 &middot;
+    Best viewed in Internet Explorer 8 at 1024&times;768 &middot; &copy; 2011 $company</div>
+</div>
 </body>
 </html>

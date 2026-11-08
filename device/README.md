@@ -34,14 +34,17 @@ step's commands in the same Debian image with Docker.
 
 The canary image runs as two containers (ADR 0018): `dekoi-canary`
 (`supervise.py canary`: OpenCanary and smbd) and `dekoi-announce`
-(`supervise.py announce`: nmbd, avahi-daemon and wsdd2). To change the
-decoy's name, model, firmware, shares or bait files, edit `canary/persona/`;
-`persona.json` is filled into the templates when the image is built, and
-the host name in `cloud-init/user-data.yaml` must match it (a test checks).
-The bait files in `persona/public` are text; one named like `x.pdf.txt`
-becomes `x.pdf` (also `.xlsx`, `.docx`, `.png`; `canary/render.py`). Their
-user names come from `bait_users` in `persona.json`, which the agent image
-also carries: a sign-in with one of them gets `"bait": true` in its detail.
+(`supervise.py announce`: nmbd, avahi-daemon and wsdd2). The decoy is a
+small company's finance server (ADR 0035). To change its name, company,
+shares or bait files, edit `canary/persona/`; `persona.json` is filled into
+the templates and into `canary/opencanary.conf` (banners) when the image is
+built, and the host name in `cloud-init/user-data.yaml` must match it (a
+test checks). The bait files in `persona/public` are text; one named like
+`x.pdf.txt` becomes `x.pdf` (also `.xlsx`, `.docx`; `canary/render.py`),
+dated by the date in its name. Their user names come from `bait_users` in
+`persona.json`, which the agent image also carries: a sign-in with one of
+them gets `"bait": true` in its detail. `tests/test_canary.py` checks that
+no card, account, organisation or personal number in them can be real.
 
 ## Wi-Fi watch
 

@@ -1,8 +1,9 @@
 # dekoi-canary: the decoys. Build context: device/
 # One image, two containers (ADR 0018): dekoi-canary runs OpenCanary and the
 # Samba file share; dekoi-announce runs what makes them visible on the
-# network (NetBIOS names, mDNS, WS-Discovery). The persona (canary/persona)
-# is filled into the configuration and the bait files at build time.
+# network (NetBIOS names, mDNS, WS-Discovery). The persona (canary/persona,
+# ADR 0035) is filled into the configuration, OpenCanary's included, and the
+# bait files at build time.
 FROM docker.io/library/python:3.13-slim-trixie@sha256:09a17cad02668ae61ece136b4fd36ac3849e14f670ebedb637ea3e15580525bc AS build
 RUN apt-get update \
  && apt-get install -y --no-install-recommends build-essential \
@@ -13,11 +14,11 @@ COPY canary/requirements.txt /tmp/requirements.txt
 RUN python -m venv /opt/venv \
  && /opt/venv/bin/pip install --no-cache-dir --disable-pip-version-check --require-hashes \
     --no-deps -r /tmp/requirements.txt
-COPY canary/render.py /tmp/render.py
-COPY canary/persona /tmp/persona
-WORKDIR /tmp/persona
-RUN python /tmp/render.py persona.json /tmp/rendered smb.conf avahi-daemon.conf \
-    skin/index.html skin/403.html skin/404.html skin/redirect.html public
+COPY canary/render.py canary/opencanary.conf /tmp/canary/
+COPY canary/persona /tmp/canary/persona
+WORKDIR /tmp/canary
+RUN python render.py persona/persona.json /tmp/rendered opencanary.conf persona/smb.conf \
+    persona/avahi-daemon.conf persona/skin persona/public
 
 FROM docker.io/library/python:3.13-slim-trixie@sha256:09a17cad02668ae61ece136b4fd36ac3849e14f670ebedb637ea3e15580525bc
 # avahi-daemon refuses to start unless its runtime directory belongs to its
@@ -31,12 +32,12 @@ RUN apt-get update \
  && install -d -o avahi -g avahi -m 0755 /run/avahi-daemon \
  && install -d -m 0755 /srv/decoy/locked
 COPY --from=build /opt/venv /opt/venv
-COPY --from=build /tmp/rendered/smb.conf /etc/samba/smb.conf
-COPY --from=build /tmp/rendered/avahi-daemon.conf /etc/avahi/avahi-daemon.conf
-COPY --from=build /tmp/rendered/skin /opt/dekoi/skin
+COPY --from=build /tmp/rendered/persona/smb.conf /etc/samba/smb.conf
+COPY --from=build /tmp/rendered/persona/avahi-daemon.conf /etc/avahi/avahi-daemon.conf
+COPY --from=build /tmp/rendered/persona/skin /opt/dekoi/skin
 COPY canary/persona/decoy.service /etc/avahi/services/decoy.service
-COPY --from=build /tmp/rendered/public /srv/decoy/Public
-COPY canary/opencanary.conf /etc/opencanaryd/opencanary.conf
+COPY --from=build /tmp/rendered/persona/public /srv/decoy/Felles
+COPY --from=build /tmp/rendered/opencanary.conf /etc/opencanaryd/opencanary.conf
 COPY canary/supervise.py agent/dekoi_agent/decoys.py /opt/dekoi/
 # Release version (the same build argument for every image) and build time,
 # reported in the agent's heartbeat (ADR 0013).

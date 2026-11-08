@@ -216,7 +216,7 @@ while it has none. 7-day uptime strip, one segment per hour from
 the HUD frame, then one tile
 per `Device.services` entry (plain name, "Touched 3 times this week",
 sparkline; opens Alerts for that service). "Try your decoy" while online
-(ADR 0018): the storage login page at `http://<local_ip>` when `http` runs,
+(ADR 0018, 0035): the payment login page at `http://<local_ip>` when `http` runs,
 the file share at `\\<local_ip>` (Windows) and `smb://<local_ip>` (Mac)
 when `smb` runs, each with where to type it, and that signing in sends an
 alert. Details (name with inline rename, address, linked since); Remove
@@ -229,7 +229,7 @@ It speaks for the DeKoi it was opened for, else the one Home speaks for.
 The answer first ("All 12 features are on", "9 of 12 features are on", why
 none run while the DeKoi is offline or setting up, "Add a DeKoi to turn
 these on" without one), then "Show me around". One HUD-framed card per
-`Feature` (`Features.kt`), in this order: decoy file server, intrusion
+`Feature` (`Features.kt`), in this order: decoy company server, intrusion
 detection, scan detection, ARP Guard, Router Guard, name trap, Wi-Fi
 Guard, network map, new device alerts, internet check, open to the
 internet, weekly summary. A card holds a 56 dp Canvas drawing of the
@@ -240,7 +240,7 @@ place (Settings for the Wi-Fi name and the weekly summary, the map,
 Insights). With a DeKoi, the decoy, intrusion detection and Wi-Fi Guard
 cards hold the feature's live view under the heading, and their 56 dp
 drawing holds still. The decoy card names the decoy as Windows shows it
-("FAMILY-NAS", from `device/canary/persona/persona.json` at build time)
+("SAP-PAY-PROD", from `device/canary/persona/persona.json` at build time)
 and, while the DeKoi is online, "Try it" with its addresses.
 - Status in glyph, colour and word as in "Live status", from data only
   (`featureState`):

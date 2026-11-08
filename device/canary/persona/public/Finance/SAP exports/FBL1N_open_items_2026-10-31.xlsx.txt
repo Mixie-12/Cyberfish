@@ -1,0 +1,11 @@
+FBL1N Leverandørposter - åpne poster per 31.10.2026	Firmakode 1000	SAP $sap_system klient 100
+
+Leverandør	Navn	Bilagsnr	Bilagsdato	Forfall	Beløp NOK	Betalingsmåte	Tekst
+200114	Grønnskjær Emballasje AS	5100018342	02.10.2026	31.10.2026	184 920,00	N	Kartong og isopor
+200231	Ytre Tindvik Kjøleteknikk AS	5100018343	05.10.2026	31.10.2026	62 500,00	N	Serviceavtale Q4
+200087	Brattholm Transport AS	5100018344	09.10.2026	31.10.2026	318 776,40	N	Frakt eksport uke 40-41
+200302	Isvik Frys AS	5100018345	12.10.2026	31.10.2026	41 250,00	N	Frysehotell
+200145	Saltvær Tønner AS	5100018346	15.10.2026	31.10.2026	27 908,75	N	Salt og tønner
+200410	Nordøy Datadrift AS	5100018347	20.10.2026	31.10.2026	48 750,00	N	SAP-drift oktober
+200019	Kvitstrand Kraft AS	5100018348	24.10.2026	31.10.2026	96 112,00	N	Strøm september
+200231	Ytre Tindvik Kjøleteknikk AS	5100018401	29.10.2026	28.11.2026	214 300,00	N	Kompressor 2, reparasjon

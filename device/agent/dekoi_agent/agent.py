@@ -296,8 +296,9 @@ class Agent:
         self.send_schedule.succeeded(at)
 
     def heartbeat(self, at: float) -> None:
-        services = running_services(self.decoys, listening_ports())
-        self.monitors.decoys(at, len(services), len(self.decoys))
+        ports = listening_ports()
+        services = running_services(self.decoys, ports)
+        self.monitors.decoys(at, len(services), set(self.decoys) <= ports)
         if self.config.scan_log.exists():
             self.monitors.alive("port_scan", at)
         arguments = self._auth() | {

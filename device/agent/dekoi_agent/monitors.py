@@ -59,9 +59,10 @@ class Monitors:
         if detail:
             self.details[name] = detail
 
-    def decoys(self, at: float, running: int, configured: int) -> None:
+    def decoys(self, at: float, running: int, complete: bool) -> None:
+        """running: services with a listening port; complete: every decoy port listens."""
         self.details["decoys"] = {"decoys": running}
-        if configured and running == configured:
+        if complete:
             self.until["decoys"] = at
 
     def ids(self, at: float, lines: list[str]) -> None:

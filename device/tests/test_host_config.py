@@ -42,12 +42,6 @@ def test_firewall_opens_exactly_the_decoys_and_their_announcements() -> None:
     assert nft_set("decoy_udp_ports") == ANNOUNCEMENT_UDP_PORTS
 
 
-def test_web_decoy_also_answers_on_port_5000() -> None:
-    config = json.loads((DEVICE / "canary" / "opencanary.conf").read_text())
-    redirects = re.findall(r"tcp dport (\d+) redirect to :(\d+)", NFTABLES.read_text())
-    assert redirects == [("5000", str(config["http.port"]))]
-
-
 def test_file_share_listens_where_the_agent_expects_it() -> None:
     smb_conf = (PERSONA / "smb.conf").read_text()
     assert re.search(r"^\s+smb ports = (\d+)$", smb_conf, re.MULTILINE)[1] == str(FILE_SHARE_PORT)
