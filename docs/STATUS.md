@@ -1,6 +1,6 @@
 # Status
 
-Updated 2026-11-07. Everything below is on `main` and deployed by CI (the
+Updated 2026-11-08. Everything below is on `main` and deployed by CI (the
 production backend deploy is green at `b69caca`). The last release is
 v0.2.0 (Phase 8: signed images, app, DeKoi Setup); v0.2.1, with Insights,
 Norwegian and the work since v0.2.0, comes next
@@ -99,8 +99,9 @@ records why.
   (`docs/design.md`); DeKoi Setup shares the palette.
 - Linking by a card secret (ADR 0017, replaced ADR 0012, which was not
   built): the claim code on the card is the proof of physical access.
-- Phone card writer (ADR 0014): a USB card reader on the phone; pinned
-  image, partition table written last, whole card read back.
+- Phone card writer (ADR 0014, replaced by ADR 0031 below): a USB card
+  reader on the phone; pinned image, partition table written last, whole
+  card read back.
 - Alerts as incidents with read state, host names and rooms, and monitoring
   status through `device_heartbeat_v2` (ADR 0013).
 - Network health, DNS check, UPnP port forwards, new devices and the weekly
@@ -163,6 +164,19 @@ on it answers nothing, not the class reset and not INQUIRY on a fresh
 connection, until it is unplugged. Not verified: a full write with any
 other reader. DeKoi Setup on a computer writes cards through the
 operating system's driver.
+
+Replaced on 2026-11-08, not released (ADR 0031): the phone no longer
+writes the image. It downloads the installer bundle pinned in
+`device/installer.json` from ghcr.io and checks its size and SHA-256,
+erases the card through Android's storage access (the owner picks the
+card's root in Android's picker), copies the bundle and the `dekoi/`
+cloud-init files, and reads every file back; the Raspberry Pi then
+installs Raspberry Pi OS itself. libaums, XZ for Java, the SCSI driver,
+the USB permission flow and the foreground service are gone. Verified:
+unit tests, and the download code against a public 30 MB layer on
+ghcr.io. Not verified: the picker and the copy on a phone with a USB
+reader, the bundle's own download (not published yet) and its install on
+a Pi.
 
 Needs hardware, not verified: the decoy in Windows Explorer and Finder on
 the owner's LAN; the Wi-Fi watch against a real evil twin; the Pi running
@@ -241,9 +255,8 @@ but does nothing (tested 2026-11-07, Genesys 05e3:0749).
   never expire; the project may pause after a week of low activity.
 - A phone's push language changes when the app next opens signed in;
   Nynorsk phones get Bokmål pushes (ADR 0025).
-- libaums builds its native helpers for 4 KB pages, so 16 KB-page phones
-  run the app in compatibility mode; without it, the card writer can crash
-  mid-write (ADR 0014).
+- The phone prepares cards of 8 to 32 GB in a USB card reader only; a
+  phone's own card slot, or a larger card, needs DeKoi Setup (ADR 0031).
 - Incident grouping lives in both `Incidents.kt` and `weekly_summary_v1`.
 - Phones with private MAC addresses can reappear as new devices.
 

@@ -1,7 +1,8 @@
 # 0014: Writing the card from the phone
 
-Status: accepted, 2026-11-07. Updated the same day with the findings from
-building it, and for ADR 0017, which replaced ADR 0012's generic card.
+Status: superseded by 0031, 2026-11-08. Accepted 2026-11-07 and updated
+the same day with the findings from building it, and for ADR 0017, which
+replaced ADR 0012's generic card.
 
 ## Context
 
