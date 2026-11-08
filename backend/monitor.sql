@@ -38,6 +38,30 @@ select
     ) as h
   )::integer,
   0
+-- Pushes. Without the URL and the secret in Vault the events trigger posts
+-- nothing (private.post_to_notify). pg_net keeps notify's answers for 6
+-- hours (pg_net.ttl): anything but 2xx is a wrong secret (401), a missing
+-- function (404), an exception such as a refused FCM key (500), the
+-- runtime's limits (5xx), or FCM refusing a phone (502). Timeouts carry no
+-- status: notify may still have sent the push.
+union all
+select
+  'notify URL and secret missing from Vault',
+  (
+    select 2 - count(distinct s.name)
+    from vault.secrets as s
+    where s.name in ('notify_url', 'notify_secret')
+  )::integer,
+  0
+union all
+select
+  'notify calls of the last 6 hours that failed',
+  (
+    select count(*)
+    from net._http_response as r
+    where r.status_code not between 200 and 299
+  )::integer,
+  0
 -- Flooding: accounts over half a limit of ADR 0016.
 union all
 select

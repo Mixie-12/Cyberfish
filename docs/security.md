@@ -241,6 +241,7 @@ API's read-only endpoint as `supabase_read_only_user`.
 | Database size: `pg_database_size(current_database())` | over 350 MB, 70% of the Free plan's 500 MB | built, daily |
 | Notify quota: events received this calendar month, an upper bound on `notify` calls | over 400,000 of the Free plan's 500,000 | built, daily |
 | Notify gate: hours of the last day with more than 600 events | any: pushes were held back for everyone (ADR 0016) | built, daily |
+| Pushes: `notify_url` and `notify_secret` in Vault, and notify's answers that pg_net keeps for 6 hours | a name missing (the events trigger then posts nothing), or any answer of those 6 hours other than 2xx: wrong secret, function missing, FCM key refused, runtime limits, FCM refusing a phone | built, daily; sees the 6 hours before the check only |
 | Flooding: per account, devices, setups waiting, events reported in any hour of the last day, push tokens | any account over half its limit (ADR 0016), or setups waiting over 100 in all | built, daily |
 | Surface checks in `docs/runbooks/deploy-backend.md` | any unexpected status | not built |
 | Backup and restore test (`docs/runbooks/restore-backup.md`) | any step | not built |
