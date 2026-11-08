@@ -2,9 +2,8 @@
 
 Updated 2026-11-08. Everything below is on `main` and deployed by CI (the
 production backend deploy is green at `b69caca`). The last release is
-v0.2.0 (Phase 8: signed images, app, DeKoi Setup); v0.2.1, with Insights,
-Norwegian and the work since v0.2.0, comes next
-(`docs/runbooks/release.md`).
+v0.3.1 (2026-11-08, its app, DeKoi Setup and image runs green); from now
+on CI tags the next one (ADR 0038, `docs/runbooks/release.md`).
 
 ## Owner answers
 
@@ -250,6 +249,34 @@ answer and the Vault entries; actionlint on the changed workflows. Not
 verified: the workflows on GitHub, `monitor.sql` against production, any
 of it on a Pi.
 
+The repository updates, pins and releases itself (ADR 0038, asked for by
+the owner): `auto-merge.yml` merges Dependabot's pull requests and the
+automation's own once every check on them passed and `main` is green, and
+starts on `main` what the push would have started; `pins.yml` proposes
+Raspberry Pi OS Lite releases (a week old, downloaded and checked) and
+Alpine package versions; the installer is built on pull requests, and its
+pin is proposed after each publish; `tag-release.yml` tags the next patch
+version weekly, or the day after a Dependabot alert is fixed, and starts
+the release workflows on the tag; a failed run opens an issue assigned to
+the owner (`failures.yml`), and the monitor checks that scheduled
+workflows still run. Verified: actionlint 1.7.12 and shellcheck 0.11.0 on
+every changed workflow and script (actionlint does not know GitHub's new
+`vulnerability-alerts` permission); dry runs against this repository and
+the real endpoints, writing nothing: `triggered.sh` for pushes, tags and
+pull requests, `main-green.sh` (green), `pr-state.sh` on Dependabot's #1
+(stop: `security` failed; it would comment and assign the owner), the file
+and line rules on made-up diffs, `pins.yml`'s check steps (the 2026-10-06
+image found, downloaded and checked, its `image.json` equal to the pin
+byte for byte; a stale python3 pin found in the Alpine 3.24 index and
+replaced exactly), the installer pin's anonymous fetch (SHA-256 and size
+match the pin), and the release decision (none: v0.3.1 is new; Dependabot
+alerts are off). Not verified until it runs on GitHub: everything that
+writes (merges, pull requests, tags, dispatches, issues);
+`workflow_run` for runs the automation started; that GitHub signs commits
+made through the contents API; `gh run download` within a run; Dependabot
+with the new groups, prefixes and ignore rule; a merge of an Actions
+update with the workflow token.
+
 Needs hardware, not verified: the decoy in Windows Explorer and Finder on
 the owner's LAN; the Wi-Fi watch against a real evil twin; the Pi running
 the new images after its nightly update (after v0.2.0); the ARP sweep
@@ -281,7 +308,9 @@ but does nothing (tested 2026-11-07, Genesys 05e3:0749).
    first key before ADR 0022; the Pi's current card accepts them
    (`rotate-keys.md`, "Take back a signed image").
 6. Repository visibility: make it public, so the `release` environment can
-   require the owner's approval. On a private repository GitHub Pro adds
+   require the owner's approval; every automatic release and weekly rebuild
+   then waits for one approval (ADR 0038), and without it signing runs
+   unattended from `v*` tags. On a private repository GitHub Pro adds
    environment secrets but not required reviewers (GitHub docs, checked
    2026-11-07). Then run `infra/github/apply.sh` and move the secrets into
    the environments: the Supabase token and Google client secret into
@@ -289,7 +318,8 @@ but does nothing (tested 2026-11-07, Genesys 05e3:0749).
    Before that, decide how scheduled workflows stay on: in a public
    repository GitHub disables them after 60 days without repository
    activity, the monitor, backups and rotation included (GitHub docs,
-   checked 2026-11-08).
+   checked 2026-11-08). The automation's weekly merges and tags may count
+   as activity; not verified.
 7. Set `EXPIRES_SUPABASE_ACCESS_TOKEN`, `EXPIRES_GOOGLE_WEB_CLIENT_SECRET`
    and `EXPIRES_COSIGN_PRIVATE_KEY` (2026-12-31) as in `rotate-keys.md`.
 8. `tofu apply` and `./publish.sh` in `infra/google`
@@ -310,8 +340,14 @@ but does nothing (tested 2026-11-07, Genesys 05e3:0749).
     host name, the Wi-Fi scan, trust in the three release repositories only.
     Then retire the first key (`rotate-keys.md`, "Retire the first key").
 12. Optional: repeat the ARP sweep from a PC connected by cable.
-13. After the first `installer` run on `main`, make the `dekoi-installer`
-    package public (`release.md`, "Installer bundle").
+13. Run `infra/github/apply.sh` now: on the private repository it applies
+    everything but the reviewer on `release`, private vulnerability
+    reporting and secret scanning, and says so. The automation needs two
+    of its settings (ADR 0038): Actions may open pull requests (until then
+    `pins.yml` and the installer's pin job fail, and their issue says so),
+    and Dependabot alerts and security updates (until then releases come
+    only weekly). Then look at the pull requests assigned to you, Dependabot's
+    #1 first (JUnit 6 fails the dependency scan).
 
 ## Known limitations
 
@@ -348,6 +384,13 @@ but does nothing (tested 2026-11-07, Genesys 05e3:0749).
 - The phone prepares cards of 8 to 32 GB in a USB card reader only; a
   phone's own card slot, or a larger card, needs DeKoi Setup (ADR 0031).
 - Incident grouping lives in both `Incidents.kt` and `weekly_summary_v1`.
+- Left to people (ADR 0038): an Actions update after `main` changed the
+  same workflow, a new release line of Python, Alpine, Debian or Raspberry
+  Pi OS, a Dependabot update that fails its checks, and the tool versions
+  pinned inside workflows (gitleaks, OSV-Scanner, Grype, ORAS, age, cosign,
+  Supabase CLI, Deno, ruff, pytest, image digests in `docker run`).
+  Whether Dependabot updates `debian@sha256:...` without a tag
+  (`device/ids`) is not verified.
 - Phones with private MAC addresses can reappear as new devices.
 
 ## Roadmap (out of MVP scope)

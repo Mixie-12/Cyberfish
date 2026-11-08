@@ -1,6 +1,7 @@
 # 0036: Maintenance without anyone watching
 
-Status: accepted, 2026-11-08
+Status: accepted, 2026-11-08. Amended by 0038 (`failures.yml` reports failed
+runs; the monitor checks that they still run).
 
 ## Context
 

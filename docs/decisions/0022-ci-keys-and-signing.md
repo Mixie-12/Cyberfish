@@ -1,6 +1,7 @@
 # 0022: Keys in CI, image signing in Cloud KMS, automatic rotation
 
-Status: accepted, 2026-11-07. Amends 0002, 0004, 0007 and 0009.
+Status: accepted, 2026-11-07. Amends 0002, 0004, 0007 and 0009. Amended by
+0038 (release cadence, Actions may open pull requests).
 
 ## Context
 
