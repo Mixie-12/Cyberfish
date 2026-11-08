@@ -2,10 +2,7 @@ package no.cyberfish.dekoi.ui
 
 import android.icu.text.ListFormatter
 import androidx.compose.animation.animateContentSize
-import androidx.compose.animation.core.Animatable
-import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.snap
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -37,10 +34,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.drawscope.DrawScope
-import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLocale
 import androidx.compose.ui.platform.LocalResources
@@ -94,6 +87,8 @@ import no.cyberfish.dekoi.ui.components.KindTile
 import no.cyberfish.dekoi.ui.components.MissingScreen
 import no.cyberfish.dekoi.ui.components.Screen
 import no.cyberfish.dekoi.ui.components.TechnicalDetailsRow
+import no.cyberfish.dekoi.ui.components.drawAlarm
+import no.cyberfish.dekoi.ui.components.rememberAlarm
 import no.cyberfish.dekoi.ui.components.severityGlyph
 import no.cyberfish.dekoi.ui.learn.learnTopicFor
 import no.cyberfish.dekoi.ui.motion.CriticalAlertHaptic
@@ -103,11 +98,6 @@ import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 
-private const val ALARM_PULSES = 3
-private const val ALARM_MS = 3000
-private const val ALARM_RINGS = 2
-private const val RING_ALPHA = 0.45f
-private const val GLOW_ALPHA = 0.3f
 private const val SHOWN_EVENTS = 8
 private const val MAX_VALUES = 10
 
@@ -115,7 +105,6 @@ private const val MAX_VALUES = 10
 private const val MAX_PORTS = 64
 
 private val ALARM_AREA = 192.dp
-private val RING_WIDTH = 3.dp
 private val STEP_MARK = 28.dp
 private val SMALL_ICON = 18.dp
 private val EVENT_DOT = 8.dp
@@ -220,52 +209,23 @@ private fun AlarmHero(
     detail: Route,
 ) {
     val critical = LocalSeverityColors.current.critical.color
-    // Once per visit: scrolling the hero away and back does not sound it again.
-    var played by rememberSaveable { mutableStateOf(false) }
-    val still = played || LocalReduceMotion.current
-    val progress = remember { Animatable(if (still) ALARM_PULSES.toFloat() else 0f) }
-    LaunchedEffect(Unit) {
-        progress.animateTo(ALARM_PULSES.toFloat(), tween(ALARM_MS, easing = LinearEasing))
-        played = true
-    }
+    val alarm = rememberAlarm()
     HudFrame(Modifier.fillMaxWidth(), contentPadding = Dimens.gutter) {
         Column(
             Modifier.fillMaxWidth(),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(Dimens.spaceM),
         ) {
-            Box(Modifier.size(ALARM_AREA).drawBehind { drawAlarm(progress.value, critical) }, contentAlignment = Alignment.Center) {
+            Box(
+                Modifier.size(ALARM_AREA).drawBehind { drawAlarm(alarm.value, critical, Dimens.heroTile.toPx() / 2) },
+                contentAlignment = Alignment.Center,
+            ) {
                 KindTile(host?.kind ?: HostKind.UNKNOWN, hero = true, contentColor = critical)
             }
             SeverityLine(Severity.CRITICAL, detail)
             Headline(incident, host, summary(incident, now, clock), TextAlign.Center)
         }
     }
-}
-
-/**
- * Rings grow from the tile to the edge and fade, [ALARM_RINGS] at a time,
- * for [ALARM_PULSES] pulses; the glow builds up meanwhile and stays.
- * [progress] runs from 0 to [ALARM_PULSES].
- */
-private fun DrawScope.drawAlarm(
-    progress: Float,
-    color: Color,
-) {
-    val inner = Dimens.heroTile.toPx() / 2
-    val outer = size.minDimension / 2
-    if (progress < ALARM_PULSES) {
-        for (ring in 0 until ALARM_RINGS) {
-            val phase = (progress + ring.toFloat() / ALARM_RINGS) % 1f
-            drawCircle(
-                color.copy(alpha = RING_ALPHA * (1 - phase)),
-                radius = inner + (outer - inner) * phase,
-                style = Stroke(RING_WIDTH.toPx()),
-            )
-        }
-    }
-    val glow = GLOW_ALPHA * (progress / ALARM_PULSES)
-    drawCircle(Brush.radialGradient(listOf(color.copy(alpha = glow), Color.Transparent), center, outer), outer)
 }
 
 /**

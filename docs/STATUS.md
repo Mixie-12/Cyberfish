@@ -197,6 +197,15 @@ ghcr.io. Not verified: the picker and the copy on a phone with a USB
 reader, the bundle's own download and its install on
 a Pi.
 
+Live status visuals (ADR 0034, asked for by the owner for demos): "What
+DeKoi watches" is a live panel (report age, every check with its drawing
+and state, a light passing over the checks that are on); one status for
+every check (starting amber, failed red with what to do); views of the
+decoy, intrusion detection and Wi-Fi Guard at work on Features and Your
+DeKoi. The state, freshness, decoy and Wi-Fi mappings are unit tested.
+Not verified on a phone: how the panel, the views and their motion look,
+and the Wi-Fi alarm with a real evil twin.
+
 Needs hardware, not verified: the decoy in Windows Explorer and Finder on
 the owner's LAN; the Wi-Fi watch against a real evil twin; the Pi running
 the new images after its nightly update (after v0.2.0); the ARP sweep

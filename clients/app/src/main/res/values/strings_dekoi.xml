@@ -54,6 +54,8 @@
     <string name="dekoi_state_off">Turned off</string>
     <string name="dekoi_state_unknown">Status not known</string>
     <string name="dekoi_state_failed">Not working right now</string>
+    <string name="check_failed_do">Your DeKoi restarts its checks by itself. If this stays for an hour, unplug its power for 10 seconds, then plug it in again.</string>
+    <string name="dekoi_watch_wifi">Watching for copies of your Wi-Fi</string>
     <string name="dekoi_watching_older">More detail after the next automatic update.</string>
     <string name="dekoi_watching_offline">Paused while your DeKoi is offline.</string>
     <string name="dekoi_software">Software %1$s</string>
@@ -65,6 +67,11 @@
         <item quantity="other">Touched %1$d times this week</item>
     </plurals>
     <string name="dekoi_not_touched">Not touched this week</string>
+    <plurals name="dekoi_touched_day">
+        <item quantity="one">Touched %1$d time in the last day</item>
+        <item quantity="other">Touched %1$d times in the last day</item>
+    </plurals>
+    <string name="dekoi_not_touched_day">Not touched in the last day</string>
     <string name="dekoi_try">Try your decoy</string>
     <string name="dekoi_try_body">On a computer on this network, open your decoy to see what an intruder sees. Signing in with a made-up name and password, or opening a shared folder, sends you an alert.</string>
     <string name="dekoi_try_login">Storage login page</string>

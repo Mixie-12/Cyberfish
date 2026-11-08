@@ -39,3 +39,4 @@ them.
 | 0031 | [The phone prepares a card that installs itself](0031-self-installing-card.md) | accepted |
 | 0032 | [Alerts appear by themselves while the app is open](0032-live-alerts.md) | accepted |
 | 0033 | [What the installer carries and what it assumes](0033-installer-build.md) | accepted |
+| 0034 | [Live status visuals](0034-live-status-visuals.md) | accepted |

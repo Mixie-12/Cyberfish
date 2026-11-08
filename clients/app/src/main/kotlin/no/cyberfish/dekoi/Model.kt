@@ -217,6 +217,8 @@ data class EventDetail(
     val file: String? = null,
     /** The sign-in used a user name from the decoy's bait files (ADR 0024). */
     val bait: Boolean = false,
+    /** How strongly Wi-Fi Guard heard the access point, in dBm (ADR 0019). */
+    @SerialName("signal_dbm") val signalDbm: Int? = null,
 )
 
 @Serializable

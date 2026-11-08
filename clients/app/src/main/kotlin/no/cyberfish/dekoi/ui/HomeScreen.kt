@@ -56,6 +56,7 @@ import androidx.compose.ui.unit.dp
 import no.cyberfish.dekoi.DekoiStatus
 import no.cyberfish.dekoi.Device
 import no.cyberfish.dekoi.Event
+import no.cyberfish.dekoi.FeatureState
 import no.cyberfish.dekoi.HostKind
 import no.cyberfish.dekoi.NetworkHost
 import no.cyberfish.dekoi.Protection
@@ -64,6 +65,7 @@ import no.cyberfish.dekoi.Severity
 import no.cyberfish.dekoi.checksOn
 import no.cyberfish.dekoi.dekoiToShow
 import no.cyberfish.dekoi.eventsPerDay
+import no.cyberfish.dekoi.featureState
 import no.cyberfish.dekoi.highestSeverity
 import no.cyberfish.dekoi.hostDisplayName
 import no.cyberfish.dekoi.isIntrusion
@@ -90,6 +92,7 @@ import no.cyberfish.dekoi.ui.components.StackedBarChart
 import no.cyberfish.dekoi.ui.components.StaleLabel
 import no.cyberfish.dekoi.ui.components.StatTile
 import no.cyberfish.dekoi.ui.components.StatusRing
+import no.cyberfish.dekoi.ui.components.checkMark
 import no.cyberfish.dekoi.ui.components.kindIcon
 import no.cyberfish.dekoi.ui.components.severityGlyph
 import no.cyberfish.dekoi.ui.motion.AnimatedStatus
@@ -491,7 +494,12 @@ private fun ChecksTile(
             on == total -> pluralStringResource(R.plurals.home_checks_all, total, total)
             else -> pluralStringResource(R.plurals.home_checks_some, total, on, total)
         }
-    val (glyph, tint) = monitorMark(dekoi.watchList.maxOfOrNull { it.state }.takeIf { status == DekoiStatus.ONLINE })
+    val worst =
+        dekoi.watchList
+            .maxOfOrNull { it.state }
+            ?.featureState
+            ?.takeIf { status == DekoiStatus.ONLINE }
+    val (glyph, tint) = checkMark(worst ?: FeatureState.PAUSED)
     StatTile(stringResource(R.string.home_checks), onClick, modifier) {
         Row(horizontalArrangement = Arrangement.spacedBy(Dimens.spaceS)) {
             Icon(painterResource(glyph), contentDescription = null, modifier = Modifier.size(ACTION_ICON), tint = tint)

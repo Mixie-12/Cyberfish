@@ -3,6 +3,10 @@ package no.cyberfish.dekoi
 import androidx.annotation.StringRes
 import java.time.Instant
 
+/** Signals at or above this are drawn next to the DeKoi, at or below [WEAK_DBM] at the edge. */
+private const val STRONG_DBM = -30
+private const val WEAK_DBM = -90
+
 /** The home network's name the owner gives for the Wi-Fi watch (ADR 0019), as the backend accepts it. */
 object WifiName {
     /** An SSID is at most 32 bytes. */
@@ -55,3 +59,26 @@ fun wifiWatchText(
         WifiWatch.NO_NAME, null -> R.string.wifi_watch_starting
     }
 }
+
+/**
+ * The access points with the home Wi-Fi's name that Wi-Fi Guard reported on
+ * [deviceId] (ADR 0019): the newest report of each, newest first.
+ */
+fun heardAccessPoints(
+    deviceId: String,
+    events: List<Event>,
+): List<Event> =
+    events
+        .filter { it.deviceId == deviceId && it.kind in Feature.WIFI_GUARD.kinds }
+        .sortedByDescending { it.occurredAt }
+        .distinctBy { it.srcMac ?: it.id }
+
+/** What Wi-Fi Guard leads with: the most serious of [heard] that still matters, the newest of those; null while none does. */
+fun wifiFinding(
+    heard: List<Event>,
+    trustedMacs: Set<String>,
+    now: Instant,
+): Event? = recentIntrusions(heard, trustedMacs, now).minWithOrNull(compareBy<Event> { it.severity }.thenByDescending { it.occurredAt })
+
+/** How far from the DeKoi an access point heard at [dbm] is drawn: 0 beside it, 1 at the edge, where one without a signal goes too. */
+fun signalReach(dbm: Int?): Float = dbm?.let { ((STRONG_DBM - it).toFloat() / (STRONG_DBM - WEAK_DBM)).coerceIn(0f, 1f) } ?: 1f

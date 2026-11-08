@@ -203,4 +203,31 @@ class DashboardTest {
         val noAddress = device("d", services = listOf("http", "smb"))
         assertEquals(emptyMap(), noAddress.decoyEntrances(now))
     }
+
+    @Test
+    fun `a report is live for two missed reports, then late`() {
+        assertEquals(Freshness.LIVE, device("d", seenAgo = Duration.ofSeconds(30)).freshness(now))
+        assertEquals(Freshness.LIVE, device("d", seenAgo = REPORT_LATE.minusSeconds(1)).freshness(now))
+        assertEquals(Freshness.LATE, device("d", seenAgo = REPORT_LATE).freshness(now))
+        assertEquals(Freshness.LATE, device("d", seenAgo = OFFLINE_AFTER).freshness(now))
+        assertEquals(Freshness.NONE, device("d", seenAgo = null).freshness(now))
+    }
+
+    @Test
+    fun `decoy touches are this DeKoi's recent ones on its own decoys, not from known devices`() {
+        val dekoi = device("d", services = listOf("ssh", "smb"))
+        val events =
+            listOf(
+                event(1, service = "ssh"),
+                event(2, kind = "login_attempt", service = "ssh", severity = Severity.CRITICAL),
+                event(3, service = "smb", ago = ATTENTION_WINDOW),
+                event(4, service = "ssh", device = "other"),
+                event(5, service = "ftp"),
+                event(6, service = "smb", mac = "known"),
+                event(7, kind = "device_online", service = "smb"),
+            )
+        val touches = dekoi.decoyTouches(events, trustedMacs = setOf("known"), now)
+        assertEquals(setOf("ssh"), touches.keys)
+        assertEquals(listOf(1L, 2L), touches.getValue("ssh").map { it.id })
+    }
 }
