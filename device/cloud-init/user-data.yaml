@@ -138,6 +138,11 @@ write_files:
 
 runcmd:
   - [systemctl, mask, --now, ssh.service, ssh.socket, avahi-daemon.service, avahi-daemon.socket]
+  # Raspberry Pi firmware puts cgroup_disable=memory on the kernel command
+  # line; cmdline.txt comes after it, so this opt-in (the kernel team's
+  # documented setting) wins at the restart below and the IDS's memory limit
+  # is enforced. cmdline.txt must stay one line.
+  - [sed, -i, "1{/cgroup_enable=memory/!s/$/ cgroup_enable=memory/}", /boot/firmware/cmdline.txt]
   - [install, -d, -m, "0755", /var/log/ulog]
   - [sysctl, --system]
   - [systemctl, daemon-reload]
@@ -149,3 +154,9 @@ runcmd:
   - [systemd-tmpfiles, --create, /etc/tmpfiles.d/dekoi-wifi.conf]
   - [systemctl, start, dekoi-canary.service, dekoi-announce.service, dekoi-agent.service, dekoi-ids.service]
   - [systemctl, enable, --now, dekoi-wifi-scan.timer]
+
+# One restart at the end of first boot, for the kernel command line above.
+power_state:
+  mode: reboot
+  message: DeKoi first boot done, restarting once
+  timeout: 60

@@ -94,7 +94,7 @@ fun InsetSection(
 }
 
 /** A full-width hairline just inside the top or bottom edge. */
-private fun DrawScope.drawHairline(
+internal fun DrawScope.drawHairline(
     color: Color,
     bottom: Boolean,
 ) {

@@ -5,7 +5,7 @@
 
     <string name="add_prepare_title">Get your DeKoi ready</string>
     <string name="add_prepare_body">Your DeKoi starts from a memory card that links it to your account. Prepare the card once, then plug your DeKoi in.</string>
-    <string name="add_write_card">Write a card with this phone</string>
+    <string name="add_write_card">Prepare the card with this phone</string>
     <string name="add_write_card_hint">You need a USB-C card reader for the memory card.</string>
     <string name="add_computer_card">I prepared a card with DeKoi Setup on a computer</string>
 

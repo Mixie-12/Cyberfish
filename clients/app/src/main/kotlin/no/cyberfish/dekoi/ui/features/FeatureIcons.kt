@@ -42,13 +42,29 @@ fun FeatureIcon(
     playing: Boolean,
     modifier: Modifier = Modifier,
 ) {
-    val look = look(feature)
+    val loop = if (playing && !LocalReduceMotion.current) loop(loopMs(feature)) else null
+    FeatureDrawing(feature, { loop?.value }, modifier)
+}
+
+/**
+ * [feature]'s drawing at [frame], how far through its loop it is, read
+ * while drawing; its still frame while that is null. Callers that play it
+ * keep to one loop on screen.
+ */
+@Composable
+fun FeatureDrawing(
+    feature: Feature,
+    frame: () -> Float?,
+    modifier: Modifier = Modifier,
+) {
     val ink = Ink(MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.onSurfaceVariant)
-    val loop = if (playing && !LocalReduceMotion.current) loop(look.periodMs) else null
     Canvas(modifier.clearAndSetSemantics { }) {
-        Stage(this, ink).draw(feature, loop?.value ?: look.still)
+        Stage(this, ink).draw(feature, frame() ?: look(feature).still)
     }
 }
+
+/** How long one loop of [feature]'s drawing takes. */
+fun loopMs(feature: Feature): Int = look(feature).periodMs
 
 /** How long one loop takes, and the frame shown when still. */
 private class Look(
@@ -93,6 +109,12 @@ private const val KNOWN_NODES = 5
 private const val SWEEP_TRAIL = 120f
 private const val BAR_STEP = 0.08f
 private val STROKE = 1.5.dp
+
+/** A unit step at [degrees] clockwise from three o'clock, as drawings place things around a centre. */
+internal fun direction(degrees: Float): Offset {
+    val r = degrees * PI.toFloat() / 180f
+    return Offset(cos(r), sin(r))
+}
 
 /** 0 at the start and end of a period, 1 halfway. */
 private fun pulse(t: Float): Float = (1 - cos(2 * PI * t).toFloat()) / 2
@@ -251,11 +273,6 @@ private class Stage(
             dot(place, 1.6f, ink.line)
             glow(place, 5f, GLOW * (1 - since / SWEEP_TRAIL).coerceAtLeast(0f))
         }
-    }
-
-    private fun direction(degrees: Float): Offset {
-        val r = degrees * PI.toFloat() / 180f
-        return Offset(cos(r), sin(r))
     }
 
     // Two devices claim the same place; the copy, dashed, is ringed while it shows itself.

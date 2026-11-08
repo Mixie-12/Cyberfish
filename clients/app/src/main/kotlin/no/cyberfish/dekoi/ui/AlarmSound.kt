@@ -6,6 +6,7 @@ import android.media.AudioAttributes
 import android.media.AudioFocusRequest
 import android.media.AudioManager
 import android.media.MediaPlayer
+import android.media.RingtoneManager
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.material3.Switch
 import androidx.compose.runtime.Composable
@@ -32,15 +33,20 @@ private const val SOUND = "sound"
 
 /**
  * Whether the alarm sound plays (ADR 0028): as the hero of an [alarm] first
- * shows on this opening of its screen, while the owner keeps the sound on
- * and the phone is set to ring, not to vibrate or silent.
+ * shows on this opening of its screen, while [soundAllowed].
  */
 fun alarmSounds(
     alarm: Boolean,
     shown: Boolean,
     soundOn: Boolean,
     ringerMode: Int,
-): Boolean = alarm && !shown && soundOn && ringerMode == AudioManager.RINGER_MODE_NORMAL
+): Boolean = alarm && !shown && soundAllowed(soundOn, ringerMode)
+
+/** Both of the app's sounds play only while the owner keeps them on and the phone is set to ring, not to vibrate or silent. */
+private fun soundAllowed(
+    soundOn: Boolean,
+    ringerMode: Int,
+): Boolean = soundOn && ringerMode == AudioManager.RINGER_MODE_NORMAL
 
 /**
  * Plays the alarm sound with the firm click of [no.cyberfish.dekoi.ui.motion.CriticalAlertHaptic],
@@ -55,8 +61,17 @@ fun CriticalAlertSound(alarm: Boolean) {
         val audio = context.getSystemService(AudioManager::class.java)
         val sound = alarmSounds(alarm, shown, soundOn(preferences(context)), audio.ringerMode)
         shown = shown || alarm
-        if (sound) play(context, audio)
+        if (sound) play(audio) { attributes, session -> MediaPlayer.create(context, R.raw.alarm_critical, attributes, session) }
     }
+}
+
+/** Plays the phone's own notification sound for an alert that arrived while the app is open (ADR 0032), while [soundAllowed]. */
+suspend fun playArrivalSound(context: Context) {
+    val audio = context.getSystemService(AudioManager::class.java)
+    if (!soundAllowed(soundOn(preferences(context)), audio.ringerMode)) return
+    val sound = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
+    // A phone set to no notification sound has nothing to create.
+    play(audio) { attributes, session -> MediaPlayer.create(context, sound, null, attributes, session) }
 }
 
 /**
@@ -66,8 +81,8 @@ fun CriticalAlertSound(alarm: Boolean) {
  * focus and no sound.
  */
 private suspend fun play(
-    context: Context,
     audio: AudioManager,
+    create: (AudioAttributes, Int) -> MediaPlayer?,
 ) {
     val attributes =
         AudioAttributes
@@ -75,7 +90,7 @@ private suspend fun play(
             .setUsage(AudioAttributes.USAGE_NOTIFICATION_EVENT)
             .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
             .build()
-    val player = MediaPlayer.create(context, R.raw.alarm_critical, attributes, audio.generateAudioSessionId()) ?: return
+    val player = create(attributes, audio.generateAudioSessionId()) ?: return
     val focus = AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN_TRANSIENT_MAY_DUCK).setAudioAttributes(attributes).build()
     try {
         if (audio.requestAudioFocus(focus) != AudioManager.AUDIOFOCUS_REQUEST_GRANTED) return
@@ -90,16 +105,16 @@ private suspend fun play(
     }
 }
 
-/** The owner's choice, kept on this phone. */
+/** The owner's choice for both sounds, kept on this phone. */
 @Composable
-fun AlarmSoundSection() {
+fun SoundSection() {
     val context = LocalContext.current
     val preferences = remember { preferences(context) }
     var on by remember { mutableStateOf(soundOn(preferences)) }
     val haptics = rememberHaptics()
-    InsetSection(footer = stringResource(R.string.settings_alarm_sound_footer)) {
+    InsetSection(footer = stringResource(R.string.settings_sound_footer)) {
         InsetRow(
-            stringResource(R.string.settings_alarm_sound),
+            stringResource(R.string.settings_sound),
             modifier =
                 Modifier.toggleable(on, role = Role.Switch) {
                     haptics.toggle(it)

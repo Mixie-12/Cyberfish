@@ -256,8 +256,36 @@ def check_attack(backend: Backend, token: str) -> None:
     print("ok: events are correct and contain no passwords")
 
 
+def monitoring_complete(row: dict) -> bool:
+    """The heartbeat_v2 report (ADR 0013), well inside the startup time,
+    so no monitor may have failed yet."""
+    monitors = {m["name"]: m for m in row["monitors"]}
+    ids = monitors.get("ids", {}).get("detail", {})
+    images = {i["name"]: i["version"] for i in row["images"]}
+    return (
+        len(monitors) == 8
+        and all(m["state"] != "failed" for m in monitors.values())
+        and monitors["decoys"]["state"] == "ok"
+        and monitors["decoys"]["detail"] == {"decoys": len(DECOYS)}
+        and monitors["ids"]["state"] == "ok"
+        and ids.get("rules", 0) > 0
+        and "ruleset_date" in ids
+        and monitors["inventory"]["state"] == "ok"
+        and sorted(images) == ["agent", "canary", "ids"]
+        and images["agent"] == row["agent_version"]
+    )
+
+
 def check_reports(backend: Backend, token: str) -> None:
-    """The inventory, networks, Wi-Fi state and monitoring report."""
+    """The inventory, the device's own subnet, the Wi-Fi watch state and the
+    monitoring report."""
+
+    def device() -> dict:
+        (row,) = backend.as_user(
+            token, "GET", "/rest/v1/devices?select=agent_version,monitors,images,wifi_watch"
+        )
+        return row
+
     wait_for(
         "network inventory from arp-scan, with identification columns",
         lambda: backend.as_user(token, "GET", "/rest/v1/network_hosts?select=mac,kind,services"),
@@ -270,41 +298,16 @@ def check_reports(backend: Backend, token: str) -> None:
             if network["source"] == "interface"
         ],
     )
-
-    def device_field(name: str) -> object:
-        (row,) = backend.as_user(token, "GET", f"/rest/v1/devices?select={name}")
-        return row[name]
-
     # No Wi-Fi name is set, so the watch is off; this checks the RPC and that
     # the agent starts with the Wi-Fi directories mounted.
     wait_for(
         "the Wi-Fi watch state, reported through device_wifi_v1",
-        lambda: device_field("wifi_watch") == "no_name",
+        lambda: device()["wifi_watch"] == "no_name",
     )
-
-    def monitoring() -> bool:
-        """The heartbeat_v2 report (ADR 0013), well inside the startup time,
-        so no monitor may have failed yet."""
-        (row,) = backend.as_user(
-            token, "GET", "/rest/v1/devices?select=agent_version,monitors,images"
-        )
-        monitors = {m["name"]: m for m in row["monitors"]}
-        ids = monitors.get("ids", {}).get("detail", {})
-        images = {i["name"]: i["version"] for i in row["images"]}
-        return (
-            len(monitors) == 8
-            and all(m["state"] != "failed" for m in monitors.values())
-            and monitors["decoys"]["state"] == "ok"
-            and monitors["decoys"]["detail"] == {"decoys": len(DECOYS)}
-            and monitors["ids"]["state"] == "ok"
-            and ids.get("rules", 0) > 0
-            and "ruleset_date" in ids
-            and monitors["inventory"]["state"] == "ok"
-            and sorted(images) == ["agent", "canary", "ids"]
-            and images["agent"] == row["agent_version"]
-        )
-
-    wait_for("monitoring report: decoys, IDS rules and ruleset, inventory, images", monitoring)
+    wait_for(
+        "monitoring report: decoys, IDS rules and ruleset, inventory, images",
+        lambda: monitoring_complete(device()),
+    )
 
 
 def main() -> None:

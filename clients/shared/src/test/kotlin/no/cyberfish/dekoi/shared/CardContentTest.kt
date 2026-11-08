@@ -41,6 +41,22 @@ class CardContentTest {
         assertFailsWith<IllegalArgumentException> { image.copy(extractSize = image.extractSize + 1) }
     }
 
+    @Test
+    fun `the pinned installer comes from device installer_json`() {
+        val installer = CardContent.installer
+        assertEquals("mixie-12/dekoi-installer", installer.repository)
+        assertEquals("sha256:${installer.sha256}", installer.digest)
+        assertTrue(installer.size > 0)
+    }
+
+    @Test
+    fun `an installer without a real hash or size is refused`() {
+        val installer = CardContent.installer
+        assertFailsWith<IllegalArgumentException> { installer.copy(sha256 = installer.digest) }
+        assertFailsWith<IllegalArgumentException> { installer.copy(sha256 = "A".repeat(64)) }
+        assertFailsWith<IllegalArgumentException> { installer.copy(size = 0) }
+    }
+
     /** CI validates these with cloud-init itself (.github/workflows/clients.yml). */
     @Test
     fun `write rendered samples for the schema check`() {

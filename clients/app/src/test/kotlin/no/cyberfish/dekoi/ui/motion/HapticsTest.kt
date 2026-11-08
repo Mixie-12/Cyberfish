@@ -19,6 +19,7 @@ class HapticsTest {
         toggle(on = false)
         confirm()
         critical()
+        arrival()
     }
 
     @Test
@@ -26,7 +27,13 @@ class HapticsTest {
         val recorder = Recorder()
         Haptics(recorder, enabled = true).playAll()
         val expected =
-            listOf(HapticFeedbackType.ToggleOn, HapticFeedbackType.ToggleOff, HapticFeedbackType.Confirm, HapticFeedbackType.LongPress)
+            listOf(
+                HapticFeedbackType.ToggleOn,
+                HapticFeedbackType.ToggleOff,
+                HapticFeedbackType.Confirm,
+                HapticFeedbackType.LongPress,
+                HapticFeedbackType.ContextClick,
+            )
         assertEquals(expected, recorder.played)
     }
 

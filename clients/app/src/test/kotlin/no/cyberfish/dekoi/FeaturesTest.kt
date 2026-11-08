@@ -228,4 +228,40 @@ class FeaturesTest {
         val kinds = Feature.entries.flatMap { it.kinds }
         assertEquals(kinds.size, kinds.toSet().size)
     }
+
+    @Test
+    fun `a state shows live only while it runs, red only when it fails, blue only when the owner can act`() {
+        val signals =
+            mapOf(
+                FeatureState.ON to Signal.LIVE,
+                FeatureState.LEARNING to Signal.LIVE,
+                FeatureState.STARTING to Signal.STARTING,
+                FeatureState.FAILED to Signal.FAILED,
+                FeatureState.NEEDS_WIFI_NAME to Signal.ASK,
+                FeatureState.WAITING_FOR_UPDATE to Signal.QUIET,
+                FeatureState.PAUSED to Signal.QUIET,
+                FeatureState.OFF to Signal.QUIET,
+                FeatureState.UNKNOWN to Signal.QUIET,
+            )
+        assertEquals(FeatureState.entries.toSet(), signals.keys)
+        signals.forEach { (state, signal) -> assertEquals(signal, state.signal, state.name) }
+    }
+
+    @Test
+    fun `a check holds its own state only while the DeKoi is online`() {
+        val failed = Monitor("ids", "failed")
+        assertEquals(FeatureState.FAILED, device().checkState(failed, now))
+        assertEquals(FeatureState.ON, device().checkState(Monitor("ids", "ok"), now))
+        assertEquals(FeatureState.UNKNOWN, device().checkState(Monitor("ids", "orbiting"), now))
+        assertEquals(FeatureState.PAUSED, device(online = false).checkState(failed, now))
+        assertEquals(FeatureState.STARTING, device(lastSeenAt = null).checkState(failed, now))
+    }
+
+    @Test
+    fun `Wi-Fi Guard asks for the name first, even while the DeKoi is offline`() {
+        assertEquals(FeatureState.NEEDS_WIFI_NAME, device(wifiName = null, online = false).wifiGuardState(now))
+        assertEquals(FeatureState.PAUSED, device(online = false).wifiGuardState(now))
+        assertEquals(FeatureState.ON, device().wifiGuardState(now))
+        assertEquals(FeatureState.LEARNING, device(wifiWatch = "learning").wifiGuardState(now))
+    }
 }

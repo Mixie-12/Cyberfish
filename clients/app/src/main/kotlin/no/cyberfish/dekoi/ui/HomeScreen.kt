@@ -4,6 +4,7 @@ import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.MutableTransitionState
 import androidx.compose.animation.core.snap
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.border
@@ -27,7 +28,9 @@ import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -53,6 +56,7 @@ import androidx.compose.ui.unit.dp
 import no.cyberfish.dekoi.DekoiStatus
 import no.cyberfish.dekoi.Device
 import no.cyberfish.dekoi.Event
+import no.cyberfish.dekoi.FeatureState
 import no.cyberfish.dekoi.HostKind
 import no.cyberfish.dekoi.NetworkHost
 import no.cyberfish.dekoi.Protection
@@ -61,6 +65,7 @@ import no.cyberfish.dekoi.Severity
 import no.cyberfish.dekoi.checksOn
 import no.cyberfish.dekoi.dekoiToShow
 import no.cyberfish.dekoi.eventsPerDay
+import no.cyberfish.dekoi.featureState
 import no.cyberfish.dekoi.highestSeverity
 import no.cyberfish.dekoi.hostDisplayName
 import no.cyberfish.dekoi.isIntrusion
@@ -87,9 +92,11 @@ import no.cyberfish.dekoi.ui.components.StackedBarChart
 import no.cyberfish.dekoi.ui.components.StaleLabel
 import no.cyberfish.dekoi.ui.components.StatTile
 import no.cyberfish.dekoi.ui.components.StatusRing
+import no.cyberfish.dekoi.ui.components.checkMark
 import no.cyberfish.dekoi.ui.components.kindIcon
 import no.cyberfish.dekoi.ui.components.severityGlyph
 import no.cyberfish.dekoi.ui.motion.AnimatedStatus
+import no.cyberfish.dekoi.ui.motion.ExpandingVisibility
 import no.cyberfish.dekoi.ui.motion.rememberHaptics
 import no.cyberfish.dekoi.ui.motion.sharedSeverity
 import no.cyberfish.dekoi.ui.onboarding.Welcome
@@ -318,10 +325,16 @@ private fun NeedsAttention(
     modifier: Modifier = Modifier,
 ) {
     val resize = if (LocalReduceMotion.current) snap() else expandSpring<IntSize>()
+    // The cards there when the section shows are simply there; one that
+    // arrives while Home is open opens in (ADR 0032).
+    val first = remember { events.mapTo(mutableSetOf()) { it.id } }
     Section(number, stringResource(R.string.home_needs_attention), modifier.animateContentSize(resize)) {
         events.forEach { event ->
-            val detail = Route.AlertDetail(event.id)
-            AttentionCard(event, data.hostFor(event.srcMac), now, detail) { onNavigate(detail) }
+            key(event.id) {
+                val shown = remember { MutableTransitionState(event.id in first) }.apply { targetState = true }
+                val detail = Route.AlertDetail(event.id)
+                ExpandingVisibility(shown) { AttentionCard(event, data.hostFor(event.srcMac), now, detail) { onNavigate(detail) } }
+            }
         }
     }
 }
@@ -481,7 +494,12 @@ private fun ChecksTile(
             on == total -> pluralStringResource(R.plurals.home_checks_all, total, total)
             else -> pluralStringResource(R.plurals.home_checks_some, total, on, total)
         }
-    val (glyph, tint) = monitorMark(dekoi.watchList.maxOfOrNull { it.state }.takeIf { status == DekoiStatus.ONLINE })
+    val worst =
+        dekoi.watchList
+            .maxOfOrNull { it.state }
+            ?.featureState
+            ?.takeIf { status == DekoiStatus.ONLINE }
+    val (glyph, tint) = checkMark(worst ?: FeatureState.PAUSED)
     StatTile(stringResource(R.string.home_checks), onClick, modifier) {
         Row(horizontalArrangement = Arrangement.spacedBy(Dimens.spaceS)) {
             Icon(painterResource(glyph), contentDescription = null, modifier = Modifier.size(ACTION_ICON), tint = tint)

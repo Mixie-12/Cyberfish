@@ -61,6 +61,27 @@ fun alertsToLookAt(
     trustedMacs: Set<String>,
 ): List<Incident> = incidents(events).filter { !it.seen && it.severity != Severity.INFO && it.mac !in trustedMacs }
 
+/**
+ * Alerts to look at in [current] that [previous] did not have, newest
+ * first: those with an event that is new, and none that was already to
+ * look at (ADR 0032). An incident that grows while it waits stays quiet, as
+ * notify's coalescing per source does; an incident the owner had read
+ * comes back when its source acts again. Null [previous] means the app has
+ * nothing to compare with yet: none.
+ */
+fun newAlerts(
+    previous: List<Event>?,
+    current: List<Event>,
+    trustedMacs: Set<String>,
+): List<Incident> {
+    if (previous == null) return emptyList()
+    val known = previous.mapTo(mutableSetOf()) { it.id }
+    val waiting = alertsToLookAt(previous, trustedMacs).flatMapTo(mutableSetOf()) { incident -> incident.events.map { it.id } }
+    return alertsToLookAt(current, trustedMacs).filter { incident ->
+        incident.events.any { it.id !in known } && incident.events.none { it.id in waiting }
+    }
+}
+
 /** The Alerts tab badge. */
 fun alertBadgeCount(
     events: List<Event>,

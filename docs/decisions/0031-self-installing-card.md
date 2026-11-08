@@ -41,7 +41,7 @@ Pi then downloads, verifies and writes Raspberry Pi OS itself.
   zeroed first and written last; reads the image back against the
   extracted SHA-256; writes the three cloud-init files into the new boot
   partition and adds `ds=nocloud;i=<instance-id>` to its `cmdline.txt`,
-  as `CloudInit.commandLine` does; and reboots into Raspberry Pi OS. The
+  as Raspberry Pi Imager does; and reboots into Raspberry Pi OS. The
   activity LED shows working and failed.
 - Hosting: CI builds the bundle and pushes it with ORAS to
   `ghcr.io/mixie-12/dekoi-installer` (public, like the device images). Its
@@ -71,5 +71,13 @@ Pi then downloads, verifies and writes Raspberry Pi OS itself.
   once writing began, a card without a partition table.
 - Cards over 32 GB need DeKoi Setup on a computer, or formatting as FAT32
   there first.
+- Found while building the phone side: on Android 11 and later the picker
+  does not offer the root of a card in the phone's own slot
+  (`ExternalStorageProvider` allows a volume's root on USB only), so those
+  phones need a USB card reader, and the app asks for one. A card that
+  still holds Raspberry Pi OS shows Android only its 512 MB boot
+  partition (vold mounts FAT, exFAT and NTFS partitions only); the app
+  refuses it as too small and asks the owner to format it in the phone's
+  storage settings first. Neither is tried on a phone yet.
 - A new package is made public once, by the owner, after its first push
   (`docs/runbooks/release.md`).

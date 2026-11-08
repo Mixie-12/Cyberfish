@@ -16,6 +16,13 @@
     <string name="features_state_learning">På, lærer hva som er normalt</string>
     <string name="features_state_wifi_name">Trenger navnet på Wi-Fi-nettet ditt</string>
     <string name="features_state_update">Etter neste automatiske oppdatering</string>
+    <string name="wifi_guard_protected">Ingen kopi av Wi-Fi-nettet ditt i nærheten</string>
+    <string name="wifi_guard_copy">En kopi av Wi-Fi-nettet ditt er i nærheten</string>
+    <string name="wifi_guard_new">Et nytt tilgangspunkt bruker navnet på Wi-Fi-nettet ditt</string>
+    <plurals name="wifi_guard_heard">
+        <item quantity="one">%1$d tilgangspunkt i nærheten bruker navnet på Wi-Fi-nettet ditt</item>
+        <item quantity="other">%1$d tilgangspunkter i nærheten bruker navnet på Wi-Fi-nettet ditt</item>
+    </plurals>
     <string name="features_last_found">Sist funnet %1$s</string>
     <string name="features_try">Prøv selv</string>
     <string name="features_add_wifi_name">Legg inn Wi-Fi-navnet</string>

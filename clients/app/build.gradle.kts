@@ -164,8 +164,6 @@ dependencies {
     implementation(libs.googleid)
     implementation(libs.code.scanner)
     implementation(libs.firebase.messaging)
-    implementation(libs.libaums)
-    implementation(libs.xz)
 
     testImplementation(libs.kotlin.test.junit4)
 }

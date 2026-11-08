@@ -88,7 +88,26 @@ def parse_arp_scan(output: str) -> list[dict]:
     return list(hosts.values())[:MAX_HOSTS]
 
 
+def neighbours(interface: str, network: str, arp_table: Path = Path("/proc/net/arp")) -> list[dict]:
+    """Hosts on network that the kernel has a complete neighbour entry for:
+    those this device exchanged traffic with, also when they did not answer
+    the scan."""
+    subnet = ipaddress.IPv4Network(network)
+    hosts = []
+    for line in arp_table.read_text().splitlines()[1:]:
+        fields = line.split()
+        if len(fields) < 6 or fields[5] != interface or not int(fields[2], 16) & ARP_COMPLETE:
+            continue
+        ip, mac = valid_ip(fields[0]), _valid_mac(fields[3])
+        if ip and mac and ipaddress.IPv4Address(ip) in subnet:
+            hosts.append({"mac": mac, "ip": ip})
+    return hosts
+
+
 def scan_hosts() -> list[dict]:
+    """The scan's answers, and the neighbours that did not answer it: phone
+    hotspots and Wi-Fi power saving drop or delay broadcast ARP, so a scan
+    alone missed devices that had just talked to the DeKoi."""
     address = local_ip()
     target = scan_target(address) if address else None
     if target is None:
@@ -101,7 +120,9 @@ def scan_hosts() -> list[dict]:
         timeout=ARP_SCAN_TIMEOUT_SECONDS,
         check=True,
     )
-    return parse_arp_scan(result.stdout)
+    hosts = {host["mac"]: host for host in neighbours(interface, network)}
+    hosts.update({host["mac"]: host for host in parse_arp_scan(result.stdout)})
+    return list(hosts.values())[:MAX_HOSTS]
 
 
 def routed_networks(

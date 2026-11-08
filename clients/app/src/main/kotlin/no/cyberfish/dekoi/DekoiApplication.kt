@@ -6,17 +6,32 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import com.google.firebase.FirebaseApp
 import com.google.firebase.messaging.FirebaseMessaging
-import no.cyberfish.dekoi.shared.CardContent
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
 
 class DekoiApplication : Application() {
     val backend: Backend by lazy { Backend(BuildConfig.SUPABASE_URL, BuildConfig.SUPABASE_KEY) }
 
-    /** Writing a card outlives the screen that starts it (WriteCardService). */
-    val cardWriting = CardWriting(CardContent.image)
+    /** Preparing a card outlives the screen that starts it. */
+    val cardWriting = CardWriting({ confirmed, onProgress -> prepareCard(this, confirmed, onProgress) })
 
     /** False in debug builds made without the Firebase settings. */
     var pushEnabled = false
         private set
+
+    private val pushedAlerts = MutableSharedFlow<Unit>(extraBufferCapacity = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+
+    /**
+     * Alerts pushed to this phone while the app shows them itself (ADR 0032).
+     * AppViewModel.watch collects it, and only while the app is resumed and
+     * signed in.
+     */
+    val alertPushes: SharedFlow<Unit> = pushedAlerts.asSharedFlow()
+
+    /** Hands a pushed alert to the open app. False when nothing collects [alertPushes]: then a notification has to show it. */
+    fun showInApp(): Boolean = pushedAlerts.subscriptionCount.value > 0 && pushedAlerts.tryEmit(Unit)
 
     override fun onCreate() {
         super.onCreate()

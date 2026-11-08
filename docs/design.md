@@ -15,8 +15,9 @@ the brand, ADR 0020. Data behind it: ADR 0010. Wording rules: CLAUDE.md,
    shows what DeKoi sees, not cabling. DeKoi cannot block devices; the app
    explains how to block them in the router.
 5. Calm motion. Motion explains a change. At most one idle loop on screen,
-   only on a hero or the Features card in focus, none when the system
-   animation scale is 0. One exception:
+   on the live visual nearest the middle of the screen (a hero, the watch
+   panel, a feature's view, the Features card in focus), none off screen
+   and none when the system animation scale is 0. One exception:
    a very likely attack opens with an alarm that pulses for 3 s, then holds
    still.
 6. Attacker text is inert: host names, models, user names and service
@@ -54,9 +55,10 @@ DeKoi" and "Take the tour". Once closed, without a DeKoi, an "Add a DeKoi"
 row. (2) "Needs attention": up to three critical or warning alerts of the
 last 24 h, one per source device, on quiet hairline-edged cards (severity
 chip, title, device, "See what to do"), each opening its alert; hidden when
-none. (3) 2x2 tiles: devices on your network (count, "3 new this week"),
-alerts in 7 days (count and sparkline), Your DeKoi (status, last check-in),
-checks ("All 8 checks on", amber when one fails, grey while
+none; a card that arrives while Home is open expands in. (3) 2x2 tiles:
+devices on your network (count, "3 new this week"), alerts in 7 days
+(count and sparkline), Your DeKoi (status, last check-in), checks ("All 8
+checks on", marked like the worst of them as in "Live status", grey while
 offline; opens Features); tabular figures roll on change (300 ms); one
 column above font scale 1.5; under them an "Add another DeKoi" row unless
 the welcome shows. (4) Seven-day bar chart stacked by severity;
@@ -79,6 +81,14 @@ dot, grey glyph and word, a lighter title. Known devices are dimmed with
 "Known device". Entries use `animateItem()`. While any alert is unread,
 the tab's header has a text action, "Mark all as read", which asks first
 above 20 unread alerts; a cross-linked list does not offer it.
+
+**Alerts while the app is open** (ADR 0032). While resumed and signed in,
+the app loads again on each alert pushed to the phone and every 20 s,
+without the pull indicator. A new alert to look at enters its list, ticks
+lightly and plays the phone's notification sound (not on silent or
+vibrate, not with the sound switch off); away from the Alerts tab a
+snackbar says "New alert" with "Open". The alert on screen is left to its
+screen. No notification is drawn for an alert while the app shows it.
 
 **Alert detail.** One incident; opening it marks its events seen
 (`acknowledge_events_v1`) and clears their notifications. (1) A critical
@@ -187,15 +197,23 @@ switch and the results with a sparkline.
 
 **Your DeKoi.** Hero in the HUD frame (fish mark, name, status, "Checked
 in 1 min ago"). The setup checklist while setting up; otherwise "What DeKoi
-watches" (ADR 0013): one row per monitor in plain words with the numbers
-the DeKoi reports ("Checking traffic against 48,213 known attack patterns",
-"Updated 3 Nov"), a green check when on, amber when failing, grey otherwise
-and while offline; the software version and when it last updated; the
-reported names collapsed under Technical details. Software from before
-ADR 0013 lists only its decoys and says more detail follows the next
-automatic update; no row is made up. "See all features" opens Features.
-7-day uptime strip, one segment per
-hour from `device_online` and `device_offline` events. Decoy grid, one tile
+watches" (ADR 0013), live: a dot, green while the last report is under
+3 minutes old (the DeKoi reports every minute; `freshness`), "Checked in
+1 min ago" and, as on Home, "All 8 checks on"; then one row per monitor,
+and Wi-Fi Guard last, each with the feature drawing of the check (dimmed
+while not on), plain words with the numbers the DeKoi reports ("Checking traffic
+against 48,213 known attack patterns", "Updated 3 Nov · Last found 2
+hours ago") and its state as in "Live status". While the panel is the
+live visual, a soft blue band crosses each check that is on, one after
+another, while its drawing plays one loop. Then the software version and
+when it last updated; the reported names collapsed under Technical
+details. Software from before ADR 0013 lists only its decoys and Wi-Fi
+Guard and says more detail follows the next automatic update; no row is
+made up. "See all features" opens Features. Wi-Fi Guard: its view in the
+HUD frame, its state and what it is doing, and "Add your Wi-Fi name"
+while it has none. 7-day uptime strip, one segment per hour from
+`device_online` and `device_offline` events. Decoys: the decoy view in
+the HUD frame, then one tile
 per `Device.services` entry (plain name, "Touched 3 times this week",
 sparkline; opens Alerts for that service). "Try your decoy" while online
 (ADR 0018, 0035): the payment login page at `http://<local_ip>` when `http` runs,
@@ -219,10 +237,13 @@ feature at work, its name, a one-line promise, the status, "Last found 2
 hours ago" with the newest related event's action (opens that alert), and
 links: "Learn more" (`learnTopicFor` of its first event kind) and its own
 place (Settings for the Wi-Fi name and the weekly summary, the map,
-Insights). The decoy card names the decoy as Windows shows it
+Insights). With a DeKoi, the decoy, intrusion detection and Wi-Fi Guard
+cards hold the feature's live view under the heading, and their 56 dp
+drawing holds still. The decoy card names the decoy as Windows shows it
 ("SAP-PAY-PROD", from `device/canary/persona/persona.json` at build time)
 and, while the DeKoi is online, "Try it" with its addresses.
-- Status in glyph, colour and word, from data only (`featureState`):
+- Status in glyph, colour and word as in "Live status", from data only
+  (`featureState`):
   monitors from the heartbeat (ADR 0013), the more concerning of two for
   scan detection and Router Guard; Wi-Fi Guard's reported state, after
   "Needs your Wi-Fi name" (a link to Settings) while the owner has given
@@ -237,9 +258,9 @@ and, while the DeKoi is online, "Try it" with its addresses.
   it holds, what the DeKoi reports: rule count and ruleset date, decoys,
   devices, new this week, the DNS check, when the router's port list was
   read, what Wi-Fi Guard is doing.
-- Motion: only the drawing of the card nearest the middle of the screen
-  loops, slowly; every drawing has a still frame that tells the story on
-  its own, shown for the rest and without animations.
+- Motion: only the drawing or view of the card nearest the middle of the
+  screen loops, slowly; every drawing has a still frame that tells the
+  story on its own, shown for the rest and without animations.
 - Tour: "Show me around" scrolls each card in turn to the top, lights its
   frame and dims the others, with a caption on navy over the bottom of the
   screen (number, name, one or two sentences, polite live region), Skip and
@@ -251,10 +272,10 @@ and, while the DeKoi is online, "Try it" with its addresses.
 **Settings.** Inset grouped list: Account (email, Sign out); Your DeKoi
 devices; Add DeKoi; Wi-Fi Guard (each DeKoi's home Wi-Fi name and what
 Wi-Fi Guard is doing, ADR 0019); Notifications (channel state, opens system
-channel settings); the alarm sound switch (on by default, kept on the
-phone); the weekly summary; Privacy; About (version, Features,
-Learn, the tour, open-source licences); Delete account last, in red, with
-confirmation.
+channel settings); "Sound in the app", one switch for the sound of a new
+alert and the alarm (on by default, kept on the phone); the weekly
+summary; Privacy; About (version, Features, Learn, the tour, open-source
+licences); Delete account last, in red, with confirmation.
 
 **Sign-in and onboarding.** Brand hero with a slowly floating koi mark (6 s,
 static without animations), tagline, "Continue with Google", inline errors.
@@ -381,6 +402,49 @@ stiffness 400).
 - `SectionLabel(number, text, modifier)`: "01 / NETWORK", number in blue,
   text in mid grey, `label` style; a heading that TalkBack reads without
   the number.
+- `CheckStatus(state, detail)`: a check's state as in "Live status", the
+  numbers under it, and for a failed one what to do. `rememberAlarm` and
+  `drawAlarm`: the alarm of a very likely attack, for Alert detail and
+  Wi-Fi Guard.
+
+## Live status
+
+Every check and feature shows its state the same way (`checkMark`,
+`Signal` in `Features.kt`; ADR 0034), with glyph, colour and word:
+
+| Signal | States | Glyph, colour |
+| ------ | ------ | ------------- |
+| live | On; On, learning what is normal | `check_circle`, safe |
+| starting | Starting | `refresh`, warning amber |
+| failed | Not working right now, and what to do (`check_failed_do`) | `error`, critical red |
+| ask | Needs your Wi-Fi name | `info`, blue |
+| quiet | After the next automatic update; Paused while offline; Turned off; Status not known | `info`, mid grey |
+
+Only live states move, and only on the live visual of the screen. The
+views of a feature at work (`ui/features`), each with a still frame:
+
+- Decoy (`DecoyView`): the server tile in the middle, the services the
+  DeKoi reports around it with their names; a service touched in the last
+  day (as on Home: not from a known device) is filled in the colour of its
+  most serious touch, with how many times. Blue while on, grey otherwise;
+  a sweep turns around it, 6 s. Under it the name it goes by and
+  "Touched 3 times in the last day". The heartbeat carries service names,
+  not ports, so no port is shown.
+- Intrusion detection (`IdsView`): packets along a line pass a gate
+  labelled with the rule count, lit as they pass, blue after it; the
+  newest alert of the last day waits at the gate in its severity colour
+  and holds still. The packets flow, 3 s.
+- Wi-Fi Guard (`WifiGuardView`): the mark in the middle inside a ring in
+  the colour of its state; around it each access point with the home
+  Wi-Fi's name it reported (`evil_twin`, `new_access_point`; the newest
+  report of each, at most 6), nearer the stronger its signal, a copy
+  dashed, in its alert's colour for a day and grey after. A copy plays the
+  alarm of a very likely attack once per visit, then glows; a new access
+  point is ringed in amber and holds still. Waves leave the ring while on,
+  4 s. Under it the Wi-Fi's name and the finding with "See what to do", or
+  "No copy of your Wi-Fi nearby" while on, and how many access points use
+  the name. The app has no list of the access points the DeKoi learned;
+  it shows what the DeKoi reported.
 
 ## Device kinds
 
@@ -446,14 +510,15 @@ Severity colour as the notification colour, a monochrome DeKoi small icon,
 `VISIBILITY_PRIVATE` with a public version "DeKoi: new alert about your
 network", tag per source so repeats replace each other. No action buttons:
 trusting or blocking needs the full context. Opening the alert in the app
-cancels its notification.
+cancels its notification. While the app is resumed and signed in it shows
+an alert itself instead (ADR 0032); the weekly summary always shows.
 
 The severity colour is the one exception to defining a colour once
 (`DesignTokens.kt`): `notify.ts` sends a copy as
 `android.notification.color`. While the app is in the background, the
 phone draws the notification from FCM's payload alone and no app code runs.
-`PushService` colours the notifications that arrive while the app is open
-from `DesignTokens`; `PushTest` fails when the copy differs.
+`PushService` colours the notifications it draws while the app is in the
+foreground from `DesignTokens`; `PushTest` fails when the copy differs.
 
 ## Motion
 
@@ -465,9 +530,10 @@ move into the hero of their detail screen, only while that screen is pushed
 or popped, never on a tab switch. Status changes fade through; items of a
 plain list expand and fade with the expand spring; lazy rows use
 `animateItem()`. Haptics use the platform constants (toggle on or off,
-confirm) and long press, the firm click, once when a critical alert opens;
-the system touch feedback setting applies. Under reduced motion nothing
-moves and nothing vibrates.
+confirm), long press, the firm click, once when a critical alert opens,
+and context click, a light tick, when an alert arrives while the app is
+open; the system touch feedback setting applies. Under reduced motion
+nothing moves and nothing vibrates.
 
 ## Libraries
 
@@ -487,5 +553,6 @@ alarms, calm for everything else; warnings never move, info stays grey;
 security scores, pie charts, 3D, parallax; map lines that imply cabling;
 data DeKoi does not have; attacker text in notifications or as links;
 trusting or blocking from a notification or a swipe; animated list rows
-beyond `animateItem`, more than one idle loop on screen; dynamic colour;
+beyond `animateItem` and the watch panel's light, more than one idle
+loop on screen; dynamic colour;
 more than four tabs, hamburger menus, stacked dialogs.

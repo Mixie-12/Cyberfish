@@ -1,5 +1,6 @@
 package no.cyberfish.dekoi
 
+import java.time.Duration
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
@@ -28,6 +29,17 @@ fun dekoiToShow(
     devices: List<Device>,
     now: Instant,
 ): Device? = devices.minWithOrNull(compareBy<Device> { it.status(now) }.thenBy { it.checksOn == it.monitors.size })
+
+/** How recent a DeKoi's last report is: it reports every minute (device/agent, HEARTBEAT_SECONDS). */
+enum class Freshness { LIVE, LATE, NONE }
+
+/** A report older than two missed ones is late. */
+val REPORT_LATE: Duration = Duration.ofMinutes(3)
+
+fun Device.freshness(now: Instant): Freshness {
+    val seen = lastSeenAt ?: return Freshness.NONE
+    return if (Duration.between(seen, now) < REPORT_LATE) Freshness.LIVE else Freshness.LATE
+}
 
 /** Monitors that report they are working. */
 val Device.checksOn: Int get() = monitors.count { it.state == MonitorState.OK }
@@ -87,6 +99,20 @@ fun touchesPerDay(
     val touches = events.filter { it.deviceId == deviceId && it.service == service && it.isIntrusion }
     return eventsPerDay(touches, today, zone, days).map { day -> day.sumOf { it.count } }
 }
+
+/**
+ * What touched each of this DeKoi's decoys and still matters (as on Home:
+ * recent, not from a device the owner knows), by service. A decoy nothing
+ * touched is not in it.
+ */
+fun Device.decoyTouches(
+    events: List<Event>,
+    trustedMacs: Set<String>,
+    now: Instant,
+): Map<String, List<Event>> =
+    recentIntrusions(events, trustedMacs, now)
+        .filter { it.deviceId == id && it.service in services }
+        .groupBy { it.service.orEmpty() }
 
 /** What the name field keeps of [typed]: no control characters, at most [MAX_DEKOI_NAME], no half characters. */
 fun cleanName(typed: String): String {

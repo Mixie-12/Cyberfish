@@ -126,6 +126,11 @@
     </plurals>
     <string name="alerts_mark_all_read_body">Varslene blir liggende i listen, og du kan fortsatt åpne hvert av dem.</string>
     <string name="alerts_mark_all_read_confirm">Merk som lest</string>
+    <plurals name="alerts_arrived">
+        <item quantity="one">Nytt varsel</item>
+        <item quantity="other">%1$d nye varsler</item>
+    </plurals>
+    <string name="alerts_arrived_open">Åpne</string>
 
     <string name="alert_missing">Dette varselet finnes ikke lenger.</string>
     <string name="alert_do_now">Gjør dette nå</string>

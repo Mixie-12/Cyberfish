@@ -19,7 +19,7 @@ them.
 | 0011 | [App design system and notifications](0011-app-design.md) | accepted |
 | 0012 | [Linking a DeKoi from the phone](0012-phone-pairing.md) | superseded by 0017 |
 | 0013 | [Incidents, device names and rooms, monitoring status](0013-incidents-rooms-monitoring.md) | accepted |
-| 0014 | [Writing the card from the phone](0014-phone-writes-card.md) | accepted |
+| 0014 | [Writing the card from the phone](0014-phone-writes-card.md) | superseded by 0031 |
 | 0015 | [Network health, exposure checks and new-device alerts](0015-network-health-and-insights.md) | accepted |
 | 0016 | [Request and storage limits in Postgres](0016-request-and-storage-limits.md) | accepted |
 | 0017 | [Link by a secret the phone writes onto the card](0017-link-by-card-secret.md) | accepted |
@@ -33,8 +33,11 @@ them.
 | 0025 | [Push text in the phone's language](0025-push-language.md) | accepted |
 | 0026 | [Languages: Bokmål and English](0026-languages.md) | accepted |
 | 0027 | [Daily read-only checks of production](0027-production-monitoring.md) | accepted |
-| 0028 | [A sound with the alarm of a very likely attack](0028-alarm-sound.md) | accepted |
-| 0029 | [The card reader driver carries libaums' unreleased fix](0029-card-reader-driver.md) | accepted |
+| 0028 | [A sound with the alarm of a very likely attack](0028-alarm-sound.md) | accepted, amended by 0032 |
+| 0029 | [The card reader driver carries libaums' unreleased fix](0029-card-reader-driver.md) | superseded by 0031 |
 | 0030 | [The mark drawn from the app icon](0030-mark-from-app-icon.md) | accepted |
 | 0031 | [The phone prepares a card that installs itself](0031-self-installing-card.md) | accepted |
+| 0032 | [Alerts appear by themselves while the app is open](0032-live-alerts.md) | accepted |
+| 0033 | [What the installer carries and what it assumes](0033-installer-build.md) | accepted |
+| 0034 | [Live status visuals](0034-live-status-visuals.md) | accepted |
 | 0035 | [The decoy is a small company's finance server](0035-finance-server-decoy.md) | accepted |
