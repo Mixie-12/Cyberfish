@@ -30,7 +30,9 @@ import kotlin.math.abs
 
 private const val FLOW_MS = 3000
 private const val PACKETS = 9
-private const val STILL = 0.5f
+
+// The still frame puts a packet in the gate, being checked.
+private const val STILL = 0f
 private const val LANE = 0.62f
 private const val FAINT = 0.35f
 private const val PASSED = 0.7f
