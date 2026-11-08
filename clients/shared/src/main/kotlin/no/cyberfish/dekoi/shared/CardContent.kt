@@ -38,7 +38,7 @@ data class Image(
         require(extractSize % SECTOR == 0L) { "The image is not a whole number of sectors" }
     }
 
-    companion object {
+    private companion object {
         const val SECTOR = 512
     }
 }
