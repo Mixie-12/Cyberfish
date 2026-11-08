@@ -229,10 +229,13 @@ private fun SignedIn(
         }
         tabSwitch.active = true
         lastTab = tab
+        // A tab opens at its root; its scroll position lives in listStates. Saved
+        // and restored tab stacks broke the Alerts tab: alert details are pushed
+        // from Home and from Alerts, and once Navigation dropped the Alerts stack's
+        // saved state, restoring it did nothing and the tab never opened.
         navController.navigate(tab.route) {
-            popUpTo(Route.Home) { saveState = true }
+            popUpTo(Route.Home)
             launchSingleTop = true
-            restoreState = true
         }
     }
 
