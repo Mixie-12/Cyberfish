@@ -1,7 +1,7 @@
 -- Offline detection and retention.
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(7);
+select plan(8);
 
 insert into auth.users (id, email) values ('00000000-0000-0000-0000-00000000000a', 'a@test.invalid');
 
@@ -29,6 +29,13 @@ insert into public.networks (device_id, cidr, source, last_seen_at) values
   ('00000000-0000-0000-0000-0000000000a2', '10.0.0.0/24', 'observed', now() - interval '91 days'),
   ('00000000-0000-0000-0000-0000000000a2', '192.168.1.0/24', 'interface', now());
 
+-- Run ids below zero: only pg_cron may draw from its sequence.
+insert into cron.job_run_details (jobid, runid, database, username, command, status, start_time, end_time)
+select j.jobid, r.runid, 'postgres', 'postgres', 'test ' || r.age, 'succeeded', now() - r.age, now() - r.age
+from cron.job as j
+cross join (values (-1, interval '31 days'), (-2, interval '8 days')) as r (runid, age)
+where j.jobname = 'dekoi-retention';
+
 select private.apply_retention();
 
 select is(
@@ -47,6 +54,13 @@ select results_eq(
   'select cidr::text from public.networks',
   $$ values ('192.168.1.0/24') $$,
   'networks not seen for 90 days are removed, recent ones stay'
+);
+
+-- monitor.sql looks back 8 days for weekly jobs.
+select results_eq(
+  $$ select command from cron.job_run_details where command like 'test %' $$,
+  $$ values ('test 8 days') $$,
+  'job runs older than 30 days are removed, those the monitor reads stay'
 );
 
 select results_eq(
