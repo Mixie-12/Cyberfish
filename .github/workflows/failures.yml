@@ -24,6 +24,7 @@ on:
       - repo
       - rotate keys
       - security
+      - tag release
     types: [completed]
 
 permissions: {}
