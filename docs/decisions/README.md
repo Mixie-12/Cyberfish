@@ -27,12 +27,12 @@ them.
 | 0019 | [Watching the Wi-Fi for copies of the home network](0019-wifi-watch.md) | accepted |
 | 0020 | [The CyberFish brand in the apps](0020-cyberfish-brand.md) | accepted |
 | 0021 | [Endpoints and rules of the network checks](0021-network-check-endpoints.md) | accepted |
-| 0022 | [Keys in CI, image signing in Cloud KMS, automatic rotation](0022-ci-keys-and-signing.md) | accepted |
+| 0022 | [Keys in CI, image signing in Cloud KMS, automatic rotation](0022-ci-keys-and-signing.md) | accepted, amended by 0038 |
 | 0023 | [A home plan from the rooms the owner sets](0023-home-plan-from-rooms.md) | accepted |
 | 0024 | [Fake credentials in the bait files](0024-bait-credentials.md) | accepted, amended by 0035 |
 | 0025 | [Push text in the phone's language](0025-push-language.md) | accepted |
 | 0026 | [Languages: Bokmål and English](0026-languages.md) | accepted |
-| 0027 | [Daily read-only checks of production](0027-production-monitoring.md) | accepted |
+| 0027 | [Daily read-only checks of production](0027-production-monitoring.md) | accepted, amended by 0038 |
 | 0028 | [A sound with the alarm of a very likely attack](0028-alarm-sound.md) | accepted, amended by 0032 |
 | 0029 | [The card reader driver carries libaums' unreleased fix](0029-card-reader-driver.md) | superseded by 0031 |
 | 0030 | [The mark drawn from the app icon](0030-mark-from-app-icon.md) | accepted |
@@ -41,5 +41,6 @@ them.
 | 0033 | [What the installer carries and what it assumes](0033-installer-build.md) | accepted |
 | 0034 | [Live status visuals](0034-live-status-visuals.md) | accepted |
 | 0035 | [The decoy is a small company's finance server](0035-finance-server-decoy.md) | accepted |
-| 0036 | [Maintenance without anyone watching](0036-unattended-maintenance.md) | accepted |
+| 0036 | [Maintenance without anyone watching](0036-unattended-maintenance.md) | accepted, amended by 0038 |
 | 0037 | [Updating host configuration in the field](0037-host-configuration-updates.md) | proposed |
+| 0038 | [The repository updates, pins and releases itself](0038-self-maintaining-repository.md) | accepted |

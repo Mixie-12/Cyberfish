@@ -1,6 +1,7 @@
 # 0027: Daily read-only checks of production
 
-Status: accepted, 2026-11-07
+Status: accepted, 2026-11-07. Amended by 0038 (`failures.yml` opens the
+issue).
 
 ## Context
 

@@ -1,0 +1,107 @@
+name: auto-merge
+
+# Merges pull requests from Dependabot and from this repository's own
+# automation once every check on their head commit succeeded (ADR 0038).
+# .github/scripts/pr-state.sh decides from GitHub's records alone: the author
+# and its branch, GitHub's signature on every commit, the files and lines
+# changed (pr-files.jq), and every workflow run on the head. Nothing from a
+# pull request is checked out or run here. A merge needs main green, and one
+# merge per run lets main's checks of it finish before the next. A merge with
+# GITHUB_TOKEN starts no push workflow, so the start job starts those the push
+# would have started. A pull request that needs the owner gets one comment
+# per head commit and is assigned to the repository owner, whom GitHub
+# emails.
+
+on:
+  schedule:
+    - cron: "13 */6 * * *"
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: auto-merge
+  cancel-in-progress: false
+
+jobs:
+  merge:
+    runs-on: ubuntu-24.04
+    permissions:
+      actions: read
+      contents: write
+      pull-requests: write
+      statuses: read
+    outputs:
+      files: ${{ steps.merge.outputs.files }}
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      OWNER: ${{ github.repository_owner }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Merge the oldest ready pull request, report those that need the owner
+        id: merge
+        run: |
+          # One comment per head commit; the owner is assigned and emailed.
+          report() {
+            local comments
+            comments="$(gh api --paginate "repos/$GH_REPO/issues/$1/comments" \
+              --jq '.[] | select(.user.login == "github-actions[bot]") | .body')"
+            if grep -qF "$2" <<< "$comments"; then return 0; fi
+            gh api "repos/$GH_REPO/issues/$1/comments" \
+              -f body="Not merged automatically at $2: $3. auto-merge.yml looks at it again every six hours." > /dev/null
+            gh api "repos/$GH_REPO/issues/$1/assignees" -f "assignees[]=$OWNER" > /dev/null
+          }
+
+          green="$(.github/scripts/main-green.sh)"
+          merged=""
+          numbers="$(gh pr list --state open --base main --limit 100 --json number --jq 'sort_by(.number) | .[].number')"
+          for number in $numbers; do
+            state="$(.github/scripts/pr-state.sh "$number")"
+            echo "$state"
+            sha="$(jq -r .sha <<< "$state")"
+            case "$(jq -r .state <<< "$state")" in
+              stop) report "$number" "$sha" "$(jq -r .reason <<< "$state")" ;;
+              ready)
+                if [ "$green" != true ] || [ -n "$merged" ]; then continue; fi
+                if ! refusal="$(gh api -X PUT "repos/$GH_REPO/pulls/$number/merge" \
+                  -f sha="$sha" -f merge_method=squash 2>&1)"; then
+                  report "$number" "$sha" "GitHub refused the merge ($refusal)"
+                  continue
+                fi
+                merged="$number"
+                files="$(gh api --paginate "repos/$GH_REPO/pulls/$number/files" --jq '.[].filename' |
+                  jq -Rsc 'split("\n") - [""]')"
+                echo "files=$files" >> "$GITHUB_OUTPUT"
+                ;;
+            esac
+          done
+
+  # What a push to main with these files would have started.
+  start:
+    needs: merge
+    if: needs.merge.outputs.files != ''
+    runs-on: ubuntu-24.04
+    permissions:
+      actions: write
+      contents: read
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      FILES: ${{ needs.merge.outputs.files }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: main
+          persist-credentials: false
+      - name: Start the workflows on main
+        run: |
+          list="$(jq -r '.[]' <<< "$FILES")"
+          mapfile -t paths <<< "$list"
+          workflows="$(.github/scripts/triggered.sh push refs/heads/main "${paths[@]}")"
+          for workflow in $workflows; do
+            echo "Starting $workflow"
+            gh workflow run "$workflow" --ref main
+          done

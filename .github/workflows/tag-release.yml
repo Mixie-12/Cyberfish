@@ -1,0 +1,78 @@
+name: tag release
+
+# Every day: when main is green and has commits since the last v* tag, and
+# that tag is RELEASE_DAYS old or a Dependabot alert was fixed after it, tags
+# the next patch version on main and starts on the tag the workflows that a
+# pushed tag starts (triggered.sh reads them from their filters: app release,
+# clients, device images). A tag made with GITHUB_TOKEN starts nothing by
+# itself (ADR 0038). Building, scanning, signing and verifying stay in those
+# workflows and the release environment, unchanged (ADR 0022).
+
+on:
+  schedule:
+    - cron: "47 5 * * *"
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: tag-release
+  cancel-in-progress: false
+
+jobs:
+  tag:
+    runs-on: ubuntu-24.04
+    permissions:
+      actions: write
+      contents: write
+      vulnerability-alerts: read
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      RELEASE_DAYS: 7
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: main
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Decide
+        id: decide
+        run: |
+          last="$(git tag --list 'v*' --sort=-v:refname | sed -n 1p)"
+          if ! [[ "$last" =~ ^v([0-9]+)\.([0-9]+)\.([0-9]+)$ ]]; then
+            echo "::error::the highest tag, '$last', is not vX.Y.Z"
+            exit 1
+          fi
+          next="v${BASH_REMATCH[1]}.${BASH_REMATCH[2]}.$((BASH_REMATCH[3] + 1))"
+          commits="$(git rev-list --count "$last..HEAD")"
+          tagged="$(git for-each-ref --format='%(creatordate:unix)' "refs/tags/$last")"
+          days=$((($(date -u +%s) - tagged) / 86400))
+          # Fixed means the vulnerable version left main. Without Dependabot
+          # alerts (infra/github/apply.sh) only the weekly release applies.
+          if fixed_at="$(gh api --paginate "repos/$GH_REPO/dependabot/alerts?state=fixed&per_page=100" --jq '.[].fixed_at')"; then
+            fixed="$(jq -Rn --arg since "$(date -u -d "@$tagged" +%FT%TZ)" '[inputs | select(. > $since)] | length' <<< "$fixed_at")"
+          else
+            echo "::warning::Dependabot alerts cannot be read; only the weekly release applies"
+            fixed=0
+          fi
+          green="$(.github/scripts/main-green.sh)"
+          echo "$last: $days days old, $commits commits after it, $fixed alerts fixed since; main green: $green"
+          if [ "$commits" -gt 0 ] && [ "$green" = true ] && { [ "$days" -ge "$RELEASE_DAYS" ] || [ "$fixed" -gt 0 ]; }; then
+            echo "next=$next" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Tag and start the release workflows
+        if: steps.decide.outputs.next != ''
+        env:
+          NEXT: ${{ steps.decide.outputs.next }}
+        run: |
+          sha="$(git rev-parse HEAD)"
+          tag="$(gh api "repos/$GH_REPO/git/tags" -f tag="$NEXT" -f message="DeKoi ${NEXT#v}" \
+            -f object="$sha" -f type=commit --jq .sha)"
+          gh api "repos/$GH_REPO/git/refs" -f ref="refs/tags/$NEXT" -f sha="$tag" > /dev/null
+          echo "Tagged $sha as $NEXT"
+          workflows="$(.github/scripts/triggered.sh push "refs/tags/$NEXT")"
+          for workflow in $workflows; do
+            echo "Starting $workflow on $NEXT"
+            gh workflow run "$workflow" --ref "$NEXT"
+          done

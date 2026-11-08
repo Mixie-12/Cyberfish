@@ -1,6 +1,8 @@
 # One weekly pull request per ecosystem. New versions wait a week before they
 # are proposed, so a compromised release has time to be found and pulled.
-# Security updates are not delayed.
+# Security updates are not delayed. auto-merge.yml merges a pull request once
+# every check on it succeeded (ADR 0038). Major versions come one per pull
+# request, so one that fails its checks holds back nothing else.
 version: 2
 updates:
   - package-ecosystem: github-actions
@@ -9,33 +11,51 @@ updates:
       interval: weekly
     cooldown:
       default-days: 7
+    commit-message:
+      prefix: ci
     groups:
       actions:
         patterns: ["*"]
+        update-types: [minor, patch]
   - package-ecosystem: gradle
     directory: /clients
     schedule:
       interval: weekly
     cooldown:
       default-days: 7
+    commit-message:
+      prefix: repo
     groups:
       gradle:
         patterns: ["*"]
+        update-types: [minor, patch]
   - package-ecosystem: pip
     directory: /device/canary
     schedule:
       interval: weekly
     cooldown:
       default-days: 7
+    commit-message:
+      prefix: canary
     groups:
       pip:
         patterns: ["*"]
+        update-types: [minor, patch]
+  # Base images follow their digests within the release line they name
+  # (Python 3.13, Debian trixie, Alpine 3.24): the agent's Python and the
+  # installer's Alpine package pins belong to that line, so moving to the
+  # next one is a change made by hand.
   - package-ecosystem: docker
     directories: [/device/agent, /device/canary, /device/ids, /device/installer]
     schedule:
       interval: weekly
     cooldown:
       default-days: 7
+    commit-message:
+      prefix: device
+    ignore:
+      - dependency-name: "*"
+        update-types: [version-update:semver-major, version-update:semver-minor]
     groups:
       docker:
         patterns: ["*"]

@@ -1,9 +1,9 @@
 name: monitor
 
 # Every day: read-only checks of production (docs/security.md,
-# "Monitoring"). A failed check opens an issue, or comments on the open
-# one. Logs and issues carry check names and counts only, never addresses,
-# keys or owners' data.
+# "Monitoring"). A failed check fails the run, and failures.yml opens or
+# updates the issue "monitor failed" for the owner (ADR 0038). Logs carry
+# check names and counts only, never addresses, keys or owners' data.
 
 on:
   schedule:
@@ -15,11 +15,6 @@ permissions: {}
 defaults:
   run:
     shell: bash
-
-# Two runs at once could both find no issue and open two.
-concurrency:
-  group: monitor
-  cancel-in-progress: false
 
 jobs:
   # The request goes where a device's goes, with the publishable key only.
@@ -153,9 +148,9 @@ jobs:
             | select(.name != "auth_leaked_password_protection" and .name != "auth_insufficient_mfa_options")]
             | length == 0' "$RUNNER_TEMP/advisors.json" > /dev/null
 
-  # The other unattended workflows open no issue when they fail. Each must
-  # have finished a run on main within its period, and the last one must
-  # have succeeded.
+  # failures.yml reports a run that fails, not a schedule that stopped
+  # starting runs. Each unattended workflow must have finished a run on main
+  # within its period.
   workflows:
     if: vars.SUPABASE_PROJECT_REF != ''
     runs-on: ubuntu-24.04
@@ -165,7 +160,7 @@ jobs:
       GH_TOKEN: ${{ github.token }}
       GH_REPO: ${{ github.repository }}
     steps:
-      - name: Backups, key rotation, expiry reminders and scans ran and succeeded
+      - name: Backups, key rotation, expiry reminders, scans and maintenance ran
         run: |
           now="$(date -u +%s)"
           status=0
@@ -176,39 +171,18 @@ jobs:
             read -r conclusion created <<< "$last"
             age=$(( (now - $(date -u -d "${created:-1970-01-01T00:00:00Z}" +%s)) / 3600 ))
             echo "$workflow: last run $conclusion, $age hours ago"
-            if [ "$conclusion" != success ] || [ "$age" -gt "$hours" ]; then
-              echo "::error::$workflow: the last run on main is $conclusion, $age hours ago (at most $hours)"
+            if [ "$age" -gt "$hours" ]; then
+              echo "::error::$workflow: the last run on main finished $age hours ago (at most $hours)"
               status=1
             fi
           done <<'EOF'
+          auto-merge.yml 8
           backup.yml 26
           expiry.yml 26
+          pins.yml 26
           rotate-keys.yml 770
           security.yml 170
+          tag-release.yml 26
           EOF
           exit "$status"
 
-  report:
-    needs: [headers, config, database, advisors, workflows]
-    if: failure()
-    runs-on: ubuntu-24.04
-    permissions:
-      issues: write
-    env:
-      GH_TOKEN: ${{ github.token }}
-      GH_REPO: ${{ github.repository }}
-      NEEDS: ${{ toJSON(needs) }}
-      RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
-      TITLE: Production monitoring failed
-    steps:
-      - name: Open the issue, or comment on the open one
-        run: |
-          failed="$(jq -r '[to_entries[] | select(.value.result == "failure") | .key] | join(", ")' <<< "$NEEDS")"
-          body="Failed: $failed. Run: $RUN_URL. What each check means: docs/security.md, \"Monitoring\"."
-          number="$(gh issue list --state open --search "\"$TITLE\" in:title" --json number,title |
-            jq -r --arg title "$TITLE" 'map(select(.title == $title)) | first | .number // empty')"
-          if [ -n "$number" ]; then
-            gh issue comment "$number" --body "$body"
-          else
-            gh issue create --title "$TITLE" --body "$body"
-          fi

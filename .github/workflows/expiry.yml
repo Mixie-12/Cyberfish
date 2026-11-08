@@ -3,7 +3,8 @@ name: expiry
 # Credentials that cannot rotate themselves have their expiry or retirement
 # date in a repository variable named EXPIRES_<secret>, as YYYY-MM-DD. From
 # REMIND_DAYS before that date, this opens one issue per credential that
-# points at docs/runbooks/rotate-keys.md.
+# points at docs/runbooks/rotate-keys.md, assigned to the repository owner,
+# whom GitHub emails (ADR 0038).
 
 on:
   schedule:
@@ -29,7 +30,7 @@ jobs:
       REMIND_DAYS: 30
     steps:
       # A credential without a date would expire without a reminder. A
-      # failed run here fails the workflows check of monitor.yml.
+      # failed run opens the issue "expiry failed" (failures.yml).
       - name: Every credential replaced by hand has a date
         run: |
           status=0
@@ -58,7 +59,7 @@ jobs:
               open="$(gh issue list --state open --search "\"$title\" in:title" --json title |
                 jq --arg title "$title" 'map(select(.title == $title)) | length')"
               if [ "$open" = 0 ]; then
-                gh issue create --title "$title" \
+                gh issue create --title "$title" --assignee "$GITHUB_REPOSITORY_OWNER" \
                   --body "$name expires or retires on $date. Steps: docs/runbooks/rotate-keys.md. Then set the repository variable $key to the new date."
               fi
             done

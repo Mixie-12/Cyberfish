@@ -99,8 +99,9 @@ network, and after any other stop the next start tries again.
 
 `digest` is the SHA-256 of the zip, the single `application/zip` layer of
 the artifact at `ghcr.io/<repository>`; the phone fetches that blob by
-digest and checks size and hash. The `installer` workflow builds and pushes
-the bundle on every change to `installer/` or `image.json` on `main` and
-prints the line for this file; `docs/runbooks/release.md` says how to adopt
-it. The unit tests run with the other device tests (Linux only: the
-installer uses `fcntl`).
+digest and checks size and hash. The `installer` workflow builds the
+bundle for every pull request that changes `installer/` or `image.json`,
+pushes it on every such change on `main`, and proposes the new line for
+this file in a pull request that `auto-merge` merges after the checks
+(`docs/runbooks/release.md`, ADR 0038). The unit tests run with the other
+device tests (Linux only: the installer uses `fcntl`).

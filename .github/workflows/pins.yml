@@ -1,0 +1,193 @@
+name: pins
+
+# Every day: keeps current the pins that Dependabot cannot see, each through
+# a pull request that auto-merge.yml merges once its checks, the installer
+# build among them, pass (ADR 0038). The check jobs read the outside world
+# with read-only tokens; only the propose job can write.
+#   raspios: Raspberry Pi OS Lite (64-bit) from Raspberry Pi's own OS list,
+#     released at least COOLDOWN_DAYS ago, downloaded and checked against the
+#     SHA-256 published next to it and the sizes and extracted SHA-256 in the
+#     list, for device/image.json. A new Debian release or first-boot format
+#     goes to the owner instead: it needs a test on a Raspberry Pi.
+#   alpine: the installer's Alpine package pins, from the index of the Alpine
+#     release its Containerfile names. Alpine removes a version from the index
+#     when it replaces it, so an old pin breaks the build.
+
+on:
+  schedule:
+    - cron: "51 3 * * *"
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: pins
+  cancel-in-progress: false
+
+jobs:
+  raspios:
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    outputs:
+      image: ${{ steps.check.outputs.image }}
+      owner: ${{ steps.find.outputs.owner }}
+    env:
+      OS_LIST: https://downloads.raspberrypi.com/os_list_imagingutility_v4.json
+      # As Dependabot's cooldown (.github/dependabot.yml).
+      COOLDOWN_DAYS: 7
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          sparse-checkout: device/image.json
+          sparse-checkout-cone-mode: false
+      - name: Find a newer release
+        id: find
+        run: |
+          latest="$(curl -fsSL "$OS_LIST" | jq -c '[.. | objects | select(.name? == "Raspberry Pi OS Lite (64-bit)" and has("url"))]
+            | if length == 1 then .[0] else error("the list has \(length) Raspberry Pi OS Lite (64-bit)") end')"
+          jq -c '{release_date, url, init_format}' <<< "$latest"
+          ready="$(date -u -d "$COOLDOWN_DAYS days ago" +%F)"
+          if ! jq -e --slurpfile pinned device/image.json --arg ready "$ready" \
+            '.release_date > $pinned[0].release_date and .release_date <= $ready' <<< "$latest" > /dev/null; then
+            echo "Nothing newer than device/image.json that is at least $COOLDOWN_DAYS days old"
+            exit 0
+          fi
+          # The Debian release is the word before -arm64-lite in the file name.
+          owner="$(jq -r --slurpfile pinned device/image.json '
+            def release: (.url | capture("-raspios-(?<r>[a-z]+)-arm64-lite\\.img\\.xz$").r)
+              // error("no Debian release in \(.url)");
+            if release != ($pinned[0] | release) then "Raspberry Pi OS on Debian \(release) needs a test on a Raspberry Pi"
+            elif .init_format != $pinned[0].init_format then "Raspberry Pi OS \(.release_date) has first-boot format \(.init_format)"
+            else "" end' <<< "$latest")"
+          echo "owner=$owner" >> "$GITHUB_OUTPUT"
+          if [ -z "$owner" ]; then echo "latest=$latest" >> "$GITHUB_OUTPUT"; fi
+      - name: Download it and check its SHA-256 and sizes
+        id: check
+        if: steps.find.outputs.latest != ''
+        env:
+          LATEST: ${{ steps.find.outputs.latest }}
+        run: |
+          url="$(jq -r .url <<< "$LATEST")"
+          if ! [[ "$url" =~ ^https://downloads\.raspberrypi\.com/raspios_lite_arm64/images/[A-Za-z0-9._/-]+\.img\.xz$ ]]; then
+            echo "::error::unexpected image URL: $url"
+            exit 1
+          fi
+          read -r download_sha256 name < <(curl -fsSL "$url.sha256")
+          if ! [[ "$download_sha256" =~ ^[0-9a-f]{64}$ ]] || [ "$name" != "${url##*/}" ]; then
+            echo "::error::$url.sha256 does not name that file with a SHA-256"
+            exit 1
+          fi
+          image="$RUNNER_TEMP/image.img.xz"
+          curl -fsSL --retry 3 --retry-all-errors -o "$image" "$url"
+          echo "$download_sha256  $image" | sha256sum -c -
+          download_size="$(stat -c %s "$image")"
+          extract_sha256="$(xz -dc "$image" | sha256sum | cut -d ' ' -f 1)"
+          extract_size="$(xz -dc "$image" | wc -c)"
+          if ! jq -e --argjson download_size "$download_size" --arg extract_sha256 "$extract_sha256" \
+            --argjson extract_size "$extract_size" \
+            '.image_download_size == $download_size and .extract_sha256 == $extract_sha256
+              and .extract_size == $extract_size' <<< "$LATEST" > /dev/null; then
+            echo "::error::$url: $download_size bytes, extracted $extract_size bytes with SHA-256 $extract_sha256; the list says otherwise"
+            exit 1
+          fi
+          image="$(jq -c --arg download_sha256 "$download_sha256" '{name, release_date, url,
+            download_sha256: $download_sha256, download_size: .image_download_size, extract_sha256,
+            extract_size, init_format}' <<< "$LATEST")"
+          echo "image=$image" >> "$GITHUB_OUTPUT"
+
+  alpine:
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    outputs:
+      pins: ${{ steps.check.outputs.pins }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          sparse-checkout: device/installer/Containerfile
+          sparse-checkout-cone-mode: false
+      - name: Compare the pins with the index
+        id: check
+        run: |
+          containerfile=device/installer/Containerfile
+          release="$(grep -oE 'alpinelinux\.org/alpine/v[0-9]+\.[0-9]+/' "$containerfile" | sort -u | cut -d / -f 3)"
+          if ! [[ "$release" =~ ^v[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::$containerfile does not name one Alpine release"
+            exit 1
+          fi
+          # The tools stage installs for the runner, the rootfs stage for the Pi.
+          for arch in x86_64 aarch64; do
+            for repository in main community; do
+              curl -fsSL "https://dl-cdn.alpinelinux.org/alpine/$release/$repository/$arch/APKINDEX.tar.gz" |
+                tar -xzO APKINDEX | awk -F : '/^P:/ { name = $2 } /^V:/ { print name, $2 }'
+            done
+          done > "$RUNNER_TEMP/index"
+          grep -oE '[[:space:]][a-z0-9][a-z0-9.+_-]*=[0-9][a-z0-9._+]*-r[0-9]+' "$containerfile" |
+            sed 's/^[[:space:]]*//' | sort -u > "$RUNNER_TEMP/pins"
+          pins="$(jq -Rnc --rawfile index "$RUNNER_TEMP/index" --arg release "$release" '
+            ($index | split("\n") - [""] | map(split(" ")) | group_by(.[0])
+              | map({key: .[0][0], value: (map(.[1]) | unique)}) | from_entries) as $versions
+            | [inputs | split("=") as [$name, $from] | ($versions[$name] // []) as $found
+              | if $found == [] then error("\($name) is not in the index of Alpine \($release)")
+                elif ($found | length) > 1 then debug("\($name): the indexes differ, \($found)") | empty
+                elif $found[0] == $from then empty
+                elif $found[0] | test("^[0-9][a-z0-9._+]*-r[0-9]+$") | not then error("\($name): odd version")
+                else {name: $name, from: $from, to: $found[0]} end]' < "$RUNNER_TEMP/pins")"
+          echo "$pins"
+          echo "pins=$pins" >> "$GITHUB_OUTPUT"
+
+  propose:
+    needs: [raspios, alpine]
+    if: >-
+      !cancelled() && (needs.raspios.outputs.image != '' || needs.raspios.outputs.owner != ''
+      || (needs.alpine.outputs.pins != '' && needs.alpine.outputs.pins != '[]'))
+    runs-on: ubuntu-24.04
+    permissions:
+      actions: write
+      contents: write
+      issues: write
+      pull-requests: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      OWNER: ${{ github.repository_owner }}
+      IMAGE: ${{ needs.raspios.outputs.image }}
+      ASK_OWNER: ${{ needs.raspios.outputs.owner }}
+      PINS: ${{ needs.alpine.outputs.pins }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Ask the owner once
+        if: env.ASK_OWNER != ''
+        run: |
+          asked="$(gh issue list --state all --search "\"$ASK_OWNER\" in:title" --json title |
+            jq --arg title "$ASK_OWNER" 'map(select(.title == $title)) | length')"
+          body="pins.yml found a Raspberry Pi OS Lite (64-bit) release that it does not propose by itself (ADR 0038)."
+          body="$body Test it on a Raspberry Pi with a card from DeKoi Setup, then update device/image.json by hand."
+          if [ "$asked" = 0 ]; then
+            gh issue create --title "$ASK_OWNER" --assignee "$OWNER" --body "$body"
+          fi
+      - name: Propose Raspberry Pi OS
+        if: env.IMAGE != ''
+        run: |
+          jq . <<< "$IMAGE" > device/image.json
+          date="$(jq -r .release_date <<< "$IMAGE")"
+          .github/scripts/propose.sh raspios device/image.json "device: pin Raspberry Pi OS Lite of $date" \
+            "pins.yml found Raspberry Pi OS Lite (64-bit) of $date in Raspberry Pi's OS list, downloaded it, checked it against the SHA-256 published next to it and against the sizes and extracted SHA-256 in the list. The installer build on this pull request checks its kernels."
+      - name: Propose the Alpine package pins
+        if: needs.alpine.outputs.pins != '' && needs.alpine.outputs.pins != '[]'
+        run: |
+          containerfile="$(cat device/installer/Containerfile)"
+          replacements="$(jq -r '.[] | "\(.name) \(.from) \(.to)"' <<< "$PINS")"
+          while read -r name from to; do
+            containerfile="${containerfile//" $name=$from"/" $name=$to"}"
+          done <<< "$replacements"
+          printf '%s\n' "$containerfile" > device/installer/Containerfile
+          git diff -- device/installer/Containerfile
+          .github/scripts/propose.sh alpine device/installer/Containerfile \
+            "device: move the installer's Alpine pins to the index" \
+            "pins.yml found newer versions in the Alpine index for the installer: $(jq -r 'map("\(.name) \(.from) to \(.to)") | join(", ")' <<< "$PINS"). Alpine removes replaced versions from its index, so the old pins stop building."

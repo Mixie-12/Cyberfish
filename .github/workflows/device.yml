@@ -6,6 +6,8 @@ on:
     paths: [device/**, backend/**, .github/workflows/device.yml, .hadolint.yaml]
   pull_request:
     paths: [device/**, backend/**, .github/workflows/device.yml, .hadolint.yaml]
+  # Started on a branch where GITHUB_TOKEN events start nothing (ADR 0038).
+  workflow_dispatch:
 
 permissions: {}
 

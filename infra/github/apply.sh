@@ -1,12 +1,14 @@
 #!/usr/bin/env bash
-# Repository settings as code (ADR 0022). Idempotent: run it after changing
-# this file, signed in to gh as the repository owner. Rulesets, environment
-# reviewers and private vulnerability reporting need a public repository (or
-# a paid plan for a private one); GitHub answers 403 or 422 otherwise.
+# Repository settings as code (ADR 0022, 0038). Idempotent: run it after
+# changing this file, signed in to gh as the repository owner. Required
+# reviewers, private vulnerability reporting and secret scanning need a
+# public repository on GitHub Pro; on a private one they are left out and
+# said so, and the rest applies.
 set -euo pipefail
 
 repo=Mixie-12/Cyberfish
 owner_id="$(gh api "users/${repo%%/*}" --jq .id)"
+public="$(gh api "repos/$repo" --jq '.visibility == "public"')"
 
 # Method and path; the JSON body on stdin.
 send() { gh api --method "$1" "repos/$repo/$2" --input - > /dev/null; }
@@ -45,26 +47,37 @@ ruleset "release tags" <<'JSON'
 JSON
 
 # production: Supabase deploys, rotation, backups and advisors, from main only.
-# release: signing images and the APK, from v* tags only, after the owner approves.
+# release: signing images and the APK, from v* tags only, after the owner
+# approves where GitHub allows a reviewer.
 environment production main branch <<'JSON'
 {"deployment_branch_policy": {"protected_branches": false, "custom_branch_policies": true}}
 JSON
+reviewers='[]'
+if [ "$public" = true ]; then reviewers="[{\"type\": \"User\", \"id\": $owner_id}]"; fi
 environment release 'v*' tag <<JSON
-{"reviewers": [{"type": "User", "id": $owner_id}], "prevent_self_review": false,
- "can_admins_bypass": false,
+{"reviewers": $reviewers, "prevent_self_review": false, "can_admins_bypass": false,
  "deployment_branch_policy": {"protected_branches": false, "custom_branch_policies": true}}
 JSON
 
-for feature in vulnerability-alerts automated-security-fixes private-vulnerability-reporting; do
+# Dependabot alerts also tell tag-release.yml that a fix landed (ADR 0038).
+for feature in vulnerability-alerts automated-security-fixes; do
     gh api --method PUT "repos/$repo/$feature" > /dev/null
 done
-gh api --method PATCH "repos/$repo" --input - > /dev/null <<'JSON'
-{"security_and_analysis": {"secret_scanning": {"status": "enabled"},
-                           "secret_scanning_push_protection": {"status": "enabled"}}}
-JSON
 send PUT actions/permissions <<'JSON'
 {"enabled": true, "allowed_actions": "all", "sha_pinning_required": true}
 JSON
+# pins.yml and installer.yml open pull requests for auto-merge.yml (ADR
+# 0038); no workflow approves one, and no rule asks for an approval.
 send PUT actions/permissions/workflow <<'JSON'
-{"default_workflow_permissions": "read", "can_approve_pull_request_reviews": false}
+{"default_workflow_permissions": "read", "can_approve_pull_request_reviews": true}
+JSON
+
+if [ "$public" != true ]; then
+    echo "Private repository: no reviewer on release, no private vulnerability reporting or secret scanning" >&2
+    exit 0
+fi
+gh api --method PUT "repos/$repo/private-vulnerability-reporting" > /dev/null
+gh api --method PATCH "repos/$repo" --input - > /dev/null <<'JSON'
+{"security_and_analysis": {"secret_scanning": {"status": "enabled"},
+                           "secret_scanning_push_protection": {"status": "enabled"}}}
 JSON

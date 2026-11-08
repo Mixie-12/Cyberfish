@@ -3,11 +3,14 @@ name: app release
 # On a v* tag: build the release APK with the production settings, sign it
 # with the DeKoi release key, check the signer against the pinned
 # certificate, and attach it with its checksum to the GitHub Release. The key
-# is a secret of the release environment, which waits for the owner.
+# is a secret of the release environment, which waits for the owner. A tag
+# that tag-release.yml creates starts this by workflow_dispatch on the tag
+# (ADR 0038); started anywhere else, it does nothing.
 
 on:
   push:
     tags: ["v*"]
+  workflow_dispatch:
 
 permissions: {}
 
@@ -17,7 +20,7 @@ concurrency:
 
 jobs:
   apk:
-    if: vars.SUPABASE_PROJECT_REF != '' && vars.GOOGLE_WEB_CLIENT_ID != ''
+    if: startsWith(github.ref, 'refs/tags/v') && vars.SUPABASE_PROJECT_REF != '' && vars.GOOGLE_WEB_CLIENT_ID != ''
     runs-on: ubuntu-24.04
     environment: release
     permissions:
