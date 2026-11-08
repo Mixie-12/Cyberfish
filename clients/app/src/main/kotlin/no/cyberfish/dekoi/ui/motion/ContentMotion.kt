@@ -13,12 +13,14 @@ import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.IntSize
 import no.cyberfish.dekoi.ui.LocalReduceMotion
 import no.cyberfish.dekoi.ui.expandSpring
+import kotlin.math.abs
 
 /**
  * Content that changes in place, such as the status hero going from
@@ -85,3 +87,18 @@ fun ExpandingVisibility(
 private val expand = expandVertically(expandSpring(IntSize.VisibilityThreshold)) + fadeIn(expandSpring())
 
 private val shrink = shrinkVertically(expandSpring(IntSize.VisibilityThreshold)) + fadeOut(expandSpring())
+
+/**
+ * Of the items with [keys] on screen, the key of the one whose middle is
+ * nearest the middle of the screen, or null when none shows. A screen with
+ * several drawings that can move lets only that one move: one loop on
+ * screen, and none off it (docs/design.md, principle 5).
+ */
+fun LazyListState.centredKey(keys: Collection<Any>): Any? {
+    val layout = layoutInfo
+    val middle = (layout.viewportStartOffset + layout.viewportEndOffset) / 2
+    return layout.visibleItemsInfo
+        .filter { it.key in keys }
+        .minByOrNull { abs(it.offset + it.size / 2 - middle) }
+        ?.key
+}

@@ -53,6 +53,8 @@
     <string name="dekoi_state_off">Slått av</string>
     <string name="dekoi_state_unknown">Ukjent status</string>
     <string name="dekoi_state_failed">Virker ikke akkurat nå</string>
+    <string name="check_failed_do">Din DeKoi starter kontrollene sine på nytt av seg selv. Varer dette i en time, trekker du ut strømmen i 10 sekunder og setter den i igjen.</string>
+    <string name="dekoi_watch_wifi">Ser etter kopier av Wi-Fi-nettet ditt</string>
     <string name="dekoi_watching_older">Flere detaljer etter neste automatiske oppdatering.</string>
     <string name="dekoi_watching_offline">Satt på pause mens din DeKoi er frakoblet.</string>
     <string name="dekoi_software">Programvare %1$s</string>

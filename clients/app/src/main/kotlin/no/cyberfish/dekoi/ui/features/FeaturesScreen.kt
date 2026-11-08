@@ -1,6 +1,5 @@
 package no.cyberfish.dekoi.ui.features
 
-import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
 import androidx.compose.animation.core.AnimationSpec
 import androidx.compose.animation.core.animateFloatAsState
@@ -36,7 +35,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawWithContent
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawOutline
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
@@ -69,10 +67,10 @@ import no.cyberfish.dekoi.status
 import no.cyberfish.dekoi.ui.Dimens
 import no.cyberfish.dekoi.ui.EntranceRow
 import no.cyberfish.dekoi.ui.LocalReduceMotion
-import no.cyberfish.dekoi.ui.LocalSeverityColors
 import no.cyberfish.dekoi.ui.OwnerData
 import no.cyberfish.dekoi.ui.Route
 import no.cyberfish.dekoi.ui.address
+import no.cyberfish.dekoi.ui.components.CheckStatus
 import no.cyberfish.dekoi.ui.components.HudFrame
 import no.cyberfish.dekoi.ui.components.MissingScreen
 import no.cyberfish.dekoi.ui.components.PrimaryButton
@@ -81,13 +79,13 @@ import no.cyberfish.dekoi.ui.dayAndMonth
 import no.cyberfish.dekoi.ui.headingCase
 import no.cyberfish.dekoi.ui.label
 import no.cyberfish.dekoi.ui.learn.learnTopicFor
+import no.cyberfish.dekoi.ui.motion.centredKey
 import no.cyberfish.dekoi.ui.relativeTime
 import no.cyberfish.dekoi.wifiWatch
 import no.cyberfish.dekoi.wifiWatchText
 import java.text.NumberFormat
 import java.time.Instant
 import java.util.Locale
-import kotlin.math.abs
 
 /** Cards start after the screen's title and the introduction. */
 internal const val FIRST_CARD = 2
@@ -98,7 +96,6 @@ private const val DIMMED = 0.4f
 private const val GLOW_ALPHA = 0.25f
 private val GLOW_WIDTH = 6.dp
 private val ICON = 56.dp
-private val STATUS_ICON = 18.dp
 private val CHEVRON = 20.dp
 
 /** Room below the last card while touring, so it can scroll up clear of the caption. */
@@ -192,12 +189,8 @@ fun FeaturesScreen(
 
 /** The card whose middle is nearest the middle of the screen. */
 private fun centredFeature(state: LazyListState): Feature? {
-    val layout = state.layoutInfo
-    val middle = (layout.viewportStartOffset + layout.viewportEndOffset) / 2
-    return layout.visibleItemsInfo
-        .mapNotNull { item -> Feature.entries.firstOrNull { it.name == item.key }?.let { it to item } }
-        .minByOrNull { (_, item) -> abs(item.offset + item.size / 2 - middle) }
-        ?.first
+    val key = state.centredKey(Feature.entries.map { it.name })
+    return Feature.entries.firstOrNull { it.name == key }
 }
 
 /** The answer first: how many features are on, or why none run; then the tour. */
@@ -291,7 +284,7 @@ private fun FeatureCard(
                 }
             }
             if (feature == Feature.DECOY) DecoyName()
-            if (device != null && state != null) StatusLine(state, detail(feature, device, state, data, now))
+            if (device != null && state != null) CheckStatus(state, detail(feature, device, state, data, now))
             device?.let { lastFound(feature, it.id, data.events) }?.let { event ->
                 LastFound(event, now) { onNavigate(Route.AlertDetail(event.id)) }
             }
@@ -308,69 +301,6 @@ private fun DecoyName() {
         stringResource(R.string.features_decoy_name, BuildConfig.DECOY_NAME.uppercase(Locale.ROOT)),
         style = MaterialTheme.typography.address,
     )
-}
-
-/** Glyph and colour of a state: a green check while on, amber when it fails, blue when the owner can turn it on, grey otherwise. */
-@Composable
-private fun stateMark(state: FeatureState): Pair<Int, Color> {
-    val colors = LocalSeverityColors.current
-    return when (state) {
-        FeatureState.ON, FeatureState.LEARNING -> {
-            R.drawable.ic_check_circle to colors.safe.color
-        }
-
-        FeatureState.FAILED -> {
-            R.drawable.ic_warning to colors.warning.color
-        }
-
-        FeatureState.NEEDS_WIFI_NAME -> {
-            R.drawable.ic_info to MaterialTheme.colorScheme.primary
-        }
-
-        FeatureState.STARTING, FeatureState.WAITING_FOR_UPDATE, FeatureState.PAUSED, FeatureState.OFF, FeatureState.UNKNOWN -> {
-            R.drawable.ic_info to colors.offline
-        }
-    }
-}
-
-@StringRes
-private fun stateWord(state: FeatureState): Int =
-    when (state) {
-        FeatureState.ON -> R.string.dekoi_state_on
-        FeatureState.LEARNING -> R.string.features_state_learning
-        FeatureState.STARTING -> R.string.dekoi_state_starting
-        FeatureState.NEEDS_WIFI_NAME -> R.string.features_state_wifi_name
-        FeatureState.WAITING_FOR_UPDATE -> R.string.features_state_update
-        FeatureState.PAUSED -> R.string.home_checks_paused
-        FeatureState.OFF -> R.string.dekoi_state_off
-        FeatureState.FAILED -> R.string.dekoi_state_failed
-        FeatureState.UNKNOWN -> R.string.dekoi_state_unknown
-    }
-
-/** The state in colour, glyph and word, and under it what the DeKoi reports about it. */
-@Composable
-private fun StatusLine(
-    state: FeatureState,
-    detail: String?,
-) {
-    val (glyph, tint) = stateMark(state)
-    Row(Modifier.semantics(mergeDescendants = true) { }, horizontalArrangement = Arrangement.spacedBy(Dimens.spaceS)) {
-        Glyph(glyph, tint)
-        Column(verticalArrangement = Arrangement.spacedBy(Dimens.spaceXs)) {
-            Text(stringResource(stateWord(state)), style = MaterialTheme.typography.labelLarge, color = tint)
-            detail?.let {
-                Text(it, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            }
-        }
-    }
-}
-
-@Composable
-private fun Glyph(
-    @DrawableRes glyph: Int,
-    tint: Color,
-) {
-    Icon(painterResource(glyph), contentDescription = null, modifier = Modifier.size(STATUS_ICON), tint = tint)
 }
 
 /**

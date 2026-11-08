@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
@@ -28,6 +29,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -69,7 +71,13 @@ import no.cyberfish.dekoi.ui.components.PrimaryButton
 import no.cyberfish.dekoi.ui.components.Screen
 import no.cyberfish.dekoi.ui.components.Section
 import no.cyberfish.dekoi.ui.components.StaleLabel
+import no.cyberfish.dekoi.ui.motion.centredKey
 import java.time.Instant
+
+// The items whose drawings move; only the one nearest the middle of the screen does.
+private const val HERO = "hero"
+private const val WATCHING = "watching"
+private val LIVE = listOf(HERO, WATCHING)
 
 private const val PULSE_MS = 2000
 private const val PULSE_ALPHA = 0.3f
@@ -145,15 +153,24 @@ fun DekoiScreen(
     val status = device.status(now)
     val still = LocalReduceMotion.current
     var confirming by rememberSaveable { mutableStateOf(false) }
-    Screen(stringResource(R.string.home_your_dekoi), onBack = onBack, subtitle = { StaleLabel(data.updatedAt, now) }) {
-        item(key = "hero") { Hero(device, status, now, Modifier.itemMotion(this, still)) }
+    val listState = rememberLazyListState()
+    val playing by remember(listState) { derivedStateOf { listState.centredKey(LIVE) } }
+    Screen(
+        stringResource(R.string.home_your_dekoi),
+        listState = listState,
+        onBack = onBack,
+        subtitle = { StaleLabel(data.updatedAt, now) },
+    ) {
+        item(key = HERO) { Hero(device, status, now, playing == HERO, Modifier.itemMotion(this, still)) }
         var section = 0
         if (status == DekoiStatus.SETTING_UP) {
             val number = ++section
             item(key = "setup") { SetupChecklist(number, device, now, Modifier.itemMotion(this, still)) }
         } else {
             val number = ++section
-            item(key = "watching") { Watching(number, device, status, now, Modifier.itemMotion(this, still)) }
+            item(key = WATCHING) {
+                Watching(number, device, data.events, status, now, playing == WATCHING, Modifier.itemMotion(this, still))
+            }
         }
         item(key = "features") {
             InsetSection(Modifier.itemMotion(this, still)) {
@@ -202,12 +219,13 @@ fun DekoiScreen(
     }
 }
 
-/** The mark, name, status and last check-in inside the brand's HUD frame. */
+/** The mark, name, status and last check-in inside the brand's HUD frame; the status dot pulses while online and [playing]. */
 @Composable
 private fun Hero(
     device: Device,
     status: DekoiStatus,
     now: Instant,
+    playing: Boolean,
     modifier: Modifier = Modifier,
 ) {
     HudFrame(modifier.fillMaxWidth(), contentPadding = Dimens.spaceXl) {
@@ -223,7 +241,7 @@ private fun Hero(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(Dimens.spaceS),
             ) {
-                StatusDot(statusColor(status), pulse = status == DekoiStatus.ONLINE)
+                StatusDot(statusColor(status), pulse = playing && status == DekoiStatus.ONLINE)
                 Text(stringResource(statusWord(status)), style = MaterialTheme.typography.labelLarge)
             }
             Text(

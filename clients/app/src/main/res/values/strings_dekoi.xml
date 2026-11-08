@@ -54,6 +54,8 @@
     <string name="dekoi_state_off">Turned off</string>
     <string name="dekoi_state_unknown">Status not known</string>
     <string name="dekoi_state_failed">Not working right now</string>
+    <string name="check_failed_do">Your DeKoi restarts its checks by itself. If this stays for an hour, unplug its power for 10 seconds, then plug it in again.</string>
+    <string name="dekoi_watch_wifi">Watching for copies of your Wi-Fi</string>
     <string name="dekoi_watching_older">More detail after the next automatic update.</string>
     <string name="dekoi_watching_offline">Paused while your DeKoi is offline.</string>
     <string name="dekoi_software">Software %1$s</string>
