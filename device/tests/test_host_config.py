@@ -103,6 +103,14 @@ def test_memory_limits_do_not_stop_a_container_on_a_pi() -> None:
     assert re.search(r"^power_state:\n  mode: reboot$", user_data, re.MULTILINE)
 
 
+def test_updates_install_where_first_boot_replaced_a_package_file() -> None:
+    # Without both, unattended-upgrades holds back every update that brings
+    # a new version of /etc/nftables.conf, /etc/ulogd.conf or policy.json.
+    apt = (HOST / "etc" / "apt" / "apt.conf.d" / "52dekoi").read_text()
+    options = r'^DPkg::Options \{\n\t"--force-confdef";\n\t"--force-confold";\n\};$'
+    assert re.search(options, apt, re.MULTILINE)
+
+
 def test_devices_trust_only_the_release_repositories() -> None:
     policy = json.loads(POLICY.read_text())
     assert policy["default"] == [{"type": "reject"}]
