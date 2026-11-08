@@ -30,3 +30,14 @@ Each component README has its build, test and run commands.
 
 Start with `docs/PROMPT.md` (what is being built) and `docs/STATUS.md` (where
 it stands).
+
+## The 3D DeKoi
+
+<img src="Images/cyberfish-landing-page.jpg" alt="The CyberFish landing page: a 3D robotic koi with glowing blue circuit lines swims above a dark sea, next to the text 'DeKoi. A plug-in network decoy for homes and small offices.'">
+
+The CyberFish landing page is a three.js scene with DeKoi as its mascot. It
+was built during the hackathon as the visual for the pitch and as a starting
+point for an advertising campaign. It is a separate asset, not part of the
+product, so it lives in its own repository:
+[nevermindmae/cyberfish-landing-page](https://github.com/nevermindmae/cyberfish-landing-page).
+It follows the same rules as this repository.
