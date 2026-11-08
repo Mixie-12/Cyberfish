@@ -172,7 +172,18 @@ a "New alert" snackbar; "Sound in the app" in Settings turns both sounds
 off. `newAlerts()` is unit tested. Not verified on a phone: the push
 hand-off, the sound, the tick, the snackbar and the 20 s loads.
 
-Live status visuals (ADR 0033, asked for by the owner for demos): "What
+Self-installing card (ADR 0031, 0033), Raspberry Pi side: `device/installer`
+builds `dekoi-installer.zip` (41 MB; two local builds gave the same
+bytes); the `installer` workflow publishes it to
+`ghcr.io/mixie-12/dekoi-installer` from `main`. `device/installer.json` is
+not pinned yet (`docs/runbooks/release.md`, "Installer bundle"). Verified:
+unit tests; under QEMU, the bundle's own arm64 Python downloads and proves
+the real image over HTTPS and writes, reads back and finishes it on a loop
+device; its busybox runs the DHCP script and reaches NTP. Not verified on
+a Pi 4 or 5: drivers, `eth0`, `mmcblk0`, the `ACT` LED, a 1 GB board's
+memory.
+
+Live status visuals (ADR 0034, asked for by the owner for demos): "What
 DeKoi watches" is a live panel (report age, every check with its drawing
 and state, a light passing over the checks that are on); one status for
 every check (starting amber, failed red with what to do); views of the
@@ -234,6 +245,8 @@ but does nothing (tested 2026-11-07, Genesys 05e3:0749).
     ports, the Wi-Fi scan, trust in the three release repositories only.
     Then retire the first key (`rotate-keys.md`, "Retire the first key").
 12. Optional: repeat the ARP sweep from a PC connected by cable.
+13. After the first `installer` run on `main`, make the `dekoi-installer`
+    package public (`release.md`, "Installer bundle").
 
 ## Known limitations
 

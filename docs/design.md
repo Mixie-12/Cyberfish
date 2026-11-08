@@ -410,7 +410,7 @@ stiffness 400).
 ## Live status
 
 Every check and feature shows its state the same way (`checkMark`,
-`Signal` in `Features.kt`; ADR 0033), with glyph, colour and word:
+`Signal` in `Features.kt`; ADR 0034), with glyph, colour and word:
 
 | Signal | States | Glyph, colour |
 | ------ | ------ | ------------- |

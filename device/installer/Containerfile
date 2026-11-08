@@ -1,0 +1,53 @@
+# check=skip=FromPlatformFlagConstDisallowed
+# The installer bundle (ADR 0031). Build context: device/
+#   docker build -f installer/Containerfile -o out .
+# writes out/dekoi-installer.zip. The check stage runs arm64 binaries, on
+# purpose, so the builder needs QEMU (Docker Desktop has it; CI sets it up).
+FROM docker.io/library/alpine:3.24@sha256:3f4d6b32e26703c6082839234f43769d5046b3ac7c910033911d1e71d8cd630a AS tools
+RUN apk add --no-cache python3=3.14.10-r1 mtools=4.0.49-r0 e2fsprogs-extra=1.47.4-r0
+
+# Kernels, firmware and device trees from the pinned image.
+FROM tools AS boot
+COPY image.json installer/bundle.py installer/boot/config.txt /build/
+RUN python3 -I /build/bundle.py boot /build/image.json /build/config.txt /card
+
+# The initramfs: Alpine's aarch64 packages from the signed index, without
+# their install scripts, and the installer as init. apk's log goes: its
+# times would make each build differ.
+FROM tools AS rootfs
+RUN apk add --root=/rootfs --arch=aarch64 --initdb --no-scripts --no-cache \
+      --keys-dir=/usr/share/apk/keys/aarch64 \
+      --repository=https://dl-cdn.alpinelinux.org/alpine/v3.24/main \
+      busybox=1.37.0-r31 python3=3.14.10-r1 ca-certificates-bundle=20261020-r0 \
+ && rm -f /rootfs/var/log/apk.log \
+ && install -d -m 0755 /rootfs/usr/share/dekoi
+COPY --chmod=0644 image.json /rootfs/usr/share/dekoi/image.json
+COPY --chmod=0755 installer/install.py /rootfs/init
+
+FROM tools AS bundle
+COPY --from=boot /card /card
+COPY --chmod=0644 installer/boot/ /card/
+COPY --from=rootfs /rootfs /rootfs
+COPY installer/bundle.py /build/
+RUN python3 -I /build/bundle.py pack /rootfs /card /out/dekoi-installer.zip
+
+# The bundle's own Python and busybox start, unpacked from the zip, and find
+# what the installer uses.
+# hadolint ignore=DL3029
+FROM --platform=linux/arm64 docker.io/library/alpine:3.24@sha256:3f4d6b32e26703c6082839234f43769d5046b3ac7c910033911d1e71d8cd630a AS check
+SHELL ["/bin/ash", "-euo", "pipefail", "-c"]
+COPY --from=bundle /out/dekoi-installer.zip /
+WORKDIR /rootfs
+RUN unzip -q /dekoi-installer.zip -d /card \
+ && initramfs="$(sed -n 's/^initramfs \([^ ]*\) followkernel$/\1/p' /card/config.txt)" \
+ && gunzip -c "/card/$initramfs" | cpio -i -d \
+ && chroot /rootfs /usr/bin/python3 -I -c 'import runpy, ssl; \
+      installer = runpy.run_path("/init", run_name="check"); \
+      installer["Image"].load(installer["IMAGE_JSON"]); \
+      installer["https_opener"](ssl.create_default_context(cafile=installer["CA_FILE"]))' \
+ && test -x /rootfs/usr/share/udhcpc/default.script \
+ && applets="$(chroot /rootfs /bin/busybox --list)" \
+ && for applet in mount umount ip udhcpc ntpd reboot sh; do echo "$applets" | grep -qx "$applet"; done
+
+FROM scratch
+COPY --from=check /dekoi-installer.zip /

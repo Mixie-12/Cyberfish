@@ -1,4 +1,4 @@
-# 0033: Live status visuals
+# 0034: Live status visuals
 
 Status: accepted, 2026-11-08. Refines the motion and status colours of
 ADR 0011 and `docs/design.md`.

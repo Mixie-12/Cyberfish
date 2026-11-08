@@ -4,7 +4,7 @@
 [tool.ruff]
 line-length = 100
 target-version = "py313"
-src = ["agent"]
+src = ["agent", "installer"]
 
 [tool.ruff.lint]
 select = ["E", "F", "W", "I", "B", "UP", "S", "BLE", "SIM", "RUF", "PL"]
@@ -15,5 +15,5 @@ ignore = ["PLR2004"]
 "e2e/*" = ["S101", "S603", "S607"]
 
 [tool.pytest.ini_options]
-testpaths = ["agent/tests", "tests"]
-pythonpath = ["agent"]
+testpaths = ["agent/tests", "installer/tests", "tests"]
+pythonpath = ["agent", "installer"]
