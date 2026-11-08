@@ -11,7 +11,7 @@ Everything that runs on the Raspberry Pi.
 | `ids/`        | `dekoi-ids` image: Suricata with the ET Open ruleset               |
 | `agent/`      | `dekoi-agent` image: the agent, standard-library Python            |
 | `e2e/`        | End-to-end test (CI runs it on a throwaway machine)                |
-| `installer/`  | The installer bundle the phone copies onto a card (ADR 0031, 0032) |
+| `installer/`  | The installer bundle the phone copies onto a card (ADR 0031, 0033) |
 | `installer.json` | The published installer bundle the apps use (format under "Installer") |
 
 Run from this directory:
@@ -60,7 +60,7 @@ has neither directory; its agent reports `no_radio`.
 
 ## Installer
 
-ADR 0031 is the contract, ADR 0032 what the bundle carries and assumes. The
+ADR 0031 is the contract, ADR 0033 what the bundle carries and assumes. The
 phone copies the entries of `dekoi-installer.zip` to the root of a FAT32
 card, next to `dekoi/user-data`, `dekoi/network-config` and
 `dekoi/meta-data`. A Raspberry Pi 4 or 5 starts the bundle's kernel with

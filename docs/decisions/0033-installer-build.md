@@ -1,4 +1,4 @@
-# 0032: What the installer carries and what it assumes
+# 0033: What the installer carries and what it assumes
 
 Status: accepted, 2026-11-08. Implements the Raspberry Pi side of ADR 0031.
 

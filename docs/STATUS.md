@@ -164,7 +164,7 @@ connection, until it is unplugged. Not verified: a full write with any
 other reader. DeKoi Setup on a computer writes cards through the
 operating system's driver.
 
-Self-installing card (ADR 0031, 0032), Raspberry Pi side: `device/installer`
+Self-installing card (ADR 0031, 0033), Raspberry Pi side: `device/installer`
 builds `dekoi-installer.zip` (41 MB; two local builds gave the same
 bytes); the `installer` workflow publishes it to
 `ghcr.io/mixie-12/dekoi-installer` from `main`. `device/installer.json` is

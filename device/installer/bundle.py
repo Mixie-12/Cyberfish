@@ -40,7 +40,7 @@ FIRMWARE = (
     "bcm2712-d-rpi-5-b.dtb",
     "bcm2712-rpi-500.dtb",
 )
-# The initramfs carries no kernel modules (ADR 0032): everything install.py
+# The initramfs carries no kernel modules (ADR 0033): everything install.py
 # needs must be built into both kernels.
 KERNEL_CONFIG = (
     "CONFIG_BLK_DEV_INITRD=y",

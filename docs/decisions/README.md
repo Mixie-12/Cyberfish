@@ -37,4 +37,4 @@ them.
 | 0029 | [The card reader driver carries libaums' unreleased fix](0029-card-reader-driver.md) | accepted |
 | 0030 | [The mark drawn from the app icon](0030-mark-from-app-icon.md) | accepted |
 | 0031 | [The phone prepares a card that installs itself](0031-self-installing-card.md) | accepted |
-| 0032 | [What the installer carries and what it assumes](0032-installer-build.md) | accepted |
+| 0033 | [What the installer carries and what it assumes](0033-installer-build.md) | accepted |
