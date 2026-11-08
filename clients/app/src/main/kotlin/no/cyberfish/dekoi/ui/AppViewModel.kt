@@ -7,27 +7,39 @@ import io.github.jan.supabase.auth.status.SessionStatus
 import io.github.jan.supabase.exceptions.HttpRequestException
 import io.github.jan.supabase.exceptions.RestException
 import io.ktor.client.plugins.HttpRequestTimeoutException
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.conflate
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterIsInstance
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.merge
+import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.launch
 import no.cyberfish.dekoi.Backend
 import no.cyberfish.dekoi.Device
 import no.cyberfish.dekoi.Event
 import no.cyberfish.dekoi.GoogleIdToken
+import no.cyberfish.dekoi.Incident
 import no.cyberfish.dekoi.Network
 import no.cyberfish.dekoi.NetworkHost
 import no.cyberfish.dekoi.NetworkInsights
 import no.cyberfish.dekoi.OwnerSettings
 import no.cyberfish.dekoi.R
+import no.cyberfish.dekoi.newAlerts
 import no.cyberfish.dekoi.shared.ClaimCode
 import no.cyberfish.dekoi.unseenBatches
 import java.io.IOException
 import java.time.Instant
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.seconds
+
+/** How often the open app loads again when no push says so; pushes can be late or lost (ADR 0032). */
+private val LIVE_REFRESH: Duration = 20.seconds
 
 data class OwnerData(
     val devices: List<Device> = emptyList(),
@@ -50,6 +62,8 @@ class AppViewModel(
     private val backend: Backend,
     private val pushToken: suspend () -> String?,
     private val publishWidget: suspend (OwnerData) -> Unit,
+    /** An alert was pushed to this phone (DekoiApplication.alertPushes). */
+    private val alertPushes: Flow<Unit>,
 ) : ViewModel() {
     val session: StateFlow<SessionStatus> get() = backend.session
 
@@ -98,11 +112,49 @@ class AppViewModel(
 
     fun refresh() {
         refreshes.value = true
-        run(onFailure = { owner.value = owner.value.copy(problem = it) }) {
+        run(onFailure = ::showProblem) {
             try {
                 owner.value = load()
             } finally {
                 refreshes.value = false
+            }
+        }
+    }
+
+    private val arrivals = MutableStateFlow<List<Incident>>(emptyList())
+
+    /** Alerts that arrived while the app was open, newest first, to announce once; empty when none. */
+    val arrived: StateFlow<List<Incident>> = arrivals.asStateFlow()
+
+    fun arrivalsAnnounced() {
+        arrivals.value = emptyList()
+    }
+
+    /**
+     * Keeps the data current while the app is resumed (ADR 0032): loads at
+     * once, then on each alert pushed to this phone and every [LIVE_REFRESH],
+     * until cancelled. The first load catches up on what came while the app
+     * was away, which had its notifications then; alerts in later loads go
+     * to [arrived].
+     */
+    suspend fun watch() {
+        var caughtUp = false
+        val ticks =
+            flow {
+                while (true) {
+                    delay(LIVE_REFRESH)
+                    emit(Unit)
+                }
+            }
+        // Conflated, so a push during a load brings one more load, and pushes
+        // are collected the whole time.
+        merge(alertPushes, ticks).onStart { emit(Unit) }.conflate().collect {
+            attempt(::showProblem) {
+                val loaded = load()
+                val alerts = newAlerts(owner.value.events.takeIf { caughtUp }, loaded.events, loaded.trustedMacs)
+                owner.value = loaded
+                caughtUp = true
+                if (alerts.isNotEmpty()) arrivals.value = alerts
             }
         }
     }
@@ -131,7 +183,7 @@ class AppViewModel(
 
     /** Reloads only the device list, as adding a DeKoi does every few seconds while the owner waits. */
     fun refreshDevices() =
-        run(onFailure = { owner.value = owner.value.copy(problem = it) }) {
+        run(onFailure = ::showProblem) {
             owner.value = owner.value.copy(devices = backend.devices(), problem = null)
         }
 
@@ -189,19 +241,24 @@ class AppViewModel(
         onFailure: (Int) -> Unit = ::show,
         block: suspend () -> Unit,
     ) {
-        viewModelScope.launch {
-            try {
-                block()
-            } catch (_: RestException) {
-                onFailure(R.string.error_generic)
-            } catch (_: HttpRequestException) {
-                onFailure(R.string.error_network)
-            } catch (_: HttpRequestTimeoutException) {
-                onFailure(R.string.error_network)
-            } catch (_: IOException) {
-                // FCM could not hand out a token, usually for want of a connection.
-                onFailure(R.string.error_network)
-            }
+        viewModelScope.launch { attempt(onFailure, block) }
+    }
+
+    private suspend fun attempt(
+        onFailure: (Int) -> Unit,
+        block: suspend () -> Unit,
+    ) {
+        try {
+            block()
+        } catch (_: RestException) {
+            onFailure(R.string.error_generic)
+        } catch (_: HttpRequestException) {
+            onFailure(R.string.error_network)
+        } catch (_: HttpRequestTimeoutException) {
+            onFailure(R.string.error_network)
+        } catch (_: IOException) {
+            // FCM could not hand out a token, usually for want of a connection.
+            onFailure(R.string.error_network)
         }
     }
 
@@ -209,6 +266,13 @@ class AppViewModel(
         @StringRes message: Int,
     ) {
         messages.value = message
+    }
+
+    /** A failed load: shown above the data the app still has. */
+    private fun showProblem(
+        @StringRes problem: Int,
+    ) {
+        owner.value = owner.value.copy(problem = problem)
     }
 
     private val ownerSettings = MutableStateFlow<OwnerSettings?>(null)

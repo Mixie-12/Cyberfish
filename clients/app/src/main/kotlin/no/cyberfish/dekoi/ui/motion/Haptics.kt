@@ -37,6 +37,12 @@ class Haptics internal constructor(
      */
     fun critical() = play(HapticFeedbackType.LongPress)
 
+    /**
+     * A light tick: an alert arrived while the app is open. The platform has
+     * no constant for that either; context click is its light tick.
+     */
+    fun arrival() = play(HapticFeedbackType.ContextClick)
+
     private fun play(type: HapticFeedbackType) {
         if (enabled) feedback.performHapticFeedback(type)
     }

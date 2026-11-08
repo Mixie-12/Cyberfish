@@ -97,7 +97,7 @@ fun SettingsScreen(
         }
         if (devices.isNotEmpty()) item { WifiNameSection(devices, now, onSetWifiName) }
         item { Notifications() }
-        item { AlarmSoundSection() }
+        item { SoundSection() }
         item { WeeklySummary(weeklySummary, onWeeklySummary) }
         item { Privacy() }
         item {

@@ -17,12 +17,17 @@ DropCapability=all
 AddCapability=NET_RAW NET_ADMIN
 Tmpfs=/tmp
 Volume=dekoi-ids-socket:/run/dekoi-ids
-# Leave memory for the decoys and the agent on a 2 GB board.
-PodmanArgs=--memory=1g
 
 [Service]
 Restart=always
 RestartSec=30
+# Leave memory for the decoys and the agent on a 2 GB board. A limit on the
+# unit, not Podman's --memory: Raspberry Pi firmware turns the memory cgroup
+# controller off unless cmdline.txt turns it on, and a container whose
+# --memory cannot be applied never started, so the IDS never ran on a Pi.
+# systemd enforces this once first boot has turned the controller on, and
+# starts the IDS either way.
+MemoryMax=1G
 # The first start pulls the image; loading the ruleset takes a minute.
 TimeoutStartSec=900
 

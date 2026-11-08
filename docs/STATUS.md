@@ -164,6 +164,14 @@ connection, until it is unplugged. Not verified: a full write with any
 other reader. DeKoi Setup on a computer writes cards through the
 operating system's driver.
 
+Live alerts (ADR 0032, asked for by the owner): while the app is resumed
+and signed in, a pushed alert makes it load at once instead of drawing a
+notification, and it loads every 20 s besides. A new alert to look at
+ticks, plays the phone's notification sound and, away from Alerts, shows
+a "New alert" snackbar; "Sound in the app" in Settings turns both sounds
+off. `newAlerts()` is unit tested. Not verified on a phone: the push
+hand-off, the sound, the tick, the snackbar and the 20 s loads.
+
 Self-installing card (ADR 0031, 0033), Raspberry Pi side: `device/installer`
 builds `dekoi-installer.zip` (41 MB; two local builds gave the same
 bytes); the `installer` workflow publishes it to
