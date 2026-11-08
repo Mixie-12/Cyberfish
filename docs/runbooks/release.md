@@ -39,3 +39,36 @@ image".
 One-time: after the first publish of each image, make its GHCR package public
 (GitHub, Packages, the package, Package settings, Change visibility). The
 `-edge` packages need no change.
+
+## Installer bundle
+
+The `installer` workflow builds `dekoi-installer.zip` on every push to
+`main` that changes `device/installer/` or `device/image.json`, and when
+started by hand (Actions, installer, Run workflow). It pushes the zip to
+`ghcr.io/mixie-12/dekoi-installer:<commit>` as one `application/zip` layer
+and shows the pin for that build in the run's summary. Nothing uses it
+until `device/installer.json` names it (ADR 0031):
+
+1. Check that the run is green, then copy the JSON from its summary into
+   `device/installer.json`:
+
+   ```json
+   {"repository": "mixie-12/dekoi-installer", "digest": "sha256:...", "size": 12345}
+   ```
+
+2. Fetch the blob without signing in, as the phone does, and compare its
+   SHA-256 and size with the pin:
+
+   ```
+   token=$(curl -fsS "https://ghcr.io/token?scope=repository:mixie-12/dekoi-installer:pull" | jq -r .token)
+   curl -fsSL -H "Authorization: Bearer $token" -o dekoi-installer.zip \
+     "https://ghcr.io/v2/mixie-12/dekoi-installer/blobs/sha256:<digest>"
+   sha256sum dekoi-installer.zip; stat -c %s dekoi-installer.zip
+   ```
+
+3. Commit `device/installer.json` on its own; the apps take it at their
+   next build and release.
+
+One-time: after the first push, make the `dekoi-installer` package public
+(GitHub, Packages, dekoi-installer, Package settings, Change visibility).
+Until then step 2 fails and phones cannot fetch the bundle.

@@ -11,6 +11,8 @@ Everything that runs on the Raspberry Pi.
 | `ids/`        | `dekoi-ids` image: Suricata with the ET Open ruleset               |
 | `agent/`      | `dekoi-agent` image: the agent, standard-library Python            |
 | `e2e/`        | End-to-end test (CI runs it on a throwaway machine)                |
+| `installer/`  | The installer bundle the phone copies onto a card (ADR 0031, 0032) |
+| `installer.json` | The published installer bundle the apps use (format under "Installer") |
 
 Run from this directory:
 
@@ -20,6 +22,7 @@ uvx --python 3.13 --from pytest==8.3.5 pytest -q     # Linux; on Windows run it 
 docker build -f canary/Containerfile -t dekoi-canary:local .
 docker build -f agent/Containerfile -t dekoi-agent:local .
 docker build -f ids/Containerfile -t dekoi-ids:local .
+docker build -f installer/Containerfile -o out .         # out/dekoi-installer.zip; needs QEMU for arm64
 ```
 
 The end-to-end test needs root, systemd and Podman; see the `e2e` job in
@@ -54,3 +57,47 @@ agent share two directories in `/run`, created by
 The agent parses the scan in `agent/dekoi_agent/wifi.py` and keeps what it
 learned in `wifi.json` beside its state. A card written before the watch
 has neither directory; its agent reports `no_radio`.
+
+## Installer
+
+ADR 0031 is the contract, ADR 0032 what the bundle carries and assumes. The
+phone copies the entries of `dekoi-installer.zip` to the root of a FAT32
+card, next to `dekoi/user-data`, `dekoi/network-config` and
+`dekoi/meta-data`. A Raspberry Pi 4 or 5 starts the bundle's kernel with
+the initramfs, whose init is `installer/install.py`; it downloads the
+image pinned in `image.json`, proves it, writes it over the card, adds the
+three cloud-init files and the `ds=nocloud;i=<instance-id>` suffix to the
+new `cmdline.txt`, and restarts into Raspberry Pi OS.
+
+| Path                      | What it is                                                   |
+| ------------------------- | ------------------------------------------------------------ |
+| `installer/install.py`    | The installer, `/init` in the initramfs                      |
+| `installer/bundle.py`     | Build steps the Containerfile runs                           |
+| `installer/boot/`         | DeKoi's `config.txt` and `cmdline.txt` for the card          |
+| `installer/Containerfile` | Builds `dekoi-installer.zip`                                 |
+
+The zip holds, all at the card's root: `config.txt`, `cmdline.txt`,
+`dekoi-installer.cpio.gz` (Alpine's busybox, Python and CA certificates,
+the installer and `image.json`), and from the image's boot partition,
+unchanged, `kernel8.img`, `kernel_2712.img`, `start4.elf`, `fixup4.dat`,
+its `LICENCE.broadcom` and the device trees in `FIRMWARE` in `bundle.py`.
+The build is meant to be reproducible: two local builds gave the same zip.
+
+On the Pi the activity LED blinks evenly (0.5 s) while it works and fast
+(0.1 s) once it stopped; the reason is on the screen (HDMI) and on the Pi
+5's debug UART. Before writing starts the card is untouched: it retries the
+network, and after any other stop the next start tries again.
+
+`installer.json` pins the published bundle for the apps:
+
+```json
+{"repository": "mixie-12/dekoi-installer", "digest": "sha256:<64 hex digits>", "size": <bytes>}
+```
+
+`digest` is the SHA-256 of the zip, the single `application/zip` layer of
+the artifact at `ghcr.io/<repository>`; the phone fetches that blob by
+digest and checks size and hash. The `installer` workflow builds and pushes
+the bundle on every change to `installer/` or `image.json` on `main` and
+prints the line for this file; `docs/runbooks/release.md` says how to adopt
+it. The unit tests run with the other device tests (Linux only: the
+installer uses `fcntl`).
