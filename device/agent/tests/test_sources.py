@@ -54,6 +54,45 @@ def test_redis_keeps_command_name_but_not_arguments() -> None:
     assert event["detail"] == {"command": "AUTH"}
 
 
+# Lines as OpenCanary 0.9.10 wrote them in the canary image, for an MSSQL
+# sign-in from FreeTDS's tsql and a connection to the SAP dispatcher port.
+MSSQL_SIGN_IN = (
+    '{"dst_host": "172.30.0.2", "dst_port": 1433, "local_time": "2026-11-08 00:30:51.709020",'
+    ' "local_time_adjusted": "2026-11-08 00:30:51.709075", "logdata": {"AppName": "TSQL",'
+    ' "CltIntName": "TDS-Library", "Database": "", "HostName": "04535bbce063",'
+    ' "Language": "us_english", "ServerName": "dekoi-persona-canary", "UserName": "ks_rapport"},'
+    ' "logtype": 9001, "node_id": "dekoi", "src_host": "172.30.0.4", "src_port": 36140,'
+    ' "utc_time": "2026-11-08 00:30:51.709063"}'
+)
+BANNER_CONNECTION = (
+    '{"dst_host": "172.30.0.2", "dst_port": 3200, "local_time": "2026-11-08 00:30:41.573119",'
+    ' "local_time_adjusted": "2026-11-08 00:30:41.573193", "logdata": {"BANNER_ID": "1",'
+    ' "DATA": "b\'\'", "FUNCTION": "CONNECTION_MADE"}, "logtype": 18001, "node_id": "dekoi",'
+    ' "src_host": "172.30.0.4", "src_port": 50150, "utc_time": "2026-11-08 00:30:41.573174"}'
+)
+
+
+def test_mssql_sign_in_keeps_only_the_user_name() -> None:
+    event = parse_canary(MSSQL_SIGN_IN, {1433: "mssql"}, NOW)
+    assert event == {
+        "occurred_at": "2026-11-08T00:30:51.709063+00:00",
+        "kind": "login_attempt",
+        "service": "mssql",
+        "src_ip": "172.30.0.4",
+        "dst_port": 1433,
+        "detail": {"username": "ks_rapport"},
+    }
+    with_password = MSSQL_SIGN_IN.replace('"UserName"', '"Password": "Typed-1", "UserName"')
+    assert "Typed-1" not in json.dumps(parse_canary(with_password, {1433: "mssql"}, NOW))
+
+
+def test_a_banner_decoy_reports_a_connection_without_its_data() -> None:
+    event = parse_canary(BANNER_CONNECTION, {3200: "sap"}, NOW)
+    assert event is not None
+    assert (event["kind"], event["service"], event["dst_port"]) == ("connection", "sap", 3200)
+    assert event["detail"] == {}
+
+
 def test_service_comes_from_the_decoy_port() -> None:
     event = parse_canary(canary_line(3000, {"PATH": "/"}, dst_port=80), DECOYS, NOW)
     assert event is not None
@@ -150,27 +189,37 @@ def test_samba_fields_are_bounded_and_cleaned() -> None:
     assert event["src_ip"] == "fe80::1"
 
 
-BAIT_USERS = frozenset({"familie.admin", "nas-backup"})
+BAIT_USERS = frozenset({"ks-drift", "ks_rapport", "vpn.revisor"})
 
 
 def test_a_sign_in_with_a_bait_name_is_flagged_on_every_decoy() -> None:
-    samba = parse_samba(SAMBA_SIGN_IN.replace('"admin"', '"FAMILIE.ADMIN"'), NOW)
+    samba = parse_samba(SAMBA_SIGN_IN.replace('"admin"', '"KS-DRIFT"'), NOW)
     web = parse_canary(
-        canary_line(3001, {"USERNAME": "nas-backup", "PASSWORD": "Backup#2023"}, dst_port=80),
+        canary_line(3001, {"USERNAME": "vpn.revisor", "PASSWORD": "Revisjon-2026!"}, dst_port=80),
         DECOYS,
         NOW,
     )
-    for event in (samba, web):
+    mssql = parse_canary(MSSQL_SIGN_IN, {1433: "mssql"}, NOW)
+    for event in (samba, web, mssql):
         assert event is not None
         assert flag_bait(event, BAIT_USERS)["detail"]["bait"] is True
-    assert "Backup#2023" not in json.dumps(web)
+    assert "Revisjon-2026!" not in json.dumps(web)
+
+
+def test_a_windows_domain_around_a_bait_name_does_not_hide_it() -> None:
+    for typed in ("KALDSKJAER\\ks-drift", "ks-drift@kaldskjaer.local"):
+        line = canary_line(4002, {"USERNAME": typed, "PASSWORD": "x"})
+        event = parse_canary(line, DECOYS, NOW)
+        assert event is not None
+        assert flag_bait(event, BAIT_USERS)["detail"] == {"username": typed, "bait": True}
 
 
 def test_only_sign_ins_with_a_bait_name_are_flagged() -> None:
     ordinary = parse_samba(SAMBA_SIGN_IN, NOW)
-    read = parse_samba(SAMBA_READ.replace("scans/passport.pdf", "nas-backup"), NOW)
-    connection = parse_canary(canary_line(3000, {"PATH": "/nas-backup"}, dst_port=80), DECOYS, NOW)
-    for event in (ordinary, read, connection):
+    read = parse_samba(SAMBA_READ.replace("scans/passport.pdf", "ks-drift"), NOW)
+    connection = parse_canary(canary_line(3000, {"PATH": "/ks-drift"}, dst_port=80), DECOYS, NOW)
+    lookalike = parse_canary(canary_line(4002, {"USERNAME": "ks-drift\\admin"}), DECOYS, NOW)
+    for event in (ordinary, read, connection, lookalike):
         assert event is not None
         assert "bait" not in flag_bait(event, BAIT_USERS)["detail"]
 

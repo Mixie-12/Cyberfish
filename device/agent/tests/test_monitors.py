@@ -58,16 +58,16 @@ def test_a_monitor_that_fails_early_is_not_starting() -> None:
 
 def test_decoys_are_ok_only_when_all_listen() -> None:
     health = Monitors(START)
-    health.decoys(START, 6, 8)
+    health.decoys(START, 6, False)
     report = health.report(START)
     assert states(report)["decoys"] == "starting"
     assert detail(report, "decoys") == {"decoys": 6}
 
-    health.decoys(START + 60, 8, 8)
+    health.decoys(START + 60, 8, True)
     assert states(health.report(START + 60))["decoys"] == "ok"
 
     at = START + STARTUP_SECONDS + 60
-    health.decoys(at, 7, 8)
+    health.decoys(at, 7, False)
     report = health.report(at)
     assert states(report)["decoys"] == "failed"
     assert detail(report, "decoys") == {"decoys": 7}

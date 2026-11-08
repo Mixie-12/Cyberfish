@@ -46,6 +46,16 @@ def test_decoys_are_the_canary_config_and_the_file_share() -> None:
     }
 
 
+def test_a_banner_decoy_is_named_by_its_service_key(tmp_path: Path) -> None:
+    config = tmp_path / "opencanary.conf"
+    config.write_text(
+        '{"tcpbanner.enabled": true, "tcpbanner_1.enabled": true, "tcpbanner_1.port": 3200,'
+        ' "tcpbanner_1.service": "sap", "tcpbanner_2.enabled": true, "tcpbanner_2.port": 9000,'
+        ' "tcpbanner_3.enabled": false, "tcpbanner_3.port": 502, "tcpbanner_3.service": "modbus"}'
+    )
+    assert load_decoys(config) == {445: "smb", 3200: "sap", 9000: "tcpbanner_2"}
+
+
 def test_bait_users_are_the_persona_names_in_lower_case(tmp_path: Path) -> None:
     assert {"familie.admin", "nas-backup"} <= load_bait_users(PERSONA)
     persona = tmp_path / "persona.json"
@@ -68,6 +78,8 @@ def test_listening_ports_and_running_services(tmp_path: Path) -> None:
     ports = listening_ports(tmp_path)
     assert ports == {22, 21}
     assert running_services({21: "ftp", 22: "ssh", 80: "http"}, ports) == ["ftp", "ssh"]
+    # A service with several ports is one decoy.
+    assert running_services({21: "sap", 22: "sap", 80: "http"}, ports) == ["sap"]
 
 
 def test_parse_arp_scan() -> None:
