@@ -49,8 +49,26 @@ enum class FeatureState {
     ;
 
     /** Running, learning included. */
-    val isOn: Boolean get() = this == ON || this == LEARNING
+    val isOn: Boolean get() = signal == Signal.LIVE
+
+    /** How it shows (docs/design.md, "Live status"). */
+    val signal: Signal
+        get() =
+            when (this) {
+                ON, LEARNING -> Signal.LIVE
+                STARTING -> Signal.STARTING
+                FAILED -> Signal.FAILED
+                NEEDS_WIFI_NAME -> Signal.ASK
+                WAITING_FOR_UPDATE, PAUSED, OFF, UNKNOWN -> Signal.QUIET
+            }
 }
+
+/**
+ * How a state shows: alive while running, amber while starting, red with
+ * what to do when it fails, blue while it waits for the owner, grey while
+ * nothing runs or nothing is known.
+ */
+enum class Signal { LIVE, STARTING, FAILED, ASK, QUIET }
 
 /** How long a DeKoi that started or updated may take to report a check for the first time; the slowest reports hourly. */
 val FIRST_REPORT: Duration = Duration.ofHours(2)
@@ -81,9 +99,8 @@ fun Device.featureState(
             }
         }
 
-        // The owner can give the name while the DeKoi is offline.
         Feature.WIFI_GUARD -> {
-            if (wifiName == null) FeatureState.NEEDS_WIFI_NAME else whileOnline(now) { wifiGuardState(now) }
+            wifiGuardState(now)
         }
 
         // public_ip is set by every hourly report of ADR 0015, whatever else it holds.
@@ -120,14 +137,25 @@ private fun Device.monitorState(
     if (monitors.isEmpty()) return if (worksWithoutMonitors(feature, hosts)) FeatureState.ON else FeatureState.WAITING_FOR_UPDATE
     val reported = feature.monitors.map { kind -> monitors.firstOrNull { it.kind == kind }?.state }
     if (reported.isEmpty() || null in reported) return FeatureState.WAITING_FOR_UPDATE
-    return when (reported.filterNotNull().max()) {
-        MonitorState.OK -> FeatureState.ON
-        MonitorState.STARTING -> FeatureState.STARTING
-        MonitorState.OFF -> FeatureState.OFF
-        MonitorState.UNKNOWN -> FeatureState.UNKNOWN
-        MonitorState.FAILED -> FeatureState.FAILED
-    }
+    return reported.filterNotNull().max().featureState
 }
+
+/** A monitor's own state, as a feature's. */
+val MonitorState.featureState: FeatureState
+    get() =
+        when (this) {
+            MonitorState.OK -> FeatureState.ON
+            MonitorState.STARTING -> FeatureState.STARTING
+            MonitorState.OFF -> FeatureState.OFF
+            MonitorState.UNKNOWN -> FeatureState.UNKNOWN
+            MonitorState.FAILED -> FeatureState.FAILED
+        }
+
+/** How [monitor] is doing: its own state while the DeKoi is online, starting while it sets up, paused while it is offline. */
+fun Device.checkState(
+    monitor: Monitor,
+    now: Instant,
+): FeatureState = whileOnline(now) { monitor.state.featureState }
 
 /** What software from before ADR 0013 shows of a feature working: decoys it runs, devices it listed. */
 private fun Device.worksWithoutMonitors(
@@ -149,8 +177,12 @@ private fun FeatureState.learningNewDevices(
     return if (this == FeatureState.ON && Duration.between(first, now) < NEW_DEVICE_LEARNING) FeatureState.LEARNING else this
 }
 
+/** Wi-Fi Guard on this DeKoi. The owner can give the name while the DeKoi is offline. */
+fun Device.wifiGuardState(now: Instant): FeatureState =
+    if (wifiName == null) FeatureState.NEEDS_WIFI_NAME else whileOnline(now) { reportedWifiGuard(now) }
+
 /** What the DeKoi reports of Wi-Fi Guard. NO_NAME is a name it has not picked up yet: it asks every few minutes. */
-private fun Device.wifiGuardState(now: Instant): FeatureState =
+private fun Device.reportedWifiGuard(now: Instant): FeatureState =
     when (wifiWatch) {
         WifiWatch.WATCHING -> FeatureState.ON
         WifiWatch.LEARNING -> FeatureState.LEARNING
