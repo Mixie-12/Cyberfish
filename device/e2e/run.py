@@ -157,10 +157,8 @@ def feed_port_scan() -> None:
         log.write("\n".join(lines) + "\n")
 
 
-def main() -> None:
-    backend = Backend(json.loads(Path(sys.argv[1]).read_text()))
-    token = backend.user_token(backend.create_user())
-
+def start_device(backend: Backend, token: str) -> None:
+    """Claims a device as the app does and starts the units with its claim code."""
     claim_code = "".join(secrets.choice(CROCKFORD) for _ in range(26))
     device_id = backend.as_user(
         token, "POST", "/rest/v1/rpc/claim_device_v1", {"claim_code": claim_code, "name": "E2E"}
@@ -177,26 +175,20 @@ def main() -> None:
     print("ok: units started (canary healthy, agent ready)")
 
     wait_for("IDS loaded its rules and is capturing, locked down", ids_running)
-
     wait_for("NetBIOS, mDNS and WS-Discovery announcing, locked down", announcing)
 
-    def device() -> dict:
+    def ready() -> bool:
         (row,) = backend.as_user(
             token, "GET", "/rest/v1/devices?select=registered_at,online,services"
         )
-        return row
+        registered = row["registered_at"] is not None
+        return registered and row["online"] and sorted(row["services"]) == DECOYS
 
-    def device_field(name: str) -> object:
-        (row,) = backend.as_user(token, "GET", f"/rest/v1/devices?select={name}")
-        return row[name]
+    wait_for("device registered, online, all decoys listening", ready)
 
-    wait_for(
-        "device registered, online, all decoys listening",
-        lambda: (
-            (d := device())["registered_at"] and d["online"] and sorted(d["services"]) == DECOYS
-        ),
-    )
 
+def check_attack(backend: Backend, token: str) -> None:
+    """Attacks the decoys and checks the events the app would show."""
     password = "e2e-" + secrets.token_hex(8)
     attack(password)
     feed_port_scan()
@@ -236,6 +228,9 @@ def main() -> None:
     )
     print("ok: events are correct and contain no passwords")
 
+
+def check_reports(backend: Backend, token: str) -> None:
+    """The inventory, networks, Wi-Fi state and monitoring report."""
     wait_for(
         "network inventory from arp-scan, with identification columns",
         lambda: backend.as_user(token, "GET", "/rest/v1/network_hosts?select=mac,kind,services"),
@@ -248,6 +243,11 @@ def main() -> None:
             if network["source"] == "interface"
         ],
     )
+
+    def device_field(name: str) -> object:
+        (row,) = backend.as_user(token, "GET", f"/rest/v1/devices?select={name}")
+        return row[name]
+
     # No Wi-Fi name is set, so the watch is off; this checks the RPC and that
     # the agent starts with the Wi-Fi directories mounted.
     wait_for(
@@ -278,6 +278,14 @@ def main() -> None:
         )
 
     wait_for("monitoring report: decoys, IDS rules and ruleset, inventory, images", monitoring)
+
+
+def main() -> None:
+    backend = Backend(json.loads(Path(sys.argv[1]).read_text()))
+    token = backend.user_token(backend.create_user())
+    start_device(backend, token)
+    check_attack(backend, token)
+    check_reports(backend, token)
     print("end-to-end test passed")
 
 
