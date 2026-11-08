@@ -1,0 +1,11 @@
+# DeKoi installer (device/installer, ADR 0031): Raspberry Pi 4 and 5.
+arm_64bit=1
+
+[pi4]
+kernel=kernel8.img
+
+[pi5]
+kernel=kernel_2712.img
+
+[all]
+initramfs dekoi-installer.cpio.gz followkernel
