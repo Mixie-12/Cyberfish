@@ -41,3 +41,5 @@ them.
 | 0033 | [What the installer carries and what it assumes](0033-installer-build.md) | accepted |
 | 0034 | [Live status visuals](0034-live-status-visuals.md) | accepted |
 | 0035 | [The decoy is a small company's finance server](0035-finance-server-decoy.md) | accepted |
+| 0036 | [Maintenance without anyone watching](0036-unattended-maintenance.md) | accepted |
+| 0037 | [Updating host configuration in the field](0037-host-configuration-updates.md) | proposed |

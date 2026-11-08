@@ -206,7 +206,7 @@ that delete it are in `docs/architecture.md`, "Scheduled jobs".
 | Source of the last push per DeKoi | devices on the owner's network | `private.notified_sources` | 1 day |
 | Client address (IPv6 by its /64) or user ID with a request count | anyone writing to the API | `private.rate_counters` | at most 70 minutes |
 | API, Auth and function logs with client addresses | anyone calling the API | Supabase's log store | 1 day on the Free plan |
-| Encrypted backups of all of the above | everyone above | GitHub Actions artifacts | 30 days (`docs/runbooks/restore-backup.md`) |
+| Encrypted backups of all of the above | everyone above | GitHub Actions artifacts | 90 days (`.github/workflows/backup.yml`, ADR 0022) |
 
 Never stored: passwords typed into decoys (they never leave the device),
 traffic contents, precise location (the country comes from the platform's
@@ -218,7 +218,7 @@ other table refers to `auth.users` or to such a table with
 `on delete cascade`. `04_account` checks both: the deletion itself, and that
 every table in `public` and `private` is reached that way, so a table added
 later cannot be forgotten. What remains afterwards: rate counts for up to
-70 minutes, platform logs for a day, backups for 30 days.
+70 minutes, platform logs for a day, backups for 90 days.
 
 Processors: Supabase (database, Auth, functions; EU, Stockholm), Google
 (sign-in; FCM receives the push token, a fixed notification text and the
@@ -242,9 +242,12 @@ API's read-only endpoint as `supabase_read_only_user`.
 | Database size: `pg_database_size(current_database())` | over 350 MB, 70% of the Free plan's 500 MB | built, daily |
 | Notify quota: events received this calendar month, an upper bound on `notify` calls | over 400,000 of the Free plan's 500,000 | built, daily |
 | Notify gate: hours of the last day with more than 600 events | any: pushes were held back for everyone (ADR 0016) | built, daily |
+| Pushes: `notify_url` and `notify_secret` in Vault, and notify's answers that pg_net keeps for 6 hours | a name missing (the events trigger then posts nothing), or any answer of those 6 hours other than 2xx: wrong secret, function missing, FCM key refused, runtime limits, FCM refusing a phone | built, daily; sees the 6 hours before the check only |
 | Flooding: per account, devices, setups waiting, events reported in any hour of the last day, push tokens | any account over half its limit (ADR 0016), or setups waiting over 100 in all | built, daily |
+| Google sign-in client: the deploy job's check against Google's token endpoint | any answer but `invalid_grant`: the client was deleted (after six months without a token request; `google-firebase.md`, "Unused clients") or the secret no longer matches | built, daily |
+| Unattended workflows: the last finished run on `main` of `backup.yml`, `expiry.yml`, `rotate-keys.yml` and `security.yml` | not successful, or older than its period with an hour or two to spare (26 hours, 26 hours, 32 days, 7 days): they open no issue of their own | built, daily; fails until the backup key exists (`docs/STATUS.md`, owner actions) |
 | Surface checks in `docs/runbooks/deploy-backend.md` | any unexpected status | not built |
-| Backup and restore test (`docs/runbooks/restore-backup.md`) | any step | not built |
+| Restore test (`docs/runbooks/restore-backup.md`) | any step | by hand, once and after schema changes: only the owner holds the backup key |
 | CI access token expiry (`docs/runbooks/deploy-backend.md`, step 4) | less than 30 days left; a reminder in the owner's calendar, since the token cannot read its own expiry | monthly, by hand |
 
 ## Known limitations

@@ -1,26 +1,17 @@
-# Back up and restore
-
-The Free plan has no downloadable backups and no point-in-time recovery
-(Pro keeps daily backups for 7 days; PITR is a paid add-on). Until then CI
-takes the backups, and only the owner holds the key that opens them.
-
-## Backup (scheduled CI job)
-
-What the job does, for whoever builds it. It runs daily, and in the deploy
-job before `supabase db push` applies a migration. It holds
-`SUPABASE_ACCESS_TOKEN` and `SUPABASE_DB_PASSWORD` like the deploy job, and
-the repository variable `BACKUP_AGE_RECIPIENT`: the public half of an age
-key. The private half exists only in 1Password ("DeKoi
-backup age key"), never in GitHub. age comes from the Ubuntu archive
-(`apt-get install age`, signature-checked by apt).
 # Backups and restore
 
+The Free plan has no downloadable backups and no point-in-time recovery
+(Pro keeps daily backups for 7 days; PITR is a paid add-on), so CI takes
+the backups, and only the owner holds the key that opens them.
+
 Every night `.github/workflows/backup.yml` dumps production with the
-Supabase CLI (custom roles, schema, and data including `auth.users`; Vault is
-not included), encrypts the dumps with `age` to the public key in
-`backend/backup-recipients.txt`, and keeps the result as a workflow artifact
-for 90 days. Artifacts of a public repository can be downloaded by anyone
-with a GitHub account; only the private key in 1Password opens them.
+Supabase CLI (custom roles, schema, and data including `auth.users`; the
+CLI leaves out Vault, pg_cron and pg_net), encrypts the dumps with `age` to
+the public key in `backend/backup-recipients.txt`, and keeps the result as
+a workflow artifact for 90 days. Artifacts of a public repository can be
+downloaded by anyone with a GitHub account; only the private key in
+1Password opens them. The daily monitor fails when the last backup run did
+not succeed within 26 hours (`docs/security.md`, "Monitoring").
 
 ## Bootstrap the key (owner, once)
 
@@ -48,16 +39,18 @@ From the run's page (Actions, backup), or:
 gh run list --repo Mixie-12/Cyberfish --workflow backup.yml --limit 5
 gh run download <run id> --repo Mixie-12/Cyberfish
 op document get "DeKoi backup age key" --vault Encryption --out-file dekoi-backup.key
-age -d -i dekoi-backup.key dekoi-<date>/dekoi-<date>.tar.age | tar -x
+age -d -i dekoi-backup.key dekoi-<time>/dekoi-<time>.tar.age | tar -x
 rm dekoi-backup.key
 ```
 
 This gives `roles.sql`, `schema.sql` and `data.sql`. They hold owners' data:
-keep them on an encrypted disk and delete them when done.
+keep them on an encrypted disk and delete them when done. `schema.sql` is
+for comparison only: the schema comes from the migrations.
 
 ## Test a restore (once, and after schema changes)
 
-Into the local stack, which applies the migrations itself:
+Into the local stack, which applies every migration itself, with triggers
+off as in "Restore", step 4:
 
 ```
 cd backend
@@ -67,79 +60,32 @@ psql "postgresql://postgres:postgres@127.0.0.1:54322/postgres" --single-transact
 supabase test db
 ```
 
-1. Dump the schema and the data:
+Compare the row counts of `auth.users`, `public.devices`, `public.events`
+and `public.network_hosts` with production's, then `supabase stop
+--no-backup` to remove the restored data.
 
-   ```
-   supabase db dump --remote="$PROJECT_REF" -f schema.sql
-   supabase db dump --remote="$PROJECT_REF" --data-only --use-copy -f data.sql \
-     -x private.rate_counters -x cron.job -x cron.job_run_details \
-     -x net.http_request_queue -x net._http_response
-   ```
-
-   The data dump already leaves out Vault (its values are encrypted with the
-   project's root key, which no dump carries; the deploy writes them again,
-   `docs/runbooks/rotate-keys.md`) and the migration history. Excluded on
-   top: rate counts, which live for minutes; the cron jobs, which the
-   migrations create; job and HTTP logs.
-
-2. Prove the dump restores before keeping it: start the local stack from
-   `backend/` (it applies every migration), load `data.sql` as in
-   "Restore", step 4, against
-   `postgresql://postgres:postgres@127.0.0.1:54322/postgres`, and compare
-   the row counts of `auth.users`, `public.devices`, `public.events` and
-   `public.network_hosts` with the project's. `schema.sql` is kept for
-   comparison only: the schema comes from the migrations.
-3. Compress, encrypt to the recipient, and remove the plain files:
-
-   ```
-   tar -czf - schema.sql data.sql | age -r "$BACKUP_AGE_RECIPIENT" -o "dekoi-$(date -u +%Y%m%dT%H%MZ).tar.gz.age"
-   rm schema.sql data.sql
-   ```
-
-4. Upload the `.age` file as a workflow artifact with `retention-days: 30`.
-   Backups hold personal data (`docs/security.md`, "Personal data"): a
-   deleted account is gone from every backup after 30 days.
-
-If any step fails, the job fails and GitHub emails the owner.
-
-Checked on the local stack on 2026-11-08: steps 1 and 2 and the restore
-below (dump, reset, load with triggers off): every row came back, the
-restored device authenticated, no event was posted to `notify` again, and
-the event id sequence continued. age was not run locally.
+Checked on the local stack on 2026-11-08 (dump, reset, load with triggers
+off): every row came back, the restored device authenticated, no event was
+posted to `notify` again, and the event id sequence continued. age was not
+run locally.
 
 ## Restore
 
 Restoring overwrites production; the owner decides when.
 
-1. Download the artifact and decrypt it on the owner's machine, with the
-   key in a temporary file that is deleted afterwards:
-
-   ```
-   gh run download <run id> --repo Mixie-12/Cyberfish --name <artifact>
-   age -d -i <key file> dekoi-<time>.tar.gz.age | tar -xzf -
-1. Create a fresh Supabase project or reset the existing one.
-2. Point `SUPABASE_PROJECT_REF` at it and run the backend workflow, so CI
-   applies every migration and the configuration. Then run `rotate-keys.yml`
-   so notify and Vault get their secrets.
-3. Load the roles and the data:
-
-   ```
-   psql "<connection string from the Supabase dashboard>" --single-transaction \
-     -v ON_ERROR_STOP=1 -f roles.sql -c "set session_replication_role = replica" -f data.sql
-   ```
-
-2. Test it locally first: from `backend/`, `supabase start`, then step 4
-   against the local database, and compare the row counts.
-3. Production: create a new project (or reset the existing one), point
-   `SUPABASE_PROJECT_REF` at it and run the backend workflow, so CI applies
-   every migration, the configuration and the secrets.
-4. Load the data in one transaction with triggers off, so restored events
-   neither call `notify` again nor count against today's limits:
+1. Get the backup as above, and test it locally first.
+2. Create a new Supabase project, or reset the existing one.
+3. Point `SUPABASE_PROJECT_REF` at it and run the backend workflow, so CI
+   applies every migration and the configuration; then run
+   `rotate-keys.yml`, so notify and Vault get their secrets.
+4. Load the roles and the data in one transaction with triggers off, so
+   restored events neither call `notify` again nor count against today's
+   limits:
 
    ```
    psql --single-transaction --variable ON_ERROR_STOP=1 \
-     --command 'set session_replication_role = replica' \
-     --file data.sql --dbname "<connection string>"
+     --file roles.sql --command 'set session_replication_role = replica' \
+     --file data.sql --dbname "<connection string from the Supabase dashboard>"
    ```
 
 5. Run the surface checks in `deploy-backend.md`.
