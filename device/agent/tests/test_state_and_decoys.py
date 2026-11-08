@@ -2,7 +2,7 @@ import stat
 from pathlib import Path
 
 from dekoi_agent.decoys import listening_ports, load_bait_users, load_decoys, running_services
-from dekoi_agent.inventory import mac_for, parse_arp_scan, scan_target
+from dekoi_agent.inventory import mac_for, neighbours, parse_arp_scan, scan_target
 from dekoi_agent.state import MAX_QUEUE, State
 
 CANARY_CONFIG = Path(__file__).parents[2] / "canary" / "opencanary.conf"
@@ -116,3 +116,20 @@ def test_mac_for_uses_complete_neighbour_entries(tmp_path: Path) -> None:
     assert mac_for("192.168.1.50", table) == "3c:22:fb:00:00:01"
     assert mac_for("192.168.1.51", table) is None
     assert mac_for("192.168.1.99", table) is None
+
+
+def test_neighbours_are_complete_entries_on_the_scanned_network(tmp_path: Path) -> None:
+    # A phone hotspot: the PC talked to the DeKoi but never answered the scan.
+    table = tmp_path / "arp"
+    table.write_text(
+        "IP address       HW type     Flags       HW address            Mask     Device\n"
+        "172.20.10.1      0x1         0x2         3c:22:fb:00:00:01     *        wlan0\n"
+        "172.20.10.5      0x1         0x2         a4:83:e7:12:34:56     *        wlan0\n"
+        "172.20.10.6      0x1         0x0         00:00:00:00:00:00     *        wlan0\n"
+        "172.20.10.7      0x1         0x2         a4:83:e7:12:34:57     *        eth0\n"
+        "192.168.9.9      0x1         0x2         a4:83:e7:12:34:58     *        wlan0\n"
+    )
+    assert neighbours("wlan0", "172.20.10.0/28", table) == [
+        {"mac": "3c:22:fb:00:00:01", "ip": "172.20.10.1"},
+        {"mac": "a4:83:e7:12:34:56", "ip": "172.20.10.5"},
+    ]
