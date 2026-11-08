@@ -69,7 +69,10 @@ be set.
   signatures checked against the cards' keys. Write tokens exist only in
   scheduled jobs on `main`'s code. Letting Actions open pull requests adds
   nothing a job with `contents: write` could not already do; none approves.
-- With a reviewer on `release` (public repository), every release and
-  rebuild waits for the owner's click; removing it is the owner's call.
+- An Actions update reaches the release jobs, which can sign, after the
+  cooldown and the checks but without a person reading it; most release
+  steps are first exercised by the edge build after the merge. With a
+  reviewer on `release` (public repository), every release and rebuild
+  waits for the owner's click; removing it is the owner's call.
 - Costs about 250 Actions minutes a month besides the CI it starts.
 - Unverified until it runs on GitHub (STATUS.md lists it).
