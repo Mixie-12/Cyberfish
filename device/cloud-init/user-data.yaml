@@ -97,6 +97,10 @@ write_files:
     permissions: "0644"
     defer: true
     content: !file host/etc/logrotate.d/dekoi-scan
+  - path: /etc/systemd/system/logrotate.timer.d/dekoi.conf
+    permissions: "0644"
+    defer: true
+    content: !file host/etc/systemd/system/logrotate.timer.d/dekoi.conf
   - path: /etc/systemd/system/ulogd2.service.d/dekoi.conf
     permissions: "0644"
     defer: true
