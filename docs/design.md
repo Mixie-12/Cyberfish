@@ -54,8 +54,9 @@ DeKoi" and "Take the tour". Once closed, without a DeKoi, an "Add a DeKoi"
 row. (2) "Needs attention": up to three critical or warning alerts of the
 last 24 h, one per source device, on quiet hairline-edged cards (severity
 chip, title, device, "See what to do"), each opening its alert; hidden when
-none. (3) 2x2 tiles: devices on your network (count, "3 new this week"),
-alerts in 7 days (count and sparkline), Your DeKoi (status, last check-in),
+none; a card that arrives while Home is open expands in. (3) 2x2 tiles:
+devices on your network (count, "3 new this week"), alerts in 7 days
+(count and sparkline), Your DeKoi (status, last check-in),
 checks ("All 8 checks on", amber when one fails, grey while
 offline; opens Features); tabular figures roll on change (300 ms); one
 column above font scale 1.5; under them an "Add another DeKoi" row unless
@@ -79,6 +80,14 @@ dot, grey glyph and word, a lighter title. Known devices are dimmed with
 "Known device". Entries use `animateItem()`. While any alert is unread,
 the tab's header has a text action, "Mark all as read", which asks first
 above 20 unread alerts; a cross-linked list does not offer it.
+
+**Alerts while the app is open** (ADR 0032). While resumed and signed in,
+the app loads again on each alert pushed to the phone and every 20 s,
+without the pull indicator. A new alert to look at enters its list, ticks
+lightly and plays the phone's notification sound (not on silent or
+vibrate, not with the sound switch off); away from the Alerts tab a
+snackbar says "New alert" with "Open". The alert on screen is left to its
+screen. No notification is drawn for an alert while the app shows it.
 
 **Alert detail.** One incident; opening it marks its events seen
 (`acknowledge_events_v1`) and clears their notifications. (1) A critical
@@ -251,10 +260,10 @@ and, while the DeKoi is online, "Try it" with its addresses.
 **Settings.** Inset grouped list: Account (email, Sign out); Your DeKoi
 devices; Add DeKoi; Wi-Fi Guard (each DeKoi's home Wi-Fi name and what
 Wi-Fi Guard is doing, ADR 0019); Notifications (channel state, opens system
-channel settings); the alarm sound switch (on by default, kept on the
-phone); the weekly summary; Privacy; About (version, Features,
-Learn, the tour, open-source licences); Delete account last, in red, with
-confirmation.
+channel settings); "Sound in the app", one switch for the sound of a new
+alert and the alarm (on by default, kept on the phone); the weekly
+summary; Privacy; About (version, Features, Learn, the tour, open-source
+licences); Delete account last, in red, with confirmation.
 
 **Sign-in and onboarding.** Brand hero with a slowly floating koi mark (6 s,
 static without animations), tagline, "Continue with Google", inline errors.
@@ -446,14 +455,15 @@ Severity colour as the notification colour, a monochrome DeKoi small icon,
 `VISIBILITY_PRIVATE` with a public version "DeKoi: new alert about your
 network", tag per source so repeats replace each other. No action buttons:
 trusting or blocking needs the full context. Opening the alert in the app
-cancels its notification.
+cancels its notification. While the app is resumed and signed in it shows
+an alert itself instead (ADR 0032); the weekly summary always shows.
 
 The severity colour is the one exception to defining a colour once
 (`DesignTokens.kt`): `notify.ts` sends a copy as
 `android.notification.color`. While the app is in the background, the
 phone draws the notification from FCM's payload alone and no app code runs.
-`PushService` colours the notifications that arrive while the app is open
-from `DesignTokens`; `PushTest` fails when the copy differs.
+`PushService` colours the notifications it draws while the app is in the
+foreground from `DesignTokens`; `PushTest` fails when the copy differs.
 
 ## Motion
 
@@ -465,9 +475,10 @@ move into the hero of their detail screen, only while that screen is pushed
 or popped, never on a tab switch. Status changes fade through; items of a
 plain list expand and fade with the expand spring; lazy rows use
 `animateItem()`. Haptics use the platform constants (toggle on or off,
-confirm) and long press, the firm click, once when a critical alert opens;
-the system touch feedback setting applies. Under reduced motion nothing
-moves and nothing vibrates.
+confirm), long press, the firm click, once when a critical alert opens,
+and context click, a light tick, when an alert arrives while the app is
+open; the system touch feedback setting applies. Under reduced motion
+nothing moves and nothing vibrates.
 
 ## Libraries
 

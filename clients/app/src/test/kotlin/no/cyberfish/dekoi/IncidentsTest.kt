@@ -176,6 +176,55 @@ class IncidentsTest {
         assertEquals(2, alertBadgeCount(events, setOf(laptop)))
     }
 
+    // Newest first, as the backend returns them.
+    private fun newest(vararg events: Event) = events.sortedByDescending { it.occurredAt }
+
+    @Test
+    fun `an unseen serious alert from a new source is new`() {
+        val before = newest(event(0))
+        val arrived = event(5, mac = laptop, severity = Severity.CRITICAL)
+        val alerts = newAlerts(before, newest(*before.toTypedArray(), arrived), emptySet())
+        assertEquals(listOf(listOf(arrived.id)), alerts.map { incident -> incident.events.map { it.id } })
+    }
+
+    @Test
+    fun `nothing is new before the app has data to compare with`() {
+        assertEquals(emptyList(), newAlerts(null, newest(event(0, severity = Severity.CRITICAL)), emptySet()))
+    }
+
+    @Test
+    fun `information, known devices and alerts already read are not new`() {
+        val before = newest(event(0))
+        val after =
+            newest(
+                *before.toTypedArray(),
+                event(60, mac = "3c:22:fb:00:00:03", severity = Severity.INFO),
+                event(61, mac = laptop, severity = Severity.CRITICAL),
+                event(62, mac = "3c:22:fb:00:00:04", seen = true),
+            )
+        assertEquals(emptyList(), newAlerts(before, after, setOf(laptop)))
+    }
+
+    @Test
+    fun `more of an alert that is still unread is not new`() {
+        val before = newest(event(0))
+        assertEquals(emptyList(), newAlerts(before, newest(*before.toTypedArray(), event(10), event(20)), emptySet()))
+    }
+
+    @Test
+    fun `an alert the owner read is new again when its source acts again`() {
+        val read = event(0, seen = true)
+        val again = event(10)
+        assertEquals(1, newAlerts(newest(read), newest(read, again), emptySet()).size)
+    }
+
+    @Test
+    fun `the same events coming back unread are not new`() {
+        // Opened in the app while the backend has not stored that yet.
+        val read = event(0, seen = true)
+        assertEquals(emptyList(), newAlerts(newest(read), newest(read.copy(seenAt = null)), emptySet()))
+    }
+
     @Test
     fun `mark all as read sends every unseen event once, at most 500 ids a call`() {
         val events = List(1201) { event(it.toLong()) } + List(3) { event(it.toLong(), seen = true) }

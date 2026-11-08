@@ -164,6 +164,14 @@ connection, until it is unplugged. Not verified: a full write with any
 other reader. DeKoi Setup on a computer writes cards through the
 operating system's driver.
 
+Live alerts (ADR 0032, asked for by the owner): while the app is resumed
+and signed in, a pushed alert makes it load at once instead of drawing a
+notification, and it loads every 20 s besides. A new alert to look at
+ticks, plays the phone's notification sound and, away from Alerts, shows
+a "New alert" snackbar; "Sound in the app" in Settings turns both sounds
+off. `newAlerts()` is unit tested. Not verified on a phone: the push
+hand-off, the sound, the tick, the snackbar and the 20 s loads.
+
 Needs hardware, not verified: the decoy in Windows Explorer and Finder on
 the owner's LAN; the Wi-Fi watch against a real evil twin; the Pi running
 the new images after its nightly update (after v0.2.0); the ARP sweep

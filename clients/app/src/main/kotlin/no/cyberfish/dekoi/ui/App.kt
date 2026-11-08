@@ -17,8 +17,10 @@ import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -33,6 +35,7 @@ import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.DrawScope
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
@@ -41,8 +44,10 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.compose.LifecycleResumeEffect
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.NavHostController
@@ -63,6 +68,7 @@ import no.cyberfish.dekoi.ui.learn.LearnScreen
 import no.cyberfish.dekoi.ui.learn.LearnTopicScreen
 import no.cyberfish.dekoi.ui.motion.Direction
 import no.cyberfish.dekoi.ui.motion.SharedElementHost
+import no.cyberfish.dekoi.ui.motion.rememberHaptics
 import no.cyberfish.dekoi.ui.motion.rememberNavTransitions
 import no.cyberfish.dekoi.ui.motion.screen
 import no.cyberfish.dekoi.ui.network.HostDetailScreen
@@ -186,9 +192,13 @@ private fun SignedIn(
     val refreshing by viewModel.refreshing.collectAsStateWithLifecycle()
     val message by viewModel.message.collectAsStateWithLifecycle()
     val openEvent by viewModel.openEvent.collectAsStateWithLifecycle()
+    val arrived by viewModel.arrived.collectAsStateWithLifecycle()
     val entry by navController.currentBackStackEntryAsState()
     val snackbar = remember { SnackbarHostState() }
+    val context = LocalContext.current
     val resources = LocalResources.current
+    val haptics = rememberHaptics()
+    val lifecycle = LocalLifecycleOwner.current.lifecycle
     val scope = rememberCoroutineScope()
     val reduceMotion = LocalReduceMotion.current
     val tabSwitch = remember { TabSwitch() }
@@ -199,9 +209,24 @@ private fun SignedIn(
     var lastTab by rememberSaveable { mutableStateOf(Tab.HOME) }
     val currentTab = entry?.rootTab() ?: lastTab
 
-    LifecycleResumeEffect(Unit) {
-        viewModel.refresh()
-        onPauseOrDispose { }
+    LaunchedEffect(lifecycle) { lifecycle.repeatOnLifecycle(Lifecycle.State.RESUMED) { viewModel.watch() } }
+    // Alerts that arrived while the app is open (ADR 0032). One the owner is
+    // looking at is left to its screen, which shows it and sounds the alarm
+    // if it is one; the Alerts tab shows them at the top of its timeline.
+    LaunchedEffect(arrived) {
+        if (arrived.isEmpty()) return@LaunchedEffect
+        viewModel.arrivalsAnnounced()
+        val looking = entry?.takeIf { it.destination.hasRoute(Route.AlertDetail::class) }?.toRoute<Route.AlertDetail>()?.eventId
+        val alerts = arrived.filter { incident -> incident.events.none { it.id == looking } }
+        if (alerts.isEmpty()) return@LaunchedEffect
+        haptics.arrival()
+        scope.launch { playArrivalSound(context) }
+        if (entry?.destination?.hasRoute(Route.Alerts::class) == true) return@LaunchedEffect
+        val text = resources.getQuantityString(R.plurals.alerts_arrived, alerts.size, alerts.size)
+        scope.launch {
+            val result = snackbar.showSnackbar(text, resources.getString(R.string.alerts_arrived_open), duration = SnackbarDuration.Long)
+            if (result == SnackbarResult.ActionPerformed) viewModel.open(alerts.first().lead.id)
+        }
     }
     LaunchedEffect(message) {
         message?.let {

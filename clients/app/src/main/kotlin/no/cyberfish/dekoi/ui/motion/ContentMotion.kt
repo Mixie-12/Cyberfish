@@ -8,6 +8,7 @@ import androidx.compose.animation.ContentTransform
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.SizeTransform
+import androidx.compose.animation.core.MutableTransitionState
 import androidx.compose.animation.core.VisibilityThreshold
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
@@ -62,18 +63,24 @@ internal fun statusChange(reduceMotion: Boolean): ContentTransform =
 /**
  * An item that appears in or leaves a list that is not lazy, such as a
  * "Needs attention" card: it opens and closes with the expand spring and
- * fades. Rows of a LazyColumn use `Modifier.animateItem()`, whose default
- * springs are the same. Nothing moves when animations are off.
+ * fades as [visibleState] moves to its target; one that starts visible is
+ * simply there. Rows of a LazyColumn use `Modifier.animateItem()`, whose
+ * default springs are the same. Nothing moves when animations are off.
+ *
+ * ```
+ * val shown = remember { MutableTransitionState(false) }.apply { targetState = true }
+ * ExpandingVisibility(shown) { AttentionCard(...) }
+ * ```
  */
 @Composable
 fun ExpandingVisibility(
-    visible: Boolean,
+    visibleState: MutableTransitionState<Boolean>,
     modifier: Modifier = Modifier,
     content: @Composable AnimatedVisibilityScope.() -> Unit,
 ) {
     val reduceMotion = LocalReduceMotion.current
     AnimatedVisibility(
-        visible,
+        visibleState,
         modifier,
         enter = if (reduceMotion) EnterTransition.None else expand,
         exit = if (reduceMotion) ExitTransition.None else shrink,

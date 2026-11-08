@@ -19,7 +19,9 @@ import kotlinx.coroutines.launch
 /**
  * Receives FCM tokens and messages. While the app is in the background, the
  * system shows notification messages itself and puts the data (event_id) into
- * the launch intent; this class shows them while the app is open.
+ * the launch intent. While the app is in the foreground, this class hands an
+ * alert to the app when it is resumed and signed in, and shows everything
+ * else as a notification.
  */
 class PushService : FirebaseMessagingService() {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
@@ -43,9 +45,12 @@ class PushService : FirebaseMessagingService() {
 
     override fun onMessageReceived(message: RemoteMessage) {
         val content = message.notification ?: return
+        val eventId = eventIdFrom(message.data[EVENT_ID_EXTRA])
+        // The open app loads the alert now and announces it itself (ADR 0032).
+        // The weekly summary carries no event and always shows.
+        if (eventId != null && (application as DekoiApplication).showInApp()) return
         val manager = getSystemService(NotificationManager::class.java)
         if (!manager.areNotificationsEnabled()) return
-        val eventId = eventIdFrom(message.data[EVENT_ID_EXTRA])
         val open =
             Intent(this, MainActivity::class.java)
                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
