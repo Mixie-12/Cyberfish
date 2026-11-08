@@ -1,6 +1,7 @@
 # 0028: A sound with the alarm of a very likely attack
 
-Status: accepted, 2026-11-07
+Status: accepted, 2026-11-07. Amended by 0032 (one switch for this sound
+and the sound of a new alert).
 
 ## Context
 

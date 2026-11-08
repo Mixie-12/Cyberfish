@@ -6,6 +6,10 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import com.google.firebase.FirebaseApp
 import com.google.firebase.messaging.FirebaseMessaging
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import no.cyberfish.dekoi.shared.CardContent
 
 class DekoiApplication : Application() {
@@ -17,6 +21,18 @@ class DekoiApplication : Application() {
     /** False in debug builds made without the Firebase settings. */
     var pushEnabled = false
         private set
+
+    private val pushedAlerts = MutableSharedFlow<Unit>(extraBufferCapacity = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+
+    /**
+     * Alerts pushed to this phone while the app shows them itself (ADR 0032).
+     * AppViewModel.watch collects it, and only while the app is resumed and
+     * signed in.
+     */
+    val alertPushes: SharedFlow<Unit> = pushedAlerts.asSharedFlow()
+
+    /** Hands a pushed alert to the open app. False when nothing collects [alertPushes]: then a notification has to show it. */
+    fun showInApp(): Boolean = pushedAlerts.subscriptionCount.value > 0 && pushedAlerts.tryEmit(Unit)
 
     override fun onCreate() {
         super.onCreate()

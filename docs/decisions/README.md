@@ -33,8 +33,9 @@ them.
 | 0025 | [Push text in the phone's language](0025-push-language.md) | accepted |
 | 0026 | [Languages: Bokmål and English](0026-languages.md) | accepted |
 | 0027 | [Daily read-only checks of production](0027-production-monitoring.md) | accepted |
-| 0028 | [A sound with the alarm of a very likely attack](0028-alarm-sound.md) | accepted |
+| 0028 | [A sound with the alarm of a very likely attack](0028-alarm-sound.md) | accepted, amended by 0032 |
 | 0029 | [The card reader driver carries libaums' unreleased fix](0029-card-reader-driver.md) | accepted |
 | 0030 | [The mark drawn from the app icon](0030-mark-from-app-icon.md) | accepted |
 | 0031 | [The phone prepares a card that installs itself](0031-self-installing-card.md) | accepted |
-| 0032 | [Live status visuals](0032-live-status-visuals.md) | accepted |
+| 0032 | [Alerts appear by themselves while the app is open](0032-live-alerts.md) | accepted |
+| 0033 | [Live status visuals](0033-live-status-visuals.md) | accepted |

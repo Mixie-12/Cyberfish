@@ -18,7 +18,9 @@ import no.cyberfish.dekoi.widget.publishWidget
 class MainActivity : ComponentActivity() {
     private val viewModel: AppViewModel by viewModels {
         val app = application as DekoiApplication
-        viewModelFactory { initializer { AppViewModel(app.backend, app::pushToken) { publishWidget(app, it) } } }
+        viewModelFactory {
+            initializer { AppViewModel(app.backend, app::pushToken, { publishWidget(app, it) }, app.alertPushes) }
+        }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
