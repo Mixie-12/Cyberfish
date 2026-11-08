@@ -30,6 +30,13 @@
     </plurals>
     <string name="features_new_learning">Alerts start once your DeKoi has known your devices for a day.</string>
     <string name="features_ports_no_list">Your router does not share which ports are open.</string>
+    <string name="wifi_guard_protected">No copy of your Wi-Fi nearby</string>
+    <string name="wifi_guard_copy">A copy of your Wi-Fi is nearby</string>
+    <string name="wifi_guard_new">A new access point uses your Wi-Fi name</string>
+    <plurals name="wifi_guard_heard">
+        <item quantity="one">%1$d access point nearby uses your Wi-Fi name</item>
+        <item quantity="other">%1$d access points nearby use your Wi-Fi name</item>
+    </plurals>
 
     <string name="features_decoy">Decoy file server</string>
     <string name="features_decoy_promise">A fake storage box on your network that sends you an alert when someone opens it.</string>

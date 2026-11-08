@@ -63,6 +63,7 @@ import no.cyberfish.dekoi.eventText
 import no.cyberfish.dekoi.featureState
 import no.cyberfish.dekoi.isNew
 import no.cyberfish.dekoi.lastFound
+import no.cyberfish.dekoi.recentIntrusions
 import no.cyberfish.dekoi.status
 import no.cyberfish.dekoi.ui.Dimens
 import no.cyberfish.dekoi.ui.EntranceRow
@@ -89,6 +90,9 @@ import java.util.Locale
 
 /** Cards start after the screen's title and the introduction. */
 internal const val FIRST_CARD = 2
+
+/** Features whose card shows them at work on the DeKoi, with its own data. */
+private val SCENES = setOf(Feature.DECOY, Feature.IDS, Feature.WIFI_GUARD)
 
 private const val SEPARATOR = " · "
 private const val SPOTLIGHT_MS = 300
@@ -250,6 +254,7 @@ private fun FeatureCard(
     onOpenSettings: () -> Unit,
 ) {
     val words = words(feature)
+    val scene = device?.takeIf { feature in SCENES }
     val spec: AnimationSpec<Float> = if (LocalReduceMotion.current) snap() else tween(SPOTLIGHT_MS)
     val lit by animateFloatAsState(if (spotlight == true) 1f else 0f, spec, label = "lit")
     val shown by animateFloatAsState(if (spotlight == false) DIMMED else 1f, spec, label = "dim")
@@ -269,7 +274,7 @@ private fun FeatureCard(
     ) {
         Column(verticalArrangement = Arrangement.spacedBy(Dimens.spaceM)) {
             Row(horizontalArrangement = Arrangement.spacedBy(Dimens.spaceL), verticalAlignment = Alignment.CenterVertically) {
-                FeatureIcon(feature, playing, Modifier.size(ICON))
+                FeatureIcon(feature, playing && scene == null, Modifier.size(ICON))
                 Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(Dimens.spaceXs)) {
                     Text(
                         stringResource(words.name).headingCase(),
@@ -283,7 +288,8 @@ private fun FeatureCard(
                     )
                 }
             }
-            if (feature == Feature.DECOY) DecoyName()
+            if (feature == Feature.DECOY && scene == null) DecoyName()
+            if (scene != null && state != null) Scene(feature, scene, state, data, now, playing, onNavigate)
             if (device != null && state != null) CheckStatus(state, detail(feature, device, state, data, now))
             device?.let { lastFound(feature, it.id, data.events) }?.let { event ->
                 LastFound(event, now) { onNavigate(Route.AlertDetail(event.id)) }
@@ -301,6 +307,45 @@ private fun DecoyName() {
         stringResource(R.string.features_decoy_name, BuildConfig.DECOY_NAME.uppercase(Locale.ROOT)),
         style = MaterialTheme.typography.address,
     )
+}
+
+/**
+ * The feature at work on [device], where a drawing of the moment says more
+ * than the state: the decoy and what touched it, the traffic intrusion
+ * detection checks, what Wi-Fi Guard hears. It plays while [playing].
+ */
+@Composable
+private fun Scene(
+    feature: Feature,
+    device: Device,
+    state: FeatureState,
+    data: OwnerData,
+    now: Instant,
+    playing: Boolean,
+    onNavigate: (Route) -> Unit,
+) {
+    when (feature) {
+        Feature.DECOY -> {
+            DecoyView(device, data.events, data.trustedMacs, now, on = state.isOn, playing = playing)
+        }
+
+        Feature.IDS -> {
+            val alert = lastFound(Feature.IDS, device.id, data.events)
+            IdsView(
+                device.monitors
+                    .firstOrNull { it.kind == MonitorKind.IDS }
+                    ?.detail
+                    ?.rules,
+                recentIntrusions(listOfNotNull(alert), data.trustedMacs, now).firstOrNull(),
+                on = state.isOn,
+                playing = playing,
+            )
+        }
+
+        else -> {
+            WifiGuardView(device, data.events, data.trustedMacs, now, playing, onNavigate)
+        }
+    }
 }
 
 /**

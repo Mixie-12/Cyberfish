@@ -66,6 +66,11 @@
         <item quantity="other">Rørt %1$d ganger denne uken</item>
     </plurals>
     <string name="dekoi_not_touched">Ikke rørt denne uken</string>
+    <plurals name="dekoi_touched_day">
+        <item quantity="one">Rørt %1$d gang det siste døgnet</item>
+        <item quantity="other">Rørt %1$d ganger det siste døgnet</item>
+    </plurals>
+    <string name="dekoi_not_touched_day">Ikke rørt det siste døgnet</string>
     <string name="dekoi_try">Prøv lokkeduen din</string>
     <string name="dekoi_try_body">Åpne lokkeduen fra en datamaskin på dette nettverket for å se det en inntrenger ser. Logger du på med et oppdiktet navn og passord, eller åpner en delt mappe, får du et varsel.</string>
     <string name="dekoi_try_login">Påloggingsside for lagring</string>

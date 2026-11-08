@@ -67,6 +67,11 @@
         <item quantity="other">Touched %1$d times this week</item>
     </plurals>
     <string name="dekoi_not_touched">Not touched this week</string>
+    <plurals name="dekoi_touched_day">
+        <item quantity="one">Touched %1$d time in the last day</item>
+        <item quantity="other">Touched %1$d times in the last day</item>
+    </plurals>
+    <string name="dekoi_not_touched_day">Not touched in the last day</string>
     <string name="dekoi_try">Try your decoy</string>
     <string name="dekoi_try_body">On a computer on this network, open your decoy to see what an intruder sees. Signing in with a made-up name and password, or opening a shared folder, sends you an alert.</string>
     <string name="dekoi_try_login">Storage login page</string>

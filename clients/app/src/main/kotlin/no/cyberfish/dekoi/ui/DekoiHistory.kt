@@ -30,9 +30,11 @@ import no.cyberfish.dekoi.Uptime
 import no.cyberfish.dekoi.hourlyUptime
 import no.cyberfish.dekoi.serviceName
 import no.cyberfish.dekoi.touchesPerDay
+import no.cyberfish.dekoi.ui.components.HudFrame
 import no.cyberfish.dekoi.ui.components.Section
 import no.cyberfish.dekoi.ui.components.Sparkline
 import no.cyberfish.dekoi.ui.components.UptimeStrip
+import no.cyberfish.dekoi.ui.features.DecoyView
 import java.time.Instant
 import java.time.ZoneId
 
@@ -108,16 +110,23 @@ private fun Swatch(
     }
 }
 
-/** One tile per decoy service; a tile opens the alerts about that decoy. */
+/**
+ * The decoy at work in the HUD frame ([DecoyView]; it plays while
+ * [playing]), then one tile per decoy service; a tile opens the alerts
+ * about that decoy.
+ */
 @Composable
 fun Decoys(
     number: Int,
     device: Device,
-    events: List<Event>,
+    data: OwnerData,
     now: Instant,
+    on: Boolean,
+    playing: Boolean,
     onNavigate: (Route) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val events = data.events
     val zone = ZoneId.systemDefault()
     val today = now.atZone(zone).toLocalDate()
     val tiles =
@@ -132,6 +141,7 @@ fun Decoys(
             }
         }
     Section(number, stringResource(R.string.dekoi_decoys), modifier) {
+        HudFrame(Modifier.fillMaxWidth()) { DecoyView(device, events, data.trustedMacs, now, on, playing) }
         TileGrid(tiles)
         Text(
             stringResource(R.string.dekoi_decoys_footer),
