@@ -11,6 +11,7 @@ on:
   workflow_run:
     workflows:
       - app release
+      - auto-merge
       - backend
       - backup
       - clients
