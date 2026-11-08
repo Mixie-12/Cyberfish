@@ -243,8 +243,10 @@ API's read-only endpoint as `supabase_read_only_user`.
 | Notify gate: hours of the last day with more than 600 events | any: pushes were held back for everyone (ADR 0016) | built, daily |
 | Pushes: `notify_url` and `notify_secret` in Vault, and notify's answers that pg_net keeps for 6 hours | a name missing (the events trigger then posts nothing), or any answer of those 6 hours other than 2xx: wrong secret, function missing, FCM key refused, runtime limits, FCM refusing a phone | built, daily; sees the 6 hours before the check only |
 | Flooding: per account, devices, setups waiting, events reported in any hour of the last day, push tokens | any account over half its limit (ADR 0016), or setups waiting over 100 in all | built, daily |
+| Google sign-in client: the deploy job's check against Google's token endpoint | any answer but `invalid_grant`: the client was deleted (after six months without a token request; `google-firebase.md`, "Unused clients") or the secret no longer matches | built, daily |
+| Unattended workflows: the last finished run on `main` of `backup.yml`, `expiry.yml`, `rotate-keys.yml` and `security.yml` | not successful, or older than its period with an hour or two to spare (26 hours, 26 hours, 32 days, 7 days): they open no issue of their own | built, daily; fails until the backup key exists (`docs/STATUS.md`, owner actions) |
 | Surface checks in `docs/runbooks/deploy-backend.md` | any unexpected status | not built |
-| Backup and restore test (`docs/runbooks/restore-backup.md`) | any step | not built |
+| Restore test (`docs/runbooks/restore-backup.md`) | any step | by hand, once and after schema changes: only the owner holds the backup key |
 | CI access token expiry (`docs/runbooks/deploy-backend.md`, step 4) | less than 30 days left; a reminder in the owner's calendar, since the token cannot read its own expiry | monthly, by hand |
 
 ## Known limitations

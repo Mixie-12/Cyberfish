@@ -77,6 +77,22 @@ jobs:
             echo "::error::Realtime is not suspended; see docs/security.md, Platform settings"
             exit 1
           fi
+      # The check of the deploy job in backend.yml, daily: Google deletes an
+      # OAuth client after six months without a token request, and a new
+      # owner's sign-in then fails with deleted_client.
+      - name: Google knows the sign-in client
+        if: ${{ !cancelled() && vars.GOOGLE_WEB_CLIENT_ID != '' }}
+        run: |
+          error="$(printf %s "$SUPABASE_AUTH_EXTERNAL_GOOGLE_SECRET" | curl -sS https://oauth2.googleapis.com/token \
+            --data-urlencode "client_id=$SUPABASE_AUTH_EXTERNAL_GOOGLE_CLIENT_ID" \
+            --data-urlencode "client_secret@-" \
+            --data-urlencode "redirect_uri=https://$PROJECT_REF.supabase.co/auth/v1/callback" \
+            -d grant_type=authorization_code -d code=dekoi-monitor-check | jq -r .error)"
+          echo "Google: $error"
+          if [ "$error" != invalid_grant ]; then
+            echo "::error::Google refused the sign-in client ($error); see docs/runbooks/google-firebase.md"
+            exit 1
+          fi
 
   # Token permission: Database read. The query runs as supabase_read_only_user.
   database:
@@ -137,8 +153,43 @@ jobs:
             | select(.name != "auth_leaked_password_protection" and .name != "auth_insufficient_mfa_options")]
             | length == 0' "$RUNNER_TEMP/advisors.json" > /dev/null
 
+  # The other unattended workflows open no issue when they fail. Each must
+  # have finished a run on main within its period, and the last one must
+  # have succeeded.
+  workflows:
+    if: vars.SUPABASE_PROJECT_REF != ''
+    runs-on: ubuntu-24.04
+    permissions:
+      actions: read
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+    steps:
+      - name: Backups, key rotation, expiry reminders and scans ran and succeeded
+        run: |
+          now="$(date -u +%s)"
+          status=0
+          # Workflow and the hours between two scheduled runs, with an hour or two to spare.
+          while read -r workflow hours; do
+            last="$(gh run list --workflow "$workflow" --branch main --status completed --limit 1 \
+              --json conclusion,createdAt --jq '.[0] // {} | "\(.conclusion // "none") \(.createdAt // "")"')"
+            read -r conclusion created <<< "$last"
+            age=$(( (now - $(date -u -d "${created:-1970-01-01T00:00:00Z}" +%s)) / 3600 ))
+            echo "$workflow: last run $conclusion, $age hours ago"
+            if [ "$conclusion" != success ] || [ "$age" -gt "$hours" ]; then
+              echo "::error::$workflow: the last run on main is $conclusion, $age hours ago (at most $hours)"
+              status=1
+            fi
+          done <<'EOF'
+          backup.yml 26
+          expiry.yml 26
+          rotate-keys.yml 770
+          security.yml 170
+          EOF
+          exit "$status"
+
   report:
-    needs: [headers, config, database, advisors]
+    needs: [headers, config, database, advisors, workflows]
     if: failure()
     runs-on: ubuntu-24.04
     permissions:

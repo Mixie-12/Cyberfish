@@ -65,3 +65,14 @@ In https://console.cloud.google.com/auth/overview?project=dekoi-cyberfish:
 
 The next backend deploy checks the ID and secret with Google, then turns on
 Google sign-in in Supabase; the next release builds the app with the ID.
+
+## Unused clients
+
+Google deletes an OAuth client that has had no token request for six
+months, and emails the project's contacts 30 days before (Google Cloud
+help, "Manage OAuth Clients"). DeKoi's sessions do not expire, so months
+without a new sign-in are possible. Keep the contact email above current;
+`monitor.yml` checks the web client every day and opens its issue when
+Google no longer accepts it. A deleted client can be restored for 30 days:
+Google Auth Platform, Clients, Deleted credentials, Restore. After that,
+create the clients again as above and release the app with the new ID.
