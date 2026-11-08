@@ -2,7 +2,7 @@
 # One image, two containers (ADR 0018): dekoi-canary runs OpenCanary and the
 # Samba file share; dekoi-announce runs what makes them visible on the
 # network (NetBIOS names, mDNS, WS-Discovery). The persona (canary/persona,
-# ADR 0032) is filled into the configuration, OpenCanary's included, and the
+# ADR 0035) is filled into the configuration, OpenCanary's included, and the
 # bait files at build time.
 FROM docker.io/library/python:3.13-slim-trixie@sha256:09a17cad02668ae61ece136b4fd36ac3849e14f670ebedb637ea3e15580525bc AS build
 RUN apt-get update \

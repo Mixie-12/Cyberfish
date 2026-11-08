@@ -13,7 +13,7 @@
 # The persona's name (device/canary/persona/persona.json; a test keeps them
 # equal), so the router's device list and local DNS show the decoy too. The
 # decoys never use this name: cards written earlier keep family-nas here
-# while their updated images announce the persona (ADR 0032).
+# while their updated images announce the persona (ADR 0035).
 hostname: sap-pay-prod
 manage_etc_hosts: true
 
