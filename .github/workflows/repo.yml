@@ -36,3 +36,21 @@ jobs:
           tar -xzf "$archive" -C "$RUNNER_TEMP" gitleaks
       - name: Scan the whole history
         run: '"$RUNNER_TEMP/gitleaks" git --redact --no-banner --exit-code 1 .'
+
+  # failures.yml reports only the workflows it names.
+  watched:
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: failures.yml names every other workflow, and only those
+        run: |
+          names="$(yq -o=json -I=0 '.name' .github/workflows/*.yml | jq -sc '. - ["failures"]')"
+          watched="$(yq -o=json -I=0 '.on.workflow_run.workflows' .github/workflows/failures.yml)"
+          differences="$(jq -nc --argjson names "$names" --argjson watched "$watched" \
+            '{"not watched": ($names - $watched), "not a workflow": ($watched - $names)}')"
+          echo "$differences"
+          jq -e 'all(.[]; . == [])' <<< "$differences" > /dev/null

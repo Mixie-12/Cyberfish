@@ -1,0 +1,69 @@
+name: failures
+
+# The owner hears about automation that fails without opening the repository
+# (ADR 0036). A run that fails on main, on a v* tag or from a schedule opens
+# the issue "<workflow> failed", assigned to the repository owner, whom
+# GitHub emails; while that issue is open, later failures comment on it.
+# Checks of pull requests are reported on the pull request by auto-merge.yml.
+# Every other workflow is named here; repo.yml fails when one is missing.
+
+on:
+  workflow_run:
+    workflows:
+      - app release
+      - backend
+      - backup
+      - clients
+      - device
+      - device images
+      - expiry
+      - installer
+      - monitor
+      - repo
+      - rotate keys
+      - security
+    types: [completed]
+
+permissions: {}
+
+# Two failures at once could both find no issue and open two.
+concurrency:
+  group: failures
+  cancel-in-progress: false
+
+jobs:
+  report:
+    if: >-
+      contains(fromJSON('["failure", "timed_out", "startup_failure"]'), github.event.workflow_run.conclusion)
+      && github.event.workflow_run.event != 'pull_request'
+      && (github.event.workflow_run.head_branch == github.event.repository.default_branch
+      || startsWith(github.event.workflow_run.head_branch, 'v'))
+    runs-on: ubuntu-24.04
+    permissions:
+      actions: read
+      issues: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      OWNER: ${{ github.repository_owner }}
+      WORKFLOW: ${{ github.event.workflow_run.name }}
+      WORKFLOW_FILE: ${{ github.event.workflow_run.path }}
+      RUN_ID: ${{ github.event.workflow_run.id }}
+      RUN_URL: ${{ github.event.workflow_run.html_url }}
+      RUN_REF: ${{ github.event.workflow_run.head_branch }}
+      RUN_EVENT: ${{ github.event.workflow_run.event }}
+    steps:
+      - name: Open the issue, or comment on the open one
+        run: |
+          failed="$(gh run view "$RUN_ID" --json jobs \
+            --jq '[.jobs[] | select(.conclusion != "success" and .conclusion != "skipped") | .name] | join(", ")')"
+          title="$WORKFLOW failed"
+          body="$(printf '%s on %s (%s) failed: %s.\n\nRun: %s\nWhat the workflow does: the comment at the top of %s.\n' \
+            "$WORKFLOW" "$RUN_REF" "$RUN_EVENT" "${failed:-the run did not start}" "$RUN_URL" "$WORKFLOW_FILE")"
+          number="$(gh issue list --state open --search "\"$title\" in:title" --json number,title |
+            jq -r --arg title "$title" 'map(select(.title == $title)) | first | .number // empty')"
+          if [ -n "$number" ]; then
+            gh issue comment "$number" --body "$body"
+          else
+            gh issue create --title "$title" --body "$body" --assignee "$OWNER"
+          fi
