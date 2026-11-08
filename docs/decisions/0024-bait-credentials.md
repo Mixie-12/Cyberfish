@@ -1,6 +1,7 @@
 # 0024: Fake credentials in the bait files
 
-Status: accepted, 2026-11-07
+Status: accepted, 2026-11-07, amended by ADR 0035 (the bait of a finance
+server; card numbers that fail the Luhn check).
 
 ## Context
 

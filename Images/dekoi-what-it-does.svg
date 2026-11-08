@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="1000" height="724" viewBox="0 0 1000 724" role="img" aria-labelledby="title desc">
   <title id="title">What DeKoi does</title>
-  <desc id="desc">Bob uses the home network as usual and never touches DeKoi. Eve, an intruder, sees what looks like a storage box, scans it and tries to sign in. DeKoi reports this to the DeKoi cloud over HTTPS, and Alice, the owner, gets a plain-language alert on her phone within seconds.</desc>
+  <desc id="desc">Bob uses the home network as usual and never touches DeKoi. Eve, an intruder, sees what looks like a company's finance server, scans it and tries to sign in. DeKoi reports this to the DeKoi cloud over HTTPS, and Alice, the owner, gets a plain-language alert on her phone within seconds.</desc>
   <defs>
     <style>
       text { font-family: "Segoe UI", -apple-system, BlinkMacSystemFont, "Helvetica Neue", Helvetica, Arial, sans-serif; fill: #A9BBD3; font-size: 13px; }
@@ -39,7 +39,7 @@
   <use href="#fish" xlink:href="#fish" x="886" y="42" width="72" height="27" fill="#F4FBFF"/>
   <text class="eyebrow" x="40" y="56">WHAT DEKOI DOES</text>
   <text class="title" x="40" y="90">A decoy on your network. Any touch is a signal.</text>
-  <text class="sub" x="40" y="118">DeKoi looks like a storage box. Nothing legitimate talks to it, so when something does, the owner knows within seconds.</text>
+  <text class="sub" x="40" y="118">DeKoi looks like a finance server. Nothing legitimate talks to it, so when something does, the owner knows within seconds.</text>
 
   <rect x="24" y="150" width="576" height="350" rx="18" fill="#081221" stroke="#17263D"/>
   <text class="label" x="46" y="180">ALICE'S HOME NETWORK</text>
@@ -71,7 +71,7 @@
 
   <path d="M366 194H546A14 14 0 0 1 560 208V302A14 14 0 0 1 546 316H470L456 330L442 316H366A14 14 0 0 1 352 302V208A14 14 0 0 1 366 194Z" fill="#0E1A2C" stroke="#FF5C70" stroke-opacity="0.6" stroke-dasharray="4 4"/>
   <text class="label" x="368" y="220" style="fill:#FF8A9A">WHAT EVE SEES</text>
-  <text class="h" x="368" y="244">A storage box (NAS)</text>
+  <text class="h" x="368" y="244">A finance server (SAP)</text>
   <g>
     <rect x="368" y="258" width="42" height="20" rx="6" fill="#16243A" stroke="#2A3F5F"/>
     <rect x="414" y="258" width="42" height="20" rx="6" fill="#16243A" stroke="#2A3F5F"/>
@@ -81,14 +81,14 @@
     <rect x="414" y="284" width="42" height="20" rx="6" fill="#16243A" stroke="#2A3F5F"/>
     <rect x="460" y="284" width="42" height="20" rx="6" fill="#16243A" stroke="#2A3F5F"/>
     <rect x="506" y="284" width="42" height="20" rx="6" fill="#16243A" stroke="#2A3F5F"/>
-    <text class="chip c" x="389" y="272">SSH</text>
-    <text class="chip c" x="435" y="272">FTP</text>
-    <text class="chip c" x="481" y="272">HTTP</text>
-    <text class="chip c" x="527" y="272">Telnet</text>
-    <text class="chip c" x="389" y="298">MySQL</text>
-    <text class="chip c" x="435" y="298">RDP</text>
-    <text class="chip c" x="481" y="298">VNC</text>
-    <text class="chip c" x="527" y="298">Redis</text>
+    <text class="chip c" x="389" y="272">SAP</text>
+    <text class="chip c" x="435" y="272">MSSQL</text>
+    <text class="chip c" x="481" y="272">SMB</text>
+    <text class="chip c" x="527" y="272">RDP</text>
+    <text class="chip c" x="389" y="298">SSH</text>
+    <text class="chip c" x="435" y="298">HTTP</text>
+    <text class="chip c" x="481" y="298">Modbus</text>
+    <text class="chip c" x="527" y="298">S7</text>
   </g>
 
   <g transform="translate(456 380)">
@@ -176,7 +176,7 @@
   <circle cx="52" cy="552" r="13" fill="#FF5C70"/>
   <text class="c" x="52" y="556.5" style="fill:#FFFFFF;font-weight:700">1</text>
   <text class="h" x="76" y="557">Eve takes the bait</text>
-  <text x="76" y="579">She scans, finds the storage box</text>
+  <text x="76" y="579">She scans, finds the finance server</text>
   <text x="76" y="597">and tries to sign in.</text>
 
   <rect x="348" y="526" width="304" height="84" rx="14" fill="#081221" stroke="#17263D"/>

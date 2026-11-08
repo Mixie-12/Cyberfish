@@ -23,13 +23,13 @@ them.
 | 0015 | [Network health, exposure checks and new-device alerts](0015-network-health-and-insights.md) | accepted |
 | 0016 | [Request and storage limits in Postgres](0016-request-and-storage-limits.md) | accepted |
 | 0017 | [Link by a secret the phone writes onto the card](0017-link-by-card-secret.md) | accepted |
-| 0018 | [A decoy that is easy to find](0018-visible-decoy.md) | accepted |
+| 0018 | [A decoy that is easy to find](0018-visible-decoy.md) | accepted, persona replaced by 0035 |
 | 0019 | [Watching the Wi-Fi for copies of the home network](0019-wifi-watch.md) | accepted |
 | 0020 | [The CyberFish brand in the apps](0020-cyberfish-brand.md) | accepted |
 | 0021 | [Endpoints and rules of the network checks](0021-network-check-endpoints.md) | accepted |
 | 0022 | [Keys in CI, image signing in Cloud KMS, automatic rotation](0022-ci-keys-and-signing.md) | accepted |
 | 0023 | [A home plan from the rooms the owner sets](0023-home-plan-from-rooms.md) | accepted |
-| 0024 | [Fake credentials in the bait files](0024-bait-credentials.md) | accepted |
+| 0024 | [Fake credentials in the bait files](0024-bait-credentials.md) | accepted, amended by 0035 |
 | 0025 | [Push text in the phone's language](0025-push-language.md) | accepted |
 | 0026 | [Languages: Bokmål and English](0026-languages.md) | accepted |
 | 0027 | [Daily read-only checks of production](0027-production-monitoring.md) | accepted |
@@ -37,3 +37,4 @@ them.
 | 0029 | [The card reader driver carries libaums' unreleased fix](0029-card-reader-driver.md) | accepted |
 | 0030 | [The mark drawn from the app icon](0030-mark-from-app-icon.md) | accepted |
 | 0031 | [The phone prepares a card that installs itself](0031-self-installing-card.md) | accepted |
+| 0035 | [The decoy is a small company's finance server](0035-finance-server-decoy.md) | accepted |
