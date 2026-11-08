@@ -28,7 +28,20 @@ jobs:
       VARS: ${{ toJSON(vars) }}
       REMIND_DAYS: 30
     steps:
+      # A credential without a date would expire without a reminder. A
+      # failed run here fails the workflows check of monitor.yml.
+      - name: Every credential replaced by hand has a date
+        run: |
+          status=0
+          for key in EXPIRES_SUPABASE_ACCESS_TOKEN EXPIRES_GOOGLE_WEB_CLIENT_SECRET; do
+            if ! jq -e --arg key "$key" 'has($key)' <<< "$VARS" > /dev/null; then
+              echo "::error::$key is not set; see docs/runbooks/rotate-keys.md"
+              status=1
+            fi
+          done
+          exit "$status"
       - name: Open an issue for each credential close to its date
+        if: ${{ !cancelled() }}
         run: |
           now="$(date -u +%s)"
           jq -r 'to_entries[] | select(.key | startswith("EXPIRES_")) | "\(.key) \(.value)"' <<< "$VARS" |
