@@ -267,7 +267,7 @@ no mapping of their own.
 pg_cron runs `private.mark_offline_devices()` every 5 minutes (one
 `device_offline` event per outage), `private.apply_retention()` nightly
 (events, hosts, networks, health samples, port forwards and speed tests
-older than 90 days), `private.expire_pending_setups()` nightly (setups
+older than 90 days; pg_cron's own run history older than 30 days), `private.expire_pending_setups()` nightly (setups
 whose DeKoi never registered within 30 days),
 `private.prune_rate_counters()` every 10 minutes (ended request windows)
 and `private.post_weekly_summaries()` on Sundays at 17:00 UTC.
