@@ -30,8 +30,8 @@
     <string name="features_new_learning">Varslene starter når din DeKoi har kjent enhetene dine i ett døgn.</string>
     <string name="features_ports_no_list">Ruteren din deler ikke hvilke porter som er åpne.</string>
 
-    <string name="features_decoy">Filserver som lokkedue</string>
-    <string name="features_decoy_promise">En falsk lagringsboks på nettverket ditt som varsler deg når noen åpner den.</string>
+    <string name="features_decoy">Bedriftsserver som lokkedue</string>
+    <string name="features_decoy_promise">En falsk bedriftsserver på nettverket ditt som varsler deg når noen åpner den.</string>
     <string name="features_decoy_name">Vises på nettverket ditt som %1$s</string>
     <string name="features_decoy_tour">Den dukker opp ved siden av de ekte enhetene dine, med delte mapper og en påloggingsside. Logger noen på eller åpner en mappe, får du et varsel.</string>
     <string name="features_ids">Angrepsgjenkjenning</string>

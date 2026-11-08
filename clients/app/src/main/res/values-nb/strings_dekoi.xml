@@ -66,7 +66,7 @@
     <string name="dekoi_not_touched">Ikke rørt denne uken</string>
     <string name="dekoi_try">Prøv lokkeduen din</string>
     <string name="dekoi_try_body">Åpne lokkeduen fra en datamaskin på dette nettverket for å se det en inntrenger ser. Logger du på med et oppdiktet navn og passord, eller åpner en delt mappe, får du et varsel.</string>
-    <string name="dekoi_try_login">Påloggingsside for lagring</string>
+    <string name="dekoi_try_login">Påloggingsside for betaling</string>
     <string name="dekoi_try_login_where">Åpne adressen i en nettleser</string>
     <string name="dekoi_try_windows">Delt mappe på Windows</string>
     <string name="dekoi_try_windows_where">Skriv adressen i adressefeltet i Filutforsker</string>

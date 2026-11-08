@@ -58,7 +58,7 @@ class EventTextTest {
 
     @Test
     fun `every decoy the device runs has a plain name`() {
-        val decoys = listOf("ftp", "http", "mysql", "rdp", "redis", "smb", "ssh", "telnet", "vnc")
+        val decoys = listOf("ftp", "http", "modbus", "mssql", "mysql", "rdp", "redis", "s7", "sap", "smb", "ssh", "telnet", "vnc")
         for (decoy in decoys) {
             assertNotEquals(R.string.service_other, serviceName(decoy), decoy)
         }
@@ -106,7 +106,7 @@ class EventTextTest {
 
     @Test
     fun `a sign-in with a name from the bait files says the bait was read`() {
-        val detail = Json.decodeFromString<EventDetail>("""{"username": "familie.admin", "bait": true}""")
+        val detail = Json.decodeFromString<EventDetail>("""{"username": "ks-drift", "bait": true}""")
         val bait = eventText(event("login_attempt", service = "smb", detail = detail))
         val ordinary = eventText(event("login_attempt", service = "smb", detail = EventDetail(username = "admin")))
         assertEquals(R.string.event_login_bait_consequence, bait.consequence)

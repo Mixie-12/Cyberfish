@@ -31,8 +31,8 @@
     <string name="features_new_learning">Alerts start once your DeKoi has known your devices for a day.</string>
     <string name="features_ports_no_list">Your router does not share which ports are open.</string>
 
-    <string name="features_decoy">Decoy file server</string>
-    <string name="features_decoy_promise">A fake storage box on your network that sends you an alert when someone opens it.</string>
+    <string name="features_decoy">Decoy company server</string>
+    <string name="features_decoy_promise">A fake company server on your network that sends you an alert when someone opens it.</string>
     <string name="features_decoy_name">Shows up on your network as %1$s</string>
     <string name="features_decoy_tour">It shows up next to your real devices, with shared folders and a login page. Signing in or opening a folder sends you an alert.</string>
     <string name="features_ids">Intrusion detection</string>

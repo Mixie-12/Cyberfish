@@ -8,8 +8,8 @@
     <string name="onboarding_page">Page %1$d of %2$d</string>
 
     <string name="onboarding_decoy_label">What it is</string>
-    <string name="onboarding_decoy_title">A storage box that is not</string>
-    <string name="onboarding_decoy_body">Your DeKoi looks like a storage box for photos and backups, but holds nothing of value. Your own devices have no reason to use it, so nothing should ever touch it.</string>
+    <string name="onboarding_decoy_title">A server that is not</string>
+    <string name="onboarding_decoy_body">Your DeKoi looks like a small company’s server for payments, accounting and backups, but holds nothing of value. Your own devices have no reason to use it, so nothing should ever touch it.</string>
 
     <string name="onboarding_touch_label">How it works</string>
     <string name="onboarding_touch_title">When something touches it, you know</string>

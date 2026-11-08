@@ -1,13 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="service_ftp">filserver</string>
-    <string name="service_http">påloggingsside for lagring</string>
+    <string name="service_http">påloggingsside for betaling</string>
     <string name="service_ssh">fjerninnlogging</string>
     <string name="service_telnet">fjernterminal</string>
     <string name="service_database">database</string>
     <string name="service_rdp">fjernskrivebord</string>
     <string name="service_vnc">skjermdeling</string>
     <string name="service_file_share">delt mappe</string>
+    <string name="service_business">forretningssystem</string>
+    <string name="service_control">maskinstyring</string>
     <string name="service_other">tjeneste</string>
     <string name="port_web">nettsider</string>
     <string name="port_file_sharing">fildeling</string>
@@ -20,7 +22,7 @@
     <string name="event_login_bait_consequence">Passordet kom fra filene på lokkeduen din. Noen har sett gjennom lokkefilene og prøver det de fant.</string>
     <string name="event_connection_title">%1$s åpnet en av lokkeduene dine</string>
     <string name="event_connection_action">Åpnet en lokkedue</string>
-    <string name="event_connection_why">Din DeKoi later som den er en lagringsboks. Vanlige enheter lar den være i fred, så et besøk betyr at noe på nettverket ditt ser seg rundt.</string>
+    <string name="event_connection_why">Din DeKoi later som den er en bedriftsserver. Vanlige enheter lar den være i fred, så et besøk betyr at noe på nettverket ditt ser seg rundt.</string>
     <string name="event_probe_consequence">Noe på nettverket ditt leter kanskje etter en vei inn.</string>
     <string name="event_scan_title">%1$s lette etter åpninger på nettverket ditt</string>
     <string name="event_scan_action">Lette etter åpninger</string>
@@ -55,7 +57,7 @@
     <string name="event_file_access_title">Noen åpnet en lokkefil på din DeKoi</string>
     <string name="event_file_access_action">Åpnet en lokkefil i den delte mappen</string>
     <string name="event_file_access_consequence">Noen på nettverket ditt ser gjennom filer som ikke er deres.</string>
-    <string name="event_file_access_why">Din DeKoi viser en delt mappe med fristende filnavn, men det er ikke noe ekte i filene. Ingen hjemme hos deg trenger disse filene, så den som åpner en av dem, leter etter passord, penger eller personlige papirer på nettverket ditt.</string>
+    <string name="event_file_access_why">Din DeKoi viser en delt mappe med fristende filnavn, som betalinger og passord, men det er ikke noe ekte i filene. Ingen hjemme hos deg trenger disse filene, så den som åpner en av dem, leter etter passord, penger eller data å stjele på nettverket ditt.</string>
     <string name="event_port_forward_title">%1$s kan nå nås fra internett</string>
     <string name="event_port_forward_action">Åpnet en vei inn fra internett</string>
     <string name="event_port_forward_consequence">Hvem som helst på internett kan nå prøve å koble seg til den.</string>
