@@ -33,9 +33,11 @@ makes public by hand; GitHub Pages needs neither.
   push to `site/`, and from `app-release.yml` and `clients.yml` once a
   release has its files. It takes the newest release with both the APK and
   the MSI, checks their SHA-256 files and the APK's signing certificate
-  against the one `app-release.yml` pins, writes the version, sizes and
-  hashes into the page, and adds a QR code of the download page. A build
-  without those values fails.
+  against the one `app-release.yml` pins, and writes the version, sizes and
+  hashes into the page. A build without those values fails.
+- `site/vite.config.ts` holds the site's address and makes the QR code of
+  the download page from it (uqr), in the dev server and in the build, so
+  the page can be checked before it is published.
 - The `github-pages` environment deploys from `main` only; the custom
   domain and HTTPS are set by `infra/github/apply.sh`. Pages from a
   private repository needs the owner's paid GitHub plan, which it has.

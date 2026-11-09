@@ -26,9 +26,10 @@ npm run dev
 
 The dev server is at http://localhost:5173. `npm run build` needs the
 release values `site.yml` sets (`VITE_VERSION`, `VITE_APK_SHA256`,
-`VITE_APK_MB`, `VITE_MSI_SHA256`, `VITE_MSI_MB`, `VITE_CERT_SHA256`,
-`VITE_SITE_HOST`) and stops without them. `site.yml` then adds the APK, the
-MSI and the QR code to `dist/download/`.
+`VITE_APK_MB`, `VITE_MSI_SHA256`, `VITE_MSI_MB`, `VITE_CERT_SHA256`) and
+stops without them; in the dev server the download page shows their names
+instead. `site.yml` then adds the APK and the MSI to `dist/download/`. The
+site's address and the download page's QR code come from `vite.config.ts`.
 
 ## Credits
 
