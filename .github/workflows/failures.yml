@@ -24,6 +24,7 @@ on:
       - repo
       - rotate keys
       - security
+      - site
       - tag release
     types: [completed]
 

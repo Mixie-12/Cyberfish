@@ -13,7 +13,8 @@ def rules:
     {path: "^clients/gradle/libs\\.versions\\.toml$"},
     {path: "^clients/gradle/wrapper/gradle-wrapper\\.(jar|properties)$"},
     {path: "^clients/gradlew(\\.bat)?$"},
-    {path: "^device/canary/requirements\\.(in|txt)$"}]
+    {path: "^device/canary/requirements\\.(in|txt)$"},
+    {path: "^site/package(-lock)?\\.json$"}]
   elif $author == "github-actions[bot]" then [
     {path: "^device/(image|installer)\\.json$"},
     {path: "^device/installer/Containerfile$"}]

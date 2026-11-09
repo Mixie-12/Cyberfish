@@ -41,6 +41,24 @@ updates:
       pip:
         patterns: ["*"]
         update-types: [minor, patch]
+  # three.js changes its API in minor versions (0.x); those move by hand.
+  - package-ecosystem: npm
+    directory: /site
+    schedule:
+      interval: weekly
+    cooldown:
+      default-days: 7
+    commit-message:
+      prefix: site
+    ignore:
+      - dependency-name: three
+        update-types: [version-update:semver-major, version-update:semver-minor]
+      - dependency-name: "@types/three"
+        update-types: [version-update:semver-major, version-update:semver-minor]
+    groups:
+      npm:
+        patterns: ["*"]
+        update-types: [minor, patch]
   # Base images follow their digests within the release line they name
   # (Python 3.13, Debian trixie, Alpine 3.24): the agent's Python and the
   # installer's Alpine package pins belong to that line, so moving to the

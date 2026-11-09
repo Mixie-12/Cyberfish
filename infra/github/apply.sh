@@ -59,6 +59,24 @@ environment release 'v*' tag <<JSON
  "deployment_branch_policy": {"protected_branches": false, "custom_branch_policies": true}}
 JSON
 
+# The public site (ADR 0039): GitHub Pages from site.yml, deployed from main
+# only, at dekoi.sysnordic.no. HTTPS is enforced once GitHub has the
+# certificate, which it requests after the DNS record exists.
+if ! gh api "repos/$repo/pages" > /dev/null 2>&1; then
+    echo '{"build_type": "workflow"}' | send POST pages
+fi
+send PUT pages <<'JSON'
+{"build_type": "workflow", "cname": "dekoi.sysnordic.no"}
+JSON
+if [ "$(gh api "repos/$repo/pages" --jq '.https_certificate.state // ""')" = approved ]; then
+    echo '{"https_enforced": true}' | send PUT pages
+else
+    echo "Pages: no certificate yet for dekoi.sysnordic.no; run this again once DNS points at GitHub" >&2
+fi
+environment github-pages main branch <<'JSON'
+{"deployment_branch_policy": {"protected_branches": false, "custom_branch_policies": true}}
+JSON
+
 # Dependabot alerts also tell tag-release.yml that a fix landed (ADR 0038).
 for feature in vulnerability-alerts automated-security-fixes; do
     gh api --method PUT "repos/$repo/$feature" > /dev/null
