@@ -94,13 +94,16 @@ jobs:
           npm ci --ignore-scripts --no-audit --no-fund
           npm run build
       # qrencode from Ubuntu's signed archive, for the code a visitor on a
-      # computer scans with their phone.
+      # computer scans with their phone. One path, not a rect per module:
+      # scaled to a fraction of a pixel per module, separate rects leave
+      # seams between neighbouring modules.
       - name: Add the downloads and the QR code
         env:
           DOWNLOADS: ${{ runner.temp }}/download
         run: |
           sudo apt-get install -y --no-install-recommends qrencode > /dev/null
-          qrencode -t SVG -m 2 -o site/dist/download/qr.svg "https://$SITE_HOST/download/"
+          qrencode -t SVG --svg-path --rle -m 2 -o site/dist/download/qr.svg \
+            "https://$SITE_HOST/download/"
           mv "$DOWNLOADS"/* site/dist/download/
           # Every link on the two pages points at a file that is there.
           grep -ho 'href="/[^"]*"\|src="/[^"]*"' site/dist/index.html site/dist/download/index.html |
