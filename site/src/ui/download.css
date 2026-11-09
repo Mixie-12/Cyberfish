@@ -18,10 +18,12 @@ html {
 body {
   margin: 0;
   min-height: 100vh;
-  /* The loading screen's scanlines over the sky's horizon glow. */
-  background:
-    repeating-linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 0 1px, transparent 1px 4px),
-    radial-gradient(ellipse 120% 60% at 50% 0%, var(--bg-sky-horizon), var(--bg) 70%);
+  /* The loading screen's scanlines over the page's flat ground. */
+  background: repeating-linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 0.03) 0 1px,
+    transparent 1px 4px
+  );
 }
 
 a {
