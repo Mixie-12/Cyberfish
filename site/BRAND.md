@@ -41,9 +41,9 @@ Rules: Michroma only for wordmark, H1 and section numbers. Everything else JetBr
 
 ## Logo
 
-- `logo/cyberfish-mark.svg`: flat version, white fill with accent stroke. Nav, favicon, footer.
-- `logo/cyberfish-mark-glow.svg`: same paths with a blue halo filter. Hero and large sizes only; it looks blurry under about 48px tall.
-- `logo/app-icon-1024.png`: the Android app icon, for reference on glow intensity and the scanline texture. Do not use it on the site.
+- `public/cyberfish-mark.svg`: flat version, white fill with accent stroke. Nav, favicon, footer.
+- `public/cyberfish-mark-glow.svg`: same paths with a blue halo filter. Hero and large sizes only; it looks blurry under about 48px tall.
+- The Android app icon (`clients/app`) is the reference for glow intensity and the scanline texture. Do not use it on the site.
 - The mark is the characters `><>` set in JetBrains Mono ExtraBold with -0.06em tracking, outlined to paths. viewBox is `30 -649 1620 640`.
 - Lockup: mark at cap height of the adjacent text, gap 0.6em. Never taller than the text.
 
@@ -53,10 +53,9 @@ Calm, specific, plain language. No exclamation marks. No hype words: seamless, r
 
 ## Product facts (do not invent beyond these)
 
-- DeKoi is a small plug-in box (Raspberry Pi) for homes and small offices that pretends to be a network storage drive.
-- It runs 9 decoy services: HTTP, HTTPS, SSH, FTP, Telnet, MySQL, RDP, VNC, Redis.
+- DeKoi is a small plug-in box (Raspberry Pi) for homes and small offices that poses as a small company's finance server. What it shows an intruder: `docs/decisions/0035-finance-server-decoy.md`.
 - Nothing legitimate touches it, so any touch triggers a plain-language push notification on the owner's phone within about a minute.
-- Setup: install the Android app, write the SD card with DeKoi Setup, scan a QR code, plug in.
+- Setup: install the Android app, prepare the memory card with the app and a USB card reader or with DeKoi Setup on a computer, plug in.
 - It detects, it does not block. It does not see phishing, stolen cloud passwords, or attackers who go straight to one target.
 - Android first. Data hosted in the EU. Attacker-typed passwords never leave the box.
 - Built at Oslo Sprint 2026 by team CyberFish, Oslo.

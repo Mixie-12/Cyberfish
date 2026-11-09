@@ -64,6 +64,32 @@ html[data-deep][data-surfacing] .nav {
   width: auto;
 }
 
+/* "Get the app": the one boxed control in the HUD, next to the sound
+   toggle, so it is found on every chapter. */
+.nav .get {
+  margin-left: auto;
+  margin-right: 28px;
+  padding: 10px 16px;
+  border: 1px solid var(--accent);
+  border-radius: 2px;
+  background: rgba(6, 10, 20, 0.35);
+  color: var(--accent);
+  font: 500 12px/1 var(--font-mono);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  transition:
+    background 160ms,
+    color 160ms;
+}
+
+.nav .get:hover,
+.nav .get:focus-visible {
+  background: rgba(46, 168, 255, 0.14);
+  color: var(--white);
+  outline: none;
+}
+
 /* Sound toggle: a bare speaker glyph and label, set like the CTA (same mono,
    same tracking) so it reads as part of the HUD rather than a widget. The
    waves light up while sound is on. */
@@ -182,6 +208,11 @@ html[data-deep][data-surfacing] .nav {
   }
   .nav .lockup {
     font-size: 20px;
+  }
+  .nav .get {
+    margin-right: 12px;
+    padding: 8px 12px;
+    font-size: 11px;
   }
   .nav .sound .sound-label {
     display: none;

@@ -1,0 +1,311 @@
+/* The download page: plain HTML and this file, no scene and no script, so
+   it opens at once on any phone. Colours and type from BRAND.md. */
+@import './tokens.css';
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  background: var(--bg);
+  color: var(--text);
+  font: 400 15px/1.75 var(--font-mono);
+  -webkit-font-smoothing: antialiased;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  /* The loading screen's scanlines over the sky's horizon glow. */
+  background:
+    repeating-linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 0 1px, transparent 1px 4px),
+    radial-gradient(ellipse 120% 60% at 50% 0%, var(--bg-sky-horizon), var(--bg) 70%);
+}
+
+a {
+  color: var(--accent);
+}
+
+h1 {
+  margin: 0 0 20px;
+  font: 400 clamp(28px, 5vw, 48px) / 1.2 var(--font-display);
+  letter-spacing: 0.01em;
+  color: var(--white);
+  text-shadow: 0 0 24px rgba(46, 168, 255, 0.25);
+}
+
+h2 {
+  margin: 0 0 20px;
+  font: 500 12px/1.6 var(--font-mono);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-mid);
+}
+
+p {
+  margin: 0 0 16px;
+  max-width: 62ch;
+}
+
+.top,
+main,
+.bottom {
+  max-width: 1040px;
+  margin: 0 auto;
+  padding-left: 24px;
+  padding-right: 24px;
+}
+
+.top {
+  padding-top: 28px;
+}
+
+/* Mark at the cap height of the text, 0.6em gap (BRAND.md, Logo). */
+.lockup {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6em;
+  color: var(--white);
+  font: 400 18px/1 var(--font-display);
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  text-decoration: none;
+}
+
+.lockup img {
+  display: block;
+  height: 0.72em;
+  width: auto;
+}
+
+main {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 56px;
+  padding-top: 56px;
+  padding-bottom: 56px;
+}
+
+.lead {
+  font-size: 17px;
+  margin-bottom: 32px;
+}
+
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  min-height: 56px;
+  padding: 16px 28px;
+  border: 1px solid var(--accent);
+  border-radius: 2px;
+  background: var(--accent);
+  color: var(--bg);
+  font: 500 14px/1 var(--font-mono);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  text-decoration: none;
+  box-shadow: 0 0 32px rgba(46, 168, 255, 0.35);
+  transition:
+    background 160ms,
+    box-shadow 160ms;
+}
+
+.button:hover {
+  background: #5cbcff;
+  box-shadow: 0 0 44px rgba(46, 168, 255, 0.55);
+}
+
+.button:focus-visible {
+  outline: 2px solid var(--white);
+  outline-offset: 4px;
+}
+
+.button.quiet {
+  background: transparent;
+  color: var(--accent);
+  box-shadow: none;
+}
+
+.button.quiet:hover {
+  background: rgba(46, 168, 255, 0.12);
+}
+
+.button svg {
+  width: 20px;
+  height: 20px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.meta {
+  margin: 12px 0 0;
+  color: var(--text-mid);
+  font-size: 13px;
+}
+
+.note {
+  margin-top: 20px;
+  color: var(--text-mid);
+  font-size: 13px;
+}
+
+/* Steps numbered like the site's sections: 01 02 03 in Michroma. */
+.steps ol {
+  display: grid;
+  gap: 28px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: step;
+}
+
+.steps li {
+  display: grid;
+  grid-template-columns: 52px minmax(0, 1fr);
+  counter-increment: step;
+}
+
+.steps li::before {
+  content: counter(step, decimal-leading-zero);
+  font: 400 14px/1.9 var(--font-display);
+  letter-spacing: 0.1em;
+  color: var(--accent);
+}
+
+.steps h3 {
+  margin: 0 0 6px;
+  font: 500 13px/1.75 var(--font-mono);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--white);
+}
+
+.steps p {
+  margin: 0;
+}
+
+/* Only where the visitor is likely not on their phone already. */
+.on-computer {
+  display: none;
+  align-self: start;
+  padding: 28px;
+  border: 1px solid var(--line);
+  border-radius: 2px;
+  background: rgba(11, 22, 54, 0.55);
+}
+
+.on-computer p {
+  margin: 20px 0 0;
+  font-size: 13px;
+}
+
+.on-computer strong {
+  color: var(--white);
+  font-weight: 500;
+}
+
+/* A scanner needs dark modules on a light ground, with a quiet zone. */
+.qr {
+  display: block;
+  width: 100%;
+  max-width: 220px;
+  height: auto;
+  padding: 12px;
+  border-radius: 2px;
+  background: #fff;
+}
+
+.tech {
+  border-top: 1px solid var(--line);
+  padding-top: 24px;
+  color: var(--text-mid);
+  font-size: 13px;
+}
+
+.tech summary {
+  cursor: pointer;
+  font: 500 12px/1.6 var(--font-mono);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.tech summary:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 4px;
+}
+
+.tech dl {
+  margin: 20px 0 0;
+}
+
+.tech dt {
+  color: var(--text);
+}
+
+.tech dd {
+  margin: 0 0 16px;
+}
+
+.tech code {
+  display: block;
+  color: var(--white);
+  font: 400 12px/1.6 var(--font-mono);
+  word-break: break-all;
+}
+
+.bottom {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 12px 24px;
+  padding-top: 24px;
+  padding-bottom: 40px;
+  border-top: 1px solid var(--line);
+  color: var(--text-dim);
+  font-size: 13px;
+}
+
+@media (min-width: 900px) {
+  main {
+    grid-template-columns: minmax(0, 1fr) 280px;
+    column-gap: 72px;
+  }
+
+  main > * {
+    grid-column: 1;
+  }
+
+  .on-computer {
+    display: block;
+    grid-column: 2;
+    grid-row: 1 / span 2;
+  }
+}
+
+@media (max-width: 480px) {
+  .top,
+  main,
+  .bottom {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+
+  main {
+    padding-top: 40px;
+  }
+
+  .button {
+    width: 100%;
+  }
+
+  .steps li {
+    grid-template-columns: 40px minmax(0, 1fr);
+  }
+}

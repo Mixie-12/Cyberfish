@@ -3,7 +3,7 @@ import * as THREE from 'three';
 /**
  * Brand colours as three.js Colors. Hex values are sRGB and three converts
  * them to linear on construction, so shaders receive linear light.
- * Source: reference/BRAND.md
+ * Source: BRAND.md
  */
 export const COLORS = {
   bg: new THREE.Color('#060a14'),

@@ -48,6 +48,36 @@ html[data-entered] .hero {
   opacity: 0.78;
 }
 
+/* The way to the app, under the tagline. Clickable only while the hero is
+   on screen: the dive hides it (cta.css). */
+.hero .get {
+  display: inline-block;
+  margin-top: 28px;
+  padding: 14px 24px;
+  border: 1px solid var(--accent);
+  border-radius: 2px;
+  background: var(--accent);
+  color: var(--bg);
+  font: 500 13px/1 var(--font-mono);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  box-shadow: 0 0 28px rgba(46, 168, 255, 0.35);
+  transition:
+    background 160ms,
+    box-shadow 160ms;
+}
+
+html[data-entered]:not([data-diving]) .hero .get {
+  pointer-events: auto;
+}
+
+.hero .get:hover,
+.hero .get:focus-visible {
+  background: #5cbcff;
+  box-shadow: 0 0 40px rgba(46, 168, 255, 0.55);
+  outline: none;
+}
+
 @media (max-aspect-ratio: 1/1) {
   .hero {
     left: calc(var(--frame-inset) + 12px);

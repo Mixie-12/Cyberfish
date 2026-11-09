@@ -1,5 +1,6 @@
 /**
- * Loading overlay. Port of reference/loading-screen.html.
+ * Loading overlay. Port of reference/loading-screen.html in the original
+ * repository (site/README.md).
  *
  * The markup and styles live in index.html so the overlay paints before any
  * module script is fetched. This class only drives it: callers report real

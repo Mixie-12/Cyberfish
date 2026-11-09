@@ -3,10 +3,16 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <!-- The loader's styles are inline; the models and sounds are fetched,
+         and three.js hands embedded textures over as blob URLs. -->
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' data: blob:; object-src 'none'; base-uri 'none'; form-action 'none'"
+    />
     <title>DeKoi by CyberFish</title>
     <meta
       name="description"
-      content="DeKoi is a small box you plug into your home or office network. It pretends to be a storage drive. If something touches it, you get an alert on your phone within a minute."
+      content="DeKoi is a small box you plug into your home or office network. It poses as a company's finance server. If something touches it, you get an alert on your phone within a minute."
     />
     <link rel="icon" type="image/svg+xml" href="/cyberfish-mark.svg" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -177,6 +183,27 @@
         cursor: default;
         opacity: 0.6;
       }
+      /* There from the first frame: a visitor who came for the app does not
+         wait for the scene. */
+      #loader .get {
+        position: absolute;
+        left: 50%;
+        bottom: max(28px, env(safe-area-inset-bottom));
+        transform: translateX(-50%);
+        padding: 12px;
+        color: #2ea8ff;
+        font: 500 12px/1 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        text-decoration: underline;
+        text-underline-offset: 6px;
+        white-space: nowrap;
+      }
+      #loader .get:hover,
+      #loader .get:focus-visible {
+        color: #f2f4fa;
+        outline: none;
+      }
       @media (prefers-reduced-motion: reduce) {
         #loader.ready #mark {
           transform: none;
@@ -206,6 +233,7 @@
         <img class="mark" src="/cyberfish-mark.svg" alt="" width="1620" height="640" />
         <span>CyberFish</span>
       </a>
+      <a class="get" href="/download/">Get the app</a>
       <button class="sound" id="sound-toggle" type="button" aria-pressed="false" aria-label="Sound">
         <svg class="speaker" viewBox="0 0 20 20" width="20" height="20" aria-hidden="true">
           <path class="horn" d="M3 7.5h3.2L10.5 4v12l-4.3-3.5H3z" />
@@ -220,6 +248,7 @@
       <h1 class="hero-title" id="hero-title">DeKoi</h1>
       <p class="hero-lead">A plug-in network decoy for homes and small offices.</p>
       <p class="hero-sub">Making real cybersecurity simple enough for everyone.</p>
+      <a class="get" href="/download/">Get the app</a>
     </section>
     <button class="cta" id="deploy" type="button">
       <span class="cta-label">Deploy The Decoy?</span>
@@ -456,6 +485,7 @@
     <!-- The floor: the mark in particles, and the last word. -->
     <section class="floor-copy" aria-label="Questions">
       <h2 class="floor-title">Questions?</h2>
+      <a class="get" href="/download/">Get the app</a>
     </section>
     <!-- Rewind: one chapter up, top centre of the chapters below the deep. -->
     <button class="rewind" id="rewind" type="button">
@@ -522,6 +552,7 @@
           <button class="btn quiet" id="enter-mute" type="button">Enter without sound</button>
         </div>
       </div>
+      <a class="get" href="/download/">Download the app</a>
     </div>
     <script type="module" src="/src/main.ts"></script>
   </body>

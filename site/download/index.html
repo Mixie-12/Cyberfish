@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <!-- No scripts on this page: it works on any phone, and nothing runs. -->
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'none'; style-src 'self' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; base-uri 'none'; form-action 'none'"
+    />
+    <title>Get the DeKoi app</title>
+    <meta
+      name="description"
+      content="Download the DeKoi app for Android, and DeKoi Setup for Windows."
+    />
+    <link rel="icon" type="image/svg+xml" href="/cyberfish-mark.svg" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Michroma&family=JetBrains+Mono:wght@400;500&display=swap"
+    />
+    <link rel="stylesheet" href="/src/ui/download.css" />
+  </head>
+  <body>
+    <header class="top">
+      <a class="lockup" href="/">
+        <img src="/cyberfish-mark.svg" alt="" width="1620" height="640" />
+        <span>CyberFish</span>
+      </a>
+    </header>
+    <main>
+      <section class="get" aria-labelledby="title">
+        <h1 id="title">Get the <span class="product">DeKoi</span> app</h1>
+        <p class="lead">
+          When someone on your network touches your DeKoi, the app tells you, in plain words,
+          within a minute. It runs on Android 10 and newer.
+        </p>
+        <a class="button" href="/download/dekoi-v%VITE_VERSION%.apk" download>
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M12 4v11M7 10.5l5 5 5-5M5 20h14" />
+          </svg>
+          Download for Android
+        </a>
+        <p class="meta">Version %VITE_VERSION% · %VITE_APK_MB% MB</p>
+      </section>
+
+      <aside class="on-computer" aria-labelledby="computer-title">
+        <h2 id="computer-title">On a computer?</h2>
+        <img
+          class="qr"
+          src="/download/qr.svg"
+          alt="QR code that opens %VITE_SITE_HOST%/download on your phone"
+          width="200"
+          height="200"
+        />
+        <p>
+          Point your phone's camera at this code, or open
+          <strong>%VITE_SITE_HOST%</strong> on your phone.
+        </p>
+      </aside>
+
+      <section class="steps" aria-labelledby="steps-title">
+        <h2 id="steps-title">Install it in three steps</h2>
+        <ol>
+          <li>
+            <div>
+              <h3>Download</h3>
+              <p>
+                Tap Download for Android on your phone. If your browser asks whether to keep the
+                file, choose Download anyway. Browsers ask this about every app that does not come
+                from Google Play.
+              </p>
+            </div>
+          </li>
+          <li>
+            <div>
+              <h3>Install</h3>
+              <p>
+                Open the file when it has downloaded. The first time, Android asks whether your
+                browser may install apps: tap Settings, turn on Allow from this source, go back and
+                tap Install. If Google Play Protect offers to scan the app, let it.
+              </p>
+            </div>
+          </li>
+          <li>
+            <div>
+              <h3>Sign in</h3>
+              <p>
+                Open DeKoi and sign in with your Google account. The app then shows you how to set
+                up your DeKoi, one step at a time.
+              </p>
+            </div>
+          </li>
+        </ol>
+      </section>
+
+      <section class="setup" aria-labelledby="setup-title">
+        <h2 id="setup-title">Prepare the memory card on a computer</h2>
+        <p>
+          The app can prepare your DeKoi's memory card with a USB card reader. You can also do it
+          with DeKoi Setup on a Windows computer.
+        </p>
+        <a class="button quiet" href="/download/dekoi-setup-v%VITE_VERSION%.msi" download>
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M12 4v11M7 10.5l5 5 5-5M5 20h14" />
+          </svg>
+          DeKoi Setup for Windows
+        </a>
+        <p class="meta">Version %VITE_VERSION% · %VITE_MSI_MB% MB</p>
+        <p class="note">
+          Windows may say that it protected your PC, because DeKoi Setup is not signed with a
+          certificate yet. Choose More info, then Run anyway.
+        </p>
+      </section>
+
+      <section class="updates" aria-labelledby="updates-title">
+        <h2 id="updates-title">Updates</h2>
+        <p>
+          To update the app, download it here again and install it over the old one. Your account
+          and your DeKoi stay as they are.
+        </p>
+      </section>
+
+      <details class="tech">
+        <summary>Technical details</summary>
+        <dl>
+          <dt>Android app</dt>
+          <dd>
+            dekoi-v%VITE_VERSION%.apk, for Android 10 (API level 29) and newer. Not in Google Play
+            yet.
+          </dd>
+          <dt>SHA-256 of the app</dt>
+          <dd><code>%VITE_APK_SHA256%</code></dd>
+          <dt>SHA-256 of the app's signing certificate</dt>
+          <dd>
+            <code>%VITE_CERT_SHA256%</code>
+            Android installs an update only when it is signed with this same certificate.
+          </dd>
+          <dt>DeKoi Setup</dt>
+          <dd>dekoi-setup-v%VITE_VERSION%.msi, for Windows.</dd>
+          <dt>SHA-256 of DeKoi Setup</dt>
+          <dd><code>%VITE_MSI_SHA256%</code></dd>
+        </dl>
+      </details>
+    </main>
+    <footer class="bottom">
+      <a href="/">How DeKoi works</a>
+      <span>DeKoi by CyberFish</span>
+    </footer>
+  </body>
+</html>

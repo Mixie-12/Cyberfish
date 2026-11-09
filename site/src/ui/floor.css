@@ -40,6 +40,41 @@ html[data-floor][data-surfacing] .floor-title {
   transition: opacity 500ms ease;
 }
 
+/* Under "Questions?": the way to the app, on the same timing. */
+.floor-copy .get {
+  display: inline-block;
+  margin-top: 24px;
+  padding: 12px 22px;
+  border: 1px solid var(--accent);
+  border-radius: 2px;
+  color: var(--accent);
+  font: 500 12px/1 var(--font-mono);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  opacity: 0;
+  transition: opacity 500ms ease;
+}
+
+html[data-floor] .floor-copy .get {
+  opacity: 1;
+  pointer-events: auto;
+  transition: opacity 1200ms ease 1400ms;
+}
+
+html[data-floor][data-ascending] .floor-copy .get,
+html[data-floor][data-surfacing] .floor-copy .get {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 500ms ease;
+}
+
+.floor-copy .get:hover,
+.floor-copy .get:focus-visible {
+  background: rgba(46, 168, 255, 0.14);
+  color: var(--white);
+  outline: none;
+}
+
 @media (max-aspect-ratio: 1/1) {
   .floor-copy {
     top: 68%;
