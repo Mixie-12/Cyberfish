@@ -1,0 +1,305 @@
+/* The market chapter, one level below the safety chapter: one Michroma
+   title, a white glowing chart of the decoys on the market (up is easier
+   to set up, right is cheaper, DeKoi alone in the top right), and a short
+   aside beside it, set straight on the water. The axes draw in, the
+   points come up one by one, the aside last (html[data-market]); it all
+   goes together when the visitor moves on. */
+.market-copy {
+  position: fixed;
+  z-index: 4;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: min(1360px, 88vw);
+  margin: 0;
+  pointer-events: none;
+}
+
+.market-title {
+  margin: 0 0 clamp(28px, 4vh, 48px);
+  font: 400 clamp(22px, 2.35vw, 38px) / 1.25 var(--font-display);
+  letter-spacing: 0.02em;
+  color: var(--white);
+  text-shadow: 0 0 22px rgba(46, 168, 255, 0.25);
+  text-wrap: balance;
+}
+
+.market-body {
+  display: grid;
+  grid-template-columns: minmax(0, 8fr) minmax(0, 3fr);
+  gap: clamp(32px, 4vw, 72px);
+  align-items: center;
+}
+
+.market-chart {
+  margin: 0;
+}
+
+.market-chart svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+
+/* The chart: white lines and dots, each with its own soft glow. The glow
+   goes on the axes as a group: a filter on a straight line alone has a
+   zero-area region and renders nothing. */
+.market-axes {
+  filter: url(#market-glow);
+}
+
+.market-axis,
+.market-arrow {
+  fill: none;
+  stroke: var(--white);
+  stroke-width: 1.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* Axis labels in the accent, set apart from the white points. */
+.market-axis-label {
+  font: 500 11.5px var(--font-mono);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  fill: var(--accent);
+}
+
+.market-axis-label-end,
+.market-text-end {
+  text-anchor: end;
+}
+
+.market-dot {
+  fill: var(--white);
+  filter: url(#market-glow);
+}
+
+.market-name {
+  font: 700 13.5px var(--font-mono);
+  fill: var(--white);
+}
+
+.market-note {
+  font: 400 13px var(--font-mono);
+  fill: var(--white);
+  opacity: 0.85;
+}
+
+/* DeKoi: the accent, hotter glow, a slow pulse round it. */
+.market-point-us .market-dot {
+  fill: var(--accent);
+  filter: url(#market-glow-hot);
+}
+
+.market-point-us .market-name {
+  fill: var(--accent);
+}
+
+.market-halo {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 1;
+  opacity: 0;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+html[data-market] .market-halo {
+  animation: market-pulse 3s ease-out infinite 2600ms;
+}
+
+/* The aside: no panel behind it, just the words. */
+.market-aside {
+  color: var(--white);
+  text-shadow: 0 1px 14px rgba(6, 10, 20, 0.8);
+}
+
+.market-lead {
+  margin: 0 0 18px;
+  font: 700 clamp(17px, 1.55vw, 22px) / 1.5 var(--font-mono);
+}
+
+.market-text {
+  margin: 0;
+  font: 400 clamp(15px, 1.3vw, 19px) / 1.65 var(--font-mono);
+  opacity: 0.9;
+}
+
+/* Reveal. Everything starts out; the title first, then the axes draw,
+   the points come up in order (--i), then the aside. */
+.market-title,
+.market-axis-label,
+.market-arrow,
+.market-point,
+.market-aside {
+  opacity: 0;
+  transition: opacity 500ms ease;
+}
+
+.market-title,
+.market-aside {
+  transform: translateY(14px);
+  transition:
+    opacity 500ms ease,
+    transform 500ms ease;
+}
+
+/* Hidden: the dash sits well clear of the path (pathLength 1) on both
+   sides. With a dash ending exactly at the path's ends, Safari draws the
+   round caps of the zero-length remnants as stray dots. */
+.market-axis {
+  stroke-dasharray: 1 3;
+  stroke-dashoffset: 2;
+  transition: stroke-dashoffset 500ms ease;
+}
+
+.market-point {
+  transform-box: fill-box;
+  transform-origin: center;
+  transform: scale(0.85);
+  transition:
+    opacity 500ms ease,
+    transform 500ms ease;
+}
+
+html[data-market] .market-title {
+  opacity: 1;
+  transform: none;
+  transition:
+    opacity 800ms ease 150ms,
+    transform 800ms cubic-bezier(0.2, 0.8, 0.2, 1) 150ms;
+}
+
+html[data-market] .market-axis {
+  stroke-dashoffset: 0;
+  transition: stroke-dashoffset 900ms cubic-bezier(0.4, 0, 0.2, 1) 400ms;
+}
+
+html[data-market] .market-arrow,
+html[data-market] .market-axis-label {
+  transition: opacity 600ms ease 1100ms;
+}
+
+html[data-market] .market-arrow {
+  opacity: 1;
+}
+
+html[data-market] .market-axis-label {
+  opacity: 1;
+}
+
+html[data-market] .market-point {
+  opacity: 1;
+  transform: none;
+  transition:
+    opacity 700ms ease calc(1000ms + var(--i) * 200ms),
+    transform 700ms cubic-bezier(0.2, 0.8, 0.2, 1) calc(1000ms + var(--i) * 200ms);
+}
+
+html[data-market] .market-aside {
+  opacity: 1;
+  transform: none;
+  transition:
+    opacity 800ms ease 1400ms,
+    transform 800ms cubic-bezier(0.2, 0.8, 0.2, 1) 1400ms;
+}
+
+/* Leaving: everything sinks together, no stagger. */
+html[data-market][data-descending] .market-title,
+html[data-market][data-descending] .market-axis-label,
+html[data-market][data-descending] .market-arrow,
+html[data-market][data-descending] .market-point,
+html[data-market][data-descending] .market-aside,
+html[data-market][data-ascending] .market-title,
+html[data-market][data-ascending] .market-axis-label,
+html[data-market][data-ascending] .market-arrow,
+html[data-market][data-ascending] .market-point,
+html[data-market][data-ascending] .market-aside,
+html[data-market][data-surfacing] .market-title,
+html[data-market][data-surfacing] .market-axis-label,
+html[data-market][data-surfacing] .market-arrow,
+html[data-market][data-surfacing] .market-point,
+html[data-market][data-surfacing] .market-aside {
+  opacity: 0;
+  transform: none;
+  transition: opacity 500ms ease;
+}
+
+html[data-market][data-descending] .market-axis,
+html[data-market][data-ascending] .market-axis,
+html[data-market][data-surfacing] .market-axis {
+  stroke-dashoffset: 2;
+  transition: stroke-dashoffset 500ms ease;
+}
+
+html[data-market][data-descending] .market-halo,
+html[data-market][data-ascending] .market-halo,
+html[data-market][data-surfacing] .market-halo {
+  animation: none;
+}
+
+@keyframes market-pulse {
+  0% {
+    opacity: 0.7;
+    transform: scale(0.6);
+  }
+  70%,
+  100% {
+    opacity: 0;
+    transform: scale(1.6);
+  }
+}
+
+@media (max-aspect-ratio: 1/1) {
+  .market-copy {
+    width: min(1160px, calc(100vw - 2 * var(--frame-inset) - 24px));
+  }
+
+  .market-body {
+    grid-template-columns: 1fr;
+    gap: 28px;
+  }
+
+  .market-aside {
+    max-width: 560px;
+  }
+}
+
+@media (max-width: 480px) {
+  .market-copy {
+    width: calc(100vw - 32px);
+  }
+
+  .market-lead {
+    font-size: 15px;
+  }
+
+  .market-text {
+    font-size: 13px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .market-title,
+  .market-aside,
+  .market-point,
+  html[data-market] .market-title,
+  html[data-market] .market-aside,
+  html[data-market] .market-point {
+    transform: none;
+    transition: opacity 300ms;
+  }
+
+  .market-axis,
+  html[data-market] .market-axis {
+    stroke-dasharray: none;
+    stroke-dashoffset: 0;
+    transition: none;
+  }
+
+  html[data-market] .market-halo {
+    animation: none;
+  }
+}
