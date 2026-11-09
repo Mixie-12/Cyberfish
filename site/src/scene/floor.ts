@@ -59,8 +59,18 @@ const MOTE_COUNT_MOBILE = 180;
 const MARK_POS = new THREE.Vector3(0, -0.3, -11);
 export const MARK_WIDTH = 5.2;
 const MARK_COLOR = new THREE.Color('#a9d6ff');
-/** Most of the frame's width the mark may take: narrow portrait frames shrink it. */
-const MARK_FILL = 0.86;
+/**
+ * Most of the frame's width the mark may take, leaving room for its drift:
+ * narrow portrait frames shrink it.
+ */
+const MARK_FILL = 0.75;
+/**
+ * The sprites keep their size on screen while the mark's follows the frame,
+ * so a small mark packs the same light into less area. Below this many
+ * square CSS pixels (the mark's width, squared) per particle, the sprites
+ * dim in proportion and the mark's brightness holds.
+ */
+const MARK_AREA_PER_POINT = 25;
 
 /**
  * Particle dynamics, in world units. A soft spring draws each particle
@@ -196,6 +206,7 @@ export class Floor {
    * @param dt      frame delta
    * @param camera  for the floor's distance fade
    * @param ray     the pointer's ray in world space, or null when there is none
+   * @param frameWidth  the frame's width in CSS pixels, for the mark's brightness
    * @returns whether the ray is disturbing the mark this frame
    */
   update(
@@ -203,6 +214,7 @@ export class Floor {
     dt: number,
     camera: THREE.PerspectiveCamera,
     ray: THREE.Ray | null,
+    frameWidth: number,
   ): boolean {
     for (const m of this.materials) if (m.uniforms.uTime) m.uniforms.uTime.value = time;
     for (const m of this.seabedMaterials) {
@@ -220,9 +232,15 @@ export class Floor {
     this.markGroup.quaternion.copy(_q);
     const span =
       2 * -MARK_POS.z * Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)) * camera.aspect;
-    this.markGroup.scale.setScalar(Math.min(1, (span * MARK_FILL) / MARK_WIDTH));
+    const scale = Math.min(1, (span * MARK_FILL) / MARK_WIDTH);
+    this.markGroup.scale.setScalar(scale);
 
     if (!this.swarm) return false;
+    const width = ((scale * MARK_WIDTH) / span) * frameWidth;
+    this.swarm.material.uniforms.uBright.value = Math.min(
+      1,
+      (width * width) / (this.swarm.count * MARK_AREA_PER_POINT),
+    );
     let local: THREE.Ray | null = null;
     if (ray) {
       this.markGroup.updateWorldMatrix(true, false);
@@ -245,6 +263,7 @@ class Swarm {
   readonly points: THREE.Points;
   readonly material: THREE.ShaderMaterial;
   readonly geometry: THREE.BufferGeometry;
+  readonly count: number;
   private readonly rest: Float32Array;
   private readonly pos: Float32Array;
   private readonly vel: Float32Array;
@@ -256,6 +275,7 @@ class Swarm {
 
   constructor(rest: Float32Array, pixelRatio: number) {
     const n = rest.length / 3;
+    this.count = n;
     this.rest = rest;
     this.pos = new Float32Array(rest);
     this.vel = new Float32Array(rest.length);

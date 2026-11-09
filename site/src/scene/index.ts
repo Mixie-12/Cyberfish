@@ -197,6 +197,7 @@ function quadBezierTangent(
 const _tan = new THREE.Vector3();
 const _v1 = new THREE.Vector3();
 const _v2 = new THREE.Vector3();
+const _size = new THREE.Vector2();
 
 /**
  * Owns the renderer, camera, sky, water, lights, post chain and the render loop.
@@ -972,7 +973,8 @@ export class CyberScene {
         this.raycaster.setFromCamera(this.pointer, this.camera);
         ray = this.raycaster.ray;
       }
-      const stirring = floor.update(this.time, dt, this.camera, ray);
+      const frameWidth = this.renderer.getSize(_size).x;
+      const stirring = floor.update(this.time, dt, this.camera, ray, frameWidth);
       if (stirring !== this.markStirred) {
         this.markStirred = stirring;
         this.onMarkStir?.(stirring);
