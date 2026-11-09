@@ -1,0 +1,322 @@
+/* The deep's copy. Left of the frame in landscape (the unit hangs on the
+   right), top of the frame in portrait (the unit sits low). Two short
+   blocks: a Michroma title (same face as the wordmark) over a mono
+   paragraph. They come up one after the other once the picture has
+   surfaced (html[data-deep]) and sink with everything else on the way
+   back (html[data-surfacing]). */
+.deep-copy {
+  position: fixed;
+  z-index: 4;
+  left: clamp(32px, 6vw, 96px);
+  top: 50%;
+  transform: translateY(-50%);
+  width: min(640px, 42vw);
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 42px;
+  pointer-events: none;
+}
+
+.deep-block {
+  opacity: 0;
+  transform: translateY(14px);
+  transition:
+    opacity 600ms ease,
+    transform 600ms ease;
+}
+
+html[data-deep] .deep-block {
+  opacity: 1;
+  transform: none;
+  transition:
+    opacity 1200ms ease 2000ms,
+    transform 1200ms cubic-bezier(0.2, 0.8, 0.2, 1) 2000ms;
+}
+
+html[data-deep] .deep-block:nth-child(2) {
+  transition-delay: 2600ms;
+}
+
+/* Back up from a chapter below (html[data-revisit]): the picture is
+   already there, so both blocks come up together, straight away. */
+html[data-deep][data-revisit]:not([data-descending]):not([data-safety]):not([data-surfacing])
+  .deep-block {
+  transition-delay: 300ms;
+}
+
+html[data-deep][data-surfacing] .deep-block {
+  opacity: 0;
+  transform: none;
+  transition: opacity 500ms ease;
+}
+
+/* Titles in Michroma, like the wordmark; mixed case, a little tracking. */
+.deep-title {
+  margin: 0 0 18px;
+  font: 400 clamp(24px, 2.3vw, 34px) / 1.3 var(--font-display);
+  letter-spacing: 0.02em;
+  color: var(--white);
+  text-shadow: 0 0 18px rgba(46, 168, 255, 0.25);
+}
+
+.deep-text {
+  margin: 0;
+  font: 400 clamp(17px, 1.55vw, 22px) / 1.65 var(--font-mono);
+  color: var(--white);
+  text-shadow: 0 1px 14px rgba(6, 10, 20, 0.8);
+}
+
+/* Callout on the board inside the unit: a dot on the heatsink, a leader
+   out of the box, and the board's name at the end. The scene places it
+   every frame (src/ui/callout.ts); `.on` draws it in once the lid has
+   opened. */
+.callout {
+  position: fixed;
+  z-index: 4;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 400ms ease;
+}
+
+.callout.on {
+  opacity: 1;
+}
+
+html[data-surfacing] .callout {
+  opacity: 0;
+}
+
+.callout-lines {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.callout-leader {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 1.2;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  opacity: 0.85;
+}
+
+.callout.on .callout-leader {
+  stroke-dashoffset: 0;
+  transition: stroke-dashoffset 900ms cubic-bezier(0.4, 0, 0.2, 1) 200ms;
+}
+
+.callout-dot {
+  fill: rgba(46, 168, 255, 0.18);
+  stroke: var(--accent);
+  stroke-width: 1.2;
+  transform-box: fill-box;
+  transform-origin: center;
+  transform: scale(0);
+  filter: drop-shadow(0 0 6px rgba(46, 168, 255, 0.6));
+}
+
+.callout.on .callout-dot {
+  transform: scale(1);
+  transition: transform 500ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.callout-label {
+  position: absolute;
+  left: 0;
+  top: 0;
+  white-space: nowrap;
+  font: 500 clamp(14px, 1.2vw, 17px) / 1 var(--font-mono);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--white);
+  text-shadow: 0 1px 14px rgba(6, 10, 20, 0.8);
+  opacity: 0;
+  will-change: transform;
+}
+
+.callout.on .callout-label {
+  opacity: 1;
+  transition: opacity 600ms ease 900ms;
+}
+
+/* Going down (html[data-descending]) and in the chapters below
+   (html[data-safety], html[data-floor]): the deep's copy and callout are
+   gone; they return when the visitor comes back up to the deep. */
+html[data-deep][data-descending] .deep-block,
+html[data-deep][data-safety] .deep-block,
+html[data-deep][data-market] .deep-block,
+html[data-deep][data-business] .deep-block,
+html[data-deep][data-gtm] .deep-block,
+html[data-deep][data-team] .deep-block,
+html[data-deep][data-floor] .deep-block {
+  opacity: 0;
+  transform: none;
+  transition: opacity 500ms ease;
+}
+
+html[data-deep][data-descending] .callout,
+html[data-deep][data-safety] .callout,
+html[data-deep][data-market] .callout,
+html[data-deep][data-business] .callout,
+html[data-deep][data-gtm] .callout,
+html[data-deep][data-team] .callout,
+html[data-deep][data-floor] .callout {
+  opacity: 0;
+}
+
+/* "Continue": bottom centre of the deep, the way the CTA sits above. Set
+   like the back-to-top control (same mono and tracking), chevron bobbing.
+   Scrolling down does the same thing. */
+.descend {
+  position: fixed;
+  z-index: 4;
+  left: 50%;
+  bottom: calc(var(--frame-inset) + 18px);
+  transform: translate(-50%, 8px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  padding: 10px 12px;
+  border: 0;
+  background: none;
+  color: var(--text-mid);
+  font: 400 clamp(13px, 1.1vw, 15px) / 1 var(--font-mono);
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  text-shadow: 0 1px 14px rgba(6, 10, 20, 0.7);
+  cursor: pointer;
+  opacity: 0;
+  pointer-events: none;
+  transition:
+    opacity 600ms ease,
+    transform 600ms ease,
+    color 200ms ease;
+}
+
+html[data-deep] .descend {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translate(-50%, 0);
+  transition:
+    opacity 1200ms ease 3200ms,
+    transform 1200ms cubic-bezier(0.2, 0.8, 0.2, 1) 3200ms,
+    color 200ms ease;
+}
+
+/* In the chapters reached by a glide it is back sooner: the picture is
+   already there. */
+html[data-deep][data-safety] .descend,
+html[data-deep][data-market] .descend,
+html[data-deep][data-business] .descend,
+html[data-deep][data-gtm] .descend,
+html[data-deep][data-team] .descend {
+  transition-delay: 700ms, 700ms, 0ms;
+}
+
+/* And back in the deep from below it comes up with the copy. */
+html[data-deep][data-revisit]:not([data-descending]):not([data-safety]):not([data-surfacing])
+  .descend {
+  transition-delay: 300ms, 300ms, 0ms;
+}
+
+html[data-deep][data-surfacing] .descend,
+html[data-deep][data-descending] .descend,
+html[data-deep][data-ascending] .descend,
+html[data-deep][data-floor] .descend {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 500ms ease;
+}
+
+.descend-label {
+  white-space: nowrap;
+}
+
+.descend-arrow {
+  width: 26px;
+  height: 26px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  animation: descend-bob 2.4s ease-in-out infinite;
+}
+
+.descend:hover,
+.descend:focus-visible {
+  color: var(--white);
+  outline: none;
+}
+
+.descend:hover .descend-arrow,
+.descend:focus-visible .descend-arrow {
+  stroke: var(--accent);
+  filter: drop-shadow(0 0 8px rgba(46, 168, 255, 0.55));
+}
+
+@keyframes descend-bob {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(6px);
+  }
+}
+
+@media (max-aspect-ratio: 1/1) {
+  .deep-copy {
+    left: calc(var(--frame-inset) + 12px);
+    top: calc(var(--frame-inset) + 84px);
+    transform: none;
+    width: min(640px, calc(100vw - 2 * var(--frame-inset) - 24px));
+    gap: 28px;
+  }
+}
+
+@media (max-width: 480px) {
+  .deep-copy {
+    left: 16px;
+    top: 92px;
+    width: calc(100vw - 32px);
+  }
+
+  .deep-text {
+    font-size: 14px;
+    line-height: 1.6;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .deep-block,
+  html[data-deep] .deep-block {
+    transform: none;
+    transition: opacity 300ms;
+  }
+
+  .callout.on .callout-leader,
+  .callout.on .callout-dot,
+  .callout.on .callout-label {
+    transition: none;
+  }
+
+  .descend,
+  html[data-deep] .descend {
+    transform: translate(-50%, 0);
+    transition: opacity 300ms;
+  }
+
+  .descend-arrow {
+    animation: none;
+  }
+}

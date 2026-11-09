@@ -7,3 +7,5 @@ pyasn1==0.6.5
 urllib3==2.8.0
 # Twisted 26.10 requires zope.interface 8; OpenCanary pins 7.2.
 zope-interface>=8
+# GHSA-xmj3-9gf7-h52w (Low, Windows only); OpenCanary pins 83.0.0.
+setuptools==84.1.0

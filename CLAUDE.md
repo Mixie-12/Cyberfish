@@ -11,8 +11,9 @@ tool (DeKoi Setup), an Android app, and a Supabase backend.
 
 Component map: `backend/` Supabase project (hosted on Supabase Cloud). `device/`
 everything that runs on the Pi. `clients/` Gradle root with `shared/`, `app/`
-(Android) and `burner/` (DeKoi Setup). Each component README has its build,
-test and run commands.
+(Android) and `burner/` (DeKoi Setup). `site/` the public site and download
+page on GitHub Pages. Each component README has its build, test and run
+commands.
 
 
 ## Philosophy
@@ -131,7 +132,7 @@ Per language:
   ```
 
   Areas: `backend`, `device`, `agent`, `canary`, `app`, `burner`, `shared`,
-  `ci`, `docs`, `repo`.
+  `site`, `ci`, `docs`, `repo`.
 - Push to `origin` whenever tests are green after a few commits, and always at
   the end of a phase.
 - Never force-push `main`, rewrite published history, or skip hooks

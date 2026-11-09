@@ -1,0 +1,133 @@
+name: site
+
+# The public site, dekoi.sysnordic.no (ADR 0039): site/ built with Vite,
+# the app and DeKoi Setup of the newest release that has both, on GitHub
+# Pages. Nothing here reads a secret, and the site has no server of its own.
+# app-release.yml and clients.yml start it on main once a release has its
+# files; a pull request only builds it.
+
+on:
+  push:
+    branches: [main]
+    paths: [site/**, .github/workflows/site.yml]
+  pull_request:
+    paths: [site/**, .github/workflows/site.yml]
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: site-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+defaults:
+  run:
+    shell: bash
+
+env:
+  SITE_HOST: dekoi.sysnordic.no
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      # A release gets its two files from two workflows; until both are
+      # there, the release before it stays on the site.
+      - name: The newest release with the app and DeKoi Setup
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          DOWNLOADS: ${{ runner.temp }}/download
+        run: |
+          tag=""
+          for candidate in $(gh release list --exclude-drafts --exclude-pre-releases --limit 20 \
+            --json tagName --jq '.[].tagName'); do
+            if gh release view "$candidate" --json assets --jq '[.assets[].name]' | jq -e --arg t "$candidate" \
+              '(["dekoi-\($t).apk", "dekoi-setup-\($t).msi"] | map(., . + ".sha256")) - . == []' > /dev/null; then
+              tag="$candidate"
+              break
+            fi
+          done
+          if [ -z "$tag" ]; then
+            echo "::error::No release has both dekoi-<tag>.apk and dekoi-setup-<tag>.msi"
+            exit 1
+          fi
+          mkdir -p "$DOWNLOADS"
+          gh release download "$tag" --dir "$DOWNLOADS" \
+            --pattern "dekoi-$tag.apk*" --pattern "dekoi-setup-$tag.msi*"
+          (cd "$DOWNLOADS" && sha256sum -c ./*.sha256 && rm ./*.sha256)
+          {
+            echo "TAG=$tag"
+            echo "VITE_VERSION=${tag#v}"
+            echo "VITE_APK_SHA256=$(sha256sum "$DOWNLOADS/dekoi-$tag.apk" | cut -d' ' -f1)"
+            echo "VITE_MSI_SHA256=$(sha256sum "$DOWNLOADS/dekoi-setup-$tag.msi" | cut -d' ' -f1)"
+            echo "VITE_APK_MB=$(stat -c %s "$DOWNLOADS/dekoi-$tag.apk" | awk '{printf "%.1f", $1 / 1e6}')"
+            echo "VITE_MSI_MB=$(stat -c %s "$DOWNLOADS/dekoi-setup-$tag.msi" | awk '{printf "%.1f", $1 / 1e6}')"
+          } >> "$GITHUB_ENV"
+      # The certificate app-release.yml signs with; the site states it, and
+      # a release file signed by anything else never reaches the site.
+      - name: The app is signed with the release certificate
+        env:
+          DOWNLOADS: ${{ runner.temp }}/download
+        run: |
+          cert="$(yq '.jobs.apk.env.RELEASE_CERT_SHA256' .github/workflows/app-release.yml)"
+          tools="$(find "$ANDROID_HOME/build-tools" -mindepth 1 -maxdepth 1 | sort -V | tail -1)"
+          "$tools/apksigner" verify --print-certs "$DOWNLOADS/dekoi-$TAG.apk" |
+            grep -q "certificate SHA-256 digest: $cert"
+          echo "VITE_CERT_SHA256=$cert" >> "$GITHUB_ENV"
+      # The current LTS line; the packages themselves are pinned by
+      # package-lock.json. No cache: a pull request's run could fill it.
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 26
+          package-manager-cache: false
+      - name: Build
+        working-directory: site
+        env:
+          VITE_SITE_HOST: ${{ env.SITE_HOST }}
+        run: |
+          npm ci --ignore-scripts --no-audit --no-fund
+          npm run build
+      # qrencode from Ubuntu's signed archive, for the code a visitor on a
+      # computer scans with their phone.
+      - name: Add the downloads and the QR code
+        env:
+          DOWNLOADS: ${{ runner.temp }}/download
+        run: |
+          sudo apt-get install -y --no-install-recommends qrencode > /dev/null
+          qrencode -t SVG -m 2 -o site/dist/download/qr.svg "https://$SITE_HOST/download/"
+          mv "$DOWNLOADS"/* site/dist/download/
+          # Every link on the two pages points at a file that is there.
+          grep -ho 'href="/[^"]*"\|src="/[^"]*"' site/dist/index.html site/dist/download/index.html |
+            sed -E 's/^(href|src)="([^"]*)"$/\2/' | sort -u | while read -r path; do
+              case "$path" in */) path="${path}index.html" ;; esac
+              test -f "site/dist$path" || { echo "::error::Missing $path"; exit 1; }
+            done
+          if grep -rl '%VITE_' site/dist --include=*.html; then
+            echo "::error::A page still holds a %VITE_ placeholder"
+            exit 1
+          fi
+          du -sh site/dist
+      - uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
+        with:
+          path: site/dist
+
+  # The github-pages environment deploys from main only (infra/github/apply.sh).
+  deploy:
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    needs: build
+    runs-on: ubuntu-24.04
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    permissions:
+      pages: write
+      id-token: write
+    steps:
+      - id: deploy
+        uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5.0.1

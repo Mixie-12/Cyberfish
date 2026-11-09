@@ -1,0 +1,559 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <!-- The loader's styles are inline; the models and sounds are fetched,
+         and three.js hands embedded textures over as blob URLs. -->
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' data: blob:; object-src 'none'; base-uri 'none'; form-action 'none'"
+    />
+    <title>DeKoi by CyberFish</title>
+    <meta
+      name="description"
+      content="DeKoi is a small box you plug into your home or office network. It poses as a company's finance server. If something touches it, you get an alert on your phone within a minute."
+    />
+    <link rel="icon" type="image/svg+xml" href="/cyberfish-mark.svg" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Michroma&family=JetBrains+Mono:wght@400;500&display=swap"
+    />
+    <!--
+      Loader styles are inlined so the overlay paints before any module
+      script (three.js included) has been fetched or executed.
+    -->
+    <style>
+      #loader {
+        /* Ready: mark and wordmark lift by --rise over --rise-ms and the enter
+           buttons slide into the space below. The buttons are out of flow, so
+           mark + wordmark are centred while loading; lifting everything by half
+           the button stack (88px) plus its 26px gap re-centres the whole group. */
+        --rise-ms: 1600ms;
+        --rise: 57px;
+        position: fixed;
+        inset: 0;
+        z-index: 10;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        background: #060a14;
+        font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+        transition: opacity 600ms;
+      }
+      /* Horizontal scanline texture, after the app icon (3/7 duty, ~8% white). */
+      #loader::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        z-index: -1;
+        pointer-events: none;
+        background: repeating-linear-gradient(
+          to bottom,
+          rgba(255, 255, 255, 0.085) 0 1px,
+          transparent 1px 4px
+        );
+      }
+      #loader.done {
+        opacity: 0;
+        pointer-events: none;
+      }
+      #mark {
+        /* The glyph spans ~95% of the viewBox: at 264px it sits just inside
+           the 260px enter buttons below. */
+        width: min(264px, 60vw);
+        height: auto;
+        overflow: visible;
+        display: block;
+        transition: transform var(--rise-ms) cubic-bezier(0.2, 0.8, 0.2, 1);
+      }
+      /* Keeps its size; moves up to make room for the enter buttons. */
+      #loader.ready #mark {
+        transform: translateY(calc(-1 * var(--rise)));
+      }
+      /* Wordmark: Michroma, 34px large / 0.02em tracking per BRAND.md. Sits under
+         the mark at all times and rises with it. */
+      #loader .wordmark {
+        position: relative;
+        margin: 26px 0 0;
+        font: 400 clamp(22px, 5.5vw, 34px) / 1 'Michroma', sans-serif;
+        letter-spacing: 0.02em;
+        color: #f2f4fa;
+        white-space: nowrap;
+        user-select: none;
+        transition: transform var(--rise-ms) cubic-bezier(0.2, 0.8, 0.2, 1);
+      }
+      #loader.ready .wordmark {
+        transform: translateY(calc(-1 * var(--rise)));
+      }
+      /* Full word, invisible: holds the box width while letters are typed in. */
+      #loader .wordmark .ghost {
+        color: transparent;
+      }
+      #loader .wordmark .typed {
+        position: absolute;
+        inset: 0 auto 0 0;
+      }
+      /* Terminal block caret after the typed letters; gone once the mark docks. */
+      #loader .wordmark .typed::after {
+        content: '';
+        display: inline-block;
+        width: 0.5em;
+        height: 0.95em;
+        margin-left: 0.1em;
+        vertical-align: -0.06em;
+        background: #2ea8ff;
+        animation: caret-blink 1s steps(1, end) infinite;
+      }
+      #loader.ready .wordmark .typed::after {
+        display: none;
+      }
+      @keyframes caret-blink {
+        50% {
+          opacity: 0;
+        }
+      }
+      /* Zero-height anchor under the wordmark; the enter buttons hang off it
+         without taking part in layout, so they don't push the mark up early. */
+      #loader .foot {
+        position: relative;
+        width: 100%;
+        height: 0;
+      }
+      /* Enter buttons. Hidden while loading, then fade in and rise with the mark. */
+      #loader .enter {
+        position: absolute;
+        top: 26px;
+        left: 0;
+        right: 0;
+        width: min(260px, 80vw);
+        margin: 0 auto;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        opacity: 0;
+        visibility: hidden;
+        transform: translateY(calc(-1 * var(--rise) + 12px));
+        transition:
+          opacity var(--rise-ms),
+          transform var(--rise-ms) cubic-bezier(0.2, 0.8, 0.2, 1),
+          visibility 0s;
+      }
+      #loader.ready .enter {
+        opacity: 1;
+        visibility: visible;
+        transform: translateY(calc(-1 * var(--rise)));
+      }
+      #loader .btn {
+        appearance: none;
+        cursor: pointer;
+        width: 100%;
+        padding: 12px 20px;
+        border: 1px solid #2ea8ff;
+        border-radius: 2px;
+        background: transparent;
+        color: #2ea8ff;
+        font: 500 12px/1 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        transition:
+          background 160ms,
+          color 160ms,
+          border-color 160ms;
+      }
+      #loader .btn:hover,
+      #loader .btn:focus-visible {
+        background: rgba(46, 168, 255, 0.12);
+        outline: none;
+      }
+      #loader .btn.quiet {
+        border-color: #4a5368;
+        color: #8a94ab;
+      }
+      #loader .btn.quiet:hover,
+      #loader .btn.quiet:focus-visible {
+        border-color: #8a94ab;
+        color: #c9d1e3;
+        background: rgba(255, 255, 255, 0.04);
+      }
+      #loader .btn:disabled {
+        cursor: default;
+        opacity: 0.6;
+      }
+      /* There from the first frame: a visitor who came for the app does not
+         wait for the scene. */
+      #loader .get {
+        position: absolute;
+        left: 50%;
+        bottom: max(28px, env(safe-area-inset-bottom));
+        transform: translateX(-50%);
+        padding: 12px;
+        color: #2ea8ff;
+        font: 500 12px/1 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        text-decoration: underline;
+        text-underline-offset: 6px;
+        white-space: nowrap;
+      }
+      #loader .get:hover,
+      #loader .get:focus-visible {
+        color: #f2f4fa;
+        outline: none;
+      }
+      @media (prefers-reduced-motion: reduce) {
+        #loader.ready #mark {
+          transform: none;
+        }
+        #loader .wordmark,
+        #loader.ready .wordmark {
+          transform: none;
+          transition: none;
+        }
+        #loader .wordmark .typed::after {
+          animation: none;
+        }
+        #loader .enter {
+          transform: none;
+          transition: opacity 300ms;
+        }
+        #loader.ready .enter {
+          transform: none;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="scene" aria-hidden="true"></div>
+    <header class="nav">
+      <a class="lockup" href="/" aria-label="CyberFish home">
+        <img class="mark" src="/cyberfish-mark.svg" alt="" width="1620" height="640" />
+        <span>CyberFish</span>
+      </a>
+      <a class="get" href="/download/">Get the app</a>
+      <button class="sound" id="sound-toggle" type="button" aria-pressed="false" aria-label="Sound">
+        <svg class="speaker" viewBox="0 0 20 20" width="20" height="20" aria-hidden="true">
+          <path class="horn" d="M3 7.5h3.2L10.5 4v12l-4.3-3.5H3z" />
+          <path class="w1" d="M13 7.3a3.8 3.8 0 0 1 0 5.4" />
+          <path class="w2" d="M15.4 5a7.2 7.2 0 0 1 0 10" />
+          <path class="mute" d="M13 7.5l5 5M18 7.5l-5 5" />
+        </svg>
+        <span class="sound-label">Sound <span class="sound-state">off</span></span>
+      </button>
+    </header>
+    <section class="hero" aria-labelledby="hero-title">
+      <h1 class="hero-title" id="hero-title">DeKoi</h1>
+      <p class="hero-lead">A plug-in network decoy for homes and small offices.</p>
+      <p class="hero-sub">Making real cybersecurity simple enough for everyone.</p>
+      <a class="get" href="/download/">Get the app</a>
+    </section>
+    <button class="cta" id="deploy" type="button">
+      <span class="cta-label">Deploy The Decoy?</span>
+      <svg class="cta-arrow" viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M4 8.5 12 16.5 20 8.5" />
+      </svg>
+    </button>
+    <!-- The deep: copy on the left, and a callout naming the board inside the unit. -->
+    <section class="deep-copy" aria-label="About DeKoi">
+      <div class="deep-block">
+        <h2 class="deep-title">Why now?</h2>
+        <p class="deep-text">
+          NSM raised Norway’s cyber risk level to high in October 2026, after successful cyber
+          attacks tripled and AI made weaknesses faster to exploit.
+        </p>
+      </div>
+      <div class="deep-block">
+        <h2 class="deep-title">How does it work?</h2>
+        <p class="deep-text">
+          DeKoi acts as bait for a bad actor trying to access your network. A decoy with
+          information that looks valuable, but isn’t. When someone touches it, you know
+          immediately, and can protect your network.
+        </p>
+      </div>
+    </section>
+    <div class="callout" id="callout" aria-hidden="true">
+      <svg class="callout-lines">
+        <polyline class="callout-leader" pathLength="1" points="0,0 0,0 0,0" />
+        <circle class="callout-dot" r="5" />
+      </svg>
+      <span class="callout-label">Raspberry Pi 4 Model B</span>
+    </div>
+    <!-- Below the deep: how the unit stays safe to attack. -->
+    <section class="safety-copy" aria-labelledby="safety-title">
+      <h2 class="safety-title" id="safety-title">DeKoi is built to be attacked, safely</h2>
+      <ul class="safety-list">
+        <li class="safety-item">
+          <svg class="safety-icon" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M5 12h13M13 7l5 5-5 5" />
+            <path d="M3 5v14" />
+          </svg>
+          <span>The box only connects outward. Nothing can connect in.</span>
+        </li>
+        <li class="safety-item">
+          <svg class="safety-icon" viewBox="0 0 24 24" aria-hidden="true">
+            <rect x="5" y="11" width="14" height="10" rx="1.5" />
+            <path d="M8 11V8a4 4 0 0 1 8 0v3" />
+            <path d="M12 15v2.5" />
+          </svg>
+          <span>No passwords, no remote login, no web interface on the box.</span>
+        </li>
+        <li class="safety-item">
+          <svg class="safety-icon" viewBox="0 0 24 24" aria-hidden="true">
+            <circle cx="8.5" cy="8.5" r="4" />
+            <path d="M11.5 11.5 20 20M17 17l2.5-2.5M14.5 14.5 17 12" />
+          </svg>
+          <span>The password an attacker types never leaves the box.</span>
+        </li>
+        <li class="safety-item">
+          <svg class="safety-icon" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M12 3l2.2 1.6 2.7-.2 1 2.5 2.5 1-.2 2.7L21.8 12l-1.6 2.2.2 2.7-2.5 1-1 2.5-2.7-.2L12 21.8l-2.2-1.6-2.7.2-1-2.5-2.5-1 .2-2.7L2.2 12l1.6-2.2-.2-2.7 2.5-1 1-2.5 2.7.2z" />
+            <path d="m8.5 12 2.3 2.3L15.5 9.5" />
+          </svg>
+          <span>It only installs updates signed with our key.</span>
+        </li>
+        <li class="safety-item">
+          <svg class="safety-icon" viewBox="0 0 24 24" aria-hidden="true">
+            <circle cx="12" cy="12" r="8.5" />
+            <path d="M3.5 12h17M12 3.5c2.8 2.6 4.2 5.4 4.2 8.5S14.8 17.9 12 20.5c-2.8-2.6-4.2-5.4-4.2-8.5S9.2 6.1 12 3.5z" />
+          </svg>
+          <span>Data stays in the EU for 90 days, and each owner sees only their own events.</span>
+        </li>
+      </ul>
+    </section>
+    <!-- Below the safety chapter: where DeKoi sits against the competition. -->
+    <section class="market-copy" aria-labelledby="market-title">
+      <h2 class="market-title" id="market-title">DeKoi vs competitors: the empty corner</h2>
+      <div class="market-body">
+        <figure class="market-chart" aria-label="Chart of network decoys by price and ease of setup">
+          <svg viewBox="0 0 560 340" aria-hidden="true">
+            <defs>
+              <filter id="market-glow" x="-50%" y="-50%" width="200%" height="200%">
+                <feGaussianBlur stdDeviation="3" result="b" />
+                <feMerge>
+                  <feMergeNode in="b" />
+                  <feMergeNode in="SourceGraphic" />
+                </feMerge>
+              </filter>
+              <filter id="market-glow-hot" x="-100%" y="-100%" width="300%" height="300%">
+                <feGaussianBlur stdDeviation="6" result="b" />
+                <feMerge>
+                  <feMergeNode in="b" />
+                  <feMergeNode in="b" />
+                  <feMergeNode in="SourceGraphic" />
+                </feMerge>
+              </filter>
+            </defs>
+            <!-- Axes: up is easier to set up, right is lower price. -->
+            <g class="market-axes">
+              <path class="market-axis" d="M40 300 H536" pathLength="1" />
+              <path class="market-axis" d="M40 300 V34" pathLength="1" />
+              <path class="market-arrow" d="M531 295 L536 300 L531 305" />
+              <path class="market-arrow" d="M35 39 L40 34 L45 39" />
+            </g>
+            <text class="market-axis-label" x="52" y="46">Easier to set up</text>
+            <text class="market-axis-label market-axis-label-end" x="536" y="326">
+              Lower price
+            </text>
+            <!-- Competitors, then DeKoi in the empty top right. Prices in
+                 both currencies; DeKoi's is still to be decided. -->
+            <g class="market-point" style="--i: 0">
+              <circle class="market-dot" cx="80" cy="106" r="6" />
+              <text class="market-name" x="96" y="98">Thinkst Canary</text>
+              <text class="market-note" x="96" y="116">≈ 80,000 kr / €6,800 a year</text>
+            </g>
+            <g class="market-point" style="--i: 1">
+              <circle class="market-dot" cx="260" cy="152" r="6" />
+              <text class="market-name" x="276" y="144">Trapster</text>
+              <text class="market-note" x="276" y="162">from 35,000 kr / €3,000 a year</text>
+            </g>
+            <g class="market-point" style="--i: 2">
+              <circle class="market-dot" cx="505" cy="278" r="6" />
+              <text class="market-name market-text-end" x="489" y="270">OpenCanary</text>
+              <text class="market-note market-text-end" x="489" y="288">free, but DIY setup</text>
+            </g>
+            <g class="market-point market-point-us" style="--i: 3">
+              <circle class="market-halo" cx="450" cy="52" r="14" />
+              <circle class="market-dot" cx="450" cy="52" r="8" />
+              <text class="market-name market-text-end" x="430" y="36">DeKoi</text>
+              <text class="market-note market-text-end" x="430" y="54">
+                from 2,100 kr / €190 a year
+              </text>
+              <text class="market-note market-text-end" x="430" y="72">plug in and go</text>
+            </g>
+          </svg>
+        </figure>
+        <div class="market-aside">
+          <p class="market-lead">Until now, network decoys were tools for security teams.</p>
+          <p class="market-text">
+            DeKoi is built from the ground up for everyone else: plug it in, and it tells you in
+            plain language when someone is inside.
+          </p>
+        </div>
+      </div>
+    </section>
+    <!-- Below the market chapter: what it costs, what it earns, how big the pond is. -->
+    <section class="business-copy" aria-labelledby="business-title">
+      <h2 class="business-title" id="business-title">Business model and market size</h2>
+      <div class="business-body">
+        <div class="business-offers">
+          <article class="business-card" style="--i: 0">
+            <p class="business-kicker">B2B · Small offices</p>
+            <p class="business-figure">1,500 NOK + 200 NOK/mo</p>
+            <p class="business-note">≈ €135 + €18/mo · via local IT partners</p>
+          </article>
+          <article class="business-card" style="--i: 1">
+            <p class="business-kicker">B2C · Homes</p>
+            <p class="business-figure">1,500 NOK + 50 NOK/mo</p>
+            <p class="business-note">≈ €135 + €4.50/mo · sold online</p>
+          </article>
+          <p class="business-margin" style="--i: 2">
+            ≈ 60% margin on subscriptions, after partner share and support
+          </p>
+        </div>
+        <article class="business-card business-card-market" style="--i: 2">
+          <div class="business-market">
+            <p class="business-kicker business-kicker-accent">TAM · Europe</p>
+            <p class="business-figure business-figure-big">≈ 82 bn NOK a year</p>
+            <p class="business-note">≈ €7.4 bn · 34 million SMEs × 2,400 NOK a year</p>
+            <p class="business-note business-note-threat">
+              AI has made attacks cheap to run at scale. Small offices are no longer too small to
+              target.
+            </p>
+          </div>
+          <div class="business-market">
+            <p class="business-kicker">Starting point · Norway</p>
+            <p class="business-figure">≈ 500 M NOK a year</p>
+            <p class="business-note">≈ €45 M · 207,800 workplaces with employees</p>
+          </div>
+        </article>
+      </div>
+      <p class="business-foot">€1 ≈ 11 NOK · Projections, ex. VAT</p>
+    </section>
+    <!-- Below that: how it reaches people. -->
+    <section class="gtm-copy" aria-labelledby="gtm-title">
+      <h2 class="gtm-title" id="gtm-title">Go-to-market: growing through partners, Norway first</h2>
+      <div class="gtm-body">
+        <article class="gtm-card" style="--i: 0">
+          <h3 class="gtm-card-title">Partnerships</h3>
+          <p class="gtm-text">
+            Local IT partners sell DeKoi, install it and answer the alarm, and earn a share of
+            every subscription.
+          </p>
+          <p class="gtm-text gtm-text-soft">
+            Our first users: pilots in our own network and our first partners’ customers.
+          </p>
+        </article>
+        <article class="gtm-card" style="--i: 1">
+          <h3 class="gtm-card-title">Advertising</h3>
+          <p class="gtm-text">
+            Our live demo: at business events, people watch an AI hacking bot take the bait.
+          </p>
+          <p class="gtm-text gtm-text-soft">
+            Shared as short videos with our fish as the mascot, and sent out by our IT partners.
+          </p>
+        </article>
+      </div>
+      <p class="gtm-line">
+        Once a beachhead market is won over, CyberFish could scale to
+        <span class="gtm-accent">the Nordics, then Europe, and beyond.</span> Same box, same
+        IT-partner model.
+      </p>
+    </section>
+    <!-- Below the market chapters: the two of us. -->
+    <section class="team-copy" aria-labelledby="team-title">
+      <h2 class="team-title" id="team-title">The CyberFish Team</h2>
+      <ul class="team-list">
+        <li class="team-member">
+          <h3 class="team-name">Magnus Simensen</h3>
+          <p class="team-bio">
+            Cybersecurity specialist, full-stack developer and general IT enthusiast. Will
+            probably talk to you about Linux.
+          </p>
+        </li>
+        <li class="team-member">
+          <h3 class="team-name">Maja Walnik</h3>
+          <p class="team-bio">
+            Writing my Masters in Innovation &amp; Entrepreneurship here at BI. Background in
+            biomedicine. Jack of all trades. I like making stuff.
+          </p>
+        </li>
+      </ul>
+    </section>
+    <!-- The floor: the mark in particles, and the last word. -->
+    <section class="floor-copy" aria-label="Questions">
+      <h2 class="floor-title">Questions?</h2>
+      <a class="get" href="/download/">Get the app</a>
+    </section>
+    <!-- Rewind: one chapter up, top centre of the chapters below the deep. -->
+    <button class="rewind" id="rewind" type="button">
+      <svg class="rewind-arrow" viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M4 15.5 12 7.5 20 15.5" />
+      </svg>
+      <span class="rewind-label">Back</span>
+    </button>
+    <button class="descend" id="descend" type="button">
+      <span class="descend-label">Continue</span>
+      <svg class="descend-arrow" viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M4 8.5 12 16.5 20 8.5" />
+      </svg>
+    </button>
+    <button class="back-top" id="back-top" type="button">
+      <svg class="back-top-arrow" viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M4 15.5 12 7.5 20 15.5" />
+      </svg>
+      <span class="back-top-label">Back to top</span>
+    </button>
+    <div id="loader">
+      <svg id="mark" viewBox="30 -649 1620 640" aria-label="CyberFish">
+        <defs>
+          <filter id="glow" x="-40%" y="-60%" width="180%" height="220%">
+            <feGaussianBlur stdDeviation="34" result="b1" />
+            <feGaussianBlur stdDeviation="12" result="b2" />
+            <feMerge>
+              <feMergeNode in="b1" />
+              <feMergeNode in="b2" />
+              <feMergeNode in="SourceGraphic" />
+            </feMerge>
+          </filter>
+          <filter id="edgeglow" x="-300%" y="-20%" width="700%" height="140%">
+            <feGaussianBlur stdDeviation="20" />
+          </filter>
+          <clipPath id="clip"><rect id="cliprect" x="30" y="-700" width="0" height="760" /></clipPath>
+          <path
+            id="p"
+            d="M70 -49V-185L346 -306Q366 -315 388.0 -321.0Q410 -327 423 -329Q410 -331 388.0 -336.5Q366 -342 346 -351L70 -472V-609L530 -401V-258Z M1070.0 -49 610.0 -257V-400L1070.0 -609V-473L794.0 -352Q774.0 -343 752.0 -337.0Q730.0 -331 717.0 -329Q730.0 -327 752.0 -321.5Q774.0 -316 794.0 -307L1070.0 -186Z M1150.0 -49V-185L1426.0 -306Q1446.0 -315 1468.0 -321.0Q1490.0 -327 1503.0 -329Q1490.0 -331 1468.0 -336.5Q1446.0 -342 1426.0 -351L1150.0 -472V-609L1610.0 -401V-258Z"
+          />
+        </defs>
+        <use href="#p" fill="none" stroke="#2EA8FF" stroke-width="10" opacity="0.28" />
+        <g clip-path="url(#clip)">
+          <use id="halo" href="#p" fill="#2EA8FF" stroke="#2EA8FF" stroke-width="18" filter="url(#glow)" opacity="0.9" />
+          <use href="#p" fill="#F4FBFF" stroke="#2EA8FF" stroke-width="18" paint-order="stroke fill" />
+        </g>
+        <g id="edge">
+          <rect id="edgeblur" x="30" y="-680" width="14" height="720" fill="#7FD0FF" filter="url(#edgeglow)" opacity="0.9" />
+          <rect id="edgeline" x="30" y="-680" width="6" height="720" fill="#FFFFFF" />
+        </g>
+      </svg>
+      <!--
+        Wordmark types out as the load progresses (driven by src/ui/loader.ts).
+        The ghost copy reserves the full width so nothing shifts per letter and
+        gives assistive tech the whole name; the typed overlay is visual only.
+      -->
+      <p class="wordmark">
+        <span class="ghost">CYBERFISH</span>
+        <span class="typed" id="typed" aria-hidden="true"></span>
+      </p>
+      <div class="foot">
+        <div class="enter" id="enter">
+          <button class="btn" id="enter-sound" type="button">Enter with sound</button>
+          <button class="btn quiet" id="enter-mute" type="button">Enter without sound</button>
+        </div>
+      </div>
+      <a class="get" href="/download/">Download the app</a>
+    </div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

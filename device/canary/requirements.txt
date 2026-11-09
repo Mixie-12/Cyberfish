@@ -606,10 +606,12 @@ service-identity==21.1.0 \
     --hash=sha256:6e6c6086ca271dc11b033d17c3a8bea9f24ebff920c587da090afc9519419d34 \
     --hash=sha256:f0b0caac3d40627c3c04d7a51b6e06721857a0e10a8775f2d1d7e72901b3a7db
     # via opencanary
-setuptools==83.0.0 \
-    --hash=sha256:025bccbbf0fa05b6192bc64ae1e7b16e001fd6d6d4d5de03c97b1c1ade523bef \
-    --hash=sha256:29b23c360f22f414dc7336bb39178cc7bcbf6021ed2733cde173f09dba19abb3
-    # via opencanary
+setuptools==84.1.0 \
+    --hash=sha256:23657205b63d4d31395ab917815247f694aafad28cd21316bf5fd45a51048ea0 \
+    --hash=sha256:5231689c6ac8156cd155cfb98c3fd6fb252c3e7e9bd3d78b64d3c55f132624c9
+    # via
+    #   --override overrides.txt
+    #   opencanary
 simplejson==3.16.0 \
     --hash=sha256:067a7177ddfa32e1483ba5169ebea1bc2ea27f224853211ca669325648ca5642 \
     --hash=sha256:2fc546e6af49fb45b93bbe878dea4c48edc34083729c0abd09981fe55bdf7f91 \

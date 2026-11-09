@@ -1,0 +1,261 @@
+/* The safety chapter's copy, one level below the deep. The lens glides
+   down to open water, and the words sit in the middle of it: one Michroma
+   title and five points with a line icon each. No rules between them; the
+   spacing does that. They come up in order once the glide has settled
+   (html[data-safety]) and go when the visitor moves on (descending /
+   ascending / surfacing). */
+.safety-copy {
+  position: fixed;
+  z-index: 4;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: min(920px, 72vw);
+  margin: 0;
+  pointer-events: none;
+}
+
+.safety-title,
+.safety-item {
+  opacity: 0;
+  transform: translateY(14px);
+  transition:
+    opacity 500ms ease,
+    transform 500ms ease;
+}
+
+html[data-safety] .safety-title,
+html[data-safety] .safety-item {
+  opacity: 1;
+  transform: none;
+  transition:
+    opacity 800ms ease,
+    transform 800ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+html[data-safety] .safety-title {
+  transition-delay: 150ms;
+}
+
+html[data-safety] .safety-item:nth-child(1) {
+  transition-delay: 500ms;
+}
+
+html[data-safety] .safety-item:nth-child(2) {
+  transition-delay: 650ms;
+}
+
+html[data-safety] .safety-item:nth-child(3) {
+  transition-delay: 800ms;
+}
+
+html[data-safety] .safety-item:nth-child(4) {
+  transition-delay: 950ms;
+}
+
+html[data-safety] .safety-item:nth-child(5) {
+  transition-delay: 1100ms;
+}
+
+/* Leaving: everything sinks together, no stagger. */
+html[data-safety][data-descending] .safety-title,
+html[data-safety][data-descending] .safety-item,
+html[data-safety][data-ascending] .safety-title,
+html[data-safety][data-ascending] .safety-item,
+html[data-safety][data-surfacing] .safety-title,
+html[data-safety][data-surfacing] .safety-item {
+  opacity: 0;
+  transform: none;
+  transition: opacity 500ms ease;
+}
+
+.safety-title {
+  margin: 0 0 44px;
+  font: 400 clamp(22px, 2.35vw, 38px) / 1.25 var(--font-display);
+  text-wrap: balance;
+  letter-spacing: 0.02em;
+  color: var(--white);
+  text-shadow: 0 0 22px rgba(46, 168, 255, 0.25);
+}
+
+.safety-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 26px;
+}
+
+.safety-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 22px;
+  font: 400 clamp(16px, 1.45vw, 21px) / 1.55 var(--font-mono);
+  color: var(--white);
+  text-shadow: 0 1px 14px rgba(6, 10, 20, 0.8);
+}
+
+.safety-icon {
+  flex: 0 0 auto;
+  width: 1.5em;
+  height: 1.5em;
+  margin-top: 0.05em;
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 1.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  filter: drop-shadow(0 0 8px rgba(46, 168, 255, 0.45));
+}
+
+/* "Back": top centre of the safety chapter, the mirror of "Continue" at
+   the bottom. One chapter up (the glide back to the unit), for rewinding
+   during a pitch. Same mono, tracking and bobbing chevron. */
+.rewind {
+  position: fixed;
+  z-index: 4;
+  left: 50%;
+  top: calc(var(--frame-inset) + 18px);
+  transform: translate(-50%, -8px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  padding: 10px 12px;
+  border: 0;
+  background: none;
+  color: var(--text-mid);
+  font: 400 clamp(13px, 1.1vw, 15px) / 1 var(--font-mono);
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  text-shadow: 0 1px 14px rgba(6, 10, 20, 0.7);
+  cursor: pointer;
+  opacity: 0;
+  pointer-events: none;
+  transition:
+    opacity 500ms ease,
+    transform 500ms ease,
+    color 200ms ease;
+}
+
+html[data-safety] .rewind,
+html[data-market] .rewind,
+html[data-business] .rewind,
+html[data-gtm] .rewind,
+html[data-team] .rewind {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translate(-50%, 0);
+  transition:
+    opacity 800ms ease 700ms,
+    transform 800ms cubic-bezier(0.2, 0.8, 0.2, 1) 700ms,
+    color 200ms ease;
+}
+
+html[data-safety][data-descending] .rewind,
+html[data-safety][data-ascending] .rewind,
+html[data-safety][data-surfacing] .rewind,
+html[data-market][data-descending] .rewind,
+html[data-market][data-ascending] .rewind,
+html[data-market][data-surfacing] .rewind,
+html[data-business][data-descending] .rewind,
+html[data-business][data-ascending] .rewind,
+html[data-business][data-surfacing] .rewind,
+html[data-gtm][data-descending] .rewind,
+html[data-gtm][data-ascending] .rewind,
+html[data-gtm][data-surfacing] .rewind,
+html[data-team][data-descending] .rewind,
+html[data-team][data-ascending] .rewind,
+html[data-team][data-surfacing] .rewind {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 500ms ease;
+}
+
+.rewind-label {
+  white-space: nowrap;
+}
+
+.rewind-arrow {
+  width: 26px;
+  height: 26px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  animation: rewind-bob 2.4s ease-in-out infinite;
+}
+
+.rewind:hover,
+.rewind:focus-visible {
+  color: var(--white);
+  outline: none;
+}
+
+.rewind:hover .rewind-arrow,
+.rewind:focus-visible .rewind-arrow {
+  stroke: var(--accent);
+  filter: drop-shadow(0 0 8px rgba(46, 168, 255, 0.55));
+}
+
+@keyframes rewind-bob {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+}
+
+@media (max-aspect-ratio: 1/1) {
+  .safety-copy {
+    width: min(920px, calc(100vw - 2 * var(--frame-inset) - 24px));
+  }
+
+  .safety-title {
+    margin-bottom: 32px;
+  }
+
+  .safety-list {
+    gap: 20px;
+  }
+}
+
+@media (max-width: 480px) {
+  .safety-copy {
+    width: calc(100vw - 32px);
+  }
+
+  .safety-item {
+    font-size: 14px;
+    gap: 14px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .safety-title,
+  .safety-item,
+  html[data-safety] .safety-title,
+  html[data-safety] .safety-item {
+    transform: none;
+    transition: opacity 300ms;
+  }
+
+  .rewind,
+  html[data-safety] .rewind,
+  html[data-market] .rewind,
+  html[data-business] .rewind,
+  html[data-gtm] .rewind,
+  html[data-team] .rewind {
+    transform: translate(-50%, 0);
+    transition: opacity 300ms;
+  }
+
+  .rewind-arrow {
+    animation: none;
+  }
+}
