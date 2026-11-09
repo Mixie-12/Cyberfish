@@ -113,6 +113,8 @@ export class Deep {
   private readonly anchorLocal = new THREE.Vector3();
   private readonly hitMeshes: THREE.Mesh[] = [];
   private readonly hits: THREE.Intersection[] = [];
+  /** The unit's lights and their full intensities (see `light`). */
+  private readonly lights: Array<{ light: THREE.Light; intensity: number }>;
 
   constructor() {
     // Device rig and its lights. The water's shaders ignore lights, so
@@ -131,6 +133,16 @@ export class Deep {
     rim.target = this.drift;
     const fill = new THREE.HemisphereLight('#3b5a9a', '#02050c', 0.4);
     this.root.add(key, rim, fill);
+    this.lights = [key, rim, fill].map((light) => ({ light, intensity: light.intensity }));
+  }
+
+  /**
+   * How much of the unit's light is on, 0..1. Lights reach the whole scene:
+   * the scene turns these down as the fish's come up on the way to the
+   * level below, so neither is ever lit by both.
+   */
+  set light(k: number) {
+    for (const { light, intensity } of this.lights) light.intensity = intensity * k;
   }
 
   /**

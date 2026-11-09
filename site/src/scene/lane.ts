@@ -10,35 +10,49 @@ import { Fish } from './fish';
  */
 
 /**
- * A chapter's fish and their route through it. The scene shows the fish
+ * A chapter's fish and their route through it, laid out from `origin` (the
+ * lens's rest point at the chapter's level). The scene shows the fish
  * while the route is in the water and drives every route it has.
  */
 export interface FishRoute {
-  readonly root: THREE.Group;
+  readonly origin: THREE.Vector3;
   readonly fish: readonly Fish[];
   update(dt: number, camera: THREE.PerspectiveCamera): void;
-  dispose(): void;
 }
 
 /**
- * The same cool key and blue rim the unit has in the deep, aimed at where
- * the fish is; the fish's own neon rides with it.
+ * The fish's light below the surface: the cool key and blue rim the unit
+ * has in the deep, a step brighter; each fish's own neon rides with it.
+ * Lights reach the whole scene, so there is one rig for every fish chapter
+ * (one per chapter would light the fish twice on the glide between two),
+ * and the scene trades it against the unit's own with `level`.
  */
-function fishLights(at: THREE.Vector3): THREE.Object3D[] {
-  const key = new THREE.DirectionalLight('#dbe8ff', 1.2);
-  key.position.set(3, 8, 5).add(at);
-  key.target.position.copy(at);
-  const rim = new THREE.DirectionalLight('#2ea8ff', 2.0);
-  rim.position.set(-4, 2, -8).add(at);
-  rim.target.position.copy(at);
-  const fill = new THREE.HemisphereLight('#3b5a9a', '#02050c', 0.5);
-  return [key, key.target, rim, rim.target, fill];
-}
+export class FishLights {
+  readonly root = new THREE.Group();
+  private readonly lights: Array<{ light: THREE.Light; intensity: number }>;
 
-function disposeLights(root: THREE.Object3D): void {
-  root.traverse((o) => {
-    if (o instanceof THREE.Light) o.dispose();
-  });
+  constructor() {
+    // Only their direction counts, so the rig stays at the scene's origin.
+    const key = new THREE.DirectionalLight('#dbe8ff', 1.8);
+    key.position.set(3, 8, 5);
+    const rim = new THREE.DirectionalLight('#2ea8ff', 3.0);
+    rim.position.set(-4, 2, -8);
+    // A hemisphere light's position is where its sky colour comes from:
+    // below and the lens side, onto the flank and belly we see.
+    const fill = new THREE.HemisphereLight('#3b5a9a', '#02050c', 0.75);
+    fill.position.set(0, -4, 3);
+    this.lights = [key, rim, fill].map((light) => ({ light, intensity: light.intensity }));
+    this.root.add(key, rim, fill);
+  }
+
+  /** How much of the rig is on, 0..1. */
+  set level(k: number) {
+    for (const { light, intensity } of this.lights) light.intensity = intensity * k;
+  }
+
+  dispose(): void {
+    for (const { light } of this.lights) light.dispose();
+  }
 }
 
 // ----------------------------------------------------------------- perch
@@ -66,11 +80,10 @@ const COMPANION_PERCH: PerchSpot = {
 };
 const PERCH_SWIM = 0.7;
 export class FishPerch implements FishRoute {
-  readonly root = new THREE.Group();
+  readonly origin = new THREE.Vector3();
   readonly fish: readonly [Fish, Fish];
 
   constructor(hero: Fish, companion: Fish) {
-    this.root.add(...fishLights(new THREE.Vector3(0, 0, -HERO_PERCH.depth)));
     this.fish = [hero, companion];
   }
 
@@ -85,14 +98,10 @@ export class FishPerch implements FishRoute {
     const halfHeight = Math.tan(THREE.MathUtils.degToRad(camera.fov) / 2) * spot.depth;
     fish.centre
       .set(halfHeight * camera.aspect * spot.at.x, halfHeight * spot.at.y, -spot.depth)
-      .add(this.root.position);
+      .add(this.origin);
     fish.facing.copy(spot.facing);
     fish.swim = PERCH_SWIM;
     fish.steer(null);
-  }
-
-  dispose(): void {
-    disposeLights(this.root);
   }
 }
 
@@ -119,7 +128,7 @@ const _b = new THREE.Vector3();
 const _target = new THREE.Vector3();
 
 export class FishLane implements FishRoute {
-  readonly root = new THREE.Group();
+  readonly origin = new THREE.Vector3();
   readonly fish: readonly [Fish];
 
   /** Which way this crossing goes (+1 screen right, -1 screen left). */
@@ -135,7 +144,6 @@ export class FishLane implements FishRoute {
   private started = false;
 
   constructor(fish: Fish) {
-    this.root.add(...fishLights(new THREE.Vector3(0, LANE_Y, -LANE_DEPTH)));
     this.fish = [fish];
     this.plan();
   }
@@ -195,10 +203,10 @@ export class FishLane implements FishRoute {
     this.u += this.speed * dt;
 
     fish.swim = 0.25 + 0.75 * (this.speed / cruise);
-    fish.steer(_a.add(this.root.position), this.heading);
+    fish.steer(_a.add(this.origin), this.heading);
   }
 
-  /** A point on the lane at u in 0..1, relative to the root. */
+  /** A point on the lane at u in 0..1, relative to the origin. */
   private point(u: number, span: number, out: THREE.Vector3): THREE.Vector3 {
     const w = Math.PI * 2 * u + this.phase;
     return out.set(
@@ -206,9 +214,5 @@ export class FishLane implements FishRoute {
       LANE_Y + WANDER_Y * Math.sin(w * 1.5 + 0.6) * Math.cos(w * 0.5),
       -LANE_DEPTH + WANDER_Z * Math.sin(w + 2.1),
     );
-  }
-
-  dispose(): void {
-    disposeLights(this.root);
   }
 }

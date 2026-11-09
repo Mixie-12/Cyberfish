@@ -8,7 +8,7 @@ import { Ocean, WAVE_CREST } from './ocean';
 import { Deep } from './deep';
 import { Floor, MARK_WIDTH } from './floor';
 import { loadLogoPoints } from './logo';
-import { FishLane, FishPerch, type FishRoute } from './lane';
+import { FishLane, FishLights, FishPerch, type FishRoute } from './lane';
 import { Water } from './water';
 import { COLORS, FISH_KEY_DIR, OCEAN, WATER_FOG_FAR, WATER_FOG_NEAR } from './palette';
 
@@ -120,6 +120,15 @@ const FISH_ROUTES: Partial<Record<Chapter, (hero: Fish, perch: readonly [Fish, F
 };
 const LEVEL_DROP = 16;
 const GLIDE_TIME = 2.0;
+/**
+ * Lights reach the whole scene, so the unit's (deep.ts) and the fish's
+ * (FishLights) are never on together, or a glide would light both twice.
+ * Between the deep and the level below, one hands over to the other across
+ * this stretch of the descent (world units below the deep): the unit has
+ * left the top of the frame and the fish has yet to come in at the bottom.
+ * The portrait lens sets the start (the unit is in frame until 3.7 down).
+ */
+const LIGHT_HANDOVER = [4, 5] as const;
 /** To and from the floor: a quick dip through black, and the floor comes up out of it. */
 const CHAPTER_FADE_OUT = 0.7;
 const CHAPTER_FADE_IN = 1.6;
@@ -238,6 +247,8 @@ export class CyberScene {
   deep: Deep | null = null;
   /** The fish routes of the chapters in the water (FISH_ROUTES): one, or two on a glide. */
   private readonly routes = new Map<Chapter, FishRoute>();
+  /** The fish's light in every chapter that has them; off above the surface and on the floor. */
+  private readonly fishRig = new FishLights();
   floor: Floor | null = null;
   /** Seconds since the current chapter's hand-off, and the lens's rest point below. */
   private deepT = 0;
@@ -335,6 +346,8 @@ export class CyberScene {
     const fill = new THREE.HemisphereLight(OCEAN.fill, OCEAN.waterBase, 0.55);
     this.scene.add(fill);
     this.heroLights = [key, fill];
+    this.fishRig.root.visible = false;
+    this.scene.add(this.fishRig.root);
 
     this.resize();
     this.post = new Post(this.renderer, this.scene, this.camera, {
@@ -389,6 +402,9 @@ export class CyberScene {
 
     this.perchFish = [fish.copy(this.focus), fish.copy(this.focus)];
     for (const copy of this.perchFish) {
+      // The hero's belly glow, so all three are lit alike. No pool: they
+      // are never over the sea.
+      copy.root.add(glow.clone());
       copy.root.visible = false;
       this.scene.add(copy.root);
     }
@@ -517,7 +533,7 @@ export class CyberScene {
     this.post.dispose();
     this.ocean.dispose();
     this.deep?.dispose();
-    for (const route of this.routes.values()) route.dispose();
+    this.fishRig.dispose();
     this.floor?.dispose();
     this.water?.dispose();
     this.renderer.dispose();
@@ -749,9 +765,9 @@ export class CyberScene {
     return CHAPTERS.indexOf(chapter) * LEVEL_DROP;
   }
 
-  private rootFor(chapter: Chapter, root: THREE.Object3D): void {
-    root.position.copy(this.deepBase);
-    root.position.y -= this.levelOf(chapter);
+  private rootFor(chapter: Chapter, origin: THREE.Vector3): void {
+    origin.copy(this.deepBase);
+    origin.y -= this.levelOf(chapter);
   }
 
   /** Build a chapter's content (the water is shared and already there). */
@@ -759,7 +775,7 @@ export class CyberScene {
     this.deepT = 0;
     if (chapter === 'deep') {
       const deep = new Deep();
-      this.rootFor('deep', deep.root);
+      this.rootFor('deep', deep.root.position);
       this.scene.add(deep.root);
       this.deep = deep;
       void this.loadDevice().then(async (gltf) => {
@@ -780,7 +796,7 @@ export class CyberScene {
         cloud: this.markCloud,
         terrain: this.seafloor,
       });
-      this.rootFor('floor', floor.root);
+      this.rootFor('floor', floor.root.position);
       this.scene.add(floor.root);
       this.floor = floor;
       if (!this.markCloud) {
@@ -801,20 +817,25 @@ export class CyberScene {
     const make = FISH_ROUTES[chapter];
     if (!make || !this.fish || !this.perchFish) return;
     const route = make(this.fish, this.perchFish);
-    this.rootFor(chapter, route.root);
-    this.scene.add(route.root);
+    this.rootFor(chapter, route.origin);
     this.routes.set(chapter, route);
     route.update(1 / 60, this.camera);
     for (const fish of route.fish) {
       fish.update(this.time, 1 / 60, this.pointer);
       fish.root.visible = true;
     }
-    for (const { light, intensity } of this.fishLights) light.intensity = intensity;
+    // The dive dimmed the hero's lights. Its belly glow comes back; the
+    // pool stays off: there is no surface under it down here, and it
+    // would shine on the fish a level below.
+    for (const { light, intensity } of this.fishLights) {
+      light.intensity = light instanceof THREE.RectAreaLight ? 0 : intensity;
+    }
   }
 
-  /** The chapter is now the current one: settle the water for it. */
+  /** The chapter is now the current one: settle the water and the light for it. */
   private arrive(chapter: Chapter): void {
     this.chapter = chapter;
+    this.fishRig.root.visible = chapter !== 'floor';
     if (this.water) {
       // The floor brings its own light; above it the shafts stop at the unit.
       this.water.root.visible = chapter !== 'floor';
@@ -830,8 +851,6 @@ export class CyberScene {
   }
 
   private removeRoute(chapter: Chapter, route: FishRoute): void {
-    this.scene.remove(route.root);
-    route.dispose();
     this.routes.delete(chapter);
     for (const fish of route.fish) {
       // Back to how it hovers above the surface (surfacing re-anchors the hero).
@@ -958,11 +977,15 @@ export class CyberScene {
       Math.tan(THREE.MathUtils.degToRad(FOV_LANDSCAPE) / 2);
     for (const [chapter, route] of this.routes) {
       const level = this.levelOf(chapter);
-      route.root.position.y = base.y - level + (descent - level) * (travel - 1);
+      route.origin.y = base.y - level + (descent - level) * (travel - 1);
       route.update(dt, this.camera);
       for (const fish of route.fish) fish.update(this.time, dt, this.pointer);
     }
+    // The unit's light in the deep, the fish's from there down.
+    const fishLight = THREE.MathUtils.smoothstep(descent, LIGHT_HANDOVER[0], LIGHT_HANDOVER[1]);
+    this.fishRig.level = fishLight;
     if (deep) {
+      deep.light = 1 - fishLight;
       deep.update(this.time, dt, this.deepT, this.camera.aspect);
       this.reportAnchor(deep);
       this.reportHover(deep);
@@ -1066,6 +1089,7 @@ export class CyberScene {
       this.water = null;
     }
     this.chapter = 'deep';
+    this.fishRig.root.visible = false;
     this.ocean.mesh.visible = true;
     this.sky.mesh.visible = true;
     this.ocean.churn = 0;
