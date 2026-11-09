@@ -1,0 +1,20 @@
+{
+  "name": "cyberfish-landing-page",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Single-page landing site for DeKoi by CyberFish",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "three": "^0.170.0"
+  },
+  "devDependencies": {
+    "@types/three": "^0.170.0",
+    "typescript": "^5.6.3",
+    "vite": "^6.0.0"
+  }
+}

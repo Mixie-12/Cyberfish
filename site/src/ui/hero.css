@@ -1,0 +1,84 @@
+/* Hero tagline. Right of the fish in landscape, below it on portrait.
+   Type per BRAND.md: product name in Michroma (mixed case, 0.01em),
+   paragraphs in JetBrains Mono. Fades in once the visitor has entered
+   (html[data-entered]). */
+.hero {
+  position: fixed;
+  z-index: 4;
+  /* Left edge of the copy sits just past the fish's nose (~54vw). */
+  left: 57vw;
+  top: 50%;
+  transform: translateY(calc(-50% + 12px));
+  width: max-content;
+  max-width: calc(43vw - var(--frame-inset) - 12px);
+  margin: 0;
+  pointer-events: none;
+  opacity: 0;
+  /* Delayed so the copy lands once the scene behind it has mostly surfaced. */
+  transition:
+    opacity 1000ms ease 700ms,
+    transform 1000ms cubic-bezier(0.2, 0.8, 0.2, 1) 700ms;
+}
+
+html[data-entered] .hero {
+  opacity: 1;
+  transform: translateY(-50%);
+}
+
+.hero-title {
+  margin: 0 0 22px;
+  font: 400 clamp(44px, 5.6vw, 76px) / 1.05 var(--font-display);
+  letter-spacing: 0.01em;
+  color: var(--white);
+  text-shadow: 0 0 24px rgba(46, 168, 255, 0.25);
+}
+
+.hero-lead,
+.hero-sub {
+  margin: 0;
+  font: 400 clamp(18px, 1.8vw, 25px) / 1.6 var(--font-mono);
+  max-width: 32ch;
+  color: var(--text);
+  /* Lifts the copy off the pale haze band behind it. */
+  text-shadow: 0 1px 14px rgba(6, 10, 20, 0.7);
+}
+
+.hero-sub {
+  margin-top: 8px;
+  opacity: 0.78;
+}
+
+@media (max-aspect-ratio: 1/1) {
+  .hero {
+    left: calc(var(--frame-inset) + 12px);
+    top: auto;
+    /* Leaves room for the centred CTA underneath. */
+    bottom: calc(var(--frame-inset) + 110px);
+    transform: translateY(12px);
+    width: min(440px, calc(100vw - 2 * var(--frame-inset) - 24px));
+    max-width: none;
+  }
+
+  html[data-entered] .hero {
+    transform: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .hero {
+    left: 16px;
+    bottom: 124px;
+  }
+
+  .hero-lead,
+  .hero-sub {
+    font-size: 17px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero {
+    transition: opacity 300ms;
+    transform: translateY(-50%);
+  }
+}

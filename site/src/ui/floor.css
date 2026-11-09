@@ -1,0 +1,55 @@
+/* The floor's one line, under the mark: "Questions?" in Michroma. It
+   comes up once the floor has surfaced out of black (html[data-floor])
+   and goes with everything else on the way up or out. */
+.floor-copy {
+  position: fixed;
+  z-index: 4;
+  left: 50%;
+  top: 72%;
+  transform: translate(-50%, 0);
+  margin: 0;
+  text-align: center;
+  pointer-events: none;
+}
+
+.floor-title {
+  margin: 0;
+  font: 400 clamp(34px, 3.9vw, 62px) / 1.2 var(--font-display);
+  letter-spacing: 0.03em;
+  color: var(--white);
+  text-shadow: 0 0 24px rgba(46, 168, 255, 0.3);
+  opacity: 0;
+  transform: translateY(14px);
+  transition:
+    opacity 500ms ease,
+    transform 500ms ease;
+}
+
+html[data-floor] .floor-title {
+  opacity: 1;
+  transform: none;
+  transition:
+    opacity 1200ms ease 1100ms,
+    transform 1200ms cubic-bezier(0.2, 0.8, 0.2, 1) 1100ms;
+}
+
+html[data-floor][data-ascending] .floor-title,
+html[data-floor][data-surfacing] .floor-title {
+  opacity: 0;
+  transform: none;
+  transition: opacity 500ms ease;
+}
+
+@media (max-aspect-ratio: 1/1) {
+  .floor-copy {
+    top: 68%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .floor-title,
+  html[data-floor] .floor-title {
+    transform: none;
+    transition: opacity 300ms;
+  }
+}

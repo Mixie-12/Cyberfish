@@ -1,0 +1,20 @@
+/* CyberFish / DeKoi brand tokens. Source: reference/BRAND.md */
+:root {
+  --bg: #060a14;
+  --bg-sky-top: #040712;
+  --bg-sky-horizon: #0b1636;
+  --water-base: #0a1430;
+  --accent: #2ea8ff;
+  --text: #c9d1e3;
+  --text-dim: #4a5368;
+  --text-mid: #8a94ab;
+  --white: #f2f4fa;
+  --fish-body: #e8edf5;
+  --fish-fin: #dbe6f5;
+  --line: #1b2234;
+
+  --font-display: 'Michroma', sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  --frame-inset: 24px;
+}

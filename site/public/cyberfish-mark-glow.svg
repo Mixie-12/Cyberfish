@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="30 -649 1620 640" role="img" aria-label="CyberFish">
+  <defs>
+    <filter id="g" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="40" result="b1"/>
+      <feGaussianBlur stdDeviation="14" result="b2"/>
+      <feMerge><feMergeNode in="b1"/><feMergeNode in="b2"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+  <path d="M70 -49V-185L346 -306Q366 -315 388.0 -321.0Q410 -327 423 -329Q410 -331 388.0 -336.5Q366 -342 346 -351L70 -472V-609L530 -401V-258Z M1070.0 -49 610.0 -257V-400L1070.0 -609V-473L794.0 -352Q774.0 -343 752.0 -337.0Q730.0 -331 717.0 -329Q730.0 -327 752.0 -321.5Q774.0 -316 794.0 -307L1070.0 -186Z M1150.0 -49V-185L1426.0 -306Q1446.0 -315 1468.0 -321.0Q1490.0 -327 1503.0 -329Q1490.0 -331 1468.0 -336.5Q1446.0 -342 1426.0 -351L1150.0 -472V-609L1610.0 -401V-258Z" fill="#2EA8FF" stroke="#2EA8FF" stroke-width="18" filter="url(#g)" opacity="0.9"/>
+  <path d="M70 -49V-185L346 -306Q366 -315 388.0 -321.0Q410 -327 423 -329Q410 -331 388.0 -336.5Q366 -342 346 -351L70 -472V-609L530 -401V-258Z M1070.0 -49 610.0 -257V-400L1070.0 -609V-473L794.0 -352Q774.0 -343 752.0 -337.0Q730.0 -331 717.0 -329Q730.0 -327 752.0 -321.5Q774.0 -316 794.0 -307L1070.0 -186Z M1150.0 -49V-185L1426.0 -306Q1446.0 -315 1468.0 -321.0Q1490.0 -327 1503.0 -329Q1490.0 -331 1468.0 -336.5Q1446.0 -342 1426.0 -351L1150.0 -472V-609L1610.0 -401V-258Z" fill="#F4FBFF" stroke="#2EA8FF" stroke-width="18" stroke-linejoin="miter" paint-order="stroke fill"/>
+</svg>

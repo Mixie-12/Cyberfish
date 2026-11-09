@@ -1,0 +1,132 @@
+/* "Deploy The Decoy?" call to action, centred at the bottom. JetBrains Mono
+   per BRAND.md. The arrow beckons with a slow bob; the label breathes.
+   Fades in with the rest of the page once the visitor has entered. */
+.cta {
+  position: fixed;
+  z-index: 4;
+  left: 50%;
+  bottom: calc(var(--frame-inset) + 18px);
+  transform: translate(-50%, 10px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+  padding: 10px 14px;
+  border: 0;
+  background: none;
+  color: var(--text);
+  font: 400 clamp(17px, 1.7vw, 24px) / 1 var(--font-mono);
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  text-shadow: 0 1px 14px rgba(6, 10, 20, 0.7);
+  cursor: pointer;
+  opacity: 0;
+  transition:
+    opacity 900ms ease 1200ms,
+    transform 900ms cubic-bezier(0.2, 0.8, 0.2, 1) 1200ms,
+    color 200ms ease;
+}
+
+html[data-entered] .cta {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+
+.cta-label {
+  /* left: 50% only offers half the viewport as available width; never wrap. */
+  white-space: nowrap;
+  animation: cta-breathe 4.2s ease-in-out infinite;
+}
+
+.cta-arrow {
+  width: 32px;
+  height: 32px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  animation: cta-bob 2.4s ease-in-out infinite;
+}
+
+.cta:hover,
+.cta:focus-visible {
+  color: var(--white);
+  outline: none;
+}
+
+.cta:hover .cta-arrow,
+.cta:focus-visible .cta-arrow {
+  stroke: var(--accent);
+  filter: drop-shadow(0 0 8px rgba(46, 168, 255, 0.55));
+}
+
+.cta:hover .cta-label,
+.cta:focus-visible .cta-label {
+  animation-play-state: paused;
+}
+
+@keyframes cta-bob {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(7px);
+  }
+}
+
+@keyframes cta-breathe {
+  0%,
+  100% {
+    opacity: 0.72;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+/* The dive. Everything in the HUD sinks away as the camera tips over, and a
+   black screen is drawn over the canvas once the frame is fully dark. */
+html[data-diving] .cta,
+html[data-diving] .hero,
+html[data-diving] .nav {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 700ms ease;
+}
+
+.dive-screen {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  background: #000;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 400ms ease;
+}
+
+html[data-dived] .dive-screen {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+@media (max-width: 480px) {
+  .cta {
+    bottom: 18px;
+    font-size: 16px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cta {
+    transition: opacity 300ms;
+    transform: translate(-50%, 0);
+  }
+
+  .cta-label,
+  .cta-arrow {
+    animation: none;
+  }
+}

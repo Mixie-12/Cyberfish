@@ -1,0 +1,189 @@
+/* Top nav. Sits inside the 24px HUD inset; the lockup follows BRAND.md:
+   mark at the cap height of the adjacent text, 0.6em gap, never taller
+   than the text. Hidden behind the loader; fades in once the visitor has
+   entered, a beat after the scene has started to surface. */
+.nav {
+  position: fixed;
+  top: 24px;
+  left: 24px;
+  right: 24px;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  /* Breathing room from the viewport corners: ~52px in, ~44px down. */
+  padding: 20px 28px;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 900ms ease 300ms;
+}
+
+html[data-entered] .nav {
+  opacity: 1;
+}
+
+/* The dive sinks the HUD (cta.css); the nav returns once the deep has
+   surfaced out of the black. */
+html[data-diving][data-deep] .nav {
+  opacity: 1;
+  transition: opacity 1200ms ease 2200ms;
+}
+
+/* ...and sinks away again on the way back up. */
+html[data-deep][data-surfacing] .nav {
+  opacity: 0;
+  transition: opacity 500ms ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .nav {
+    transition: opacity 300ms;
+  }
+}
+
+.nav > * {
+  pointer-events: auto;
+}
+
+.nav .lockup {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6em;
+  color: var(--white);
+  font: 400 30px/1 var(--font-display);
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  text-decoration: none;
+  user-select: none;
+}
+
+/* Michroma's cap height is ~0.72em. */
+.nav .lockup .mark {
+  display: block;
+  height: 0.72em;
+  width: auto;
+}
+
+/* Sound toggle: a bare speaker glyph and label, set like the CTA (same mono,
+   same tracking) so it reads as part of the HUD rather than a widget. The
+   waves light up while sound is on. */
+.nav .sound {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  /* No visible box; the padding only widens the hit target. */
+  padding: 6px 0 6px 8px;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  color: var(--text-mid);
+  font: 400 clamp(13px, 1.1vw, 15px) / 1 var(--font-mono);
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  text-shadow: 0 1px 14px rgba(6, 10, 20, 0.7);
+  transition: color 160ms;
+}
+
+.nav .sound:hover,
+.nav .sound:focus-visible {
+  color: var(--white);
+  outline: none;
+}
+
+.nav .sound[aria-pressed='true'] {
+  color: var(--white);
+}
+
+.nav .sound .sound-state {
+  color: var(--text-dim);
+}
+
+.nav .sound[aria-pressed='true'] .sound-state {
+  color: var(--accent);
+}
+
+/* Speaker glyph: horn always; sound waves when on, a cross when off. */
+.nav .sound .speaker {
+  display: block;
+  overflow: visible;
+  /* Overrides the 20px width/height attributes in the markup. */
+  width: 28px;
+  height: 28px;
+  filter: drop-shadow(0 1px 10px rgba(6, 10, 20, 0.6));
+}
+
+.nav .sound .speaker path {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transition:
+    opacity 200ms,
+    stroke 200ms;
+}
+
+.nav .sound .speaker .horn {
+  fill: currentColor;
+  stroke-width: 1;
+}
+
+.nav .sound .speaker .w1,
+.nav .sound .speaker .w2 {
+  opacity: 0;
+}
+
+.nav .sound .speaker .mute {
+  opacity: 0.7;
+}
+
+.nav .sound[aria-pressed='true'] .speaker .horn {
+  fill: var(--accent);
+  stroke: var(--accent);
+}
+
+.nav .sound[aria-pressed='true'] .speaker .w1,
+.nav .sound[aria-pressed='true'] .speaker .w2 {
+  stroke: var(--accent);
+  opacity: 1;
+}
+
+.nav .sound[aria-pressed='true'] .speaker .w2 {
+  animation: wave-pulse 1.8s ease-in-out infinite;
+}
+
+.nav .sound[aria-pressed='true'] .speaker .mute {
+  opacity: 0;
+}
+
+@keyframes wave-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.3;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .nav .sound[aria-pressed='true'] .speaker .w2 {
+    animation: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .nav {
+    top: 16px;
+    left: 16px;
+    right: 16px;
+    padding: 12px 16px;
+  }
+  .nav .lockup {
+    font-size: 20px;
+  }
+  .nav .sound .sound-label {
+    display: none;
+  }
+}
