@@ -6,8 +6,8 @@ v0.3.1 (2026-11-08, its app, DeKoi Setup and image runs green); from now
 on CI tags the next one (ADR 0038, `docs/runbooks/release.md`).
 
 The public site with the download page for the app and DeKoi Setup is
-`site/`, published by `site.yml` on GitHub Pages for `dekoi.sysnordic.no`
-(ADR 0039). It is served once owner action 14 is done.
+`site/`, published by `site.yml` on GitHub Pages at
+https://dekoi.sysnordic.no (ADR 0039), HTTPS only since 2026-11-09.
 
 ## Owner answers
 
@@ -352,12 +352,9 @@ but does nothing (tested 2026-11-07, Genesys 05e3:0749).
     and Dependabot alerts and security updates (until then releases come
     only weekly). Then look at the pull requests assigned to you, Dependabot's
     #1 first (JUnit 6 fails the dependency scan).
-14. For the launch, at Domeneshop: a `CNAME` record `dekoi` for
-    `sysnordic.no` with the value `mixie-12.github.io` (ADR 0039). Then, in
-    GitHub, Settings, Pages, Add a domain: verify `sysnordic.no` with the
-    `TXT` record it shows, so no other GitHub account can claim the name.
-    Once the site answers on HTTPS, run `infra/github/apply.sh` (action 13)
-    to enforce HTTPS.
+14. In GitHub, Settings, Pages, Add a domain: verify `sysnordic.no` with the
+    `TXT` record it shows at Domeneshop, so no other GitHub account can
+    claim `dekoi.sysnordic.no` (ADR 0039). The `CNAME` record is in place.
 
 ## Known limitations
 
