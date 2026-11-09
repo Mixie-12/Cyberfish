@@ -53,18 +53,18 @@ html[data-entered] .hero {
 .hero .get {
   display: inline-block;
   margin-top: 28px;
-  padding: 14px 24px;
+  padding: 10px 16px;
   border: 1px solid var(--accent);
   border-radius: 2px;
-  background: var(--accent);
-  color: var(--bg);
-  font: 500 13px/1 var(--font-mono);
+  background: rgba(6, 10, 20, 0.35);
+  color: var(--accent);
+  font: 500 12px/1 var(--font-mono);
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  box-shadow: 0 0 28px rgba(46, 168, 255, 0.35);
+  white-space: nowrap;
   transition:
     background 160ms,
-    box-shadow 160ms;
+    color 160ms;
 }
 
 html[data-entered]:not([data-diving]) .hero .get {
@@ -73,8 +73,8 @@ html[data-entered]:not([data-diving]) .hero .get {
 
 .hero .get:hover,
 .hero .get:focus-visible {
-  background: #5cbcff;
-  box-shadow: 0 0 40px rgba(46, 168, 255, 0.55);
+  background: rgba(46, 168, 255, 0.14);
+  color: var(--white);
   outline: none;
 }
 
