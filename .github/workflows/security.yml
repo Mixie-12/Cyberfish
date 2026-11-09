@@ -14,6 +14,7 @@ on:
       - clients/**/*.gradle.kts
       - device/canary/requirements.txt
       - backend/supabase/functions/**/deno.json
+      - site/package-lock.json
       - .github/gradle-lockfiles.init.gradle.kts
       - .github/workflows/security.yml
 
