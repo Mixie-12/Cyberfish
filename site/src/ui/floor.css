@@ -48,6 +48,7 @@ html[data-floor][data-surfacing] .floor-copy {
   font: 400 clamp(15px, 1.4vw, 20px) / 1.5 var(--font-mono);
   color: var(--text);
   text-shadow: 0 1px 14px rgba(6, 10, 20, 0.8);
+  text-wrap: balance;
 }
 
 .floor-copy .get {
