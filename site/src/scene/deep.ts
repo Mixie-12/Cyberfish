@@ -81,8 +81,18 @@ const DEVICE_TURN = -0.55;
 /** Model height is 3 cm with the base at y = 0: pivot about the middle. */
 const DEVICE_CENTRE_Y = -0.015;
 const LID_CLIP = 'DK_LidOpen';
-/** Seconds after the hand-off before the lid lifts (the fade-in is ~3 s). */
-const LID_OPEN_AT = 3.4;
+/**
+ * Seconds after the hand-off before the lid clip starts. The clip holds
+ * still for its first 0.85 s, so the lid lifts as the picture clears (the
+ * fade-in is ~3 s) rather than after it.
+ */
+const LID_OPEN_AT = 1.2;
+/**
+ * Seconds into the clip (4 s long) when the lid has stopped turning and
+ * only settles upward: the board is uncovered, so the callout draws in
+ * without waiting for the settle.
+ */
+const LID_CLEAR_AT = 2.7;
 /** The part the callout points at: the Pi's heatsink, mid-board. */
 const ANCHOR_MESH = 'DK_Pi_sink';
 /** The unit's outer shell, for pointer hit-testing (not the board's parts). */
@@ -98,8 +108,6 @@ export class Deep {
   private mixer: THREE.AnimationMixer | null = null;
   private lid: THREE.AnimationAction | null = null;
   private lidOpened = false;
-  /** True once the lid clip has run to its end. */
-  lidOpen = false;
   /** Mesh the callout points at, and the point on it (local space). */
   private anchorMesh: THREE.Mesh | null = null;
   private readonly anchorLocal = new THREE.Vector3();
@@ -184,10 +192,12 @@ export class Deep {
       this.mixer.update(0);
       action.paused = true;
       this.lid = action;
-      this.mixer.addEventListener('finished', () => {
-        this.lidOpen = true;
-      });
     }
+  }
+
+  /** True once the lid is clear of the board (the clip then holds its end time). */
+  get lidOpen(): boolean {
+    return this.lid !== null && this.lid.time >= LID_CLEAR_AT;
   }
 
   /** Show the unit (after its programs are compiled). */

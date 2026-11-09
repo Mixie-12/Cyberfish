@@ -161,7 +161,7 @@ export interface DiveOptions {
 export interface DeviceAnchor {
   x: number;
   y: number;
-  /** The lid has finished opening. */
+  /** The lid is clear of the board. */
   open: boolean;
 }
 
