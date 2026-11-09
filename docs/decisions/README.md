@@ -44,3 +44,4 @@ them.
 | 0036 | [Maintenance without anyone watching](0036-unattended-maintenance.md) | accepted, amended by 0038 |
 | 0037 | [Updating host configuration in the field](0037-host-configuration-updates.md) | proposed |
 | 0038 | [The repository updates, pins and releases itself](0038-self-maintaining-repository.md) | accepted |
+| 0039 | [The public site is static, on GitHub Pages](0039-public-site.md) | accepted |

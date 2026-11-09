@@ -25,6 +25,7 @@ for each security claim is in `docs/security.md`.
 | `device/`   | Everything that runs on the Pi: decoys, IDS, agent, host config |
 | `clients/`  | Gradle root: Android app, DeKoi Setup (SD-card tool), shared   |
 | `docs/`     | Build brief, status, architecture, security, decisions         |
+| `site/`     | The public site and download page, dekoi.sysnordic.no          |
 
 Each component README has its build, test and run commands.
 
@@ -35,9 +36,9 @@ it stands).
 
 <img src="Images/cyberfish-landing-page.jpg" alt="The CyberFish landing page: a 3D robotic koi with glowing blue circuit lines swims above a dark sea, next to the text 'DeKoi. A plug-in network decoy for homes and small offices.'">
 
-The CyberFish landing page is a three.js scene with DeKoi as its mascot. It
-was built during the hackathon as the visual for the pitch and as a starting
-point for an advertising campaign. It is am advertising asset, not strictly part of the core
-product, so it lives in its own repository:
-[nevermindmae/cyberfish-landing-page](https://github.com/nevermindmae/cyberfish-landing-page).
-It followed the same hackathon rules as the main product repository. 
+The CyberFish landing page is a three.js scene with DeKoi as its mascot,
+built during the hackathon as the visual for the pitch. It is the public
+site, with the download page for the app and DeKoi Setup, at
+[dekoi.sysnordic.no](https://dekoi.sysnordic.no) (ADR 0039). `site/` holds
+what is shipped; the Blender sources and the history before the import are
+in [nevermindmae/cyberfish-landing-page](https://github.com/nevermindmae/cyberfish-landing-page).
