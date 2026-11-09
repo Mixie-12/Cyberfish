@@ -1,71 +1,74 @@
-/* The floor's one line, under the mark: "Questions?" in Michroma. It
+/* The floor's last word, low under the mark: the name in Michroma, the
+   line in mono, and the way to the app (the hero's outlined button). It
    comes up once the floor has surfaced out of black (html[data-floor])
    and goes with everything else on the way up or out. */
 .floor-copy {
   position: fixed;
   z-index: 4;
   left: 50%;
-  top: 72%;
-  transform: translate(-50%, 0);
+  bottom: calc(var(--frame-inset) + 64px);
+  width: max-content;
+  max-width: calc(100vw - 2 * var(--frame-inset) - 24px);
   margin: 0;
   text-align: center;
   pointer-events: none;
-}
-
-.floor-title {
-  margin: 0;
-  font: 400 clamp(34px, 3.9vw, 62px) / 1.2 var(--font-display);
-  letter-spacing: 0.03em;
-  color: var(--white);
-  text-shadow: 0 0 24px rgba(46, 168, 255, 0.3);
   opacity: 0;
-  transform: translateY(14px);
+  transform: translate(-50%, 14px);
   transition:
     opacity 500ms ease,
     transform 500ms ease;
 }
 
-html[data-floor] .floor-title {
+html[data-floor] .floor-copy {
   opacity: 1;
-  transform: none;
+  transform: translate(-50%, 0);
   transition:
     opacity 1200ms ease 1100ms,
     transform 1200ms cubic-bezier(0.2, 0.8, 0.2, 1) 1100ms;
 }
 
-html[data-floor][data-ascending] .floor-title,
-html[data-floor][data-surfacing] .floor-title {
+html[data-floor][data-ascending] .floor-copy,
+html[data-floor][data-surfacing] .floor-copy {
   opacity: 0;
-  transform: none;
+  transform: translate(-50%, 0);
   transition: opacity 500ms ease;
 }
 
-/* Under "Questions?": the way to the app, on the same timing. */
+.floor-title {
+  margin: 0;
+  font: 400 clamp(30px, 3.4vw, 54px) / 1.2 var(--font-display);
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--white);
+  text-shadow: 0 0 24px rgba(46, 168, 255, 0.3);
+}
+
+.floor-tagline {
+  margin: 10px 0 0;
+  font: 400 clamp(15px, 1.4vw, 20px) / 1.5 var(--font-mono);
+  color: var(--text);
+  text-shadow: 0 1px 14px rgba(6, 10, 20, 0.8);
+}
+
 .floor-copy .get {
   display: inline-block;
-  margin-top: 24px;
-  padding: 12px 22px;
+  margin-top: 32px;
+  padding: 16px 28px;
   border: 1px solid var(--accent);
   border-radius: 2px;
+  background: rgba(6, 10, 20, 0.35);
   color: var(--accent);
-  font: 500 12px/1 var(--font-mono);
+  font: 500 16px/1 var(--font-mono);
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  opacity: 0;
-  transition: opacity 500ms ease;
+  white-space: nowrap;
+  transition:
+    background 160ms,
+    color 160ms;
 }
 
-html[data-floor] .floor-copy .get {
-  opacity: 1;
+html[data-floor]:not([data-ascending]):not([data-surfacing]) .floor-copy .get {
   pointer-events: auto;
-  transition: opacity 1200ms ease 1400ms;
-}
-
-html[data-floor][data-ascending] .floor-copy .get,
-html[data-floor][data-surfacing] .floor-copy .get {
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 500ms ease;
 }
 
 .floor-copy .get:hover,
@@ -75,16 +78,16 @@ html[data-floor][data-surfacing] .floor-copy .get {
   outline: none;
 }
 
-@media (max-aspect-ratio: 1/1) {
+@media (max-width: 480px) {
   .floor-copy {
-    top: 68%;
+    bottom: 88px;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .floor-title,
-  html[data-floor] .floor-title {
-    transform: none;
+  .floor-copy,
+  html[data-floor] .floor-copy {
+    transform: translate(-50%, 0);
     transition: opacity 300ms;
   }
 }

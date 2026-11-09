@@ -6,10 +6,7 @@ import './ui/cta.css';
 import './ui/back.css';
 import './ui/deep.css';
 import './ui/safety.css';
-import './ui/market.css';
-import './ui/business.css';
-import './ui/gtm.css';
-import './ui/team.css';
+import './ui/sprint.css';
 import './ui/floor.css';
 import { Loader } from './ui/loader';
 import { Sfx } from './ui/audio';
@@ -86,7 +83,7 @@ loader.setProgress(0.2);
 // In the deep, the callout follows the board inside the unit.
 const calloutEl = document.getElementById('callout');
 if (calloutEl) {
-  const callout = new Callout(calloutEl);
+  const callout = new Callout(calloutEl, document.getElementById('descend'));
   scene.onDeviceAnchor = (a) => callout.place(a);
 }
 // The unit answers the cursor like a button does.
@@ -149,10 +146,7 @@ const changing = (): boolean =>
   'surfacing' in html.dataset || 'descending' in html.dataset || 'ascending' in html.dataset;
 const reflectChapter = (): void => {
   delete html.dataset.safety;
-  delete html.dataset.market;
-  delete html.dataset.business;
-  delete html.dataset.gtm;
-  delete html.dataset.team;
+  delete html.dataset.sprint;
   delete html.dataset.floor;
   const chapter: Chapter = scene.chapter;
   if (chapter !== 'deep') html.dataset[chapter] = '';
@@ -227,10 +221,7 @@ if (backTop) {
     delete html.dataset.diving;
     delete html.dataset.deep;
     delete html.dataset.safety;
-    delete html.dataset.market;
-    delete html.dataset.business;
-    delete html.dataset.gtm;
-    delete html.dataset.team;
+    delete html.dataset.sprint;
     delete html.dataset.floor;
     delete html.dataset.revisit;
     delete html.dataset.surfacing;

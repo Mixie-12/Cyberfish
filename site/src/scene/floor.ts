@@ -55,9 +55,12 @@ const RAY = { distance: 30, angle: -0.32, seed: 2.9, intensity: 0.5, anchor: 0.3
 const MOTE_COUNT = 420;
 const MOTE_COUNT_MOBILE = 180;
 
-/** The mark: where it hangs (facing the lens) and its colour. */
+/** The mark: where it hangs (facing the lens), how wide, and its colour. */
 const MARK_POS = new THREE.Vector3(0, -0.3, -11);
+export const MARK_WIDTH = 5.2;
 const MARK_COLOR = new THREE.Color('#a9d6ff');
+/** Most of the frame's width the mark may take: narrow portrait frames shrink it. */
+const MARK_FILL = 0.86;
 
 /**
  * Particle dynamics, in world units. A soft spring draws each particle
@@ -195,7 +198,12 @@ export class Floor {
    * @param ray     the pointer's ray in world space, or null when there is none
    * @returns whether the ray is disturbing the mark this frame
    */
-  update(time: number, dt: number, camera: THREE.Camera, ray: THREE.Ray | null): boolean {
+  update(
+    time: number,
+    dt: number,
+    camera: THREE.PerspectiveCamera,
+    ray: THREE.Ray | null,
+  ): boolean {
     for (const m of this.materials) if (m.uniforms.uTime) m.uniforms.uTime.value = time;
     for (const m of this.seabedMaterials) {
       m.uniforms.uCamera.value.copy(camera.position);
@@ -210,6 +218,9 @@ export class Floor {
     );
     _q.setFromAxisAngle(_up, Math.sin(time * 0.19) * 0.09);
     this.markGroup.quaternion.copy(_q);
+    const span =
+      2 * -MARK_POS.z * Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)) * camera.aspect;
+    this.markGroup.scale.setScalar(Math.min(1, (span * MARK_FILL) / MARK_WIDTH));
 
     if (!this.swarm) return false;
     let local: THREE.Ray | null = null;

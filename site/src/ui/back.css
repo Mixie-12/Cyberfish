@@ -1,6 +1,7 @@
 /* "Back to top", lower right, once the deep has surfaced. Set like the sound
    toggle (same mono, same tracking); the chevron nods upward. Appears a
-   beat after the picture, and sinks away again as the way back begins. */
+   beat after the picture, and sinks away again as the way back begins.
+   The label is also the button's aria-label, for phones where it is hidden. */
 .back-top {
   position: fixed;
   z-index: 4;
@@ -49,7 +50,8 @@ html[data-deep][data-surfacing] .back-top {
   white-space: nowrap;
 }
 
-.back-top-arrow {
+.back-top-arrow,
+.back-top-stack {
   width: 26px;
   height: 26px;
   fill: none;
@@ -66,8 +68,16 @@ html[data-deep][data-surfacing] .back-top {
   outline: none;
 }
 
+/* Phones drop the label; four chevrons tell it apart from "Back". */
+.back-top-stack {
+  display: none;
+  height: 32px;
+}
+
 .back-top:hover .back-top-arrow,
-.back-top:focus-visible .back-top-arrow {
+.back-top:focus-visible .back-top-arrow,
+.back-top:hover .back-top-stack,
+.back-top:focus-visible .back-top-stack {
   stroke: var(--accent);
   filter: drop-shadow(0 0 8px rgba(46, 168, 255, 0.55));
 }
@@ -87,6 +97,15 @@ html[data-deep][data-surfacing] .back-top {
     right: 10px;
     bottom: 18px;
   }
+
+  .back-top-arrow,
+  .back-top-label {
+    display: none;
+  }
+
+  .back-top-stack {
+    display: block;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -96,7 +115,8 @@ html[data-deep][data-surfacing] .back-top {
     transition: opacity 300ms;
   }
 
-  .back-top-arrow {
+  .back-top-arrow,
+  .back-top-stack {
     animation: none;
   }
 }

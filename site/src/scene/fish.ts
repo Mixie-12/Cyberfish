@@ -239,9 +239,17 @@ export class Fish {
   private readonly uniforms: SharedUniforms;
   /** When set, update() places the fish here instead of hovering. */
   private override: { pos: THREE.Vector3; dir: THREE.Vector3 } | null = null;
+  /** The model as loaded, before this fish set it up; copies start from it. */
+  private readonly source: THREE.Object3D;
+  private readonly opts: FishOptions;
 
-  private constructor(model: THREE.Object3D, centre: THREE.Vector3, opts: FishOptions) {
+  private constructor(source: THREE.Object3D, centre: THREE.Vector3, opts: FishOptions) {
     const { reducedMotion } = opts;
+    this.source = source;
+    this.opts = opts;
+    // Geometry and textures stay shared with the source; materials are
+    // cloned per mesh below.
+    const model = source.clone();
     this.centre = centre.clone();
     this.reducedMotion = reducedMotion;
 
@@ -303,6 +311,11 @@ export class Fish {
         (err) => reject(err instanceof Error ? err : new Error(String(err))),
       );
     });
+  }
+
+  /** Another fish from the same model, with its own hover. */
+  copy(centre: THREE.Vector3): Fish {
+    return new Fish(this.source, centre, this.opts);
   }
 
   /**

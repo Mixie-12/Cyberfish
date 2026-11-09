@@ -1,9 +1,8 @@
 /* The deep's copy. Left of the frame in landscape (the unit hangs on the
-   right), top of the frame in portrait (the unit sits low). Two short
-   blocks: a Michroma title (same face as the wordmark) over a mono
-   paragraph. They come up one after the other once the picture has
-   surfaced (html[data-deep]) and sink with everything else on the way
-   back (html[data-surfacing]). */
+   right), top of the frame in portrait (the unit sits low). A Michroma
+   title (same face as the wordmark) over two mono paragraphs. It comes up
+   once the picture has surfaced (html[data-deep]) and sinks with
+   everything else on the way back (html[data-surfacing]). */
 .deep-copy {
   position: fixed;
   z-index: 4;
@@ -12,9 +11,6 @@
   transform: translateY(-50%);
   width: min(640px, 42vw);
   margin: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 42px;
   pointer-events: none;
 }
 
@@ -34,12 +30,8 @@ html[data-deep] .deep-block {
     transform 1200ms cubic-bezier(0.2, 0.8, 0.2, 1) 2000ms;
 }
 
-html[data-deep] .deep-block:nth-child(2) {
-  transition-delay: 2600ms;
-}
-
 /* Back up from a chapter below (html[data-revisit]): the picture is
-   already there, so both blocks come up together, straight away. */
+   already there, so the copy comes up straight away. */
 html[data-deep][data-revisit]:not([data-descending]):not([data-safety]):not([data-surfacing])
   .deep-block {
   transition-delay: 300ms;
@@ -65,6 +57,44 @@ html[data-deep][data-surfacing] .deep-block {
   font: 400 clamp(17px, 1.55vw, 22px) / 1.65 var(--font-mono);
   color: var(--white);
   text-shadow: 0 1px 14px rgba(6, 10, 20, 0.8);
+}
+
+.deep-text + .deep-text {
+  margin-top: 1em;
+}
+
+/* Under the copy: the way to the repository. Clickable only while the
+   deep's copy is on screen. */
+.deep-more {
+  display: inline-block;
+  margin-top: 28px;
+  padding: 16px 28px;
+  border: 1px solid var(--accent);
+  border-radius: 2px;
+  background: rgba(6, 10, 20, 0.35);
+  color: var(--accent);
+  font: 500 16px/1 var(--font-mono);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  text-decoration: none;
+  white-space: nowrap;
+  transition:
+    background 160ms,
+    color 160ms;
+}
+
+html[data-deep]:not([data-descending]):not([data-safety]):not([data-sprint]):not([data-floor]):not(
+    [data-surfacing]
+  )
+  .deep-more {
+  pointer-events: auto;
+}
+
+.deep-more:hover,
+.deep-more:focus-visible {
+  background: rgba(46, 168, 255, 0.14);
+  color: var(--white);
+  outline: none;
 }
 
 /* Callout on the board inside the unit: a dot on the heatsink, a leader
@@ -151,10 +181,7 @@ html[data-surfacing] .callout {
    gone; they return when the visitor comes back up to the deep. */
 html[data-deep][data-descending] .deep-block,
 html[data-deep][data-safety] .deep-block,
-html[data-deep][data-market] .deep-block,
-html[data-deep][data-business] .deep-block,
-html[data-deep][data-gtm] .deep-block,
-html[data-deep][data-team] .deep-block,
+html[data-deep][data-sprint] .deep-block,
 html[data-deep][data-floor] .deep-block {
   opacity: 0;
   transform: none;
@@ -163,10 +190,7 @@ html[data-deep][data-floor] .deep-block {
 
 html[data-deep][data-descending] .callout,
 html[data-deep][data-safety] .callout,
-html[data-deep][data-market] .callout,
-html[data-deep][data-business] .callout,
-html[data-deep][data-gtm] .callout,
-html[data-deep][data-team] .callout,
+html[data-deep][data-sprint] .callout,
 html[data-deep][data-floor] .callout {
   opacity: 0;
 }
@@ -215,10 +239,7 @@ html[data-deep] .descend {
 /* In the chapters reached by a glide it is back sooner: the picture is
    already there. */
 html[data-deep][data-safety] .descend,
-html[data-deep][data-market] .descend,
-html[data-deep][data-business] .descend,
-html[data-deep][data-gtm] .descend,
-html[data-deep][data-team] .descend {
+html[data-deep][data-sprint] .descend {
   transition-delay: 700ms, 700ms, 0ms;
 }
 
@@ -280,7 +301,6 @@ html[data-deep][data-floor] .descend {
     top: calc(var(--frame-inset) + 84px);
     transform: none;
     width: min(640px, calc(100vw - 2 * var(--frame-inset) - 24px));
-    gap: 28px;
   }
 }
 
@@ -294,6 +314,15 @@ html[data-deep][data-floor] .descend {
   .deep-text {
     font-size: 14px;
     line-height: 1.6;
+  }
+
+  .deep-more {
+    padding: 12px 20px;
+    font-size: 12px;
+  }
+
+  .descend-label {
+    display: none;
   }
 }
 

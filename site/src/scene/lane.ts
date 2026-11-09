@@ -2,17 +2,21 @@ import * as THREE from 'three';
 import { Fish } from './fish';
 
 /**
- * The hero fish in the open-water chapters: copy over the water, with the
- * fish far behind it. The fish itself belongs to the scene (it is the one
- * from above the surface); these are its routes and its light. FishLane
- * has it swim across behind the copy; FishPerch has it hold station in an
- * empty corner, the way it does above the surface.
+ * The fish in the open-water chapters: copy over the water, with the fish
+ * far behind it. The fish belong to the scene (the hero from above the
+ * surface and copies of it); these are their routes and their light.
+ * FishLane has one swim across behind the copy; FishPerch has two hold
+ * station in empty corners, the way the hero does above the surface.
  */
 
-/** A fish's route through a chapter: the scene drives whichever it has. */
+/**
+ * A chapter's fish and their route through it. The scene shows the fish
+ * while the route is in the water and drives every route it has.
+ */
 export interface FishRoute {
   readonly root: THREE.Group;
-  update(dt: number, camera: THREE.PerspectiveCamera, fish: Fish): void;
+  readonly fish: readonly Fish[];
+  update(dt: number, camera: THREE.PerspectiveCamera): void;
   dispose(): void;
 }
 
@@ -39,34 +43,50 @@ function disposeLights(root: THREE.Object3D): void {
 
 // ----------------------------------------------------------------- perch
 /**
- * Where the fish holds station: how far behind the lens (sets its size in
- * frame) and where in the frame (NDC, x right, y up), the top right.
+ * Where a fish holds station: how far behind the lens (sets its size in
+ * frame), where in the frame (NDC, x right, y up) and which way its nose
+ * points. The hero fish takes the top right, nose to screen left, turned a
+ * little toward the viewer; the companion the lower left, nose to screen
+ * right, a little farther off.
  */
-const PERCH_DEPTH = 30;
-const PERCH_AT = new THREE.Vector2(0.5, 0.56);
-/** Nose to screen left, turned a little toward the viewer: into the slide. */
-const PERCH_FACING = new THREE.Vector3(-1, 0, 0.42).normalize();
+interface PerchSpot {
+  depth: number;
+  at: THREE.Vector2;
+  facing: THREE.Vector3;
+}
+const HERO_PERCH: PerchSpot = {
+  depth: 30,
+  at: new THREE.Vector2(0.5, 0.56),
+  facing: new THREE.Vector3(-1, 0, 0.42).normalize(),
+};
+const COMPANION_PERCH: PerchSpot = {
+  depth: 36,
+  at: new THREE.Vector2(-0.55, -0.5),
+  facing: Fish.BASE_DIR.clone(),
+};
 const PERCH_SWIM = 0.7;
-
 export class FishPerch implements FishRoute {
   readonly root = new THREE.Group();
-  private readonly spot = new THREE.Vector3();
+  readonly fish: readonly [Fish, Fish];
 
-  constructor() {
-    this.root.add(...fishLights(new THREE.Vector3(0, 0, -PERCH_DEPTH)));
+  constructor(hero: Fish, companion: Fish) {
+    this.root.add(...fishLights(new THREE.Vector3(0, 0, -HERO_PERCH.depth)));
+    this.fish = [hero, companion];
   }
 
-  /** Hold the fish in the corner on its own hover (drift, bob, sway, cursor). */
-  update(_dt: number, camera: THREE.PerspectiveCamera, fish: Fish): void {
-    // The spot on the frame, at the perch's depth, straight ahead of the lens's rest point.
-    const halfHeight = Math.tan(THREE.MathUtils.degToRad(camera.fov) / 2) * PERCH_DEPTH;
-    this.spot.set(
-      halfHeight * camera.aspect * PERCH_AT.x,
-      halfHeight * PERCH_AT.y,
-      -PERCH_DEPTH,
-    );
-    fish.centre.copy(this.spot).add(this.root.position);
-    fish.facing.copy(PERCH_FACING);
+  /** Hold each fish in its corner on its own hover (drift, bob, sway, cursor). */
+  update(_dt: number, camera: THREE.PerspectiveCamera): void {
+    this.place(this.fish[0], HERO_PERCH, camera);
+    this.place(this.fish[1], COMPANION_PERCH, camera);
+  }
+
+  /** Anchor a fish at its spot on the frame, straight ahead of the lens's rest point. */
+  private place(fish: Fish, spot: PerchSpot, camera: THREE.PerspectiveCamera): void {
+    const halfHeight = Math.tan(THREE.MathUtils.degToRad(camera.fov) / 2) * spot.depth;
+    fish.centre
+      .set(halfHeight * camera.aspect * spot.at.x, halfHeight * spot.at.y, -spot.depth)
+      .add(this.root.position);
+    fish.facing.copy(spot.facing);
     fish.swim = PERCH_SWIM;
     fish.steer(null);
   }
@@ -100,6 +120,7 @@ const _target = new THREE.Vector3();
 
 export class FishLane implements FishRoute {
   readonly root = new THREE.Group();
+  readonly fish: readonly [Fish];
 
   /** Which way this crossing goes (+1 screen right, -1 screen left). */
   private dir = -1;
@@ -113,8 +134,9 @@ export class FishLane implements FishRoute {
   private readonly heading = new THREE.Vector3(-1, 0, 0.25).normalize();
   private started = false;
 
-  constructor() {
+  constructor(fish: Fish) {
     this.root.add(...fishLights(new THREE.Vector3(0, LANE_Y, -LANE_DEPTH)));
+    this.fish = [fish];
     this.plan();
   }
 
@@ -129,7 +151,8 @@ export class FishLane implements FishRoute {
    * behind the copy nosing along its own path, goes out the other side,
    * and after a moment comes back the other way. It never stops in frame.
    */
-  update(dt: number, camera: THREE.PerspectiveCamera, fish: Fish): void {
+  update(dt: number, camera: THREE.PerspectiveCamera): void {
+    const [fish] = this.fish;
     const cruise = 1 / CROSSING;
     const halfWidth =
       Math.tan(THREE.MathUtils.degToRad(camera.fov) / 2) * LANE_DEPTH * camera.aspect;

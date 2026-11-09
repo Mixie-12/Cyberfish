@@ -6,7 +6,7 @@ import { Fish, type ProgressCallback } from './fish';
 import { Sky } from './sky';
 import { Ocean, WAVE_CREST } from './ocean';
 import { Deep } from './deep';
-import { Floor } from './floor';
+import { Floor, MARK_WIDTH } from './floor';
 import { loadLogoPoints } from './logo';
 import { FishLane, FishPerch, type FishRoute } from './lane';
 import { Water } from './water';
@@ -21,7 +21,13 @@ import { COLORS, FISH_KEY_DIR, OCEAN, WATER_FOG_FAR, WATER_FOG_NEAR } from './pa
  */
 const CAMERA_POS = new THREE.Vector3(0, 0, 13);
 const CAMERA_CLEARANCE = 2.8;
-const CAMERA_PITCH_UP = THREE.MathUtils.degToRad(4);
+/**
+ * Pitch of the lens (up is positive). Portrait screens stack the tagline
+ * under the fish, so there the lens tips down: the fish rides in the upper
+ * third and the water behind the copy fills the rest.
+ */
+const CAMERA_PITCH_LANDSCAPE = THREE.MathUtils.degToRad(4);
+const CAMERA_PITCH_PORTRAIT = THREE.MathUtils.degToRad(-7);
 /** Lens: 28 degrees vertical in landscape, wider on portrait screens. */
 const FOV_LANDSCAPE = 28;
 const FOV_PORTRAIT = 48;
@@ -99,27 +105,27 @@ const DEEP_LOOK = new THREE.Vector3(0, 0, -10);
  * Between the open-water chapters the lens glides down through the water;
  * the floor is reached through black (it has its own light and ground).
  */
-export type Chapter = 'deep' | 'safety' | 'market' | 'business' | 'gtm' | 'team' | 'floor';
-const CHAPTERS: Chapter[] = ['deep', 'safety', 'market', 'business', 'gtm', 'team', 'floor'];
+export type Chapter = 'deep' | 'safety' | 'sprint' | 'floor';
+const CHAPTERS: Chapter[] = ['deep', 'safety', 'sprint', 'floor'];
 /**
- * The chapters with the hero fish behind the copy, and how it is there:
- * swimming across (lane) or holding station in the empty top right (perch).
+ * The chapters with fish, and how they are there: the hero swimming across
+ * behind the copy (lane), or two copies of it holding station top right and
+ * lower left (perch). Each chapter has its own fish, so on the glide
+ * between two of them both sets are in the water and simply pass through
+ * the frame.
  */
-const FISH_ROUTES: Partial<Record<Chapter, () => FishRoute>> = {
-  safety: () => new FishLane(),
-  market: () => new FishLane(),
-  gtm: () => new FishPerch(),
-  team: () => new FishLane(),
+const FISH_ROUTES: Partial<Record<Chapter, (hero: Fish, perch: readonly [Fish, Fish]) => FishRoute>> = {
+  safety: (hero) => new FishLane(hero),
+  sprint: (_hero, [top, low]) => new FishPerch(top, low),
 };
 const LEVEL_DROP = 16;
 const GLIDE_TIME = 2.0;
 /** To and from the floor: a quick dip through black, and the floor comes up out of it. */
 const CHAPTER_FADE_OUT = 0.7;
 const CHAPTER_FADE_IN = 1.6;
-/** Particles in the floor's mark, and how wide it hangs (world units). */
+/** Particles in the floor's mark. */
 const MARK_POINTS = 21000;
 const MARK_POINTS_MOBILE = 8000;
-const MARK_WIDTH = 5.2;
 /** Back to the top: the deep goes dark, then the sea returns out of black. */
 const SURFACE_FADE_OUT = 1.2;
 const SURFACE_FADE_IN = 2.6;
@@ -203,6 +209,8 @@ export class CyberScene {
   readonly sky: Sky;
   readonly ocean: Ocean;
   fish: Fish | null = null;
+  /** Copies of the hero for the perch; hidden until its route is in the water. */
+  private perchFish: [Fish, Fish] | null = null;
 
   private readonly container: HTMLElement;
   private readonly opts: SceneOptions;
@@ -210,8 +218,10 @@ export class CyberScene {
   private time = 0;
   private running = false;
   private raf = 0;
-  /** Camera aim: straight ahead, pitched up by CAMERA_PITCH_UP. Re-based per frame. */
+  /** Camera aim: straight ahead, pitched by `pitch`. Re-based per frame. */
   private readonly lookTarget = new THREE.Vector3();
+  /** Radians, set with the lens on resize. */
+  private pitch = CAMERA_PITCH_LANDSCAPE;
   /** Smoothed camera height above the rest plane. */
   private cameraY = WAVE_CREST + CAMERA_CLEARANCE;
   /** Pointer position in -1..1, and its damped copy used by the camera. */
@@ -225,9 +235,8 @@ export class CyberScene {
   /** The water shared by every chapter below, and the chapters' own content. */
   private water: Water | null = null;
   deep: Deep | null = null;
-  /** The hero fish's route, in the chapters that have it (FISH_ROUTES), and which one. */
-  lane: FishRoute | null = null;
-  private laneChapter: Chapter | null = null;
+  /** The fish routes of the chapters in the water (FISH_ROUTES): one, or two on a glide. */
+  private readonly routes = new Map<Chapter, FishRoute>();
   floor: Floor | null = null;
   /** Seconds since the current chapter's hand-off, and the lens's rest point below. */
   private deepT = 0;
@@ -376,6 +385,12 @@ export class CyberScene {
 
     // Settle the heading before the first visible frame.
     fish.update(this.time, 1 / 60, this.pointer);
+
+    this.perchFish = [fish.copy(this.focus), fish.copy(this.focus)];
+    for (const copy of this.perchFish) {
+      copy.root.visible = false;
+      this.scene.add(copy.root);
+    }
   }
 
   start(): void {
@@ -501,7 +516,7 @@ export class CyberScene {
     this.post.dispose();
     this.ocean.dispose();
     this.deep?.dispose();
-    this.lane?.dispose();
+    for (const route of this.routes.values()) route.dispose();
     this.floor?.dispose();
     this.water?.dispose();
     this.renderer.dispose();
@@ -526,9 +541,11 @@ export class CyberScene {
     const h = this.container.clientHeight || window.innerHeight;
     this.renderer.setSize(w, h, false);
     this.camera.aspect = w / h;
-    // Long lens in landscape; wider on narrow screens so the fish and some
-    // water both stay in frame.
-    this.camera.fov = w < h ? FOV_PORTRAIT : FOV_LANDSCAPE;
+    // Long lens in landscape; wider and tipped down on narrow screens so the
+    // fish stays in frame above the tagline.
+    const portrait = w < h;
+    this.camera.fov = portrait ? FOV_PORTRAIT : FOV_LANDSCAPE;
+    this.pitch = portrait ? CAMERA_PITCH_PORTRAIT : CAMERA_PITCH_LANDSCAPE;
     this.camera.updateProjectionMatrix();
     this.post?.setSize(w, h);
   };
@@ -753,12 +770,8 @@ export class CyberScene {
         if (this.deep === deep) deep.reveal();
       });
     } else if (FISH_ROUTES[chapter]) {
-      // Copy over the water, with the hero fish back in the picture far
-      // behind the words, lit like the unit. There is one fish: when two of
-      // these chapters are adjacent, the glide between them keeps the fish
-      // on the route it is on, and the new one is laid on arrival (see
-      // arrive()).
-      if (!this.lane) this.addLane(chapter);
+      // Copy over the water, with fish far behind the words, lit like the unit.
+      this.addRoute(chapter);
     } else if (chapter === 'floor') {
       const floor = new Floor({
         mobile: this.opts.mobile,
@@ -780,31 +793,27 @@ export class CyberScene {
         });
       }
     }
-    // 'business' is copy over the water alone.
   }
 
-  /** Lay the fish's route for a chapter and put the fish on it, at its start. */
-  private addLane(chapter: Chapter): void {
+  /** Lay a chapter's fish route and put its fish on it, at its start. */
+  private addRoute(chapter: Chapter): void {
     const make = FISH_ROUTES[chapter];
-    if (!make) return;
-    const lane = make();
-    this.rootFor(chapter, lane.root);
-    this.scene.add(lane.root);
-    this.lane = lane;
-    this.laneChapter = chapter;
-    if (this.fish) {
-      lane.update(1 / 60, this.camera, this.fish);
-      this.fish.update(this.time, 1 / 60, this.pointer);
-      this.fish.root.visible = true;
-      for (const { light, intensity } of this.fishLights) light.intensity = intensity;
+    if (!make || !this.fish || !this.perchFish) return;
+    const route = make(this.fish, this.perchFish);
+    this.rootFor(chapter, route.root);
+    this.scene.add(route.root);
+    this.routes.set(chapter, route);
+    route.update(1 / 60, this.camera);
+    for (const fish of route.fish) {
+      fish.update(this.time, 1 / 60, this.pointer);
+      fish.root.visible = true;
     }
+    for (const { light, intensity } of this.fishLights) light.intensity = intensity;
   }
 
   /** The chapter is now the current one: settle the water for it. */
   private arrive(chapter: Chapter): void {
     this.chapter = chapter;
-    // After a glide from another fish chapter (its route went with leave()).
-    if (FISH_ROUTES[chapter] && !this.lane) this.addLane(chapter);
     if (this.water) {
       // The floor brings its own light; above it the shafts stop at the unit.
       this.water.root.visible = chapter !== 'floor';
@@ -814,21 +823,21 @@ export class CyberScene {
 
   private leave(chapter: Chapter): void {
     if (chapter === 'deep' && this.deep) this.removeDeep(this.deep);
-    if (chapter === this.laneChapter && this.lane) this.removeLane(this.lane);
+    const route = this.routes.get(chapter);
+    if (route) this.removeRoute(chapter, route);
     if (chapter === 'floor' && this.floor) this.removeFloor(this.floor);
   }
 
-  private removeLane(lane: FishRoute): void {
-    this.scene.remove(lane.root);
-    lane.dispose();
-    this.lane = null;
-    this.laneChapter = null;
-    if (this.fish) {
-      // Back to how it hovers above the surface (surfacing re-anchors it).
-      this.fish.steer(null);
-      this.fish.facing.copy(Fish.BASE_DIR);
-      this.fish.swim = 1;
-      this.fish.root.visible = false;
+  private removeRoute(chapter: Chapter, route: FishRoute): void {
+    this.scene.remove(route.root);
+    route.dispose();
+    this.routes.delete(chapter);
+    for (const fish of route.fish) {
+      // Back to how it hovers above the surface (surfacing re-anchors the hero).
+      fish.steer(null);
+      fish.facing.copy(Fish.BASE_DIR);
+      fish.swim = 1;
+      fish.root.visible = false;
     }
   }
 
@@ -940,9 +949,17 @@ export class CyberScene {
     this.camera.updateMatrixWorld();
 
     this.water?.update(this.time, base, descent, this.levelOf('floor'));
-    if (this.lane && this.laneChapter && this.fish) {
-      this.lane.update(dt, this.camera, this.fish);
-      this.fish.update(this.time, dt, this.pointer);
+    // The fish travel through the frame with the glide by the same share of
+    // it on any lens: on the wider portrait lens they move further than the
+    // camera, so they are out of frame by the time their chapter goes.
+    const travel =
+      Math.tan(THREE.MathUtils.degToRad(this.camera.fov) / 2) /
+      Math.tan(THREE.MathUtils.degToRad(FOV_LANDSCAPE) / 2);
+    for (const [chapter, route] of this.routes) {
+      const level = this.levelOf(chapter);
+      route.root.position.y = base.y - level + (descent - level) * (travel - 1);
+      route.update(dt, this.camera);
+      for (const fish of route.fish) fish.update(this.time, dt, this.pointer);
     }
     if (deep) {
       deep.update(this.time, dt, this.deepT, this.camera.aspect);
@@ -1073,11 +1090,11 @@ export class CyberScene {
     this.post.setDive({ time: 0, wobble: 0, flash: 0, deep: 1, dark: 1 });
   }
 
-  /** Look straight ahead from the current height, pitched up by CAMERA_PITCH_UP. */
+  /** Look straight ahead from the current height, pitched by `pitch`. */
   private aimCamera(): void {
     this.lookTarget.set(
       CAMERA_POS.x,
-      this.camera.position.y + CAMERA_POS.z * Math.tan(CAMERA_PITCH_UP),
+      this.camera.position.y + CAMERA_POS.z * Math.tan(this.pitch),
       0,
     );
     this.camera.lookAt(this.lookTarget);

@@ -258,19 +258,17 @@
     <!-- The deep: copy on the left, and a callout naming the board inside the unit. -->
     <section class="deep-copy" aria-label="About DeKoi">
       <div class="deep-block">
-        <h2 class="deep-title">Why now?</h2>
+        <h2 class="deep-title">What is a DeKoi?</h2>
         <p class="deep-text">
-          NSM raised Norway’s cyber risk level to high in October 2026, after successful cyber
-          attacks tripled and AI made weaknesses faster to exploit.
+          Successful cyber attacks are increasing due to AI making weaknesses faster to exploit.
         </p>
-      </div>
-      <div class="deep-block">
-        <h2 class="deep-title">How does it work?</h2>
         <p class="deep-text">
-          DeKoi acts as bait for a bad actor trying to access your network. A decoy with
-          information that looks valuable, but isn’t. When someone touches it, you know
-          immediately, and can protect your network.
+          A DeKoi uses a Raspberry Pi to pose as a decoy for intruders on your network. The
+          application sends a notification to your phone if someone touches the honeypot.
         </p>
+        <a class="deep-more" href="https://github.com/Mixie-12/Cyberfish" target="_blank" rel="noopener noreferrer">
+          Click to learn more
+        </a>
       </div>
     </section>
     <div class="callout" id="callout" aria-hidden="true">
@@ -322,186 +320,36 @@
         </li>
       </ul>
     </section>
-    <!-- Below the safety chapter: where DeKoi sits against the competition. -->
-    <section class="market-copy" aria-labelledby="market-title">
-      <h2 class="market-title" id="market-title">DeKoi vs competitors: the empty corner</h2>
-      <div class="market-body">
-        <figure class="market-chart" aria-label="Chart of network decoys by price and ease of setup">
-          <svg viewBox="0 0 560 340" aria-hidden="true">
-            <defs>
-              <filter id="market-glow" x="-50%" y="-50%" width="200%" height="200%">
-                <feGaussianBlur stdDeviation="3" result="b" />
-                <feMerge>
-                  <feMergeNode in="b" />
-                  <feMergeNode in="SourceGraphic" />
-                </feMerge>
-              </filter>
-              <filter id="market-glow-hot" x="-100%" y="-100%" width="300%" height="300%">
-                <feGaussianBlur stdDeviation="6" result="b" />
-                <feMerge>
-                  <feMergeNode in="b" />
-                  <feMergeNode in="b" />
-                  <feMergeNode in="SourceGraphic" />
-                </feMerge>
-              </filter>
-            </defs>
-            <!-- Axes: up is easier to set up, right is lower price. -->
-            <g class="market-axes">
-              <path class="market-axis" d="M40 300 H536" pathLength="1" />
-              <path class="market-axis" d="M40 300 V34" pathLength="1" />
-              <path class="market-arrow" d="M531 295 L536 300 L531 305" />
-              <path class="market-arrow" d="M35 39 L40 34 L45 39" />
-            </g>
-            <text class="market-axis-label" x="52" y="46">Easier to set up</text>
-            <text class="market-axis-label market-axis-label-end" x="536" y="326">
-              Lower price
-            </text>
-            <!-- Competitors, then DeKoi in the empty top right. Prices in
-                 both currencies; DeKoi's is still to be decided. -->
-            <g class="market-point" style="--i: 0">
-              <circle class="market-dot" cx="80" cy="106" r="6" />
-              <text class="market-name" x="96" y="98">Thinkst Canary</text>
-              <text class="market-note" x="96" y="116">≈ 80,000 kr / €6,800 a year</text>
-            </g>
-            <g class="market-point" style="--i: 1">
-              <circle class="market-dot" cx="260" cy="152" r="6" />
-              <text class="market-name" x="276" y="144">Trapster</text>
-              <text class="market-note" x="276" y="162">from 35,000 kr / €3,000 a year</text>
-            </g>
-            <g class="market-point" style="--i: 2">
-              <circle class="market-dot" cx="505" cy="278" r="6" />
-              <text class="market-name market-text-end" x="489" y="270">OpenCanary</text>
-              <text class="market-note market-text-end" x="489" y="288">free, but DIY setup</text>
-            </g>
-            <g class="market-point market-point-us" style="--i: 3">
-              <circle class="market-halo" cx="450" cy="52" r="14" />
-              <circle class="market-dot" cx="450" cy="52" r="8" />
-              <text class="market-name market-text-end" x="430" y="36">DeKoi</text>
-              <text class="market-note market-text-end" x="430" y="54">
-                from 2,100 kr / €190 a year
-              </text>
-              <text class="market-note market-text-end" x="430" y="72">plug in and go</text>
-            </g>
-          </svg>
-        </figure>
-        <div class="market-aside">
-          <p class="market-lead">Until now, network decoys were tools for security teams.</p>
-          <p class="market-text">
-            DeKoi is built from the ground up for everyone else: plug it in, and it tells you in
-            plain language when someone is inside.
-          </p>
-        </div>
-      </div>
+    <!-- Below the safety chapter: where DeKoi was made, and the way to the app. -->
+    <section class="sprint-copy" aria-label="Where DeKoi was made">
+      <p class="sprint-text">DeKoi was made during the Oslo Sprint 2026 Hackathon by team CyberFish.</p>
+      <a class="get" href="/download/">Get the app</a>
     </section>
-    <!-- Below the market chapter: what it costs, what it earns, how big the pond is. -->
-    <section class="business-copy" aria-labelledby="business-title">
-      <h2 class="business-title" id="business-title">Business model and market size</h2>
-      <div class="business-body">
-        <div class="business-offers">
-          <article class="business-card" style="--i: 0">
-            <p class="business-kicker">B2B · Small offices</p>
-            <p class="business-figure">1,500 NOK + 200 NOK/mo</p>
-            <p class="business-note">≈ €135 + €18/mo · via local IT partners</p>
-          </article>
-          <article class="business-card" style="--i: 1">
-            <p class="business-kicker">B2C · Homes</p>
-            <p class="business-figure">1,500 NOK + 50 NOK/mo</p>
-            <p class="business-note">≈ €135 + €4.50/mo · sold online</p>
-          </article>
-          <p class="business-margin" style="--i: 2">
-            ≈ 60% margin on subscriptions, after partner share and support
-          </p>
-        </div>
-        <article class="business-card business-card-market" style="--i: 2">
-          <div class="business-market">
-            <p class="business-kicker business-kicker-accent">TAM · Europe</p>
-            <p class="business-figure business-figure-big">≈ 82 bn NOK a year</p>
-            <p class="business-note">≈ €7.4 bn · 34 million SMEs × 2,400 NOK a year</p>
-            <p class="business-note business-note-threat">
-              AI has made attacks cheap to run at scale. Small offices are no longer too small to
-              target.
-            </p>
-          </div>
-          <div class="business-market">
-            <p class="business-kicker">Starting point · Norway</p>
-            <p class="business-figure">≈ 500 M NOK a year</p>
-            <p class="business-note">≈ €45 M · 207,800 workplaces with employees</p>
-          </div>
-        </article>
-      </div>
-      <p class="business-foot">€1 ≈ 11 NOK · Projections, ex. VAT</p>
-    </section>
-    <!-- Below that: how it reaches people. -->
-    <section class="gtm-copy" aria-labelledby="gtm-title">
-      <h2 class="gtm-title" id="gtm-title">Go-to-market: growing through partners, Norway first</h2>
-      <div class="gtm-body">
-        <article class="gtm-card" style="--i: 0">
-          <h3 class="gtm-card-title">Partnerships</h3>
-          <p class="gtm-text">
-            Local IT partners sell DeKoi, install it and answer the alarm, and earn a share of
-            every subscription.
-          </p>
-          <p class="gtm-text gtm-text-soft">
-            Our first users: pilots in our own network and our first partners’ customers.
-          </p>
-        </article>
-        <article class="gtm-card" style="--i: 1">
-          <h3 class="gtm-card-title">Advertising</h3>
-          <p class="gtm-text">
-            Our live demo: at business events, people watch an AI hacking bot take the bait.
-          </p>
-          <p class="gtm-text gtm-text-soft">
-            Shared as short videos with our fish as the mascot, and sent out by our IT partners.
-          </p>
-        </article>
-      </div>
-      <p class="gtm-line">
-        Once a beachhead market is won over, CyberFish could scale to
-        <span class="gtm-accent">the Nordics, then Europe, and beyond.</span> Same box, same
-        IT-partner model.
-      </p>
-    </section>
-    <!-- Below the market chapters: the two of us. -->
-    <section class="team-copy" aria-labelledby="team-title">
-      <h2 class="team-title" id="team-title">The CyberFish Team</h2>
-      <ul class="team-list">
-        <li class="team-member">
-          <h3 class="team-name">Magnus Simensen</h3>
-          <p class="team-bio">
-            Cybersecurity specialist, full-stack developer and general IT enthusiast. Will
-            probably talk to you about Linux.
-          </p>
-        </li>
-        <li class="team-member">
-          <h3 class="team-name">Maja Walnik</h3>
-          <p class="team-bio">
-            Writing my Masters in Innovation &amp; Entrepreneurship here at BI. Background in
-            biomedicine. Jack of all trades. I like making stuff.
-          </p>
-        </li>
-      </ul>
-    </section>
-    <!-- The floor: the mark in particles, and the last word. -->
-    <section class="floor-copy" aria-label="Questions">
-      <h2 class="floor-title">Questions?</h2>
+    <!-- The floor: the mark in particles, and the way to the app. -->
+    <section class="floor-copy" aria-labelledby="floor-title">
+      <h2 class="floor-title" id="floor-title">CyberFish</h2>
+      <p class="floor-tagline">Making complex cybersecurity simple</p>
       <a class="get" href="/download/">Get the app</a>
     </section>
     <!-- Rewind: one chapter up, top centre of the chapters below the deep. -->
-    <button class="rewind" id="rewind" type="button">
+    <button class="rewind" id="rewind" type="button" aria-label="Back">
       <svg class="rewind-arrow" viewBox="0 0 24 24" aria-hidden="true">
         <path d="M4 15.5 12 7.5 20 15.5" />
       </svg>
       <span class="rewind-label">Back</span>
     </button>
-    <button class="descend" id="descend" type="button">
+    <button class="descend" id="descend" type="button" aria-label="Continue">
       <span class="descend-label">Continue</span>
       <svg class="descend-arrow" viewBox="0 0 24 24" aria-hidden="true">
         <path d="M4 8.5 12 16.5 20 8.5" />
       </svg>
     </button>
-    <button class="back-top" id="back-top" type="button">
+    <button class="back-top" id="back-top" type="button" aria-label="Back to top">
       <svg class="back-top-arrow" viewBox="0 0 24 24" aria-hidden="true">
         <path d="M4 15.5 12 7.5 20 15.5" />
+      </svg>
+      <svg class="back-top-stack" viewBox="0 0 24 30" aria-hidden="true">
+        <path d="M4 9 12 3 20 9M4 15 12 9 20 15M4 21 12 15 20 21M4 27 12 21 20 27" />
       </svg>
       <span class="back-top-label">Back to top</span>
     </button>

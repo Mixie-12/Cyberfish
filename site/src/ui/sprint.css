@@ -1,0 +1,105 @@
+/* The sprint chapter, one level below the safety chapter: one Michroma
+   line in the middle of the water, with the hero fish top right and its
+   companion lower left, and the floor's outlined way to the app under it.
+   The line comes up once the glide has settled (html[data-sprint]), the
+   button a beat later; both go when the visitor moves on. */
+.sprint-copy {
+  position: fixed;
+  z-index: 4;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: min(820px, 72vw);
+  margin: 0;
+  text-align: center;
+  pointer-events: none;
+}
+
+.sprint-text {
+  margin: 0 0 36px;
+  font: 400 clamp(22px, 2.35vw, 38px) / 1.35 var(--font-display);
+  letter-spacing: 0.02em;
+  text-wrap: balance;
+  color: var(--white);
+  text-shadow: 0 0 22px rgba(46, 168, 255, 0.25);
+}
+
+.sprint-copy .get {
+  display: inline-block;
+  padding: 16px 28px;
+  border: 1px solid var(--accent);
+  border-radius: 2px;
+  background: rgba(6, 10, 20, 0.35);
+  color: var(--accent);
+  font: 500 16px/1 var(--font-mono);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.sprint-copy .get:hover,
+.sprint-copy .get:focus-visible {
+  background: rgba(46, 168, 255, 0.14);
+  color: var(--white);
+  outline: none;
+}
+
+/* Reveal. */
+.sprint-text,
+.sprint-copy .get {
+  opacity: 0;
+  transform: translateY(14px);
+  transition:
+    opacity 500ms ease,
+    transform 500ms ease,
+    background 160ms,
+    color 160ms;
+}
+
+html[data-sprint] .sprint-text,
+html[data-sprint] .sprint-copy .get {
+  opacity: 1;
+  transform: none;
+  transition:
+    opacity 800ms ease 150ms,
+    transform 800ms cubic-bezier(0.2, 0.8, 0.2, 1) 150ms,
+    background 160ms,
+    color 160ms;
+}
+
+html[data-sprint] .sprint-copy .get {
+  pointer-events: auto;
+  transition-delay: 600ms, 600ms, 0ms, 0ms;
+}
+
+/* Leaving: everything sinks together, no stagger. */
+html[data-sprint][data-descending] .sprint-text,
+html[data-sprint][data-ascending] .sprint-text,
+html[data-sprint][data-surfacing] .sprint-text,
+html[data-sprint][data-descending] .sprint-copy .get,
+html[data-sprint][data-ascending] .sprint-copy .get,
+html[data-sprint][data-surfacing] .sprint-copy .get {
+  opacity: 0;
+  pointer-events: none;
+  transform: none;
+  transition: opacity 500ms ease;
+}
+
+@media (max-width: 480px) {
+  .sprint-copy {
+    width: calc(100vw - 32px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sprint-text,
+  .sprint-copy .get,
+  html[data-sprint] .sprint-text,
+  html[data-sprint] .sprint-copy .get {
+    transform: none;
+    transition:
+      opacity 300ms,
+      background 160ms,
+      color 160ms;
+  }
+}

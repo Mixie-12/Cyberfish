@@ -141,10 +141,7 @@ html[data-safety][data-surfacing] .safety-item {
 }
 
 html[data-safety] .rewind,
-html[data-market] .rewind,
-html[data-business] .rewind,
-html[data-gtm] .rewind,
-html[data-team] .rewind {
+html[data-sprint] .rewind {
   opacity: 1;
   pointer-events: auto;
   transform: translate(-50%, 0);
@@ -157,18 +154,9 @@ html[data-team] .rewind {
 html[data-safety][data-descending] .rewind,
 html[data-safety][data-ascending] .rewind,
 html[data-safety][data-surfacing] .rewind,
-html[data-market][data-descending] .rewind,
-html[data-market][data-ascending] .rewind,
-html[data-market][data-surfacing] .rewind,
-html[data-business][data-descending] .rewind,
-html[data-business][data-ascending] .rewind,
-html[data-business][data-surfacing] .rewind,
-html[data-gtm][data-descending] .rewind,
-html[data-gtm][data-ascending] .rewind,
-html[data-gtm][data-surfacing] .rewind,
-html[data-team][data-descending] .rewind,
-html[data-team][data-ascending] .rewind,
-html[data-team][data-surfacing] .rewind {
+html[data-sprint][data-descending] .rewind,
+html[data-sprint][data-ascending] .rewind,
+html[data-sprint][data-surfacing] .rewind {
   opacity: 0;
   pointer-events: none;
   transition: opacity 500ms ease;
@@ -234,6 +222,16 @@ html[data-team][data-surfacing] .rewind {
     font-size: 14px;
     gap: 14px;
   }
+
+  /* Arrow only, and clear of the nav row (nav.css): the wordmark crosses
+     the middle of the frame at this width. */
+  .rewind {
+    top: 76px;
+  }
+
+  .rewind-label {
+    display: none;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -247,10 +245,7 @@ html[data-team][data-surfacing] .rewind {
 
   .rewind,
   html[data-safety] .rewind,
-  html[data-market] .rewind,
-  html[data-business] .rewind,
-  html[data-gtm] .rewind,
-  html[data-team] .rewind {
+  html[data-sprint] .rewind {
     transform: translate(-50%, 0);
     transition: opacity 300ms;
   }

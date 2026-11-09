@@ -53,12 +53,12 @@ html[data-entered] .hero {
 .hero .get {
   display: inline-block;
   margin-top: 28px;
-  padding: 10px 16px;
+  padding: 16px 28px;
   border: 1px solid var(--accent);
   border-radius: 2px;
   background: rgba(6, 10, 20, 0.35);
   color: var(--accent);
-  font: 500 12px/1 var(--font-mono);
+  font: 500 16px/1 var(--font-mono);
   letter-spacing: 0.14em;
   text-transform: uppercase;
   white-space: nowrap;
@@ -103,6 +103,11 @@ html[data-entered]:not([data-diving]) .hero .get {
   .hero-lead,
   .hero-sub {
     font-size: 17px;
+  }
+
+  .hero .get {
+    padding: 10px 16px;
+    font-size: 12px;
   }
 }
 

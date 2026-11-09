@@ -52,9 +52,24 @@ const MOTE_HALF_HEIGHT = 12;
  */
 const DEVICE_DISTANCE = 6;
 const DEVICE_SCALE = 8.6;
-/** Sits a little low: the lid lifts up and toward the lens when it opens. */
-const DEVICE_POS_LANDSCAPE = new THREE.Vector3(1.3, -0.3, -DEVICE_DISTANCE);
-const DEVICE_POS_PORTRAIT = new THREE.Vector3(0, -0.65, -DEVICE_DISTANCE);
+/**
+ * Sits a little low: the lid lifts up and toward the lens when it opens.
+ * In portrait the copy above is fixed in pixels while the unit scales with
+ * the frame height, so on a short phone the unit is smaller and lower to
+ * fit, with its callout, between the copy and "Continue".
+ */
+interface DevicePose {
+  at: THREE.Vector3;
+  scale: number;
+}
+const DEVICE_POSE_LANDSCAPE: DevicePose = {
+  at: new THREE.Vector3(1.3, -0.3, -DEVICE_DISTANCE),
+  scale: 1,
+};
+const DEVICE_POSE_PORTRAIT: DevicePose = {
+  at: new THREE.Vector3(0, -0.95, -DEVICE_DISTANCE),
+  scale: 0.8,
+};
 /**
  * The GLB's emissives are set for a bloom threshold around 1.0 with a small
  * radius; ours is wide and strong, so cap them here or the mark smears into
@@ -96,15 +111,15 @@ export class Deep {
     // these are for the unit alone: a cool key from above on the lens
     // side, a blue rim from behind, and a faint fill so the black case has
     // some form in its shadows.
-    this.drift.position.copy(DEVICE_POS_LANDSCAPE);
+    this.drift.position.copy(DEVICE_POSE_LANDSCAPE.at);
     this.tilt.rotation.x = DEVICE_TILT;
     this.drift.add(this.tilt);
     this.root.add(this.drift);
     const key = new THREE.DirectionalLight('#dbe8ff', 1.0);
-    key.position.set(3, 7, 4).add(DEVICE_POS_LANDSCAPE);
+    key.position.set(3, 7, 4).add(DEVICE_POSE_LANDSCAPE.at);
     key.target = this.drift;
     const rim = new THREE.DirectionalLight('#2ea8ff', 2.0);
-    rim.position.set(-4, 2, -8).add(DEVICE_POS_LANDSCAPE);
+    rim.position.set(-4, 2, -8).add(DEVICE_POSE_LANDSCAPE.at);
     rim.target = this.drift;
     const fill = new THREE.HemisphereLight('#3b5a9a', '#02050c', 0.4);
     this.root.add(key, rim, fill);
@@ -208,8 +223,9 @@ export class Deep {
    */
   update(time: number, dt: number, since: number, aspect: number): void {
     // The unit floats: a slow bob and the gentlest roll and nod.
-    const at = aspect < 1 ? DEVICE_POS_PORTRAIT : DEVICE_POS_LANDSCAPE;
+    const { at, scale } = aspect < 1 ? DEVICE_POSE_PORTRAIT : DEVICE_POSE_LANDSCAPE;
     this.drift.position.set(at.x, at.y + Math.sin(time * 0.45) * 0.07, at.z);
+    this.drift.scale.setScalar(scale);
     this.drift.rotation.z = Math.sin(time * 0.31) * 0.05;
     this.drift.rotation.x = Math.sin(time * 0.23 + 1.7) * 0.035;
 
