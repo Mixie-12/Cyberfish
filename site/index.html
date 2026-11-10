@@ -183,27 +183,6 @@
         cursor: default;
         opacity: 0.6;
       }
-      /* There from the first frame: a visitor who came for the app does not
-         wait for the scene. */
-      #loader .get {
-        position: absolute;
-        left: 50%;
-        bottom: max(28px, env(safe-area-inset-bottom));
-        transform: translateX(-50%);
-        padding: 12px;
-        color: #2ea8ff;
-        font: 500 12px/1 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
-        letter-spacing: 0.14em;
-        text-transform: uppercase;
-        text-decoration: underline;
-        text-underline-offset: 6px;
-        white-space: nowrap;
-      }
-      #loader .get:hover,
-      #loader .get:focus-visible {
-        color: #f2f4fa;
-        outline: none;
-      }
       @media (prefers-reduced-motion: reduce) {
         #loader.ready #mark {
           transform: none;
@@ -399,7 +378,6 @@
           <button class="btn quiet" id="enter-mute" type="button">Enter without sound</button>
         </div>
       </div>
-      <a class="get" href="/download/">Download the app</a>
     </div>
     <script type="module" src="/src/main.ts"></script>
   </body>

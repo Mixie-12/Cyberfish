@@ -27,8 +27,10 @@ makes public by hand; GitHub Pages needs neither.
   repository above; its Blender sources and screenshots stay there) and a
   download page, `site/download/`, with no script: one button for the
   APK, three install steps, DeKoi Setup for Windows, and hashes under
-  "Technical details". The loading screen, the hero and the sea floor
-  link to it, so a visitor never waits for the scene to get the app.
+  "Technical details". The hero, the sprint and the sea floor link to
+  it. The loading screen did too until 2026-11-10; the owner removed
+  that link so visitors see the scene before the download. Anyone can
+  still open `/download/` directly, and the QR code leads there.
 - `site.yml` builds it with Vite and publishes it with GitHub Pages: on a
   push to `site/`, and from `app-release.yml` and `clients.yml` once a
   release has its files. It takes the newest release with both the APK and
