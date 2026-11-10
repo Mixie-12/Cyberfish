@@ -114,6 +114,266 @@
         </p>
       </section>
 
+      <section class="in-app" aria-labelledby="in-app-title">
+        <h2 id="in-app-title">Inside the app</h2>
+        <p>
+          Once your DeKoi is plugged in, the app shows how your network is doing in plain words.
+          Quiet days stay quiet. When something touches the decoy, you get an alert with clear
+          steps.
+        </p>
+        <svg class="phone-icons" aria-hidden="true" focusable="false">
+          <symbol id="p-home" viewBox="0 0 24 24">
+            <path d="M4 11.5 12 4.5l8 7V20h-5.5v-5h-5v5H4z" />
+          </symbol>
+          <symbol id="p-bell" viewBox="0 0 24 24">
+            <path d="M6 16v-6a6 6 0 0 1 12 0v6l2 2.2H4z" />
+            <path d="M10 20.8h4" />
+          </symbol>
+          <symbol id="p-lan" viewBox="0 0 24 24">
+            <rect x="9" y="3" width="6" height="5" rx="1" />
+            <rect x="3" y="16" width="6" height="5" rx="1" />
+            <rect x="15" y="16" width="6" height="5" rx="1" />
+            <path d="M12 8v4M6 16v-2.5h12V16M12 12v2" />
+          </symbol>
+          <symbol id="p-gear" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="3.2" />
+            <path
+              d="M12 3.5v2.3M12 18.2v2.3M3.5 12h2.3M18.2 12h2.3M6 6l1.7 1.7M16.3 16.3 18 18M18 6l-1.7 1.7M7.7 16.3 6 18"
+            />
+          </symbol>
+          <symbol id="p-shield" viewBox="0 0 24 24">
+            <path d="M12 2.6 5 5.8v4.8c0 4.5 3 8.6 7 9.6 4-1 7-5.1 7-9.6V5.8L12 2.6z" />
+          </symbol>
+          <symbol id="p-laptop" viewBox="0 0 24 24">
+            <rect x="4.5" y="5" width="15" height="10" rx="1.2" />
+            <path d="M2.5 18.5h19" />
+          </symbol>
+          <symbol id="p-error" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="8.6" />
+            <path d="M12 7.4v5.4M12 15.8v.9" />
+          </symbol>
+          <symbol id="p-check" viewBox="0 0 24 24">
+            <path d="M5.5 12.8 10 17.2 18.5 7.8" />
+          </symbol>
+          <symbol id="p-check-circle" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="8.6" />
+            <path d="M8 12.4 11 15.4 16.2 9.4" />
+          </symbol>
+          <symbol id="p-back" viewBox="0 0 24 24">
+            <path d="M14.5 5.5 8 12l6.5 6.5" />
+          </symbol>
+        </svg>
+        <div class="phones" role="list">
+          <figure class="phone" role="listitem">
+            <div class="phone-shell" aria-hidden="true">
+              <div class="phone-bezel">
+                <div class="droid-bar">
+                  <span>15:13</span>
+                  <span class="droid-cam"></span>
+                  <span class="droid-status"><i class="droid-wifi"></i><i class="droid-batt"></i></span>
+                </div>
+                <div class="phone-screen">
+                  <p class="screen-title">DeKoi</p>
+                  <p class="hud-label"><span>01</span> / Status</p>
+                  <div class="status-hero">
+                    <div class="status-ring">
+                      <svg viewBox="0 0 96 96">
+                        <circle class="ring-track" cx="48" cy="48" r="43" />
+                        <circle class="ring-arc" cx="48" cy="48" r="43" />
+                      </svg>
+                      <svg class="ring-shield" viewBox="0 0 24 24"><use href="#p-shield" /></svg>
+                    </div>
+                    <p class="status-title">All clear</p>
+                    <p class="app-body">Nothing unusual in the last 24 hours.</p>
+                  </div>
+                  <p class="hud-label"><span>02</span> / At a glance</p>
+                  <div class="tile-grid">
+                    <div class="tile">
+                      <span class="tile-label">Devices on your network</span>
+                      <span class="tile-value">18</span>
+                      <span class="tile-detail">3 new this week</span>
+                    </div>
+                    <div class="tile">
+                      <span class="tile-label">Alerts in 7 days</span>
+                      <span class="tile-value">2</span>
+                      <svg class="tile-spark" viewBox="0 0 60 16" preserveAspectRatio="none">
+                        <polyline class="spark-line" points="1,13 11,11 21,14 31,8 41,12 51,4 59,9" />
+                      </svg>
+                    </div>
+                    <div class="tile">
+                      <span class="tile-label">Your DeKoi</span>
+                      <span class="tile-value small"><i class="dot-on"></i>Online</span>
+                      <span class="tile-detail">Checked in 1 min ago</span>
+                    </div>
+                    <div class="tile">
+                      <span class="tile-label">What DeKoi watches</span>
+                      <span class="tile-value small">
+                        <svg class="tile-check" viewBox="0 0 24 24"><use href="#p-check-circle" /></svg>
+                        All 8 checks on
+                      </span>
+                    </div>
+                  </div>
+                  <nav class="tab-bar">
+                    <span class="tab on">
+                      <svg viewBox="0 0 24 24" class="fill"><use href="#p-home" /></svg>
+                      Home
+                    </span>
+                    <span class="tab">
+                      <svg viewBox="0 0 24 24"><use href="#p-bell" /></svg>
+                      Alerts
+                    </span>
+                    <span class="tab">
+                      <svg viewBox="0 0 24 24"><use href="#p-lan" /></svg>
+                      Network
+                    </span>
+                    <span class="tab">
+                      <svg viewBox="0 0 24 24"><use href="#p-gear" /></svg>
+                      Settings
+                    </span>
+                  </nav>
+                </div>
+                <div class="droid-gesture"></div>
+              </div>
+            </div>
+            <figcaption>
+              <strong>Quiet days</strong>
+              The ring around the shield stays green while nothing has touched your DeKoi.
+            </figcaption>
+          </figure>
+
+          <figure class="phone" role="listitem">
+            <div class="phone-shell" aria-hidden="true">
+              <div class="phone-bezel">
+                <div class="droid-bar">
+                  <span>15:13</span>
+                  <span class="droid-cam"></span>
+                  <span class="droid-status"><i class="droid-wifi"></i><i class="droid-batt"></i></span>
+                </div>
+                <div class="phone-screen">
+                  <svg class="back-arrow" viewBox="0 0 24 24"><use href="#p-back" /></svg>
+                  <div class="hud-frame">
+                    <div class="hud-in">
+                      <div class="alarm">
+                        <span class="alarm-pulse"></span>
+                        <span class="alarm-pulse late"></span>
+                        <span class="kind-tile">
+                          <svg viewBox="0 0 24 24"><use href="#p-laptop" /></svg>
+                        </span>
+                      </div>
+                      <p class="severity-line">
+                        <svg viewBox="0 0 24 24"><use href="#p-error" /></svg>
+                        Act now
+                      </p>
+                      <p class="alert-title">A laptop tried to sign in to your DeKoi</p>
+                      <p class="app-body">
+                        Someone may be trying to get into the devices on your network.
+                      </p>
+                      <p class="alert-meta">Today · 1 time · 15:13</p>
+                    </div>
+                  </div>
+                  <div class="inset">
+                    <p class="inset-label">Is this a real threat?</p>
+                    <p class="verdict">Very likely an attack</p>
+                    <p class="app-body dim">
+                      Something tried passwords on your DeKoi. No ordinary device in a home does
+                      that.
+                    </p>
+                  </div>
+                  <nav class="tab-bar">
+                    <span class="tab">
+                      <svg viewBox="0 0 24 24"><use href="#p-home" /></svg>
+                      Home
+                    </span>
+                    <span class="tab on">
+                      <span class="tab-badge">1</span>
+                      <svg viewBox="0 0 24 24" class="fill"><use href="#p-bell" /></svg>
+                      Alerts
+                    </span>
+                    <span class="tab">
+                      <svg viewBox="0 0 24 24"><use href="#p-lan" /></svg>
+                      Network
+                    </span>
+                    <span class="tab">
+                      <svg viewBox="0 0 24 24"><use href="#p-gear" /></svg>
+                      Settings
+                    </span>
+                  </nav>
+                </div>
+                <div class="droid-gesture"></div>
+              </div>
+            </div>
+            <figcaption>
+              <strong>When something touches it</strong>
+              You get a plain-language alert, usually within seconds.
+            </figcaption>
+          </figure>
+
+          <figure class="phone" role="listitem">
+            <div class="phone-shell" aria-hidden="true">
+              <div class="phone-bezel">
+                <div class="droid-bar">
+                  <span>15:14</span>
+                  <span class="droid-cam"></span>
+                  <span class="droid-status"><i class="droid-wifi"></i><i class="droid-batt"></i></span>
+                </div>
+                <div class="phone-screen">
+                  <svg class="back-arrow" viewBox="0 0 24 24"><use href="#p-back" /></svg>
+                  <div class="inset">
+                    <p class="inset-label">Do this now</p>
+                    <ol class="step-list">
+                      <li>
+                        <span class="step-mark done">
+                          <svg viewBox="0 0 24 24"><use href="#p-check" /></svg>
+                        </span>
+                        <span class="step-text">Find the device. It looks like a computer.</span>
+                      </li>
+                      <li>
+                        <span class="step-mark">2</span>
+                        <span class="step-text"
+                          >Unplug its network cable or turn off its Wi-Fi.</span
+                        >
+                      </li>
+                      <li>
+                        <span class="step-mark">3</span>
+                        <span class="step-text">Ask who in your home owns it.</span>
+                      </li>
+                    </ol>
+                  </div>
+                  <div class="snackbar">
+                    New alert
+                    <span class="snackbar-action">Open</span>
+                  </div>
+                  <nav class="tab-bar">
+                    <span class="tab">
+                      <svg viewBox="0 0 24 24"><use href="#p-home" /></svg>
+                      Home
+                    </span>
+                    <span class="tab on">
+                      <span class="tab-badge">1</span>
+                      <svg viewBox="0 0 24 24" class="fill"><use href="#p-bell" /></svg>
+                      Alerts
+                    </span>
+                    <span class="tab">
+                      <svg viewBox="0 0 24 24"><use href="#p-lan" /></svg>
+                      Network
+                    </span>
+                    <span class="tab">
+                      <svg viewBox="0 0 24 24"><use href="#p-gear" /></svg>
+                      Settings
+                    </span>
+                  </nav>
+                </div>
+                <div class="droid-gesture"></div>
+              </div>
+            </div>
+            <figcaption>
+              <strong>Clear next steps</strong>
+              Each alert says what happened and what to do, without jargon.
+            </figcaption>
+          </figure>
+        </div>
+      </section>
+
       <section class="updates" aria-labelledby="updates-title">
         <h2 id="updates-title">Updates</h2>
         <p>
