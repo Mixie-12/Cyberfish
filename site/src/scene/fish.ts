@@ -11,7 +11,8 @@ import { MeshSurfaceSampler } from 'three/addons/math/MeshSurfaceSampler.js';
  * All deformation is done in the vertex shader (one displacement field per
  * fin type), and normals are corrected from the field's Jacobian.
  */
-const MODEL_URL = '/models/cyberfish_straight.glb';
+const MODEL_URL = import.meta.env.VITE_FISH_URL;
+const MODEL_BYTES = import.meta.env.VITE_FISH_BYTES;
 
 /** Brings the ~6.75 unit model to ~6.1 units. */
 const MODEL_SCALE = 0.9;
@@ -305,9 +306,9 @@ export class Fish {
       new GLTFLoader().load(
         MODEL_URL,
         (gltf) => resolve(new Fish(gltf.scene, centre, opts)),
-        (e) => {
-          if (onProgress && e.lengthComputable && e.total > 0) onProgress(e.loaded / e.total);
-        },
+        // Not e.total: GitHub Pages gzips the model, so e.total is the
+        // compressed size while e.loaded counts bytes after decompression.
+        (e) => onProgress?.(Math.min(1, e.loaded / MODEL_BYTES)),
         (err) => reject(err instanceof Error ? err : new Error(String(err))),
       );
     });

@@ -1,3 +1,4 @@
+import { statSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { renderSVG } from 'uqr';
@@ -12,6 +13,11 @@ const host = 'dekoi.sysnordic.no';
 // the dev server shows the same one the build publishes.
 const qrPath = 'download/qr.svg';
 const qrSvg = renderSVG(`https://${host}/download/`, { border: 2 });
+
+// The fish model the loading screen waits for, with its size: the server
+// may compress it, and then no response header tells the page its size.
+const fishUrl = '/models/cyberfish_straight.glb';
+const fishBytes = statSync(resolve(root, `public${fishUrl}`)).size;
 
 // site.yml sets these from the release it publishes (ADR 0039). Without
 // them the download page would link to files that are not there.
@@ -31,7 +37,11 @@ export default defineConfig(({ command, mode }) => {
     throw new Error(`The build needs ${missing.join(', ')}`);
   }
   return {
-    define: { 'import.meta.env.VITE_SITE_HOST': JSON.stringify(host) },
+    define: {
+      'import.meta.env.VITE_SITE_HOST': JSON.stringify(host),
+      'import.meta.env.VITE_FISH_URL': JSON.stringify(fishUrl),
+      'import.meta.env.VITE_FISH_BYTES': JSON.stringify(fishBytes),
+    },
     plugins: [
       {
         name: 'qr-code',

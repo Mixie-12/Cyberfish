@@ -66,7 +66,7 @@ for (const id of ['enter-sound', 'enter-mute']) {
 }
 
 // Progress milestones. Reaching this script means the module graph (three.js
-// included) has been fetched and evaluated. The fish GLB (~9.5 MB) is the
+// included) has been fetched and evaluated. The fish GLB (11 MB) is the
 // bulk of the load, so its download drives the 0.2..0.9 band.
 const loader = new Loader(reducedMotion);
 loader.setProgress(0.15);
