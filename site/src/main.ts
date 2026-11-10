@@ -46,11 +46,11 @@ toggle?.addEventListener('click', () => {
 // "Enter with sound": unlock inside the gesture itself (Safari needs the
 // call stack) and play the confirmation right away, not after the loader's
 // fade.
-// The background track follows straight on from the confirmation.
+let enterConfirmation: Promise<void> = Promise.resolve();
 document.getElementById('enter-sound')?.addEventListener('click', () => {
   sfx.unlock();
   sfx.setEnabled(true);
-  void sfx.play('confirm2').then(() => sfx.startMusic());
+  enterConfirmation = sfx.play('confirm2');
 });
 // pointerdown is already a user activation and lands ~100 ms before click:
 // start the context and decode the buffers then, so the click plays at once.
@@ -111,12 +111,15 @@ scene.start();
 requestAnimationFrame(() => loader.setProgress(1));
 
 // The visitor's enter choice (sound itself was handled in the click above).
-// Entering muted still marks the music as wanted, so switching sound on
-// later brings it in after that confirmation.
-loader.done.then(({ sound }) => {
+// This is the only place the music becomes wanted, so it never plays while
+// the loader is on screen; with sound on it follows the confirmation.
+// Entering muted still marks it as wanted, so switching sound on later
+// brings it in after that confirmation.
+loader.done.then(async ({ sound }) => {
   document.documentElement.dataset.entered = '';
   sfx.setEnabled(sound);
-  if (!sound) sfx.startMusic();
+  await enterConfirmation;
+  sfx.startMusic();
 });
 
 const html = document.documentElement;
