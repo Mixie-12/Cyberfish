@@ -158,7 +158,7 @@ main {
   font-size: 13px;
 }
 
-/* Steps numbered like the site's sections: 01 02 03 in Michroma. */
+/* Install steps: "Step 1" in Michroma, matching the download page voice. */
 .steps ol {
   display: grid;
   gap: 28px;
@@ -170,15 +170,17 @@ main {
 
 .steps li {
   display: grid;
-  grid-template-columns: 52px minmax(0, 1fr);
+  grid-template-columns: auto minmax(0, 1fr);
+  column-gap: 20px;
   counter-increment: step;
 }
 
 .steps li::before {
-  content: counter(step, decimal-leading-zero);
-  font: 400 14px/1.9 var(--font-display);
-  letter-spacing: 0.1em;
+  content: 'Step ' counter(step);
+  font: 400 13px/1.9 var(--font-display);
+  letter-spacing: 0.08em;
   color: var(--accent);
+  white-space: nowrap;
 }
 
 .steps h3 {
@@ -308,6 +310,7 @@ main {
   }
 
   .steps li {
-    grid-template-columns: 40px minmax(0, 1fr);
+    grid-template-columns: auto minmax(0, 1fr);
+    column-gap: 14px;
   }
 }
