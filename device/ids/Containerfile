@@ -1,7 +1,7 @@
 # dekoi-ids: Suricata with the Emerging Threats Open ruleset. Build context: device/
 # The rules are fetched and tested at build time, so they reach devices
 # through the signed image like everything else (ADR 0003).
-FROM docker.io/library/debian@sha256:a72b4433de1cf7d6bae0c4cee74d0547f58601a643b3375f070c51600d63b6b2 AS rules
+FROM docker.io/library/debian@sha256:9c6e381421d0f48d1b8133e573f33c185ee16cbf505eda9c4a8a4791b25ea8a6 AS rules
 RUN apt-get update \
  && apt-get install -y --no-install-recommends suricata suricata-update ca-certificates \
  && rm -rf /var/lib/apt/lists/*
@@ -12,7 +12,7 @@ RUN suricata-update --no-reload --suricata-conf /etc/dekoi/suricata.yaml --disab
  && suricata -T -c /etc/dekoi/suricata.yaml -S /var/lib/suricata/rules/suricata.rules \
  && date -u +%Y-%m-%d > /var/lib/suricata/rules/ruleset-date
 
-FROM docker.io/library/debian@sha256:a72b4433de1cf7d6bae0c4cee74d0547f58601a643b3375f070c51600d63b6b2
+FROM docker.io/library/debian@sha256:9c6e381421d0f48d1b8133e573f33c185ee16cbf505eda9c4a8a4791b25ea8a6
 RUN apt-get update \
  && apt-get install -y --no-install-recommends suricata \
  && rm -rf /var/lib/apt/lists/* \
