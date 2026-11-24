@@ -4,7 +4,7 @@
 # writes out/dekoi-installer.zip. The check stage runs arm64 binaries, on
 # purpose, so the builder needs QEMU (Docker Desktop has it; CI sets it up).
 FROM docker.io/library/alpine:3.24@sha256:3f4d6b32e26703c6082839234f43769d5046b3ac7c910033911d1e71d8cd630a AS tools
-RUN apk add --no-cache python3=3.14.10-r1 mtools=4.0.49-r0 e2fsprogs-extra=1.47.4-r0
+RUN apk add --no-cache python3=3.14.10-r2 mtools=4.0.49-r0 e2fsprogs-extra=1.47.4-r0
 
 # Kernels, firmware and device trees from the pinned image.
 FROM tools AS boot
@@ -18,7 +18,7 @@ FROM tools AS rootfs
 RUN apk add --root=/rootfs --arch=aarch64 --initdb --no-scripts --no-cache \
       --keys-dir=/usr/share/apk/keys/aarch64 \
       --repository=https://dl-cdn.alpinelinux.org/alpine/v3.24/main \
-      busybox=1.37.0-r31 python3=3.14.10-r1 ca-certificates-bundle=20261020-r0 \
+      busybox=1.37.0-r31 python3=3.14.10-r2 ca-certificates-bundle=20261020-r0 \
  && rm -f /rootfs/var/log/apk.log \
  && install -d -m 0755 /rootfs/usr/share/dekoi
 COPY --chmod=0644 image.json /rootfs/usr/share/dekoi/image.json
